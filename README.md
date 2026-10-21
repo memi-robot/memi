@@ -4,6 +4,7 @@
 
 [![Project page](https://img.shields.io/badge/Project-page-0f0f70)](https://memi-robot.github.io/)
 [![Benchmark](https://img.shields.io/badge/Benchmark-RoboMME-405c78)](https://robomme.github.io/)
+[![Leaderboard](https://img.shields.io/badge/RoboMME-Leaderboard-a8853f)](https://robomme.github.io/leaderboard.html)
 [![License](https://img.shields.io/badge/License-Apache_2.0-68876b)](LICENSE)
 
 </div>
