@@ -1,0 +1,177 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "pending_target_positions",
+  "buttons_completed"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  10,
+  15,
+  36,
+  39,
+  47
+ ],
+ "scored": 23,
+ "failed": 7,
+ "subgoal_wrong": 2,
+ "memory_wrong": 7,
+ "subgoal_verified": 0.9130434782608695,
+ "memory_verified": 0.6956521739130435,
+ "reads": {
+  "pending_target_positions": 17,
+  "buttons_completed": 15
+ },
+ "field_errors": {
+  "pending_target_positions": {
+   "in": 7,
+   "sole": 7
+  },
+  "buttons_completed": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.30434782608695654,
+ "verified_of_all": 0.6956521739130435,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 23,
+ "critique": "field pending_target_positions, POLICY PROMPT\n  When the goal required identifying covered cubes after both button presses, rotating pairs returned to approximately the same unordered positions while their contents exchanged places. After the first press the policy correctly selected the second button but sometimes wrote the targets at their original locations, unlike the annotated memory. After the second press the same error sometimes selected the wrong first container or left the later target at its pre-exchange location. These are PREDICTABILITY failures and, when the first target is affected, SUFFICIENCY failures. Retain this field as the ordered list of current [y, x] positions of requested containers not yet successfully lifted, but make the existing rotation instruction an explicit tracking procedure: seed target identities from incoming positions, associate exposed cubes with their descending covers, and process every observed frame in chronological order. For each moving pair, temporarily track both members, including a non-target partner. Estimate their common center and compare the two possible joint assignments at each successive frame. Select the assignment that continues the angular direction established by the preceding motion, rather than independently minimizing endpoint distance. Carry those identities forward through the final settling frames. A return of the unordered pair to its starting positions must not reset identities. One observed half-turn exchanges the identities; two observed half-turns restore them. Apply this procedure again to every subsequent rotating pair, even when the next command is already determined by the button count, and keep tracking residual motion during manipulation. At the decision scene, write every remaining target's current center in unchanged goal order. For example, a target moving from [134, 173] through [125, 156] and [109, 151] to [99, 166] must yield [[99, 166]], not the opposite endpoint near its starting position. Remove the first entry only upon an observed successful grasp-and-lift, and preserve that removal during put-down. No additional persistent field is needed.\n\nrefused\n  The reports asking for explicit individual coordinate paths all describe the same failure to apply the existing identity-through-rotation rule. Pass on a shared operational tracking clarification, not separate rules keyed to particular colors, positions, or button numbers. The observed shuffles include both single exchanges and repeated exchanges, so a blanket rule that every button press swaps a pair would be incorrect. Do not change the annotator prompt: its current values already follow the observed container identities, including exchanging two requested targets and moving a previously exchanged target through a different pair. Do not change the policy prompt for subgoal or buttons_completed: the failed cases either chose the correct button with incorrect target memory, chose a wrong container because that memory was not updated through the shuffle, or retained an incorrect later-target position despite choosing the correct first container. The existing dispatch on the updated button count and selection of the first pending target are sufficient once tracking is applied correctly.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pending_target_positions",
+    "description": "When the goal required identifying covered cubes after both button presses, rotating pairs returned to approximately the same unordered positions while their contents exchanged places. After the first press the policy correctly selected the second button but sometimes wrote the targets at their original locations, unlike the annotated memory. After the second press the same error sometimes selected the wrong first container or left the later target at its pre-exchange location. These are PREDICTABILITY failures and, when the first target is affected, SUFFICIENCY failures. Retain this field as the ordered list of current [y, x] positions of requested containers not yet successfully lifted, but make the existing rotation instruction an explicit tracking procedure: seed target identities from incoming positions, associate exposed cubes with their descending covers, and process every observed frame in chronological order. For each moving pair, temporarily track both members, including a non-target partner. Estimate their common center and compare the two possible joint assignments at each successive frame. Select the assignment that continues the angular direction established by the preceding motion, rather than independently minimizing endpoint distance. Carry those identities forward through the final settling frames. A return of the unordered pair to its starting positions must not reset identities. One observed half-turn exchanges the identities; two observed half-turns restore them. Apply this procedure again to every subsequent rotating pair, even when the next command is already determined by the button count, and keep tracking residual motion during manipulation. At the decision scene, write every remaining target's current center in unchanged goal order. For example, a target moving from [134, 173] through [125, 156] and [109, 151] to [99, 166] must yield [[99, 166]], not the opposite endpoint near its starting position. Remove the first entry only upon an observed successful grasp-and-lift, and preserve that removal during put-down. No additional persistent field is needed."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "The reports asking for explicit individual coordinate paths all describe the same failure to apply the existing identity-through-rotation rule. Pass on a shared operational tracking clarification, not separate rules keyed to particular colors, positions, or button numbers. The observed shuffles include both single exchanges and repeated exchanges, so a blanket rule that every button press swaps a pair would be incorrect. Do not change the annotator prompt: its current values already follow the observed container identities, including exchanging two requested targets and moving a previously exchanged target through a different pair. Do not change the policy prompt for subgoal or buttons_completed: the failed cases either chose the correct button with incorrect target memory, chose a wrong container because that memory was not updated through the shuffle, or retained an incorrect later-target position despite choosing the correct first container. The existing dispatch on the updated button count and selection of the first pending target are sufficient once tracking is applied correctly."
+ },
+ "critiques": [
+  {
+   "step": [
+    10,
+    "exec",
+    114
+   ],
+   "memory_in": "pending_target_positions=[[135, 172]]; buttons_completed=0",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The tracking rule should explicitly connect the blue-covering container's trajectory [134, 173] → [125, 156] → [109, 151] → [99, 166]. The rotating pair makes a half-turn, exchanging identities at its original positions. Thus write pending_target_positions=[[99, 166]], not [[133, 174]]. The existing general half-turn instruction was sufficient in principle but was not correctly applied here.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    15,
+    "exec",
+    204
+   ],
+   "memory_in": "pending_target_positions=[[102, 183], [128, 200]]; buttons_completed=1",
+   "answered": "C: pick up the container at [102, 182]",
+   "recorded": "C: pick up the container at [125, 204]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    115
+   ],
+   "memory_in": "pending_target_positions=[[111, 86], [133, 115]]; buttons_completed=0",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The rotation-tracking rule should explicitly connect this interval to an identity exchange: red moves from [108, 85] through [105, 100] and [113, 117] to [131, 115], while green moves from [131, 115] through [136, 98] and [128, 81] to [109, 84]. Thus write pending_target_positions=[[131, 115], [109, 84]], rather than matching the final positions to the starting positions.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    209
+   ],
+   "memory_in": "pending_target_positions=[[131, 115], [109, 84]]; buttons_completed=1",
+   "answered": "C: pick up the container at [131, 116]",
+   "recorded": "C: pick up the container at [98, 165]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    39,
+    "exec",
+    114
+   ],
+   "memory_in": "pending_target_positions=[[108, 120], [122, 180]]; buttons_completed=0",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make the rotation-to-identity connection explicit here: the green-covering container moves from [105, 120] through [115, 130] at t=80 and [130, 127] at t=96 to [134, 107] at t=114. The rotating pair has exchanged positions, not returned to its original identities. Write pending_target_positions=[[134, 107], [120, 181]], rather than matching green to its original covering position.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    47,
+    "exec",
+    114
+   ],
+   "memory_in": "pending_target_positions=[[107, 123], [106, 168]]; buttons_completed=0",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make explicit that the green container follows [103, 169] → [116, 176] → [128, 171] → [125, 150] across t=64,80,96,112. The rotating pair exchanges identities rather than returning them to their starting positions. Thus write pending_target_positions=[[105, 121], [125, 150]] at t=114, not assign green to [103, 168] by endpoint proximity.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    47,
+    "exec",
+    213
+   ],
+   "memory_in": "pending_target_positions=[[105, 121], [125, 150]]; buttons_completed=1",
+   "answered": "C: pick up the container at [105, 122]",
+   "recorded": "C: pick up the container at [102, 124]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

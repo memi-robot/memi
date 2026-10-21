@@ -1,0 +1,129 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "remaining_path"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  44,
+  76,
+  79,
+  85,
+  86
+ ],
+ "scored": 20,
+ "failed": 4,
+ "subgoal_wrong": 2,
+ "memory_wrong": 4,
+ "subgoal_verified": 0.9,
+ "memory_verified": 0.8,
+ "reads": {
+  "remaining_path": 16
+ },
+ "field_errors": {
+  "remaining_path": {
+   "in": 4,
+   "sole": 4
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 0,
+ "decisions": 20,
+ "critique": "field remaining_path, POLICY PROMPT\n  The failures occurred at initialization while reproducing a demonstrated stick-navigation route. Two successive larger-x lower-arc moves were decoded as B,B instead of C,C; an initial smaller-x upper-arc move was decoded as B instead of D; seven traversals containing repeated returns were compressed into three; and a final smaller-x upper-arc move was recorded as B instead of D. The annotations retained the complete correctly decoded routes. These errors break PREDICTABILITY of the initial memory and, when the first letter is wrong, SUFFICIENCY for selecting the first subgoal. Strengthen initialization with an explicit two-stage decoding procedure. First identify the chronological sequence of target arrivals across the entire demonstration, keeping each visit, immediate reversal, and repeated crossing as a separate traversal. A temporary double highlight must not erase an arrival boundary: use wrist arrival and subsequent motion to resolve which adjacent site was reached. Suppress only coordinate jitter and duplicate indications of the same arrival, not returns to previously visited sites. Then classify EACH traversal independently using destination minus departure target x and the intermediate wrist arc relative to the line between resting wrist positions. Use this explicit table: larger x plus upper arc = A; larger x plus lower arc = C; smaller x plus upper arc = D; smaller x plus lower arc = B. Upper means smaller image y than that baseline, not smaller y than a target. Do not infer the arc from the preceding traversal, the net excursion, or a waypoint. Verify that the number of letters equals the number of adjacent-site traversals, including the final arrival. For example, alternating upper-arc smaller-x and larger-x crossings, followed by a lower-arc larger-x return, another upper-arc smaller-x crossing, and two upper-arc larger-x moves yields [\"D\",\"A\",\"D\",\"C\",\"D\",\"A\",\"A\"]. The field continues to hold the ordered demonstrated traversals not yet completed, including the one selected now. Initialize the entire list when demonstration frames and empty incoming memory are present. At each later decision following one completed oracle execution, remove exactly one leading letter; do not remove the newly selected letter. Retain the list if no command completed, and write [] after the final completion. No additional memory fields are needed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_path",
+    "description": "The failures occurred at initialization while reproducing a demonstrated stick-navigation route. Two successive larger-x lower-arc moves were decoded as B,B instead of C,C; an initial smaller-x upper-arc move was decoded as B instead of D; seven traversals containing repeated returns were compressed into three; and a final smaller-x upper-arc move was recorded as B instead of D. The annotations retained the complete correctly decoded routes. These errors break PREDICTABILITY of the initial memory and, when the first letter is wrong, SUFFICIENCY for selecting the first subgoal. Strengthen initialization with an explicit two-stage decoding procedure. First identify the chronological sequence of target arrivals across the entire demonstration, keeping each visit, immediate reversal, and repeated crossing as a separate traversal. A temporary double highlight must not erase an arrival boundary: use wrist arrival and subsequent motion to resolve which adjacent site was reached. Suppress only coordinate jitter and duplicate indications of the same arrival, not returns to previously visited sites. Then classify EACH traversal independently using destination minus departure target x and the intermediate wrist arc relative to the line between resting wrist positions. Use this explicit table: larger x plus upper arc = A; larger x plus lower arc = C; smaller x plus upper arc = D; smaller x plus lower arc = B. Upper means smaller image y than that baseline, not smaller y than a target. Do not infer the arc from the preceding traversal, the net excursion, or a waypoint. Verify that the number of letters equals the number of adjacent-site traversals, including the final arrival. For example, alternating upper-arc smaller-x and larger-x crossings, followed by a lower-arc larger-x return, another upper-arc smaller-x crossing, and two upper-arc larger-x moves yields [\"D\",\"A\",\"D\",\"C\",\"D\",\"A\",\"A\"]. The field continues to hold the ordered demonstrated traversals not yet completed, including the one selected now. Initialize the entire list when demonstration frames and empty incoming memory are present. At each later decision following one completed oracle execution, remove exactly one leading letter; do not remove the newly selected letter. Retain the list if no command completed, and write [] after the final completion. No additional memory fields are needed."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    44,
+    "exec",
+    100
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    76,
+    "exec",
+    150
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    350
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make explicit that the alternating arrivals here are seven separate traversals, not three merged excursions: t=0–48 D, 48–96 A, 96–144 D, 144–208 C, 208–256 D, 256–304 A, and 304–349 A. The double highlight at t=144 marks an arrival at [64, 81], followed by the lower-arc return C; it must not erase that traversal boundary. Upper-arc returns toward larger x are A, including the final move to [84, 138]. Write the entire initial remaining_path as ['D','A','D','C','D','A','A'], retaining every return and reversal.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    250
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "A: move to the nearest left target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The final traversal should be explicitly connected to the image-upper rightward rule: from the target near [74, 148] to [84, 117], the wrist passes through [57, 140], [53, 124], and [64, 117], above the line between its resting positions near [63, 151] and [73, 117]. Thus this traversal is D, not B, and the initial remaining_path is ['A', 'C', 'A', 'B', 'D'].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

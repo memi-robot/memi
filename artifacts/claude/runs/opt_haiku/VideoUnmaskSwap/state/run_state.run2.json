@@ -1,0 +1,466 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   14,
+   28,
+   53,
+   80,
+   90
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step: the entry just written in the memory answer for that step, so the point and the memory name the same container. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position; a point within a few pixels of that position selects the same container, so a few pixels' difference between a listed position and an entry is never a reason to doubt the container choice. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+  "fields": [
+   {
+    "name": "target_containers",
+    "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; the positions listed in that frame are the slots; label the named container by its slot; (3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty'. A listed position within a few pixels of a slot (e.g. [98, 153] for [99, 155]) is AT that slot; a frame in which two listed positions match no slot (containers in mid-swing at intermediate positions, e.g. [73, 140] and [101, 139] where the slots are [71, 123] and [103, 159]) is an 'empty' frame for the two slots nobody occupies in it. Listed positions carry no identity: a container can only be followed through slots, never by matching positions in the last frame to positions in the first. Do not stop at the first 'all at slots' frame and do not stop before the last frame; the final shuffle can sit in the frames just before the closing frames. Then group consecutive 'empty' frames into runs; each run is one SHUFFLE, and the number of runs is the number of shuffles, however many there are (one, two, three or more) and whether or not the same pair of slots repeats. Write out the list of shuffles in order (e.g. 'shuffle 1: slots P and Q, frames 80-96; shuffle 2: slots P and Q, frames 128-144; shuffle 3: slots Q and R, frames 176-192'). Then keep an explicit slot table (which container is at which slot, starting from the first container frame) and apply the shuffles one by one in time order, each time swapping the two containers whose slots were empty in that run, writing the table after every swap. Only after the last shuffle is applied read off the named container's slot. Parity cross-check, not a substitute: for the named container's pair, an even number of shuffles of that pair returns it to where it was before those shuffles, an odd number leaves it swapped; if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot. The entry may only be written AFTER these four things have actually been written out in the answer: the frame-by-frame labels, the numbered list of shuffles, the slot table after each swap, and the parity check; a block of one or more consecutive 'empty' frames is one shuffle even when it is the only shuffle in the video. Whenever a shuffle empties the named container's own slot, the named container ends at the OTHER slot of that pair; so if its slot was emptied an odd number of times the entry must differ from the container that first sat over the cube. Every demonstration of this task contains at least one shuffle: an answer that finds zero shuffles, or that returns every named cube to its first container, has mislabelled frames and must be recounted; (4) never assume a container returns to its own starting slot, and never take the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example (two cubes, two different pairs each shuffle once, so BOTH named containers move): green cube at [92, 156], blue cube at [125, 117]; first container frame lists [80, 121], [89, 157], [123, 116], [131, 154]; green's slot is [89, 157], blue's is [123, 116]; frames 80-96 list two positions matching no slot while [123, 116] and [131, 154] stay, so 'slots [80, 121] and [89, 157] empty'; frame 112 'all at slots'; frames 128-160 'slots [123, 116] and [131, 154] empty'; last frame 'all at slots'. Shuffle 1 swaps [80, 121] and [89, 157]: green now at [80, 121]. Shuffle 2 swaps [123, 116] and [131, 154]: blue now at [131, 154]. Last frame lists those slots as [82, 121] and [131, 154]; entry [[82, 121], [131, 154]]. Second worked example (three shuffles, the last two of the same pair, the last one just before the closing frames): goal names green then red; green cube at [82, 128], red cube at [127, 146]; containers first rest at [80, 129], [96, 88], [128, 145], [110, 172]; green's container is at slot [80, 129], red's at slot [128, 145]; labelling every frame to the end: frames 64-80 'slots [96, 88] and [110, 172] empty', frame 96 'all at slots', frames 112-128 'slots [80, 129] and [128, 145] empty', frame 144 'all at slots', frames 160-176 'slots [80, 129] and [128, 145] empty', frames 192-208 'all at slots' (last frame). Shuffle 1 swaps [96, 88] and [110, 172]: green still at [80, 129], red still at [128, 145]. Shuffle 2 swaps [80, 129] and [128, 145]: green at [128, 145], red at [80, 129]. Shuffle 3 swaps the same two: green back at [80, 129], red back at [128, 145]. Parity: two shuffles of green's pair, even, so green is where it started; agrees. Last frame lists those slots as [81, 129] and [129, 145]; entry [[81, 129], [129, 145]]. e.g. [[84, 110], [93, 163]]",
+    "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step from the demonstration, by slots and swaps: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the frames after the first container frame in order and split them into runs: a run is a maximal block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels, however their positions change inside the block), and it ends at the first following frame in which every container is again at a slot. Each run is exactly one shuffle, and it swaps the slots of the two containers whose slots are empty during that run. A later run, even of the same two slots, is a separate shuffle. List the runs in order, apply the swaps in order (an odd number of runs of a pair leaves them swapped, an even number leaves them where they started; runs of other pairs do not touch the named container), and only then read off the named container's slot; (4) the entry is the named cube's container's slot after all swaps, written with the coordinates listed for that slot in the last demonstration frame (slots wobble by a few pixels). Never changes afterwards; copied unchanged at every later step. e.g. [[84, 110], [93, 163]]"
+   },
+   {
+    "name": "put_down_count",
+    "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+    "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   14,
+   28,
+   53,
+   80,
+   90
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+  "fields": [
+   {
+    "name": "target_containers",
+    "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry. e.g. [[81, 90], [87, 134]]",
+    "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+   },
+   {
+    "name": "put_down_count",
+    "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+    "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 13,
+    "subgoal_wrong": 1,
+    "memory_wrong": 2,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "target_containers": 2,
+     "put_down_count": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field target_containers, ANNOTATOR PROMPT\n  Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step and copied unchanged afterwards. Situation that mattered: at the first decision step, with an empty memory and the demonstration shown, the goal named a cube whose container took part in a shuffle; in every demonstration of this task a shuffle is a block of three consecutive frames in which exactly two containers leave their resting slots, circle each other, and come back to rest, and when they come back each of the two sits in the OTHER one's slot. The policy instead took the container resting at the named cube's original slot in the last frame, so it wrote the neighbour's position and pointed at the wrong container (PREDICTABILITY: the value written differed from the annotated one; SUFFICIENCY: the first pick then pointed at the wrong container). The filling is to be stated by slots and swaps rather than by nearest-neighbour arcs: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the remaining frames; each block of frames in which two containers are away from their slots is one shuffle, and when the frame after it shows all containers back at slots, those two containers have exchanged slots (two shuffles of the same pair put them back where they started); (4) the entry is the named cube's container's slot after all shuffles, written with the coordinates listed in the last demonstration frame (slots wobble by a few pixels). e.g. [[84, 110], [93, 163]]\n\nfield target_containers, POLICY PROMPT\n  Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown), then copy it unchanged at every later step. Situation that mattered: the named cube's container was moved during the demonstration and the policy answered with the container that sits at the cube's original spot in the last frame, which after a swap is a different container; the entry and the first pick were both wrong (PREDICTABILITY and SUFFICIENCY). Replace the nearest-neighbour/arc procedure with this one: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; call the positions listed in that frame the slots, and label the named container by its slot; (3) go through the remaining frames; whenever a frame lists two containers at positions that are not slots (they are off by well over 10 pixels), a shuffle is under way between the two containers whose slots are now empty; the shuffle lasts until a frame again shows all containers at slots; at that frame those two containers have SWAPPED slots, so if the named container was one of the two, its slot is now the other container's old slot; a second shuffle of the same pair swaps them back; shuffles of other pairs do not touch it; (4) never assume a container returns to its own starting slot, and never pick the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. e.g. [[84, 110], [93, 163]]\n\nrefused\n  The failed steps asked for the existing nearest-neighbour-plus-arc tracking to be kept and merely decorated with warnings and a swap example. That is not passed on as such: across the minibatch the arc tie-break gives a wrong answer in one demonstration where two containers circle each other and the arc continuation points to the wrong one, so the whole procedure is replaced by the slot-and-swap rule above, which reproduces every annotated entry in the minibatch. The suggestion for the subgoal instruction (that the point may be written as the tracked container's current listed position, small offsets being acceptable) is already how the instruction reads and the policy got the point right once it had the right container, so nothing changes there.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "target_containers",
+      "edits": [
+       {
+        "modify_from": "Filled at the first decision step from the demonstration (cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]",
+        "modify_to": "Filled once at the first decision step from the demonstration, by slots and swaps: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the remaining frames; each block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels) is one shuffle between the two containers whose slots are empty; when the next frame shows all containers back at slots, those two containers have exchanged slots (a second shuffle of the same pair puts them back where they were; shuffles of other pairs do not touch the named container); (4) the entry is the named cube's container's slot after all swaps, written with the coordinates listed for that slot in the last demonstration frame (slots wobble by a few pixels). Never changes afterwards; copied unchanged at every later step. e.g. [[84, 110], [93, 163]]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "target_containers",
+      "edits": [
+       {
+        "modify_from": "Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry. e.g. [[81, 90], [87, 134]]",
+        "modify_to": "Procedure: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; the positions listed in that frame are the slots; label the named container by its slot; (3) go through the remaining frames; whenever a frame lists two containers at positions that are not slots (off by well over 10 pixels), a shuffle is under way between the two containers whose slots are now empty; it lasts until a frame again shows all containers at slots; at that frame those two containers have SWAPPED slots, so if the named container was one of the two, its slot is now the other container's old slot; a second shuffle of the same pair swaps them back; shuffles of other pairs do not change its slot; (4) never assume a container returns to its own starting slot, and never take the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. e.g. [[84, 110], [93, 163]]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing in the subgoal instruction changes: the report confirms the point is already written as the tracked container's current listed position and the policy chose correctly once it held the right container. The failed steps' request to keep nearest-neighbour-plus-arc tracking with added warnings is not committed; the arc tie-break is what produced the wrong entry, so it is replaced outright by the slot-and-swap procedure on both sides rather than decorated."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 7,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "target_containers": 1,
+     "put_down_count": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field target_containers, ANNOTATOR PROMPT\n  Same field, same meaning: ordered list of container positions [y, x], one per cube named in the goal, each the last-demonstration-frame position of the container that ends up hiding that cube. The filling procedure has to make shuffle-counting explicit, because a demonstration can contain two separate shuffles of the same pair of containers, separated by one or more frames in which every container is back at a slot; the policy treated all off-slot frames as a single shuffle and so recorded the container's position after the first swap only, pointing at the wrong container at the first decision step. This breaks PREDICTABILITY (the written value differs from the value the procedure yields). Replace step (3) with: scan the frames after the first container frame and split them into runs; a run is a maximal block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels, however their positions change inside the block); a run ends at the first following frame in which every container is at a slot. Each run is exactly one shuffle, and it swaps the slots of the two containers whose slots are empty during that run. List the runs in order, apply the swaps in order, and only then read off the named container's slot. Two runs of the same pair cancel (odd number of runs of a pair = swapped, even = back where they started). Then step (4) as before: the entry is the named container's slot after all swaps, written with that slot's coordinates in the last demonstration frame. Never changes afterwards. e.g. [[101, 139]]\n\nfield target_containers, POLICY PROMPT\n  Same field, same meaning and format. Rewrite step (3) so the policy counts shuffles one by one instead of treating every off-slot frame as part of one shuffle: after the first container frame, walk the frames in order and keep a running slot assignment. A SHUFFLE is a maximal run of consecutive frames in which two containers are off their slots (well over 10 pixels); it ENDS at the first later frame where all containers are again at slots. At that ending frame, swap the slots of the two containers whose slots were empty during the run. Then keep walking: if a later frame again shows two containers off their slots, that is a NEW shuffle, even if it is the same two slots as before, and it swaps them again when it ends. Write out the list of shuffles (e.g. 'shuffle 1: slots P and Q, frames 80-96, ends 112; shuffle 2: slots P and Q, frames 128-144, ends 160') before computing the answer. Two shuffles of the same pair put them back where they started; three put them swapped again. Only after all shuffles are applied, take the named container's slot and write it with the coordinates listed for that slot in the last demonstration frame. Keep the existing warnings: never assume a container returns to its own starting slot, never pick the container nearest the cube's original position in the last frame. Worked example to add: cube at [103, 138]; containers first rest at [91, 78], [100, 139], [104, 178]; the cube's container is at slot [100, 139]; frames 80 and 96 show the [100, 139] and [104, 178] containers off their slots, frame 112 shows all at slots (shuffle 1: those two swap, cube's container now at slot [104, 178]); frames 128 and 144 again show the same two slots empty, frame 160 all at slots (shuffle 2: they swap back, cube's container at slot [100, 139]); last frame lists that slot as [101, 139]; entry [[101, 139]]. e.g. [[101, 139]]",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "target_containers",
+      "edits": [
+       {
+        "modify_from": "(3) scan the remaining frames; each block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels) is one shuffle between the two containers whose slots are empty; when the next frame shows all containers back at slots, those two containers have exchanged slots (a second shuffle of the same pair puts them back where they were; shuffles of other pairs do not touch the named container);",
+        "modify_to": "(3) scan the frames after the first container frame in order and split them into runs: a run is a maximal block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels, however their positions change inside the block), and it ends at the first following frame in which every container is again at a slot. Each run is exactly one shuffle, and it swaps the slots of the two containers whose slots are empty during that run. A later run, even of the same two slots, is a separate shuffle. List the runs in order, apply the swaps in order (an odd number of runs of a pair leaves them swapped, an even number leaves them where they started; runs of other pairs do not touch the named container), and only then read off the named container's slot;"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "target_containers",
+      "edits": [
+       {
+        "modify_from": "(3) go through the remaining frames; whenever a frame lists two containers at positions that are not slots (off by well over 10 pixels), a shuffle is under way between the two containers whose slots are now empty; it lasts until a frame again shows all containers at slots; at that frame those two containers have SWAPPED slots, so if the named container was one of the two, its slot is now the other container's old slot; a second shuffle of the same pair swaps them back; shuffles of other pairs do not change its slot;",
+        "modify_to": "(3) walk the frames after the first container frame in order and keep a running slot assignment. A SHUFFLE is a maximal run of consecutive frames in which two containers are off their slots (well over 10 pixels); it ENDS at the first later frame where all containers are again at slots. At that ending frame, swap the slots of the two containers whose slots were empty during the run. Keep walking: if a later frame again shows two containers off their slots, that is a NEW shuffle, even if it is the same two slots as before, and it swaps them again when it ends. Before computing the answer, write out the list of shuffles in order (e.g. 'shuffle 1: slots P and Q, frames 80-96, ends 112; shuffle 2: slots P and Q, frames 128-144, ends 160'). Two shuffles of the same pair put them back where they started; three leave them swapped. Shuffles of other pairs do not change the named container's slot;"
+       },
+       {
+        "modify_from": "those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. e.g. [[84, 110], [93, 163]]",
+        "modify_to": "those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. Second worked example (two shuffles of one pair): cube at [103, 138]; containers first rest at [91, 78], [100, 139], [104, 178]; the cube's container is at slot [100, 139]; frames 80 and 96 show the [100, 139] and [104, 178] containers off their slots, frame 112 shows all at slots (shuffle 1: those two swap, cube's container now at slot [104, 178]); frames 128 and 144 again show the same two slots empty, frame 160 shows all at slots (shuffle 2: they swap back, cube's container at slot [100, 139]); last frame lists that slot as [101, 139]; entry [[101, 139]]. e.g. [[84, 110], [93, 163]]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The report asked to change the closing e.g. value of target_containers to [[101, 139]]; the existing e.g. shows a two-entry list, which is the more general shape, and the new case is covered by the added worked example, so the e.g. stays. Nothing in the subgoal instruction changes: the step failed only because the memory entry was wrong, and the round-1 slot-and-swap procedure is kept intact; this edit only makes its shuffle counting run-by-run so repeated shuffles of one pair are counted separately."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 9,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "target_containers": 1,
+     "put_down_count": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field target_containers, POLICY PROMPT\n  Situation: the goal named two cubes (green first, then red) and the demonstration contained three shuffles, the last two of which moved the same pair of slots, with the final shuffle's off-slot frames sitting just before the closing frames of the demonstration. The annotated memory listed the green cube's container at the slot it started in, because the pair swapped twice and came back. The policy counted only the first two shuffles, stopped walking the frames before the end, and wrote the green container at the slot of the second shuffle's partner. This breaks PREDICTABILITY: the recorded value and the policy's value differ at the same step although the step shows everything needed. Change: the field keeps the same content (ordered list of [y, x] slot positions from the last demonstration frame, one per named cube, in goal order, written once at the first decision step and copied unchanged afterward), but the procedure must be made exhaustive and mechanical. Require the policy to go through EVERY container frame after the first one, up to and including the last demonstration frame, and to label each frame with either 'all at slots' or 'slots P and Q empty' before doing anything else; it must not stop at the first frame where everything is at slots, and must not stop before reaching the last frame. Then group consecutive 'empty' frames into runs; each run is one shuffle, and the number of runs is the number of shuffles, however many there are (one, two, three or more) and whether or not the same pair repeats. Then keep an explicit slot assignment table (which container is at which slot) and apply the runs one by one in time order, each time swapping the two containers whose slots were empty in that run, writing the table after every swap. Only after the last run is applied read off the named container's slot and write it with the last frame's coordinates for that slot. State the parity check as a cross-check, not a substitute: for the named container's pair, an even number of runs of that pair returns it to where it was before those runs, an odd number leaves it swapped; if the table and the parity check disagree, recount the runs. Add a worked example with three shuffles where the second and third involve the same two slots and the third's off-slot frames are the two frames right before the final frames, so that the named container ends back at its original slot. Example value: [[81, 129], [129, 145]]",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "target_containers",
+      "edits": [
+       {
+        "modify_from": "(3) walk the frames after the first container frame in order and keep a running slot assignment. A SHUFFLE is a maximal run of consecutive frames in which two containers are off their slots (well over 10 pixels); it ENDS at the first later frame where all containers are again at slots. At that ending frame, swap the slots of the two containers whose slots were empty during the run. Keep walking: if a later frame again shows two containers off their slots, that is a NEW shuffle, even if it is the same two slots as before, and it swaps them again when it ends. Before computing the answer, write out the list of shuffles in order (e.g. 'shuffle 1: slots P and Q, frames 80-96, ends 112; shuffle 2: slots P and Q, frames 128-144, ends 160'). Two shuffles of the same pair put them back where they started; three leave them swapped. Shuffles of other pairs do not change the named container's slot;",
+        "modify_to": "(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty' (a container is off its slot when it is well over 10 pixels away). Do not stop at the first 'all at slots' frame and do not stop before the last frame; the final shuffle can sit in the frames just before the closing frames. Then group consecutive 'empty' frames into runs; each run is one SHUFFLE, and the number of runs is the number of shuffles, however many there are (one, two, three or more) and whether or not the same pair of slots repeats. Write out the list of shuffles in order (e.g. 'shuffle 1: slots P and Q, frames 80-96; shuffle 2: slots P and Q, frames 128-144; shuffle 3: slots Q and R, frames 176-192'). Then keep an explicit slot table (which container is at which slot, starting from the first container frame) and apply the shuffles one by one in time order, each time swapping the two containers whose slots were empty in that run, writing the table after every swap. Only after the last shuffle is applied read off the named container's slot. Parity cross-check, not a substitute: for the named container's pair, an even number of shuffles of that pair returns it to where it was before those shuffles, an odd number leaves it swapped; if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot;"
+       },
+       {
+        "modify_from": "Second worked example (two shuffles of one pair): cube at [103, 138]; containers first rest at [91, 78], [100, 139], [104, 178]; the cube's container is at slot [100, 139]; frames 80 and 96 show the [100, 139] and [104, 178] containers off their slots, frame 112 shows all at slots (shuffle 1: those two swap, cube's container now at slot [104, 178]); frames 128 and 144 again show the same two slots empty, frame 160 shows all at slots (shuffle 2: they swap back, cube's container at slot [100, 139]); last frame lists that slot as [101, 139]; entry [[101, 139]].",
+        "modify_to": "Second worked example (three shuffles, the last two of the same pair, the last one just before the closing frames): goal names green then red; green cube at [82, 128], red cube at [127, 146]; containers first rest at [80, 129], [96, 88], [128, 145], [110, 172]; green's container is at slot [80, 129], red's at slot [128, 145]; labelling every frame to the end: frames 64-80 'slots [96, 88] and [110, 172] empty', frame 96 'all at slots', frames 112-128 'slots [80, 129] and [128, 145] empty', frame 144 'all at slots', frames 160-176 'slots [80, 129] and [128, 145] empty', frames 192-208 'all at slots' (last frame). Shuffle 1 swaps [96, 88] and [110, 172]: green still at [80, 129], red still at [128, 145]. Shuffle 2 swaps [80, 129] and [128, 145]: green at [128, 145], red at [80, 129]. Shuffle 3 swaps the same two: green back at [80, 129], red back at [128, 145]. Parity: two shuffles of green's pair, even, so green is where it started; agrees. Last frame lists those slots as [81, 129] and [129, 145]; entry [[81, 129], [129, 145]]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The annotator prompt is not changed: its step (3) already scans every frame after the first container frame in order and counts runs separately, and the annotator filled the field correctly this round; the failure was the policy stopping its walk early, which is a policy-side procedure fault. The report's worked example is committed in place of the previous two-shuffle example rather than as a third one, since the new example contains a two-shuffle cancellation of one pair and so covers the round-2 case as well; three worked examples would only grow the text. The closing e.g. value stays as it is, consistent with the round-2 refusal. The subgoal instruction is untouched: the step failed only because the memory entry was wrong."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 9,
+    "subgoal_wrong": 3,
+    "memory_wrong": 3,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "target_containers": 3,
+     "put_down_count": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 3
+   },
+   "critique": "field target_containers, POLICY PROMPT\n  Situation: at the first decision step of every failed episode the demonstration showed the named cube covered, then two containers swinging through intermediate positions that match no slot (e.g. the pair that had rested at [71, 123] and [103, 159] is listed at [73, 140] and [101, 139], then at [86, 158] and [88, 121]) and then all containers resting at slots again. The annotation, following the rule, swapped the two emptied slots and wrote the named container's new slot (e.g. [103, 159]). The policy instead wrote the container that first sat over the cube ([73, 123]), i.e. it skipped the shuffle entirely; in the two-cube episode it did this for both cubes even though two different pairs each shuffled once. This breaks PREDICTABILITY: the written value and the annotated value are two answers to one field at one step, and the subgoal then fails SUFFICIENCY because the point goes to the wrong container. The policy itself said the procedure was present but it did not apply it, so the fix is to make the procedure impossible to skip. Change: keep the same field and meaning (ordered list of the named containers' slots after all shuffles, slot coordinates taken from the last demonstration frame, written once at the first decision step and copied unchanged afterwards), but (a) require the policy to actually write out, before the entry, four things: the frame-by-frame labels for EVERY container frame after the first ('all at slots' or 'slots P and Q empty'), the numbered list of runs/shuffles, the slot table after each swap, and the parity check; the entry may only be written after these four appear; (b) state plainly that a frame in which two listed positions match no slot (containers in mid-swing, at intermediate positions) is an 'empty' frame for the two slots that nobody occupies in it, that a block of one or more consecutive such frames is one shuffle even when it is the only shuffle in the video, and that a position within a few pixels of a slot (e.g. [98, 153] for [99, 155]) counts as at that slot; (c) state the trap directly: when a run empties the named container's own slot, the named container ends at the OTHER slot of that pair, so the entry must differ from the container that first sat nearest the cube whenever its slot was emptied an odd number of times, and in these demonstrations there is always at least one shuffle, so an answer that finds zero shuffles or that returns every named cube to its first container must be recounted; (d) note that listed container positions carry no identity, so a container can only be followed through slots, never by matching positions in the last frame to positions in the first; (e) add a third worked example in which two cubes are named and two different pairs each shuffle once so that BOTH named containers move: green cube at [92, 156] and blue cube at [125, 117]; first container frame lists [80, 121], [89, 157], [123, 116], [131, 154]; green's slot is [89, 157], blue's is [123, 116]; frames 80-96 list two positions matching no slot while [123, 116] and [131, 154] stay, so 'slots [80, 121] and [89, 157] empty'; frame 112 'all at slots'; frames 128-160 'slots [123, 116] and [131, 154] empty'; last frame 'all at slots'. Shuffle 1 swaps [80, 121] and [89, 157]: green now at [80, 121]. Shuffle 2 swaps [123, 116] and [131, 154]: blue now at [131, 154]. Last frame lists those slots as [82, 121] and [131, 154]; entry [[82, 121], [131, 154]]. Example value: [[103, 159]].\n\nthe policy prompt for subgoal\n  No transition rule sent the policy wrong; every wrong subgoal came from a wrong target_containers value written at the same step. One clarification to rule (2) and the opening sentence: the point selects a container, so it should be the container's listed position in the current scene, and a point within a few pixels of that position (the recorded demonstrations typically sit three to five pixels toward smaller y, i.e. toward the robot's side of the container) selects the same container; the policy need not reproduce that offset and must not treat a few pixels' difference as a reason to doubt its container choice. Rule (2) should also say explicitly that at the first decision step the entry used is the one the policy has just computed in its own memory answer for target_containers, so the point and the memory must name the same container.\n\nrefused\n  Two first-step reports said the recorded point differs by a few pixels from the container's listed position and asked whether some offset is required. Not passed on as a fault: the point only has to select the right container, every recorded point in the minibatch is within five pixels of a listed container, and the policy's errors at those steps were on which container, not on the pixel offset. It is answered only as a clarification in the subgoal instruction, not as a change to the memory fields or the annotator prompt. The annotator prompt itself is unchanged: the annotated values follow it exactly and match the recorded subgoals in every episode, so the failures are all in the policy's application of the memory procedure.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "target_containers",
+      "edits": [
+       {
+        "modify_from": "(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty' (a container is off its slot when it is well over 10 pixels away).",
+        "modify_to": "(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty'. A listed position within a few pixels of a slot (e.g. [98, 153] for [99, 155]) is AT that slot; a frame in which two listed positions match no slot (containers in mid-swing at intermediate positions, e.g. [73, 140] and [101, 139] where the slots are [71, 123] and [103, 159]) is an 'empty' frame for the two slots nobody occupies in it. Listed positions carry no identity: a container can only be followed through slots, never by matching positions in the last frame to positions in the first."
+       },
+       {
+        "modify_from": "if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot;",
+        "modify_to": "if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot. The entry may only be written AFTER these four things have actually been written out in the answer: the frame-by-frame labels, the numbered list of shuffles, the slot table after each swap, and the parity check; a block of one or more consecutive 'empty' frames is one shuffle even when it is the only shuffle in the video. Whenever a shuffle empties the named container's own slot, the named container ends at the OTHER slot of that pair; so if its slot was emptied an odd number of times the entry must differ from the container that first sat over the cube. Every demonstration of this task contains at least one shuffle: an answer that finds zero shuffles, or that returns every named cube to its first container, has mislabelled frames and must be recounted;"
+       },
+       {
+        "modify_from": "Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110].",
+        "modify_to": "Worked example (two cubes, two different pairs each shuffle once, so BOTH named containers move): green cube at [92, 156], blue cube at [125, 117]; first container frame lists [80, 121], [89, 157], [123, 116], [131, 154]; green's slot is [89, 157], blue's is [123, 116]; frames 80-96 list two positions matching no slot while [123, 116] and [131, 154] stay, so 'slots [80, 121] and [89, 157] empty'; frame 112 'all at slots'; frames 128-160 'slots [123, 116] and [131, 154] empty'; last frame 'all at slots'. Shuffle 1 swaps [80, 121] and [89, 157]: green now at [80, 121]. Shuffle 2 swaps [123, 116] and [131, 154]: blue now at [131, 154]. Last frame lists those slots as [82, 121] and [131, 154]; entry [[82, 121], [131, 154]]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "with the point on the first entry of target_containers computed from the demonstration at that same step.",
+      "modify_to": "with the point on the first entry of target_containers computed from the demonstration at that same step: the entry just written in the memory answer for that step, so the point and the memory name the same container."
+     },
+     {
+      "modify_from": "write the point as that container's listed position.",
+      "modify_to": "write the point as that container's listed position; a point within a few pixels of that position selects the same container, so a few pixels' difference between a listed position and an entry is never a reason to doubt the container choice."
+     }
+    ],
+    "refused": "The annotator prompt stays unchanged, as the report itself finds the annotated values correct. The report's third worked example is committed in place of the original single-cube, single-shuffle example rather than as a third one: it contains that case (one shuffle per pair) and adds the two-cube, two-pair situation, while the remaining second example keeps the repeated-pair and late-shuffle cases of rounds 2 and 3, so no earlier case is lost and the text does not grow by a whole example. The report's request to change the closing e.g. value to [[103, 159]] is not committed, consistent with rounds 2 and 3: the two-entry shape stays. The subgoal instruction gets only the two clarifications the report named; no transition rule changes, since every wrong subgoal came from a wrong memory entry."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 4,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    2,
+    28,
+    31,
+    67,
+    79
+   ],
+   "verified_of_all": 0.8461538461538461,
+   "subgoal_verified": 0.9230769230769231,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry. e.g. [[81, 90], [87, 134]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    33,
+    57,
+    61,
+    70,
+    92
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; the positions listed in that frame are the slots; label the named container by its slot; (3) go through the remaining frames; whenever a frame lists two containers at positions that are not slots (off by well over 10 pixels), a shuffle is under way between the two containers whose slots are now empty; it lasts until a frame again shows all containers at slots; at that frame those two containers have SWAPPED slots, so if the named container was one of the two, its slot is now the other container's old slot; a second shuffle of the same pair swaps them back; shuffles of other pairs do not change its slot; (4) never assume a container returns to its own starting slot, and never take the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. e.g. [[84, 110], [93, 163]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step from the demonstration, by slots and swaps: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the remaining frames; each block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels) is one shuffle between the two containers whose slots are empty; when the next frame shows all containers back at slots, those two containers have exchanged slots (a second shuffle of the same pair puts them back where they were; shuffles of other pairs do not touch the named container); (4) the entry is the named cube's container's slot after all swaps, written with the coordinates listed for that slot in the last demonstration frame (slots wobble by a few pixels). Never changes afterwards; copied unchanged at every later step. e.g. [[84, 110], [93, 163]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    0,
+    14,
+    17,
+    48,
+    50
+   ],
+   "verified_of_all": 0.8571428571428571,
+   "subgoal_verified": 0.8571428571428571,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; the positions listed in that frame are the slots; label the named container by its slot; (3) go through the remaining frames; whenever a frame lists two containers at positions that are not slots (off by well over 10 pixels), a shuffle is under way between the two containers whose slots are now empty; it lasts until a frame again shows all containers at slots; at that frame those two containers have SWAPPED slots, so if the named container was one of the two, its slot is now the other container's old slot; a second shuffle of the same pair swaps them back; shuffles of other pairs do not change its slot; (4) never assume a container returns to its own starting slot, and never take the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. e.g. [[84, 110], [93, 163]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step from the demonstration, by slots and swaps: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the remaining frames; each block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels) is one shuffle between the two containers whose slots are empty; when the next frame shows all containers back at slots, those two containers have exchanged slots (a second shuffle of the same pair puts them back where they were; shuffles of other pairs do not touch the named container); (4) the entry is the named cube's container's slot after all swaps, written with the coordinates listed for that slot in the last demonstration frame (slots wobble by a few pixels). Never changes afterwards; copied unchanged at every later step. e.g. [[84, 110], [93, 163]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    47,
+    50,
+    55,
+    62
+   ],
+   "verified_of_all": 0.8888888888888888,
+   "subgoal_verified": 0.8888888888888888,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; the positions listed in that frame are the slots; label the named container by its slot; (3) walk the frames after the first container frame in order and keep a running slot assignment. A SHUFFLE is a maximal run of consecutive frames in which two containers are off their slots (well over 10 pixels); it ENDS at the first later frame where all containers are again at slots. At that ending frame, swap the slots of the two containers whose slots were empty during the run. Keep walking: if a later frame again shows two containers off their slots, that is a NEW shuffle, even if it is the same two slots as before, and it swaps them again when it ends. Before computing the answer, write out the list of shuffles in order (e.g. 'shuffle 1: slots P and Q, frames 80-96, ends 112; shuffle 2: slots P and Q, frames 128-144, ends 160'). Two shuffles of the same pair put them back where they started; three leave them swapped. Shuffles of other pairs do not change the named container's slot; (4) never assume a container returns to its own starting slot, and never take the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. Second worked example (two shuffles of one pair): cube at [103, 138]; containers first rest at [91, 78], [100, 139], [104, 178]; the cube's container is at slot [100, 139]; frames 80 and 96 show the [100, 139] and [104, 178] containers off their slots, frame 112 shows all at slots (shuffle 1: those two swap, cube's container now at slot [104, 178]); frames 128 and 144 again show the same two slots empty, frame 160 shows all at slots (shuffle 2: they swap back, cube's container at slot [100, 139]); last frame lists that slot as [101, 139]; entry [[101, 139]]. e.g. [[84, 110], [93, 163]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step from the demonstration, by slots and swaps: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the frames after the first container frame in order and split them into runs: a run is a maximal block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels, however their positions change inside the block), and it ends at the first following frame in which every container is again at a slot. Each run is exactly one shuffle, and it swaps the slots of the two containers whose slots are empty during that run. A later run, even of the same two slots, is a separate shuffle. List the runs in order, apply the swaps in order (an odd number of runs of a pair leaves them swapped, an even number leaves them where they started; runs of other pairs do not touch the named container), and only then read off the named container's slot; (4) the entry is the named cube's container's slot after all swaps, written with the coordinates listed for that slot in the last demonstration frame (slots wobble by a few pixels). Never changes afterwards; copied unchanged at every later step. e.g. [[84, 110], [93, 163]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    0,
+    2,
+    17,
+    60,
+    75
+   ],
+   "verified_of_all": 0.6666666666666666,
+   "subgoal_verified": 0.6666666666666666,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; the positions listed in that frame are the slots; label the named container by its slot; (3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty' (a container is off its slot when it is well over 10 pixels away). Do not stop at the first 'all at slots' frame and do not stop before the last frame; the final shuffle can sit in the frames just before the closing frames. Then group consecutive 'empty' frames into runs; each run is one SHUFFLE, and the number of runs is the number of shuffles, however many there are (one, two, three or more) and whether or not the same pair of slots repeats. Write out the list of shuffles in order (e.g. 'shuffle 1: slots P and Q, frames 80-96; shuffle 2: slots P and Q, frames 128-144; shuffle 3: slots Q and R, frames 176-192'). Then keep an explicit slot table (which container is at which slot, starting from the first container frame) and apply the shuffles one by one in time order, each time swapping the two containers whose slots were empty in that run, writing the table after every swap. Only after the last shuffle is applied read off the named container's slot. Parity cross-check, not a substitute: for the named container's pair, an even number of shuffles of that pair returns it to where it was before those shuffles, an odd number leaves it swapped; if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot; (4) never assume a container returns to its own starting slot, and never take the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. Second worked example (three shuffles, the last two of the same pair, the last one just before the closing frames): goal names green then red; green cube at [82, 128], red cube at [127, 146]; containers first rest at [80, 129], [96, 88], [128, 145], [110, 172]; green's container is at slot [80, 129], red's at slot [128, 145]; labelling every frame to the end: frames 64-80 'slots [96, 88] and [110, 172] empty', frame 96 'all at slots', frames 112-128 'slots [80, 129] and [128, 145] empty', frame 144 'all at slots', frames 160-176 'slots [80, 129] and [128, 145] empty', frames 192-208 'all at slots' (last frame). Shuffle 1 swaps [96, 88] and [110, 172]: green still at [80, 129], red still at [128, 145]. Shuffle 2 swaps [80, 129] and [128, 145]: green at [128, 145], red at [80, 129]. Shuffle 3 swaps the same two: green back at [80, 129], red back at [128, 145]. Parity: two shuffles of green's pair, even, so green is where it started; agrees. Last frame lists those slots as [81, 129] and [129, 145]; entry [[81, 129], [129, 145]]. e.g. [[84, 110], [93, 163]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step from the demonstration, by slots and swaps: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the frames after the first container frame in order and split them into runs: a run is a maximal block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels, however their positions change inside the block), and it ends at the first following frame in which every container is again at a slot. Each run is exactly one shuffle, and it swaps the slots of the two containers whose slots are empty during that run. A later run, even of the same two slots, is a separate shuffle. List the runs in order, apply the swaps in order (an odd number of runs of a pair leaves them swapped, an even number leaves them where they started; runs of other pairs do not touch the named container), and only then read off the named container's slot; (4) the entry is the named cube's container's slot after all swaps, written with the coordinates listed for that slot in the last demonstration frame (slots wobble by a few pixels). Never changes afterwards; copied unchanged at every later step. e.g. [[84, 110], [93, 163]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  }
+ ]
+}

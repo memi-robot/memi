@@ -1,0 +1,298 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoPlaceButton",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   7,
+   31,
+   47,
+   52,
+   89
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start in A: with the execution-start gripper empty, pick up the cube of the color named in the goal, pointing at its current visible center. Use only the execution scene for this pickup, not its earlier demonstration location. If the observed execution interval shows descent to that cube, closure to a grasp-sized opening (approximately 46%), and a lift with that opening maintained, choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position. Explicit held-object evidence also permits B. The recorded cube coordinates may remain at the tabletop position after pickup and a held label may be absent; these do not override the closure-and-lift evidence. Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded. If pickup clearly closed on nothing or left the hand empty, choose A again at the requested cube. C is not required: the demonstration press identifies the desired target, and must not be reenacted. A completed release of the requested cube onto the selected target finishes the task; do not press the button afterward. For an otherwise unmatched nonterminal situation, choose B if there is credible evidence the requested cube is held, otherwise A at that cube. If pre_press_target is unknown and dropping is necessary, use the visible target nearest the requested cube as a deterministic fallback rather than asking for clarification.",
+  "fields": [
+   {
+    "name": "pre_press_target",
+    "description": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]. Once populated, copy the incoming value unchanged at every decision step; do not replace it with the cube's current position or a newly shifted visible centroid. If no target can be identified, write \"unknown\". e.g. [126, 145]",
+    "annotation": "Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location. Write this at decision step #1 and retain it unchanged thereafter. If the selected target cannot be identified, write \"unknown\". e.g. [126, 145]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoPlaceButton",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   7,
+   31,
+   47,
+   52,
+   89
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start in A: with the execution-start gripper empty, pick up the cube of the color named in the goal, pointing at its current visible center. Use only the execution scene for this pickup, not its earlier demonstration location. If the observed execution interval shows descent to that cube, closure to a grasp-sized opening (approximately 46%), and a lift with that opening maintained, choose B, dropping onto the target selected by pre_press_target. Explicit held-object evidence also permits B. The recorded cube coordinates may remain at the tabletop position after pickup and a held label may be absent; these do not override the closure-and-lift evidence. Match the remembered point to the corresponding visible target and point within that target, or use the remembered point if it is occluded. If pickup clearly closed on nothing or left the hand empty, choose A again at the requested cube. C is not required: the demonstration press identifies the desired target, and must not be reenacted. A completed release of the requested cube onto the selected target finishes the task; do not press the button afterward. For an otherwise unmatched nonterminal situation, choose B if there is credible evidence the requested cube is held, otherwise A at that cube. If pre_press_target is unknown and dropping is necessary, use the visible target nearest the requested cube as a deterministic fallback rather than asking for clarification.",
+  "fields": [
+   {
+    "name": "pre_press_target",
+    "description": "When memory is empty and the demonstration is shown, locate the button press by the closed gripper descending onto the button and its depression. Find the instruction's cube's last completed target placement before that event; if the cube is hidden during the press, use its preceding release and resting position. Match that target to the execution-start scene and write its visible center as [y, x]. Ignore subsequent cube placements when selecting the target. Once populated, copy the incoming value unchanged at every decision step; do not replace it with the cube's current position or a newly shifted visible centroid. If no target can be identified, write \"unknown\". e.g. [126, 145]",
+    "annotation": "Store the [y, x] center of the target on which the instruction's cube rested immediately before the demonstration button press. Identify it from the last completed placement before that press, not from later placements or the cube's final position. Use the selected target's center in the execution-start scene, matching it through the demonstration despite occlusion and small centroid shifts. Write this at decision step #1 and retain it unchanged thereafter. For episodes 7, 31, 47, 52, and 89 respectively, the values at both decision steps are [126, 145], [115, 152], [80, 162], [101, 163], and [76, 104]. e.g. [126, 145]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "pre_press_target": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field pre_press_target, ANNOTATOR PROMPT\n  When the instruction requested the target right after the demonstrated press, the annotation retained the target occupied before the press. After pickup, the policy therefore dropped toward that earlier target because the demonstration was no longer visible. This breaks SUFFICIENCY: the requested post-press destination is not recoverable from the execution scene. Generalize this single field to hold the instruction-selected target, despite its legacy name. For 'right before', select the last completed placement of the named cube onto a target before the press; for 'right after', select its first completed placement onto a target after the press, not the cube's unchanged resting position immediately after button contact. Track the selected physical target through the remainder of the demonstration, including actual target movements or exchanges, and store its center in the execution-start scene. Write the value at the first decision step and retain it unchanged thereafter. For example, the post-press destination in the shown after-press case is [86, 100], not [93, 162]. Remove episode-specific enumerations as the definition of the rule. Keep only this one selected destination; neither both temporal alternatives nor the temporal relation needs a separate memory field.\n\nfield pre_press_target, POLICY PROMPT\n  For an instruction asking for the placement right after the press, the existing extraction rule deliberately ignored the relevant placement and retained the pre-press target. Once the demonstration disappeared, this broke SUFFICIENCY. Also, when targets exchanged positions late in a demonstration, matching by their earlier locations could produce a different memory value from the annotation, breaking PREDICTABILITY. With empty memory and the demonstration visible, identify the button press from closed-finger descent onto the button and contact/depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: select the named cube's last completed target placement before the press for 'before', or its first completed target placement after the press for 'after'. Recognize a completed placement from release and subsequent resting evidence, rather than an isolated held label or centroid. Then follow that selected physical target through the remaining visible demonstration, including target motion and exchanges; do not substitute the target that later occupies its old location. Write its execution-start center as [y, x], for example [86, 100] for the demonstrated post-press destination. This field now means the instruction-selected destination despite its legacy name. On subsequent decision steps copy it unchanged. Preserve the existing 'unknown' representation when identification genuinely fails.\n\nthe policy prompt for subgoal\n  When the goal asked for the target right after the demonstrated press, the robot correctly recognized a successful pickup but chose B toward the remembered pre-press target. The unconditional pre-press destination rule breaks SUFFICIENCY because the requested placement history is absent from later execution observations. Replace that rule with: when the requested cube is held, choose B at the physical target identified by the instruction-selected value of pre_press_target. Its before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reinterpret or reconstruct that history from the current cube position. Match the stored execution-start point to the corresponding visible target, using the remembered point if occluded. Remove the unconditional requirement that the destination be a pre-press target. Retain the existing execution-scene pickup rule, closure-and-lift evidence for successful grasp, retry rule for clear empty grasps, completion after release, and prohibition on reenacting the button press.\n\nrefused\n  Do not accept the proposed correction that the before-press target must remain at [76, 143] merely because the cube was released there before the press, or that [89, 165] necessarily denotes the post-press target. The full demonstration includes a later exchange of the two targets after the cube has been moved away. The target selected by the pre-press placement moves to the execution-start location [89, 165], which agrees with the annotated memory and recorded drop. The reported contradiction overlooks physical target identity across this movement. Keep that annotation; clarify target tracking in the policy prompts rather than changing the temporal selection rule to fit the later placement.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "pre_press_target",
+      "edits": [
+       {
+        "modify_from": "Store the [y, x] center of the target on which the instruction's cube rested immediately before the demonstration button press. Identify it from the last completed placement before that press, not from later placements or the cube's final position. Use the selected target's center in the execution-start scene, matching it through the demonstration despite occlusion and small centroid shifts.",
+        "modify_to": "Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location."
+       },
+       {
+        "modify_from": "For episodes 7, 31, 47, 52, and 89 respectively, the values at both decision steps are [126, 145], [115, 152], [80, 162], [101, 163], and [76, 104].",
+        "modify_to": "If the selected target cannot be identified, write \"unknown\"."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pre_press_target",
+      "edits": [
+       {
+        "modify_from": "When memory is empty and the demonstration is shown, locate the button press by the closed gripper descending onto the button and its depression. Find the instruction's cube's last completed target placement before that event; if the cube is hidden during the press, use its preceding release and resting position. Match that target to the execution-start scene and write its visible center as [y, x]. Ignore subsequent cube placements when selecting the target.",
+        "modify_to": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "choose B, dropping onto the target selected by pre_press_target.",
+      "modify_to": "choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position."
+     },
+     {
+      "modify_from": "Match the remembered point to the corresponding visible target and point within that target, or use the remembered point if it is occluded.",
+      "modify_to": "Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded."
+     }
+    ],
+    "refused": "No requested general correction is omitted. Do not replace a selected target's execution-start center with its earlier placement location, or infer before/after identity from location alone: the selected physical target must be tracked through later movements and exchanges. No episode-specific coordinate corrections or additional memory fields are added."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 1,
+ "quiet": 4,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    19,
+    21,
+    72,
+    79,
+    83
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.9,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the execution-start gripper empty, pick up the cube of the color named in the goal, pointing at its current visible center. Use only the execution scene for this pickup, not its earlier demonstration location. If the observed execution interval shows descent to that cube, closure to a grasp-sized opening (approximately 46%), and a lift with that opening maintained, choose B, dropping onto the target selected by pre_press_target. Explicit held-object evidence also permits B. The recorded cube coordinates may remain at the tabletop position after pickup and a held label may be absent; these do not override the closure-and-lift evidence. Match the remembered point to the corresponding visible target and point within that target, or use the remembered point if it is occluded. If pickup clearly closed on nothing or left the hand empty, choose A again at the requested cube. C is not required: the demonstration press identifies the desired target, and must not be reenacted. A completed release of the requested cube onto the selected target finishes the task; do not press the button afterward. For an otherwise unmatched nonterminal situation, choose B if there is credible evidence the requested cube is held, otherwise A at that cube. If pre_press_target is unknown and dropping is necessary, use the visible target nearest the requested cube as a deterministic fallback rather than asking for clarification.",
+    "fields": [
+     {
+      "name": "pre_press_target",
+      "description": "When memory is empty and the demonstration is shown, locate the button press by the closed gripper descending onto the button and its depression. Find the instruction's cube's last completed target placement before that event; if the cube is hidden during the press, use its preceding release and resting position. Match that target to the execution-start scene and write its visible center as [y, x]. Ignore subsequent cube placements when selecting the target. Once populated, copy the incoming value unchanged at every decision step; do not replace it with the cube's current position or a newly shifted visible centroid. If no target can be identified, write \"unknown\". e.g. [126, 145]",
+      "annotation": "Store the [y, x] center of the target on which the instruction's cube rested immediately before the demonstration button press. Identify it from the last completed placement before that press, not from later placements or the cube's final position. Use the selected target's center in the execution-start scene, matching it through the demonstration despite occlusion and small centroid shifts. Write this at decision step #1 and retain it unchanged thereafter. For episodes 7, 31, 47, 52, and 89 respectively, the values at both decision steps are [126, 145], [115, 152], [80, 162], [101, 163], and [76, 104]. e.g. [126, 145]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    7,
+    16,
+    22,
+    52,
+    97
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the execution-start gripper empty, pick up the cube of the color named in the goal, pointing at its current visible center. Use only the execution scene for this pickup, not its earlier demonstration location. If the observed execution interval shows descent to that cube, closure to a grasp-sized opening (approximately 46%), and a lift with that opening maintained, choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position. Explicit held-object evidence also permits B. The recorded cube coordinates may remain at the tabletop position after pickup and a held label may be absent; these do not override the closure-and-lift evidence. Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded. If pickup clearly closed on nothing or left the hand empty, choose A again at the requested cube. C is not required: the demonstration press identifies the desired target, and must not be reenacted. A completed release of the requested cube onto the selected target finishes the task; do not press the button afterward. For an otherwise unmatched nonterminal situation, choose B if there is credible evidence the requested cube is held, otherwise A at that cube. If pre_press_target is unknown and dropping is necessary, use the visible target nearest the requested cube as a deterministic fallback rather than asking for clarification.",
+    "fields": [
+     {
+      "name": "pre_press_target",
+      "description": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]. Once populated, copy the incoming value unchanged at every decision step; do not replace it with the cube's current position or a newly shifted visible centroid. If no target can be identified, write \"unknown\". e.g. [126, 145]",
+      "annotation": "Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location. Write this at decision step #1 and retain it unchanged thereafter. If the selected target cannot be identified, write \"unknown\". e.g. [126, 145]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    6,
+    10,
+    19,
+    22,
+    24
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the execution-start gripper empty, pick up the cube of the color named in the goal, pointing at its current visible center. Use only the execution scene for this pickup, not its earlier demonstration location. If the observed execution interval shows descent to that cube, closure to a grasp-sized opening (approximately 46%), and a lift with that opening maintained, choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position. Explicit held-object evidence also permits B. The recorded cube coordinates may remain at the tabletop position after pickup and a held label may be absent; these do not override the closure-and-lift evidence. Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded. If pickup clearly closed on nothing or left the hand empty, choose A again at the requested cube. C is not required: the demonstration press identifies the desired target, and must not be reenacted. A completed release of the requested cube onto the selected target finishes the task; do not press the button afterward. For an otherwise unmatched nonterminal situation, choose B if there is credible evidence the requested cube is held, otherwise A at that cube. If pre_press_target is unknown and dropping is necessary, use the visible target nearest the requested cube as a deterministic fallback rather than asking for clarification.",
+    "fields": [
+     {
+      "name": "pre_press_target",
+      "description": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]. Once populated, copy the incoming value unchanged at every decision step; do not replace it with the cube's current position or a newly shifted visible centroid. If no target can be identified, write \"unknown\". e.g. [126, 145]",
+      "annotation": "Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location. Write this at decision step #1 and retain it unchanged thereafter. If the selected target cannot be identified, write \"unknown\". e.g. [126, 145]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    6,
+    20,
+    26,
+    46
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the execution-start gripper empty, pick up the cube of the color named in the goal, pointing at its current visible center. Use only the execution scene for this pickup, not its earlier demonstration location. If the observed execution interval shows descent to that cube, closure to a grasp-sized opening (approximately 46%), and a lift with that opening maintained, choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position. Explicit held-object evidence also permits B. The recorded cube coordinates may remain at the tabletop position after pickup and a held label may be absent; these do not override the closure-and-lift evidence. Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded. If pickup clearly closed on nothing or left the hand empty, choose A again at the requested cube. C is not required: the demonstration press identifies the desired target, and must not be reenacted. A completed release of the requested cube onto the selected target finishes the task; do not press the button afterward. For an otherwise unmatched nonterminal situation, choose B if there is credible evidence the requested cube is held, otherwise A at that cube. If pre_press_target is unknown and dropping is necessary, use the visible target nearest the requested cube as a deterministic fallback rather than asking for clarification.",
+    "fields": [
+     {
+      "name": "pre_press_target",
+      "description": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]. Once populated, copy the incoming value unchanged at every decision step; do not replace it with the cube's current position or a newly shifted visible centroid. If no target can be identified, write \"unknown\". e.g. [126, 145]",
+      "annotation": "Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location. Write this at decision step #1 and retain it unchanged thereafter. If the selected target cannot be identified, write \"unknown\". e.g. [126, 145]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    8,
+    46,
+    51,
+    72,
+    74
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the execution-start gripper empty, pick up the cube of the color named in the goal, pointing at its current visible center. Use only the execution scene for this pickup, not its earlier demonstration location. If the observed execution interval shows descent to that cube, closure to a grasp-sized opening (approximately 46%), and a lift with that opening maintained, choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position. Explicit held-object evidence also permits B. The recorded cube coordinates may remain at the tabletop position after pickup and a held label may be absent; these do not override the closure-and-lift evidence. Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded. If pickup clearly closed on nothing or left the hand empty, choose A again at the requested cube. C is not required: the demonstration press identifies the desired target, and must not be reenacted. A completed release of the requested cube onto the selected target finishes the task; do not press the button afterward. For an otherwise unmatched nonterminal situation, choose B if there is credible evidence the requested cube is held, otherwise A at that cube. If pre_press_target is unknown and dropping is necessary, use the visible target nearest the requested cube as a deterministic fallback rather than asking for clarification.",
+    "fields": [
+     {
+      "name": "pre_press_target",
+      "description": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]. Once populated, copy the incoming value unchanged at every decision step; do not replace it with the cube's current position or a newly shifted visible centroid. If no target can be identified, write \"unknown\". e.g. [126, 145]",
+      "annotation": "Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location. Write this at decision step #1 and retain it unchanged thereafter. If the selected target cannot be identified, write \"unknown\". e.g. [126, 145]"
+     }
+    ]
+   }
+  }
+ ]
+}

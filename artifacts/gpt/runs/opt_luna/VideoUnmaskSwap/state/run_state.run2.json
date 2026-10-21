@@ -1,0 +1,437 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   14,
+   28,
+   53,
+   80,
+   90
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+  "fields": [
+   {
+    "name": "remaining_targets",
+    "description": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it. Within this demonstration-bearing decision, maintain a temporary identity-to-resting-position assignment for every container, giving unrequested and extra containers distinct temporary identities too. Initialize this assignment at the covering layout and process all subsequent movements chronologically, partitioning the demonstration into movement intervals bounded by settled layouts. For each interval, identify the departing resting positions from the visible intermediate motion, excluding stationary containers from the moving pair. This assignment is temporary computation, not an additional persistent memory field. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. Carry each identity along its intermediate trajectory through the final settling segment. For sparsely sampled curved motion, a change of direction does not itself mark another exchange: continue the same identity along that branch to its resting endpoint, rather than rematching the endpoint to an initial position. To resolve a curved exchange of two containers, identify the moving pair and exclude stationary containers from that pair's endpoint association. Estimate the pair's midpoint across successive frames and follow each identity's displacement around it. Assign the two settling endpoints jointly by continuing their observed rotational branches; do not assign an endpoint by proximity to that identity's starting position or by extrapolating only its last straight-line displacement. When the moving pair settles, commit both endpoint assignments before processing the next movement. Check each interval for exchange completion using the intermediate trajectories through settling. When they establish a completed exchange between two resting positions, jointly assign the identity previously at each departing position to the opposite resting endpoint, exactly once. Nearly identical unordered occupied positions before and after the interval do not negate this swap. Do not override the committed assignment by subsequently matching endpoints to initial positions. Keep every identity outside that moving pair at its committed position. Identify the participants in the next movement from visible departures and intermediate motion using this updated assignment, never the original cube-to-position association. Apply each later exchange to the current assignment, including exchanges involving extra containers or a different pair. After all movements have been processed, verify every requested identity's final assignment against the committed interval updates, including targets not selected by the current command and targets that exchanged with extra containers. For each requested identity, use its last committed endpoint, or its covering location if it never moved; later intervals in which it was stationary leave that endpoint unchanged. Then look up all requested identities in the final assignment to construct remaining_targets in goal order. Count a second exchange only when subsequent motion shows the pair exchanging endpoints again. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]",
+    "annotation": "An ordered list of [y, x] container locations for requested pickups not yet completed. At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized. At the decision immediately following a successful requested pickup, remove the first entry. Do not remove an entry merely because a pickup is selected at the current decision. Putting a container down leaves the list unchanged. Thus, at steps 2 and 3 of each two-target episode, the list contains only the second target. Locations identify containers rather than requiring exact pixel agreement. e.g. [[121, 102]]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   14,
+   28,
+   53,
+   80,
+   90
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+  "fields": [
+   {
+    "name": "remaining_targets",
+    "description": "With empty incoming memory, use the demonstration to associate each requested cube with the container placed over it, then track that container through all subsequent movement. Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. In these observations the initial lists are: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]]. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]",
+    "annotation": "An ordered list of [y, x] container locations for requested pickups not yet completed. At the first decision, identify the container initially covering each requested cube, follow its identity through the entire demonstration, and list its final location in the order specified by the goal. Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them. Ignore extra containers unless they cover a requested cube. Initialization for these episodes is: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]]. At the decision immediately following a successful requested pickup, remove the first entry. Do not remove an entry merely because a pickup is selected at the current decision. Putting a container down leaves the list unchanged. Thus, at steps 2 and 3 of each two-target episode, the list contains only the second target. Locations identify containers rather than requiring exact pixel agreement. e.g. [[121, 102]]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 13,
+    "subgoal_wrong": 3,
+    "memory_wrong": 4,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 4
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 3
+   },
+   "critique": "field remaining_targets, POLICY PROMPT\n  At initialization, the goals requested one hidden cube's container or two containers in color order. The moving containers finished near the same unordered set of positions they had occupied before moving. The policy treated some of these motions as identity restoration: it selected an original covering position instead of the exchanged destination, or selected the first target correctly but retained the wrong second destination. The intended memory instead listed the final positions of the tracked covering containers in goal order. This is a PREDICTABILITY failure in demonstration-based initialization, also causing incorrect immediate or later target selection; it does not require another memory field or a change in subgoal rules. Strengthen the tracking instructions as follows: associate identities with containers when they cover the cubes, then follow each identity along its entire moving arc. A moving pair departing two resting positions and settling into those same two positions can constitute ONE exchange: the identities end at opposite endpoints. Do not count the intermediate crossing or the return of the unordered position set as an additional exchange. Use the direction of travel through the intermediate frames to assign endpoints, rather than resetting identities at each resting layout or matching only nearest positions. Only a second complete exchange of that same pair restores their original assignment; exchanges involving a different pair do not cancel the first. For example, a green-covering container moving [71, 123] → [73, 140] → [86, 158] → [103, 159] ends at [103, 159], even though another container ends near green's original position. The initialized value is therefore [[103, 159]]. In a two-target goal, independently follow both requested identities through all exchanges, including exchanges with unrequested or extra containers, and retain both final destinations in goal order. Replace the episode-specific initialization lookup with these observation-based instructions. Keep the field's meaning and subsequent updates unchanged: remaining_targets is the ordered list of final container locations for requested pickups not yet completed; initialize when the demonstration is shown with absent incoming memory, remove its first entry only when the currently shown execution contains the successful grasp and lift of that target, and preserve it during release. Selecting a pickup does not itself remove an entry, and an existing empty list is not a request to initialize again.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "At the first decision, identify the container initially covering each requested cube, follow its identity through the entire demonstration, and list its final location in the order specified by the goal. Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them. Ignore extra containers unless they cover a requested cube. Initialization for these episodes is: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]].",
+        "modify_to": "At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "With empty incoming memory, use the demonstration to associate each requested cube with the container placed over it, then track that container through all subsequent movement. Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. In these observations the initial lists are: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]].",
+        "modify_to": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it, then independently follow each requested container's identity along its entire moving trajectory, including exchanges with unrequested or extra containers. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No substantive proposed change is refused. The example trajectory is omitted in favor of the general continuous-identity tracking rule. The subgoal rules and post-initialization memory updates remain unchanged."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 9,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field remaining_targets, POLICY PROMPT\n  When the goal requested green and then blue, their two containers moved around one another and settled into the same unordered pair of resting positions. The policy treated that final layout as restoration of the original identities, selected green's original position, and wrote the targets in reverse order. The required memory instead placed green at blue's original position and blue at green's original position. This is a PREDICTABILITY failure in initializing the identity-to-location list, leading to the wrong pickup despite the subgoal rule correctly selecting its first entry. Strengthen the existing continuous-motion instruction with an explicit sparse-trajectory example: green's path [97, 157] to [101, 144] to [95, 129] ends at [82, 131]; blue's path [81, 132] to [77, 145] to [82, 158] ends at [96, 157]. The final segment finishes the exchange; it does not reset identities. More generally, carry each identity along its intermediate branch through the settling segment, even when a curved path changes direction. Do not rematch the final resting positions to the initial positions or infer a second exchange merely from that direction change. Initialize remaining_targets when incoming memory is absent and the current observation includes the demonstration, storing final target locations in goal order; this example yields [[82, 131], [96, 157]]. Keep the existing subsequent update rules: remove the first entry only after an observed successful pickup, preserve it through release, and never reinitialize an existing empty list. No additional persistent field is needed.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order.",
+        "modify_to": "Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. Carry each identity along its intermediate trajectory through the final settling segment. For sparsely sampled curved motion, a change of direction does not itself mark another exchange: continue the same identity along that branch to its resting endpoint, rather than rematching the endpoint to an initial position. Count a second exchange only when subsequent motion shows the pair exchanging endpoints again."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Omit the episode-specific coordinate example in favor of the general rule for following curved, sparsely sampled trajectories through settling. The annotator prompt already specifies the correct identity-based values; initialization timing, pickup and release updates, empty-list handling, and subgoal selection remain unchanged. No additional memory field is needed."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 7,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field remaining_targets, ANNOTATOR PROMPT\n  When the goal requested the green-hidden container, two containers moved along opposite curved branches and settled at each other's starting locations. The policy selected the container at green's original location and wrote that location, whereas the correct target list contained the opposite endpoint. This is a PREDICTABILITY failure in initializing the identity-to-location assignment, not a need for another memory field. Clarify how to resolve a sampled curved exchange: follow each moving identity around the pair's midpoint through the intermediate frames to its final endpoint. Returning to the same unordered resting layout does not restore the identities. For example, the requested identity follows [114, 107] through [102, 114] and [98, 130] to [109, 143], so write [[109, 143]], not [[115, 108]]. The field remains an ordered list of final container locations for requested pickups not yet completed. Initialize it from the demonstration at the first decision; thereafter remove its head only at the decision showing that requested pickup successfully completed, and preserve it through release. Two separately completed exchanges of the same pair restore their original assignments.\n\nfield remaining_targets, POLICY PROMPT\n  In a demonstration requesting the green-hidden container, a curved exchange returned the occupied positions to their original layout but exchanged the identities. The policy initialized remaining_targets with green's original location and therefore selected the wrong container; the correct initialization used the opposite endpoint. This breaks PREDICTABILITY despite the demonstration containing the needed information. Make the existing continuous-motion instruction operational: identify the two moving containers while leaving stationary containers out of the association, estimate their midpoint, and follow each identity's successive displacement around that midpoint. Continue the observed rotational branch into the settling frame instead of assigning the endpoint by proximity to its starting position or by extending only its last straight-line displacement. For example, [114, 107] -> [102, 114] -> [98, 130] continues to [109, 143], yielding remaining_targets=[[109, 143]]. A later motion segment starting from the settled layout is a separate exchange; two completed exchanges of the same pair restore the assignment. Use this procedure only to initialize the ordered list when incoming memory is absent and the demonstration is present. Keep the existing updates: remove the head after execution visibly shows successful grasp and lift of that target, preserve the list after release, and never reinitialize an existing empty list or remove a target merely because its pickup is being selected.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "For sparsely sampled curved motion, a change of direction does not itself mark another exchange: continue the same identity along that branch to its resting endpoint, rather than rematching the endpoint to an initial position.",
+        "modify_to": "For sparsely sampled curved motion, a change of direction does not itself mark another exchange: continue the same identity along that branch to its resting endpoint, rather than rematching the endpoint to an initial position. To resolve a curved exchange of two containers, identify the moving pair and exclude stationary containers from that pair's endpoint association. Estimate the pair's midpoint across successive frames and follow each identity's displacement around it. Assign the two settling endpoints jointly by continuing their observed rotational branches; do not assign an endpoint by proximity to that identity's starting position or by extrapolating only its last straight-line displacement. Keep stationary identities at their observed locations, and carry all resulting identity assignments into any subsequent movement, including exchanges with a different pair."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The annotation-rule change is not committed: its existing continuous-trajectory and exchange rules already specify the correct values, and the reported failure concerns how the policy derives them. The episode-specific coordinate example is omitted, consistently with earlier edits, in favor of an operational rule for curved pairwise motion. Initialization timing, successful-pickup and release updates, empty-list handling, and subgoal selection remain unchanged because the report identifies no new failure in those rules. No additional memory field is needed."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 9,
+    "subgoal_wrong": 1,
+    "memory_wrong": 2,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 2
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field remaining_targets, POLICY PROMPT\n  During demonstration initialization, one goal requested green followed by red. Red exchanged places with an extra container, after which green exchanged twice with that extra container while red remained stationary. The policy correctly selected green first but wrote red's original location as the second target, rather than its post-exchange location. In another demonstration requesting red alone, red participated in the second of two exchanges involving different pairs; the policy selected red's original location instead of its exchanged endpoint. These are PREDICTABILITY failures in initializing remaining_targets; the single-target failure also produced the wrong subgoal. Make initialization operational by maintaining a temporary identity-to-resting-position assignment for all containers, including unrequested and extra containers. Identify the moving pair from the visible departures and intermediate motion, excluding stationary containers. When that motion settles after an exchange, swap the identities assigned to those two resting positions exactly once. Commit that assignment before interpreting the next movement. Determine subsequent moving identities from this updated assignment, never from the original cube-to-position association. A requested identity outside the next moving pair keeps its committed position. Two exchanges of the same pair restore that pair's assignment; two exchanges involving different pairs must be applied separately. Use the intermediate rotational trajectories to establish each completed exchange, rather than treating the return of the unordered resting layout as an identity reset. This temporary assignment is computation within the demonstration-bearing decision, not an additional persistent memory field. After processing all visible movements, remaining_targets still holds only the final [y, x] positions of requested containers in goal order; for example, [[81, 129], [129, 145]]. Initialize only with absent incoming memory and a visible demonstration. Preserve the existing later update rule: remove the first entry only after the currently shown execution confirms its successful pickup, not when selecting that pickup, and leave the list unchanged after release.\n\nrefused\n  Do not add a demonstration-specific trajectory clause or change the annotated target values. The reported green-then-red initialization error identifies a correct red trajectory, but the annotator prompt already requires tracking exchanges with extra containers and preserving identities across subsequent movements. The other failed initialization supplied no diagnosis; its visible exchange nevertheless supports the same operational clarification. Neither failure justifies changing the policy prompt for subgoal: selecting the first location in a correctly initialized list yields the correct container, and the successful pickup and release decisions already use the intended list updates. No additional persistent identity map, exchange counter, or hand-state field is needed.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "Associate each requested cube with the container placed over it, then independently follow each requested container's identity along its entire moving trajectory, including exchanges with unrequested or extra containers.",
+        "modify_to": "Associate each requested cube with the container placed over it. Within this demonstration-bearing decision, maintain a temporary identity-to-resting-position assignment for every container, giving unrequested and extra containers distinct temporary identities too. Initialize this assignment at the covering layout and process all subsequent movements chronologically. This assignment is temporary computation, not an additional persistent memory field."
+       },
+       {
+        "modify_from": "Keep stationary identities at their observed locations, and carry all resulting identity assignments into any subsequent movement, including exchanges with a different pair.",
+        "modify_to": "When the moving pair settles, commit both endpoint assignments before processing the next movement. For a completed exchange between two resting positions, swap the identities currently assigned to those positions exactly once, as established by the intermediate trajectories. Keep every identity outside that moving pair at its committed position. Identify the participants in the next movement from visible departures and intermediate motion using this updated assignment, never the original cube-to-position association. Apply each later exchange to the current assignment, including exchanges involving extra containers or a different pair. After all movements have been processed, look up each requested identity in the final assignment to construct remaining_targets in goal order."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Omit the episode-specific coordinate example. The temporary assignment procedure generalizes across successive exchanges while preserving the earlier curved-trajectory and settling instructions. No annotation-rule or subgoal-policy prompt change is needed: the existing rule specifies the intended final identities, and the policy prompt for subgoal selects from their ordered locations correctly. Do not add a persistent identity map, exchange counter, or hand-state field; the full demonstration is available within initialization. Initialization timing, empty-list handling, and subsequent pickup and release updates remain unchanged."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 9,
+    "subgoal_wrong": 1,
+    "memory_wrong": 3,
+    "memory_only": 2,
+    "memory_only_unexplained": 2,
+    "fields": {
+     "remaining_targets": 3
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field remaining_targets, POLICY PROMPT\n  At initialization from the demonstration, a requested red container exchanged resting positions with another container while a third stayed stationary. The policy selected the red container's original position and wrote that position into memory instead of its exchanged endpoint. In a two-target demonstration, the policy correctly selected the first target but kept the second target at its original position after that target exchanged with an extra container. These failures affect PREDICTABILITY of the initialized list and, when its first entry is wrong, SUFFICIENCY for target selection. Strengthen the existing exchange procedure with an explicit completion check: partition the demonstration into movement intervals bounded by settled layouts; identify the two departing resting positions in each interval, excluding stationary containers. When the intermediate motion establishes a completed exchange, assign the identity previously at each departing position to the opposite resting endpoint, jointly and exactly once. Do this even when the unordered occupied positions before and after the interval are nearly identical. Do not subsequently override this committed swap by nearest-position matching. Process each later interval against the updated assignment. Before constructing the output, verify the final assignment of every requested identity, including requested targets not selected by the current command and identities exchanged with extra containers. Two completed exchanges of the same pair restore its assignment; exchanges of different pairs must each be applied independently. remaining_targets remains the ordered list of final container locations for requested pickups not yet completed; for example, a first target exchanged with one container and a second target exchanged with an extra container can yield [[82, 121], [131, 154]]. Initialize only with absent incoming memory and a visible demonstration. Preserve the existing later update rule: remove the first entry only on observed successful pickup, not on selection or release. No additional persistent field is needed.\n\nrefused\n  A reported first-target pickup used a visible container center rather than the recorded interior grasp point, while its initialized memory correctly contained both requested identities at their final locations. Both points select the same container, so this is not a SUFFICIENCY or PREDICTABILITY failure and does not warrant changing the policy prompt for subgoal or prescribing exact recorded pixels. The other correctly selected first target likewise needs no subgoal change, although its incorrectly initialized second target is addressed by the memory-policy prompt clarification. The proposed red-container repair also supplied a particular intermediate identity path. That path is not supported by continuous branch tracking: it associates the red identity with the other moving branch before asserting the correct exchanged endpoint. Retain the conclusion that this is one completed exchange, but do not insert that path or a coordinate-specific exception. The annotator prompt already requires the correct exchanged endpoints for every requested identity, including extra-container exchanges, and the policy prompt for subgoal already selects the first remaining target and handles successful pickups and releases correctly. Neither requires a change.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "Initialize this assignment at the covering layout and process all subsequent movements chronologically.",
+        "modify_to": "Initialize this assignment at the covering layout and process all subsequent movements chronologically, partitioning the demonstration into movement intervals bounded by settled layouts. For each interval, identify the departing resting positions from the visible intermediate motion, excluding stationary containers from the moving pair."
+       },
+       {
+        "modify_from": "For a completed exchange between two resting positions, swap the identities currently assigned to those positions exactly once, as established by the intermediate trajectories.",
+        "modify_to": "Check each interval for exchange completion using the intermediate trajectories through settling. When they establish a completed exchange between two resting positions, jointly assign the identity previously at each departing position to the opposite resting endpoint, exactly once. Nearly identical unordered occupied positions before and after the interval do not negate this swap. Do not override the committed assignment by subsequently matching endpoints to initial positions."
+       },
+       {
+        "modify_from": "After all movements have been processed, look up each requested identity in the final assignment to construct remaining_targets in goal order.",
+        "modify_to": "After all movements have been processed, verify every requested identity's final assignment against the committed interval updates, including targets not selected by the current command and targets that exchanged with extra containers. For each requested identity, use its last committed endpoint, or its covering location if it never moved; later intervals in which it was stationary leave that endpoint unchanged. Then look up all requested identities in the final assignment to construct remaining_targets in goal order."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Omit the coordinate-specific example and the unsupported intermediate identity path. The interval completion check preserves the earlier continuous-branch tracking and chronological assignment procedure rather than replacing it with a case-specific trajectory. No annotation-rule change or additional persistent field is needed: the rule already specifies the correct final identities. Do not prescribe exact recorded grasp pixels or change subgoal selection when another interior point selects the same container. Initialization timing, empty-list handling, and successful-pickup and release updates remain unchanged."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    2,
+    28,
+    31,
+    67,
+    79
+   ],
+   "verified_of_all": 0.6923076923076923,
+   "subgoal_verified": 0.7692307692307693,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "With empty incoming memory, use the demonstration to associate each requested cube with the container placed over it, then track that container through all subsequent movement. Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. In these observations the initial lists are: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]]. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]",
+      "annotation": "An ordered list of [y, x] container locations for requested pickups not yet completed. At the first decision, identify the container initially covering each requested cube, follow its identity through the entire demonstration, and list its final location in the order specified by the goal. Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them. Ignore extra containers unless they cover a requested cube. Initialization for these episodes is: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]]. At the decision immediately following a successful requested pickup, remove the first entry. Do not remove an entry merely because a pickup is selected at the current decision. Putting a container down leaves the list unchanged. Thus, at steps 2 and 3 of each two-target episode, the list contains only the second target. Locations identify containers rather than requiring exact pixel agreement. e.g. [[121, 102]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    33,
+    57,
+    61,
+    70,
+    92
+   ],
+   "verified_of_all": 0.8888888888888888,
+   "subgoal_verified": 0.8888888888888888,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it, then independently follow each requested container's identity along its entire moving trajectory, including exchanges with unrequested or extra containers. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]",
+      "annotation": "An ordered list of [y, x] container locations for requested pickups not yet completed. At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized. At the decision immediately following a successful requested pickup, remove the first entry. Do not remove an entry merely because a pickup is selected at the current decision. Putting a container down leaves the list unchanged. Thus, at steps 2 and 3 of each two-target episode, the list contains only the second target. Locations identify containers rather than requiring exact pixel agreement. e.g. [[121, 102]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    0,
+    14,
+    17,
+    48,
+    50
+   ],
+   "verified_of_all": 0.8571428571428571,
+   "subgoal_verified": 0.8571428571428571,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it, then independently follow each requested container's identity along its entire moving trajectory, including exchanges with unrequested or extra containers. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. Carry each identity along its intermediate trajectory through the final settling segment. For sparsely sampled curved motion, a change of direction does not itself mark another exchange: continue the same identity along that branch to its resting endpoint, rather than rematching the endpoint to an initial position. Count a second exchange only when subsequent motion shows the pair exchanging endpoints again. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]",
+      "annotation": "An ordered list of [y, x] container locations for requested pickups not yet completed. At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized. At the decision immediately following a successful requested pickup, remove the first entry. Do not remove an entry merely because a pickup is selected at the current decision. Putting a container down leaves the list unchanged. Thus, at steps 2 and 3 of each two-target episode, the list contains only the second target. Locations identify containers rather than requiring exact pixel agreement. e.g. [[121, 102]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    47,
+    50,
+    55,
+    62
+   ],
+   "verified_of_all": 0.7777777777777778,
+   "subgoal_verified": 0.8888888888888888,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it, then independently follow each requested container's identity along its entire moving trajectory, including exchanges with unrequested or extra containers. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. Carry each identity along its intermediate trajectory through the final settling segment. For sparsely sampled curved motion, a change of direction does not itself mark another exchange: continue the same identity along that branch to its resting endpoint, rather than rematching the endpoint to an initial position. To resolve a curved exchange of two containers, identify the moving pair and exclude stationary containers from that pair's endpoint association. Estimate the pair's midpoint across successive frames and follow each identity's displacement around it. Assign the two settling endpoints jointly by continuing their observed rotational branches; do not assign an endpoint by proximity to that identity's starting position or by extrapolating only its last straight-line displacement. Keep stationary identities at their observed locations, and carry all resulting identity assignments into any subsequent movement, including exchanges with a different pair. Count a second exchange only when subsequent motion shows the pair exchanging endpoints again. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]",
+      "annotation": "An ordered list of [y, x] container locations for requested pickups not yet completed. At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized. At the decision immediately following a successful requested pickup, remove the first entry. Do not remove an entry merely because a pickup is selected at the current decision. Putting a container down leaves the list unchanged. Thus, at steps 2 and 3 of each two-target episode, the list contains only the second target. Locations identify containers rather than requiring exact pixel agreement. e.g. [[121, 102]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    0,
+    2,
+    17,
+    60,
+    75
+   ],
+   "verified_of_all": 0.6666666666666666,
+   "subgoal_verified": 0.8888888888888888,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it. Within this demonstration-bearing decision, maintain a temporary identity-to-resting-position assignment for every container, giving unrequested and extra containers distinct temporary identities too. Initialize this assignment at the covering layout and process all subsequent movements chronologically. This assignment is temporary computation, not an additional persistent memory field. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. Carry each identity along its intermediate trajectory through the final settling segment. For sparsely sampled curved motion, a change of direction does not itself mark another exchange: continue the same identity along that branch to its resting endpoint, rather than rematching the endpoint to an initial position. To resolve a curved exchange of two containers, identify the moving pair and exclude stationary containers from that pair's endpoint association. Estimate the pair's midpoint across successive frames and follow each identity's displacement around it. Assign the two settling endpoints jointly by continuing their observed rotational branches; do not assign an endpoint by proximity to that identity's starting position or by extrapolating only its last straight-line displacement. When the moving pair settles, commit both endpoint assignments before processing the next movement. For a completed exchange between two resting positions, swap the identities currently assigned to those positions exactly once, as established by the intermediate trajectories. Keep every identity outside that moving pair at its committed position. Identify the participants in the next movement from visible departures and intermediate motion using this updated assignment, never the original cube-to-position association. Apply each later exchange to the current assignment, including exchanges involving extra containers or a different pair. After all movements have been processed, look up each requested identity in the final assignment to construct remaining_targets in goal order. Count a second exchange only when subsequent motion shows the pair exchanging endpoints again. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]",
+      "annotation": "An ordered list of [y, x] container locations for requested pickups not yet completed. At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized. At the decision immediately following a successful requested pickup, remove the first entry. Do not remove an entry merely because a pickup is selected at the current decision. Putting a container down leaves the list unchanged. Thus, at steps 2 and 3 of each two-target episode, the list contains only the second target. Locations identify containers rather than requiring exact pixel agreement. e.g. [[121, 102]]"
+     }
+    ]
+   }
+  }
+ ]
+}

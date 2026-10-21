@@ -1,0 +1,105 @@
+{
+ "episodes": [
+  9,
+  38,
+  49,
+  71,
+  94
+ ],
+ "user_chars": 26006,
+ "usage": {
+  "prompt_tokens": 11498,
+  "completion_tokens": 2701,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 11494
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 842
+  }
+ },
+ "reasoning": "I'm weighing whether to add a `cubes` field that tracks age order, since age isn't otherwise visible later and seems to explain the picks better than nearest-to-gripper or nearest-to-bin heuristics, though the initial step-1 ordering still doesn't fully align with it.\n\nGiven the conflicting evidence, I'll go with nearest-bin as the deterministic default for the initial order since it fits more picks than largest-y, while flagging it as still somewhat arbitrary. I also need to add the JSON formatting instruction to the policy side only, matching the double-quote convention already used in annotations.\n\nNow I'm drafting the exact passage replacements: swapping the candidate-selection text (which discarded detections on the bin and preferred stable-position cubes over shifting ones, breaking ties by largest-y then smallest-x) for an age-based rule using the `cubes` field, and replacing the fallback clause about pointing nearest the gripper or at any visible cube with the updated logic. I'll keep the final instruction to point at the cube's center as-is, just merged into the new wording.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Point at that cube's center as shown in the scene at this decision step. Among the cubes of that color, first discard any detection lying on top of the bin's position and prefer a detection present at the same place in every execution step of this decision step over one that appeared, vanished or moved mid-step (at step #1 all visible cubes of that color are candidates); if several candidates remain, take the one with the largest y, and on equal y the smallest x. A point offset by a pixel or two from the detection center is acceptable;",
+    "modify_to": "Among the cubes of that color, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene at this decision step shows a detection of that color within about 10 px of that entry, point at that detection's center; if not (the arm may be covering it), point at the remembered position. Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position. At step #1 the first entry of `cubes` is the needed-color cube nearest the bin's center. A point offset by a pixel or two from the detection center is acceptable;"
+   },
+   {
+    "modify_from": "otherwise choose A pointing at the cube of a needed color nearest the gripper, and if none is visible at all, choose A pointing at any visible cube.",
+    "modify_to": "otherwise choose A pointing at the first entry of `cubes` whose color is still needed, and if `cubes` has no such entry, choose A pointing at any visible cube of a needed color, or failing that any visible cube."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "cubes",
+    "edits": [],
+    "description": "Ordered list of the cubes of the goal colors on the table and not yet picked, oldest first, each as [color, [y, x]]. When the carried-in memory is blank (the first decision step), list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it. Cubes of colors not named in the goal are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]]]"
+   },
+   {
+    "kind": "modify",
+    "field": "placed",
+    "edits": [
+     {
+      "modify_from": "e.g. [\"green\", \"green\"]",
+      "modify_to": "Write the list as a JSON array with double-quoted strings, never Python-style single quotes; the field is compared literally. e.g. [\"green\", \"green\"]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "add",
+    "field": "cubes",
+    "edits": [],
+    "description": "Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. Age on the table is what the list preserves: a cube present at the start of the episode precedes every cube that appeared during execution, and among cubes that appeared during execution the earlier arrival precedes the later. At step #1 fill it with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step copy the carried list, then (a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube), and (c) refresh each remaining entry's position to its latest reported position. Cubes of colors the goal does not name are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]"
+   }
+  ],
+  "refused": "The per-step geometric tie-breaks (nearest the gripper, nearest the bin, nearest the button, smallest y, the newly appeared cube) are again refused, as in round 1: each is contradicted by other recorded picks. The round-1 largest-y/smallest-x default is withdrawn, not restored, since it was committed only as an arbitrary stabilizer and both rounds find it fits a minority of picks; age order, which no later step can recover, replaces it as the one rule that fits every multi-candidate pick, which is why a new field is added rather than another visible criterion. The step #1 ordering of `cubes` by distance to the bin is committed as a deterministic default only; the report itself says no visible ordering fits every recorded first pick, so the remaining first-step disagreement is left open rather than patched with a clause that would contradict other episodes. The color-choice rule from round 1 (finish the last-placed color before starting another) is kept unchanged, as is the `placed` logic; only its output format is pinned to JSON double quotes."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "add",
+    "field": "cubes",
+    "edits": [],
+    "description": "Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. Age on the table is what the list preserves: a cube present at the start of the episode precedes every cube that appeared during execution, and among cubes that appeared during execution the earlier arrival precedes the later. At step #1 fill it with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step copy the carried list, then (a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube), and (c) refresh each remaining entry's position to its latest reported position. Cubes of colors the goal does not name are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "cubes",
+    "edits": [],
+    "description": "Ordered list of the cubes of the goal colors on the table and not yet picked, oldest first, each as [color, [y, x]]. When the carried-in memory is blank (the first decision step), list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it. Cubes of colors not named in the goal are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]]]"
+   },
+   {
+    "kind": "modify",
+    "field": "placed",
+    "edits": [
+     {
+      "modify_from": "e.g. [\"green\", \"green\"]",
+      "modify_to": "Write the list as a JSON array with double-quoted strings, never Python-style single quotes; the field is compared literally. e.g. [\"green\", \"green\"]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Point at that cube's center as shown in the scene at this decision step. Among the cubes of that color, first discard any detection lying on top of the bin's position and prefer a detection present at the same place in every execution step of this decision step over one that appeared, vanished or moved mid-step (at step #1 all visible cubes of that color are candidates); if several candidates remain, take the one with the largest y, and on equal y the smallest x. A point offset by a pixel or two from the detection center is acceptable;",
+    "modify_to": "Among the cubes of that color, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene at this decision step shows a detection of that color within about 10 px of that entry, point at that detection's center; if not (the arm may be covering it), point at the remembered position. Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position. At step #1 the first entry of `cubes` is the needed-color cube nearest the bin's center. A point offset by a pixel or two from the detection center is acceptable;"
+   },
+   {
+    "modify_from": "otherwise choose A pointing at the cube of a needed color nearest the gripper, and if none is visible at all, choose A pointing at any visible cube.",
+    "modify_to": "otherwise choose A pointing at the first entry of `cubes` whose color is still needed, and if `cubes` has no such entry, choose A pointing at any visible cube of a needed color, or failing that any visible cube."
+   }
+  ],
+  "refused": "The per-step geometric tie-breaks (nearest the gripper, nearest the bin, nearest the button, smallest y, the newly appeared cube) are again refused, as in round 1: each is contradicted by other recorded picks. The round-1 largest-y/smallest-x default is withdrawn, not restored, since it was committed only as an arbitrary stabilizer and both rounds find it fits a minority of picks; age order, which no later step can recover, replaces it as the one rule that fits every multi-candidate pick, which is why a new field is added rather than another visible criterion. The step #1 ordering of `cubes` by distance to the bin is committed as a deterministic default only; the report itself says no visible ordering fits every recorded first pick, so the remaining first-step disagreement is left open rather than patched with a clause that would contradict other episodes. The color-choice rule from round 1 (finish the last-placed color before starting another) is kept unchanged, as is the `placed` logic; only its output format is pinned to JSON double quotes."
+ },
+ "not_applied": [],
+ "refused": "The per-step geometric tie-breaks (nearest the gripper, nearest the bin, nearest the button, smallest y, the newly appeared cube) are again refused, as in round 1: each is contradicted by other recorded picks. The round-1 largest-y/smallest-x default is withdrawn, not restored, since it was committed only as an arbitrary stabilizer and both rounds find it fits a minority of picks; age order, which no later step can recover, replaces it as the one rule that fits every multi-candidate pick, which is why a new field is added rather than another visible criterion. The step #1 ordering of `cubes` by distance to the bin is committed as a deterministic default only; the report itself says no visible ordering fits every recorded first pick, so the remaining first-step disagreement is left open rather than patched with a clause that would contradict other episodes. The color-choice rule from round 1 (finish the last-placed color before starting another) is kept unchanged, as is the `placed` logic; only its output format is pinned to JSON double quotes.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"add\", \"field\": \"cubes\", \"description\": \"Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. Age on the table is what the list preserves: a cube present at the start of the episode precedes every cube that appeared during execution, and among cubes that appeared during execution the earlier arrival precedes the later. At step #1 fill it with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step copy the carried list, then (a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube), and (c) refresh each remaining entry's position to its latest reported position. Cubes of colors the goal does not name are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\\\"blue\\\", [54, 118]], [\\\"blue\\\", [87, 181]], [\\\"blue\\\", [53, 102]]]\"}],\n \"policy_prompt_for_memory\": [{\"kind\": \"add\", \"field\": \"cubes\", \"description\": \"Ordered list of the cubes of the goal colors on the table and not yet picked, oldest first, each as [color, [y, x]]. When the carried-in memory is blank (the first decision step), list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it. Cubes of colors not named in the goal are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\\\"blue\\\", [54, 118]], [\\\"blue\\\", [87, 181]]]\"},\n  {\"kind\": \"modify\", \"field\": \"placed\", \"edits\": [{\"modify_from\": \"e.g. [\\\"green\\\", \\\"green\\\"]\", \"modify_to\": \"Write the list as a JSON array with double-quoted strings, never Python-style single quotes; the field is compared literally. e.g. [\\\"green\\\", \\\"green\\\"]\"}]}],\n \"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"Point at that cube's center as shown in the scene at this decision step. Among the cubes of that color, first discard any detection lying on top of the bin's position and prefer a detection present at the same place in every execution step of this decision step over one that appeared, vanished or moved mid-step (at step #1 all visible cubes of that color are candidates); if several candidates remain, take the one with the largest y, and on equal y the smallest x. A point offset by a pixel or two from the detection center is acceptable;\", \"modify_to\": \"Among the cubes of that color, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene at this decision step shows a detection of that color within about 10 px of that entry, point at that detection's center; if not (the arm may be covering it), point at the remembered position. Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position. At step #1 the first entry of `cubes` is the needed-color cube nearest the bin's center. A point offset by a pixel or two from the detection center is acceptable;\"},\n  {\"modify_from\": \"otherwise choose A pointing at the cube of a needed color nearest the gripper, and if none is visible at all, choose A pointing at any visible cube.\", \"modify_to\": \"otherwise choose A pointing at the first entry of `cubes` whose color is still needed, and if `cubes` has no such entry, choose A pointing at any visible cube of a needed color, or failing that any visible cube.\"}],\n \"refused\": \"The per-step geometric tie-breaks (nearest the gripper, nearest the bin, nearest the button, smallest y, the newly appeared cube) are again refused, as in round 1: each is contradicted by other recorded picks. The round-1 largest-y/smallest-x default is withdrawn, not restored, since it was committed only as an arbitrary stabilizer and both rounds find it fits a minority of picks; age order, which no later step can recover, replaces it as the one rule that fits every multi-candidate pick, which is why a new field is added rather than another visible criterion. The step #1 ordering of `cubes` by distance to the bin is committed as a deterministic default only; the report itself says no visible ordering fits every recorded first pick, so the remaining first-step disagreement is left open rather than patched with a clause that would contradict other episodes. The color-choice rule from round 1 (finish the last-placed color before starting another) is kept unchanged, as is the `placed` logic; only its output format is pinned to JSON double quotes.\"}"
+}

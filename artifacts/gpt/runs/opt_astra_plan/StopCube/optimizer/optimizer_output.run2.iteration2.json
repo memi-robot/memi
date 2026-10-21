@@ -1,0 +1,88 @@
+{
+ "episodes": [
+  1,
+  2,
+  38,
+  66,
+  93
+ ],
+ "user_chars": 15410,
+ "usage": {
+  "prompt_tokens": 5595,
+  "completion_tokens": 729,
+  "total_tokens": 6324,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 3300,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant. In particular, an endpoint turnaround can already be the press-launch time for a fast cube. The final shown decisions in episodes 23 and 32 are such turnarounds; those in episodes 66, 94, and 99 show motion toward the requested next passage.",
+    "modify_to": "Estimate the upcoming arrival using the updated motion_history, including retained and newly shown samples, and the currently visible target x. Fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to those timestamped cube positions and find its next target crossing after the current final observation. Account for slowing and reversal at endpoints; do not extrapolate a near-zero endpoint velocity as constant. When passage_count equals N-1 and that crossing is approximately 35 or fewer time units away, select C even if the cube is still near an endpoint. A short or nearly stationary current interval does not by itself imply that the crossing is farther away."
+   },
+   {
+    "modify_from": "If motion timing is uncertain, default to B while refining the estimate from the next observations, rather than pressing on the wrong ordinal.",
+    "modify_to": "Apply the uncertainty fallback only after estimating timing from the full updated motion_history, not merely because the current interval is short or nearly stationary. If timing remains uncertain after considering that history, select B and refine the estimate from the next observations rather than pressing on the wrong ordinal."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "motion_history",
+    "edits": [],
+    "description": "Maintain an ordered list of timestamped cube-center execution observations, each written [timestamp, [y, x]]. With empty memory, start with all execution observations currently shown. Otherwise copy the incoming list and append all newly shown execution observations through the current final observation, including observations during A and B. Exclude demonstration observations. Retain earlier samples in chronological order and do not duplicate a timestamp already stored. Write observed positions only, without predicting the selected command's effects. Retained samples provide motion timing when the current interval is short or nearly stationary. e.g. [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "add",
+    "field": "motion_history",
+    "edits": [],
+    "description": "An ordered list of timestamped cube-center observations from execution through this decision's final observation. Each sample is [timestamp, [y, x]]. Initialize with the execution observations shown at the first decision, then append newly shown execution observations at every decision, including observations during preparation and waiting. Exclude demonstration observations. Retain earlier samples in chronological order and include each timestamp only once. Record observed positions only, never future positions or effects expected from the command selected at this decision. e.g. [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]"
+   }
+  ],
+  "refused": ""
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "add",
+    "field": "motion_history",
+    "edits": [],
+    "description": "An ordered list of timestamped cube-center observations from execution through this decision's final observation. Each sample is [timestamp, [y, x]]. Initialize with the execution observations shown at the first decision, then append newly shown execution observations at every decision, including observations during preparation and waiting. Exclude demonstration observations. Retain earlier samples in chronological order and include each timestamp only once. Record observed positions only, never future positions or effects expected from the command selected at this decision. e.g. [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "motion_history",
+    "edits": [],
+    "description": "Maintain an ordered list of timestamped cube-center execution observations, each written [timestamp, [y, x]]. With empty memory, start with all execution observations currently shown. Otherwise copy the incoming list and append all newly shown execution observations through the current final observation, including observations during A and B. Exclude demonstration observations. Retain earlier samples in chronological order and do not duplicate a timestamp already stored. Write observed positions only, without predicting the selected command's effects. Retained samples provide motion timing when the current interval is short or nearly stationary. e.g. [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]"
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant. In particular, an endpoint turnaround can already be the press-launch time for a fast cube. The final shown decisions in episodes 23 and 32 are such turnarounds; those in episodes 66, 94, and 99 show motion toward the requested next passage.",
+    "modify_to": "Estimate the upcoming arrival using the updated motion_history, including retained and newly shown samples, and the currently visible target x. Fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to those timestamped cube positions and find its next target crossing after the current final observation. Account for slowing and reversal at endpoints; do not extrapolate a near-zero endpoint velocity as constant. When passage_count equals N-1 and that crossing is approximately 35 or fewer time units away, select C even if the cube is still near an endpoint. A short or nearly stationary current interval does not by itself imply that the crossing is farther away."
+   },
+   {
+    "modify_from": "If motion timing is uncertain, default to B while refining the estimate from the next observations, rather than pressing on the wrong ordinal.",
+    "modify_to": "Apply the uncertainty fallback only after estimating timing from the full updated motion_history, not merely because the current interval is short or nearly stationary. If timing remains uncertain after considering that history, select B and refine the estimate from the next observations rather than pressing on the wrong ordinal."
+   }
+  ],
+  "refused": ""
+ },
+ "not_applied": [],
+ "refused": "",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"add\",\n      \"field\": \"motion_history\",\n      \"description\": \"An ordered list of timestamped cube-center observations from execution through this decision's final observation. Each sample is [timestamp, [y, x]]. Initialize with the execution observations shown at the first decision, then append newly shown execution observations at every decision, including observations during preparation and waiting. Exclude demonstration observations. Retain earlier samples in chronological order and include each timestamp only once. Record observed positions only, never future positions or effects expected from the command selected at this decision. e.g. [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]\"\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"add\",\n      \"field\": \"motion_history\",\n      \"description\": \"Maintain an ordered list of timestamped cube-center execution observations, each written [timestamp, [y, x]]. With empty memory, start with all execution observations currently shown. Otherwise copy the incoming list and append all newly shown execution observations through the current final observation, including observations during A and B. Exclude demonstration observations. Retain earlier samples in chronological order and do not duplicate a timestamp already stored. Write observed positions only, without predicting the selected command's effects. Retained samples provide motion timing when the current interval is short or nearly stationary. e.g. [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]\"\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant. In particular, an endpoint turnaround can already be the press-launch time for a fast cube. The final shown decisions in episodes 23 and 32 are such turnarounds; those in episodes 66, 94, and 99 show motion toward the requested next passage.\",\n      \"modify_to\": \"Estimate the upcoming arrival using the updated motion_history, including retained and newly shown samples, and the currently visible target x. Fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to those timestamped cube positions and find its next target crossing after the current final observation. Account for slowing and reversal at endpoints; do not extrapolate a near-zero endpoint velocity as constant. When passage_count equals N-1 and that crossing is approximately 35 or fewer time units away, select C even if the cube is still near an endpoint. A short or nearly stationary current interval does not by itself imply that the crossing is farther away.\"\n    },\n    {\n      \"modify_from\": \"If motion timing is uncertain, default to B while refining the estimate from the next observations, rather than pressing on the wrong ordinal.\",\n      \"modify_to\": \"Apply the uncertainty fallback only after estimating timing from the full updated motion_history, not merely because the current interval is short or nearly stationary. If timing remains uncertain after considering that history, select B and refine the estimate from the next observations rather than pressing on the wrong ordinal.\"\n    }\n  ],\n  \"refused\": \"\"\n}"
+}

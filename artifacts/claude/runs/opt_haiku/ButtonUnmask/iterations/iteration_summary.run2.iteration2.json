@@ -1,0 +1,110 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "blue_cube_pos",
+  "green_cube_pos",
+  "red_cube_pos",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  15,
+  20,
+  47,
+  86,
+  89
+ ],
+ "scored": 14,
+ "failed": 1,
+ "subgoal_wrong": 0,
+ "memory_wrong": 1,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9285714285714286,
+ "reads": {
+  "blue_cube_pos": 1,
+  "green_cube_pos": 3,
+  "red_cube_pos": 3,
+  "picks_done": 9
+ },
+ "field_errors": {
+  "blue_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "green_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "red_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "picks_done": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.07142857142857142,
+ "verified_of_all": 0.9285714285714286,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 14,
+ "critique": "field picks_done, ANNOTATOR PROMPT\n  Situation: the goal named two containers to pick in order. The container over the first named cube had been lifted at the previous decision step, where picks_done became 1. At the next decision step the shown execution steps began with that container still held (carried over from the previous moment), then showed it released and resting back on the table, with the gripper empty and open in the scene at the decision step. The policy wrote picks_done=2, while the rule intends 1, because the put-down execution also contains a frame where a container is held. This is a PREDICTABILITY failure: the value depends on what happened before the shown execution steps, not on what they show. Change the field so that it is tied to the scene at the decision step itself, not to any frame among the execution steps: picks_done is the count of containers lifted so far; it starts at 0 at the first decision step; it increases by one exactly at a decision step whose own scene (the last shown frame) shows a container held in the gripper; at every other decision step, including the one right after the container has been set down (gripper empty, container back on the table), it is copied unchanged. e.g. 0 before any lift, 1 at the step where the first container hangs in the gripper and still 1 at the step after it has been put down.\n\nfield picks_done, POLICY PROMPT\n  Situation: after putting down the first container, the shown execution steps opened with the container still in the gripper and then showed it released; the literal instruction 'any execution step shows a container held' made the policy add one a second time and write 2 where 1 was intended. PREDICTABILITY failure. Replace the condition with one read only from the scene at this decision step: take the carried-in value (0 if none was carried in); if the scene at this decision step, meaning the last frame shown, shows a container held in the gripper, write carried-in + 1; otherwise write the carried-in value unchanged. Ignore every earlier execution frame for this field, in particular a frame at the start of the execution that still shows a container held from before. A gripper that is empty and open at the decision step, with every container resting on the table, never increments the count. e.g. 0 at the first decision step; 1 at the step where the first container hangs in the gripper; 1 again at the step after it was set down.\n\nrefused\n  The pointed container at the failed step differed from the recorded point by two pixels on the same container over the second named cube; that is detection wobble, not a choice error, and Rule 2 already settles it, so no change to the subgoal instruction is passed on.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "picks_done",
+    "description": "Situation: after putting down the first container, the shown execution steps opened with the container still in the gripper and then showed it released; the literal instruction 'any execution step shows a container held' made the policy add one a second time and write 2 where 1 was intended. PREDICTABILITY failure. Replace the condition with one read only from the scene at this decision step: take the carried-in value (0 if none was carried in); if the scene at this decision step, meaning the last frame shown, shows a container held in the gripper, write carried-in + 1; otherwise write the carried-in value unchanged. Ignore every earlier execution frame for this field, in particular a frame at the start of the execution that still shows a container held from before. A gripper that is empty and open at the decision step, with every container resting on the table, never increments the count. e.g. 0 at the first decision step; 1 at the step where the first container hangs in the gripper; 1 again at the step after it was set down."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "picks_done",
+    "description": "Situation: the goal named two containers to pick in order. The container over the first named cube had been lifted at the previous decision step, where picks_done became 1. At the next decision step the shown execution steps began with that container still held (carried over from the previous moment), then showed it released and resting back on the table, with the gripper empty and open in the scene at the decision step. The policy wrote picks_done=2, while the rule intends 1, because the put-down execution also contains a frame where a container is held. This is a PREDICTABILITY failure: the value depends on what happened before the shown execution steps, not on what they show. Change the field so that it is tied to the scene at the decision step itself, not to any frame among the execution steps: picks_done is the count of containers lifted so far; it starts at 0 at the first decision step; it increases by one exactly at a decision step whose own scene (the last shown frame) shows a container held in the gripper; at every other decision step, including the one right after the container has been set down (gripper empty, container back on the table), it is copied unchanged. e.g. 0 before any lift, 1 at the step where the first container hangs in the gripper and still 1 at the step after it has been put down."
+   }
+  ],
+  "refused": "The pointed container at the failed step differed from the recorded point by two pixels on the same container over the second named cube; that is detection wobble, not a choice error, and Rule 2 already settles it, so no change to the subgoal instruction is passed on."
+ },
+ "critiques": [
+  {
+   "step": [
+    15,
+    "exec",
+    264
+   ],
+   "memory_in": "blue_cube_pos=[141, 114]; green_cube_pos=[114, 162]; red_cube_pos=[102, 91]; picks_done=1",
+   "answered": "B: pick up the container at [140, 114]",
+   "recorded": "B: pick up the container at [138, 114]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The picks_done increment rule does not distinguish a pick-up execution from a put-down execution. Here the shown steps (t=224 held, t=240 released, t=256/264 empty) are the put-down of the container whose pick was already counted when picks_done became 1 at the previous decision step; the instruction's literal 'any execution step shows a container held' made me add 1 again. It should say: add 1 only when the shown execution steps show a container going from on the table (not held at the first shown step) to held in the gripper; if the first shown execution step already shows the container held and later steps show it released, that is the put-down and picks_done is copied unchanged.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

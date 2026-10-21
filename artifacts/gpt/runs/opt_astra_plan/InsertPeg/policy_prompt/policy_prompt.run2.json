@@ -1,0 +1,77 @@
+{
+ "task": "InsertPeg",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 0,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    27,
+    76,
+    82,
+    88,
+    96
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    13,
+    17,
+    66,
+    96
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    12,
+    36,
+    45,
+    64,
+    65
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    51,
+    63,
+    85,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    2,
+    12,
+    36,
+    43,
+    45
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Start in A when the execution scene shows an empty, open gripper. At this first decision, use the visible demonstration to identify the peg that moves with the gripper after closure, trace it back to its pre-grasp position, and determine whether its head or tail was grasped. Match that peg to the reset execution scene and point to that same endpoint, using its current visible position rather than a shifted or occluded centroid during demonstration contact. Episode 1 selects the tail of the peg with head near [124, 204], targeting approximately [116, 211]; episode 15 selects the head near [127, 75], targeting [128, 76]; episode 33 selects the head near [132, 190], targeting [133, 190]; episode 54 selects the head near [72, 158], targeting [73, 159]; episode 60 selects the head near [87, 146], targeting [88, 147]. These points identify endpoints, not universal fixed coordinates. When the current execution observation shows a peg held after pickup, switch from A to B if insertion_side is \"right\", or to C if insertion_side is \"left\". Explicit held-object observations or closure followed by the peg moving with the raised hand establish a successful grasp; the wrist being outside the frame does not imply an empty hand. B and C require no point. Do not choose insertion side from the current pickup location. The demonstrated insertion command completes the supplied episodes; no subsequent menu transition is required. For an unanticipated decision, prioritize visible state: if still holding a peg, use the remembered insertion side; if that value is \"unknown\", use the side of the box on which the held peg currently lies, choosing B for smaller x and C for larger x. If empty-handed and a demonstration remains visible, reapply the demonstrated pickup rule. If empty-handed with no demonstration available, choose A at the clearest accessible peg endpoint as a best-effort fallback rather than claiming to recall an unrecorded target.",
+ "fields": [
+  {
+   "name": "insertion_side",
+   "description": "When the current observation includes the demonstration and incoming memory is empty, inspect the final low-height insertion approach relative to the box. Write \"right\" if the held peg approaches the box from smaller x, or \"left\" if it approaches from larger x. Use this final approach rather than the pickup position or initial lift direction. If the demonstration does not establish a side, write \"unknown\". At steps without a demonstration, copy the incoming value unchanged; do not infer a new side from the currently held peg's location. e.g. \"right\""
+  }
+ ],
+ "stage": "optimized"
+}

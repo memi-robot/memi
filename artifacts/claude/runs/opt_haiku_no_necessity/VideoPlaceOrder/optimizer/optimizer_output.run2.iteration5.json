@@ -1,0 +1,101 @@
+{
+ "episodes": [
+  23,
+  40,
+  54,
+  59,
+  84
+ ],
+ "user_chars": 71278,
+ "usage": {
+  "prompt_tokens": 26309,
+  "completion_tokens": 1545,
+  "prompt_tokens_details": {
+   "cached_tokens": 3214,
+   "cache_write_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 355
+  }
+ },
+ "reasoning": "I need to edit demo_placements to clarify that a release onto a target still counts even if the cube is later re-grasped from it, and that the re-grasp exclusion only applies when the grasp reopens on the same target without travel elsewhere. I'm also adding a count sanity check while keeping the stable-list override wording and quoting the annotator prompt precisely.\n\nI need to update the corresponding policy-side passage with the same clarified wording, then write out the final JSON.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "a re-grasp that lifts and sets the cube back on the same target without resting elsewhere is NOT a placement either.",
+      "modify_to": "a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between is NOT a placement either. Every raised carry that ends with the cube resting within a few pixels of a stable target IS one placement, written in order, no matter what happens next: the cube being picked up again from that target later never removes the entry; the last placement is ALWAYS followed by such a re-grasp, because the demo ends by lifting the cube off its last target and carrying it to the centre, and that centre carry is the only carry you skip. Check before writing: entries = raised carries of the cube minus one, and at least the ordinal the goal names ('third' needs three entries)."
+     },
+     {
+      "modify_from": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]",
+      "modify_to": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then a re-grasp from [97, 88] into the centre carry: [[107, 166], [125, 119], [97, 88]]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "a re-grasp that lifts the cube and sets it back on the same target without the cube having rested anywhere else produces no entry either.",
+      "modify_to": "a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between produces no entry either. Every raised carry that ends with the cube resting within a few pixels of a target produces exactly one entry, no matter what happens afterwards: the cube being re-grasped off that target later (which always happens before the final centre carry, and may also happen before a carry to another target) never cancels the entry. Sanity check: the number of entries equals the number of raised carries of the cube minus one (the centre carry), and is at least the ordinal the goal names."
+     },
+     {
+      "modify_from": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]",
+      "modify_to": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then a re-grasp from [97, 88] into the centre carry: [[107, 166], [125, 119], [97, 88]]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The report's full rewrite of the field as a carry count is not taken wholesale: the existing text already defines entries by raised carries, the stable-list value source and the artifact exclusions from rounds 2 and 3, and replacing it would risk dropping those settlements. Only the misread re-grasp clause is reworded so that a release onto a target always counts and only a lift-and-reopen on the same target with no raised travel elsewhere is excluded, and the carry-count sanity check is added. The stable-list override of opening-frame values is already stated on both sides and is left as is. The subgoal instruction is unchanged, as the report found it sufficient."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "a re-grasp that lifts the cube and sets it back on the same target without the cube having rested anywhere else produces no entry either.",
+      "modify_to": "a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between produces no entry either. Every raised carry that ends with the cube resting within a few pixels of a target produces exactly one entry, no matter what happens afterwards: the cube being re-grasped off that target later (which always happens before the final centre carry, and may also happen before a carry to another target) never cancels the entry. Sanity check: the number of entries equals the number of raised carries of the cube minus one (the centre carry), and is at least the ordinal the goal names."
+     },
+     {
+      "modify_from": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]",
+      "modify_to": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then a re-grasp from [97, 88] into the centre carry: [[107, 166], [125, 119], [97, 88]]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "a re-grasp that lifts and sets the cube back on the same target without resting elsewhere is NOT a placement either.",
+      "modify_to": "a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between is NOT a placement either. Every raised carry that ends with the cube resting within a few pixels of a stable target IS one placement, written in order, no matter what happens next: the cube being picked up again from that target later never removes the entry; the last placement is ALWAYS followed by such a re-grasp, because the demo ends by lifting the cube off its last target and carrying it to the centre, and that centre carry is the only carry you skip. Check before writing: entries = raised carries of the cube minus one, and at least the ordinal the goal names ('third' needs three entries)."
+     },
+     {
+      "modify_from": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]",
+      "modify_to": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then a re-grasp from [97, 88] into the centre carry: [[107, 166], [125, 119], [97, 88]]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "The report's full rewrite of the field as a carry count is not taken wholesale: the existing text already defines entries by raised carries, the stable-list value source and the artifact exclusions from rounds 2 and 3, and replacing it would risk dropping those settlements. Only the misread re-grasp clause is reworded so that a release onto a target always counts and only a lift-and-reopen on the same target with no raised travel elsewhere is excluded, and the carry-count sanity check is added. The stable-list override of opening-frame values is already stated on both sides and is left as is. The subgoal instruction is unchanged, as the report found it sufficient."
+ },
+ "not_applied": [],
+ "refused": "The report's full rewrite of the field as a carry count is not taken wholesale: the existing text already defines entries by raised carries, the stable-list value source and the artifact exclusions from rounds 2 and 3, and replacing it would risk dropping those settlements. Only the misread re-grasp clause is reworded so that a release onto a target always counts and only a lift-and-reopen on the same target with no raised travel elsewhere is excluded, and the carry-count sanity check is added. The stable-list override of opening-frame values is already stated on both sides and is left as is. The subgoal instruction is unchanged, as the report found it sufficient.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"demo_placements\", \"edits\": [{\"modify_from\": \"a re-grasp that lifts the cube and sets it back on the same target without the cube having rested anywhere else produces no entry either.\", \"modify_to\": \"a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between produces no entry either. Every raised carry that ends with the cube resting within a few pixels of a target produces exactly one entry, no matter what happens afterwards: the cube being re-grasped off that target later (which always happens before the final centre carry, and may also happen before a carry to another target) never cancels the entry. Sanity check: the number of entries equals the number of raised carries of the cube minus one (the centre carry), and is at least the ordinal the goal names.\"}, {\"modify_from\": \"e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]\", \"modify_to\": \"e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then a re-grasp from [97, 88] into the centre carry: [[107, 166], [125, 119], [97, 88]]\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"demo_placements\", \"edits\": [{\"modify_from\": \"a re-grasp that lifts and sets the cube back on the same target without resting elsewhere is NOT a placement either.\", \"modify_to\": \"a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between is NOT a placement either. Every raised carry that ends with the cube resting within a few pixels of a stable target IS one placement, written in order, no matter what happens next: the cube being picked up again from that target later never removes the entry; the last placement is ALWAYS followed by such a re-grasp, because the demo ends by lifting the cube off its last target and carrying it to the centre, and that centre carry is the only carry you skip. Check before writing: entries = raised carries of the cube minus one, and at least the ordinal the goal names ('third' needs three entries).\"}, {\"modify_from\": \"e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]\", \"modify_to\": \"e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then a re-grasp from [97, 88] into the centre carry: [[107, 166], [125, 119], [97, 88]]\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"The report's full rewrite of the field as a carry count is not taken wholesale: the existing text already defines entries by raised carries, the stable-list value source and the artifact exclusions from rounds 2 and 3, and replacing it would risk dropping those settlements. Only the misread re-grasp clause is reworded so that a release onto a target always counts and only a lift-and-reopen on the same target with no raised travel elsewhere is excluded, and the carry-count sanity check is added. The stable-list override of opening-frame values is already stated on both sides and is left as is. The subgoal instruction is unchanged, as the report found it sufficient.\"}"
+}

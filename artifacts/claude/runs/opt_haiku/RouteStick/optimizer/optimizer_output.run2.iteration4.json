@@ -1,0 +1,93 @@
+{
+ "episodes": [
+  8,
+  17,
+  18,
+  40,
+  70
+ ],
+ "user_chars": 30646,
+ "usage": {
+  "prompt_tokens": 13265,
+  "completion_tokens": 999,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 13261
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes.",
+      "modify_to": "First fix the target slots from the first demonstration frame (the highlighted target plus every listed target; slots are spaced roughly 30 px or more apart in x). Then walk through the demonstration frames and, at every frame, assign the highlighted target to the nearest slot; every frame where the highlighted target is assigned to a different slot than in the previous frame ends one leg and starts the next, so the number of letters is exactly the number of such slot changes. A slot change always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target with coordinate jitter and nothing has changed; do not count it."
+     },
+     {
+      "modify_from": "even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame.",
+      "modify_to": "even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame; a visited target means a visited slot."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one.",
+      "modify_to": "A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Targets are identified by slot, not by exact coordinates: the set of target slots is fixed for the episode (the slots are spaced roughly 30 px or more apart in x), and each frame's highlighted target is whichever slot it is nearest to. The highlighted target has changed only when it is assigned to a different slot than in the previous frame, which shows as a jump of tens of pixels to where a non-highlighted target sat; a highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing refused. The slot-based identification of the highlighted target is added on both sides in the same terms, as a definition of what counts as a change; the round-1 counting rule (every change counts, returns and short legs and last-frame changes included, two-target frame is the change frame) and the round-2 leg-frame and reference-cube rules are kept unchanged and now read in terms of slots. The subgoal instruction is untouched: no subgoal was wrong this round, and demo_moves[legs_done] still matches the recorded subgoals once the list is right."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one.",
+      "modify_to": "A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Targets are identified by slot, not by exact coordinates: the set of target slots is fixed for the episode (the slots are spaced roughly 30 px or more apart in x), and each frame's highlighted target is whichever slot it is nearest to. The highlighted target has changed only when it is assigned to a different slot than in the previous frame, which shows as a jump of tens of pixels to where a non-highlighted target sat; a highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes.",
+      "modify_to": "First fix the target slots from the first demonstration frame (the highlighted target plus every listed target; slots are spaced roughly 30 px or more apart in x). Then walk through the demonstration frames and, at every frame, assign the highlighted target to the nearest slot; every frame where the highlighted target is assigned to a different slot than in the previous frame ends one leg and starts the next, so the number of letters is exactly the number of such slot changes. A slot change always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target with coordinate jitter and nothing has changed; do not count it."
+     },
+     {
+      "modify_from": "even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame.",
+      "modify_to": "even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame; a visited target means a visited slot."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "Nothing refused. The slot-based identification of the highlighted target is added on both sides in the same terms, as a definition of what counts as a change; the round-1 counting rule (every change counts, returns and short legs and last-frame changes included, two-target frame is the change frame) and the round-2 leg-frame and reference-cube rules are kept unchanged and now read in terms of slots. The subgoal instruction is untouched: no subgoal was wrong this round, and demo_moves[legs_done] still matches the recorded subgoals once the list is right."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. The slot-based identification of the highlighted target is added on both sides in the same terms, as a definition of what counts as a change; the round-1 counting rule (every change counts, returns and short legs and last-frame changes included, two-target frame is the change frame) and the round-2 leg-frame and reference-cube rules are kept unchanged and now read in terms of slots. The subgoal instruction is untouched: no subgoal was wrong this round, and demo_moves[legs_done] still matches the recorded subgoals once the list is right.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"demo_moves\", \"edits\": [{\"modify_from\": \"A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one.\", \"modify_to\": \"A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Targets are identified by slot, not by exact coordinates: the set of target slots is fixed for the episode (the slots are spaced roughly 30 px or more apart in x), and each frame's highlighted target is whichever slot it is nearest to. The highlighted target has changed only when it is assigned to a different slot than in the previous frame, which shows as a jump of tens of pixels to where a non-highlighted target sat; a highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg.\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"demo_moves\", \"edits\": [{\"modify_from\": \"First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes.\", \"modify_to\": \"First fix the target slots from the first demonstration frame (the highlighted target plus every listed target; slots are spaced roughly 30 px or more apart in x). Then walk through the demonstration frames and, at every frame, assign the highlighted target to the nearest slot; every frame where the highlighted target is assigned to a different slot than in the previous frame ends one leg and starts the next, so the number of letters is exactly the number of such slot changes. A slot change always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target with coordinate jitter and nothing has changed; do not count it.\"}, {\"modify_from\": \"even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame.\", \"modify_to\": \"even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame; a visited target means a visited slot.\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"Nothing refused. The slot-based identification of the highlighted target is added on both sides in the same terms, as a definition of what counts as a change; the round-1 counting rule (every change counts, returns and short legs and last-frame changes included, two-target frame is the change frame) and the round-2 leg-frame and reference-cube rules are kept unchanged and now read in terms of slots. The subgoal instruction is untouched: no subgoal was wrong this round, and demo_moves[legs_done] still matches the recorded subgoals once the list is right.\"}"
+}

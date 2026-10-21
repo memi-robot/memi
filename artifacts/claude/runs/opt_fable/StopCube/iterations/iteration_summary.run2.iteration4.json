@@ -1,0 +1,94 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "crossings",
+  "first_cross_t",
+  "scene_frame"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  66,
+  68,
+  72,
+  77,
+  83
+ ],
+ "scored": 26,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9615384615384616,
+ "memory_verified": 1.0,
+ "reads": {
+  "crossings": 21,
+  "first_cross_t": 7,
+  "scene_frame": 21
+ },
+ "field_errors": {
+  "crossings": {
+   "in": 0,
+   "sole": 0
+  },
+  "first_cross_t": {
+   "in": 0,
+   "sole": 0
+  },
+  "scene_frame": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.038461538461538464,
+ "verified_of_all": 0.9615384615384616,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 26,
+ "critique": "the policy prompt for subgoal\n  The failure: the goal asked for the fifth arrival. Across the step's frames the cube made its fourth crossing, went out to the small-x extreme, and had just turned back toward the target, so the updated memory read crossings = N-1 with the first-crossing timestep set. The predicted fifth arrival was 37 timesteps away. The instruction's rule (b) (scene timestep at or past the predicted turnaround) and rule (c) (cube HEADING BACK by the two-frame velocity test) both fired, so the policy chose C; the recorded choice was B, and the press was recorded at the following short step, 25 timesteps before the predicted arrival. This is a SUFFICIENCY failure caused by the instruction, not the memory: the press needs roughly 25-30 timesteps to land, so pressing at 37 lands early. Rules (b) and (c) are over-eager: with the first-crossing timestep known, the predicted arrival time alone decides, and being past the turnaround or just having turned back is not enough while more than 30 timesteps remain. In every episode of the minibatch the recorded press occurs at the first decision step where crossings == N-1 and remaining <= 30 (observed values 21, 25, 27, 28), and B is recorded at every step with crossings == N-1 and remaining > 30 (observed 37 and larger), including steps where the cube is already heading back. What should stand in place of the C rule: choose C 'press button to stop the cube' if and only if crossings == N-1 (after updating memory at this step) AND remaining = (2N-1)*first_cross_t - (timestep of this decision step's scene) <= 30. Otherwise choose B, which now explicitly includes: crossings == N-1 with the cube past the turnaround and already moving back toward the target while remaining > 30. Remove rule (b) and rule (c) entirely, and remove the HEADING BACK / RUNNING OUT velocity test and its surrounding caveats, since no rule reads them any more. Keep the fallback: if crossings somehow exceeds N-1, choose C immediately. Keep: A only at the first step; while first_cross_t is empty crossings is 0 and the answer is B after the first step.\n\nrefused\n  The reporting step also suggested replacing the timing rules with a distance-over-expected-speed estimate of time-to-target. That is not passed on: the predicted-arrival time computed from the first-crossing timestep already separates every recorded press from every recorded wait in the minibatch with a single threshold, while cube speed varies threefold across episodes and changes sign and magnitude around the turnaround, so a per-step speed estimate would be less reliable than the period-based prediction the memory already supports.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The failure: the goal asked for the fifth arrival. Across the step's frames the cube made its fourth crossing, went out to the small-x extreme, and had just turned back toward the target, so the updated memory read crossings = N-1 with the first-crossing timestep set. The predicted fifth arrival was 37 timesteps away. The instruction's rule (b) (scene timestep at or past the predicted turnaround) and rule (c) (cube HEADING BACK by the two-frame velocity test) both fired, so the policy chose C; the recorded choice was B, and the press was recorded at the following short step, 25 timesteps before the predicted arrival. This is a SUFFICIENCY failure caused by the instruction, not the memory: the press needs roughly 25-30 timesteps to land, so pressing at 37 lands early. Rules (b) and (c) are over-eager: with the first-crossing timestep known, the predicted arrival time alone decides, and being past the turnaround or just having turned back is not enough while more than 30 timesteps remain. In every episode of the minibatch the recorded press occurs at the first decision step where crossings == N-1 and remaining <= 30 (observed values 21, 25, 27, 28), and B is recorded at every step with crossings == N-1 and remaining > 30 (observed 37 and larger), including steps where the cube is already heading back. What should stand in place of the C rule: choose C 'press button to stop the cube' if and only if crossings == N-1 (after updating memory at this step) AND remaining = (2N-1)*first_cross_t - (timestep of this decision step's scene) <= 30. Otherwise choose B, which now explicitly includes: crossings == N-1 with the cube past the turnaround and already moving back toward the target while remaining > 30. Remove rule (b) and rule (c) entirely, and remove the HEADING BACK / RUNNING OUT velocity test and its surrounding caveats, since no rule reads them any more. Keep the fallback: if crossings somehow exceeds N-1, choose C immediately. Keep: A only at the first step; while first_cross_t is empty crossings is 0 and the answer is B after the first step.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "The reporting step also suggested replacing the timing rules with a distance-over-expected-speed estimate of time-to-target. That is not passed on: the predicted-arrival time computed from the first-crossing timestep already separates every recorded press from every recorded wait in the minibatch with a single threshold, while cube speed varies threefold across episodes and changes sign and magnitude around the turnaround, so a per-step speed estimate would be less reliable than the period-based prediction the memory already supports."
+ },
+ "critiques": [
+  {
+   "step": [
+    77,
+    "exec",
+    503
+   ],
+   "memory_in": "crossings=3; first_cross_t=60; scene_frame=[401, 143, 107]",
+   "answered": "C: press button to stop the cube",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "With crossings=4=N-1, first_cross_t=60, scene t=503: T_5=540 so remaining=37 (>30), but the scene is past the predicted turnaround 480 (rule b) and the last two frames (47->52 on the smaller_x side, v>0) say HEADING BACK (rule c), so the instruction forced C; the recorded answer is B. The instruction should say that when crossings == N-1 the press is chosen ONLY by remaining <= 30 (the press needs 25-30 timesteps to land, and pressing at remaining=37 lands ~7-10 timesteps early); being past the turnaround or just having turned back toward the target is not by itself enough while remaining > 30 — the cube here is only 56 px from the target line and still accelerating out of its turnaround, so B until remaining <= 30 (i.e. until about t>=510). Rules (b) and (c) should be removed or subordinated to the remaining<=30 check, or replaced with a distance/speed estimate (time-to-target = |cube_x - target_x| / expected speed <= ~30).",
+   "missing": ""
+  }
+ ]
+}

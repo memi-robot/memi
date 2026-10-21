@@ -1,0 +1,13 @@
+{
+ "task": "VideoRepick",
+ "fields": [
+  {
+   "name": "target_cube",
+   "description": "Current table position [y, x] of the cube the demonstration grasped. At the first decision step the grasped cube is identified as the listed cube (from a demonstration frame before the gripper descended) nearest the gripper's position in the demonstration frame where the gripper is at its lowest (height about 0.02) with fingers partly closed (about 46-51%), confirmed by the first frame that lists a cube 'held in the gripper'; cubes that vanish from the list earlier while the gripper is still high and 100% open are merely occluded by the arm and are not the grasped cube. That cube is then followed frame by frame to the end of the demonstration by nearest-neighbour matching (each cube goes to the listed position closest to its previous one, conflicts resolved by the smallest total displacement; cubes swap places during the shuffle and move tens of pixels per frame, and lists are sorted by y, not identity, so the cube is not assumed to return to its old spot). Its position in the last demonstration frame, matched to the nearest listed cube in the scene at the start of execution, is the value. At every later decision step: if the execution steps since the previous decision step include a frame where the gripper is at table height (height below about 0.04), the value becomes the listed position, in the scene at this decision step, of the cube nearest that lowest gripper position (the cube just picked or just put down, which is the same cube); otherwise the carried value is copied. e.g. [85, 109]"
+  },
+  {
+   "name": "picks_done",
+   "description": "Count of completed pick-ups in the execution so far. It is 0 at the first decision step. It goes up by one at each decision step whose own scene (the last frame) shows the gripper raised (height about 0.12 or more) with fingers partly closed (about 46-51%, not 100%), regardless of what the cube list says (the held cube may still be listed at its old table position; a 'held in the gripper' line in the execution steps is corroborating but not required). It does not change at decision steps whose last frame shows the fingers 100% open, even if a cube line is flagged 'lifted off the table'. e.g. 1"
+  }
+ ]
+}

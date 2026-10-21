@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "crossings",
+  "cube_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  2,
+  38,
+  66,
+  93
+ ],
+ "scored": 17,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9411764705882353,
+ "memory_verified": 1.0,
+ "reads": {
+  "crossings": 12,
+  "cube_side": 12
+ },
+ "field_errors": {
+  "crossings": {
+   "in": 0,
+   "sole": 0
+  },
+  "cube_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.058823529411764705,
+ "verified_of_all": 0.9411764705882353,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 17,
+ "critique": "field first_cross_t, ANNOTATOR PROMPT\n  The timestep at which the cube first crossed the target line, interpolated linearly between the last observed frame on the starting side and the first observed frame on the other side (interpolate on cube_x against target_x and round to the nearest timestep). Empty until the step whose observed frames (or the carried-in side versus this step's first frame) contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30\n\nfield first_cross_t, POLICY PROMPT\n  Carry it unchanged if it is already set. If it is empty and the crossings count you just computed at this step went from 0 to 1 or more, find the first pair of consecutive frames in this step's sequence whose cube side differs (if the flip is between the carried-in cube_side and this step's first frame, use the last frame of the previous step as the earlier frame; its timestep is the previous decision step's timestep, which is the memory's step time; if that is not known, take the first frame of this step minus 8) and write the timestep where cube_x would equal target_x by linear interpolation between those two frames, rounded to the nearest whole timestep. Otherwise leave it empty. e.g. 30\n\nthe policy prompt for subgoal\n  The failure: the goal asked for the second arrival, the cube had just made its first crossing during the step and was gliding out toward the far end of its swing at roughly 0.8 pixels per timestep over a short final frame gap. The carried memory said crossings=0 on the near side, and the updated memory correctly said crossings=1 (N-1). The velocity-and-side rule said the cube was 'NOT moving away' because |v| was at most 1 px per timestep, so the policy chose C; the correct subgoal was B, because that cube was slow and still some eighty timesteps from reaching the target again, and a press then would have landed far too early. This breaks SUFFICIENCY: the |v| <= 1 threshold cannot distinguish a slow cube still running out (wait) from a fast cube near or at its turnaround (press), since across episodes the cube's speed varies by a factor of three, and in other episodes a cube moving away at 0.7 to 1.0 px per timestep was correctly pressed on. Remove the rule 'the cube is NOT moving away if |v| is at most 1 px per timestep, so press'. Replace the whole decision at steps after the first with a timing rule based on the predicted arrival: the cube starts at rest at one end of its swing at t=0, so the time of the first crossing, first_cross_t, is a quarter period and the Nth arrival at the target is predicted at T_N = (2N-1)*first_cross_t. Compute remaining = T_N - (timestep of this decision step). Choose C 'press button to stop the cube' when crossings == N-1 and any of: (a) remaining <= 35 timesteps (the press takes roughly 25-30 timesteps to land); (b) the cube is heading back toward the target by the velocity sign (on the larger_x side with v < 0, or on the smaller_x side with v > 0, using the last two frames and dividing by their time gap); (c) the cube's x is identical in the last two frames (fully stopped at the turnaround). Otherwise choose B 'remain static': crossings < N-1 regardless of motion, or crossings == N-1 with the cube still moving away from the target and remaining > 35. Keep the first-step rule (empty memory: choose A, no point) and keep 'never choose A after the first step'. Keep the fallback: if crossings exceeds N-1, choose C if the cube is heading toward the target or stopped, otherwise B. Note that the policy must update memory (crossings, cube_side, first_cross_t) before applying these rules, since the crossing that makes crossings reach N-1 often happens inside the frames of the very step where the decision is made.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The failure: the goal asked for the second arrival, the cube had just made its first crossing during the step and was gliding out toward the far end of its swing at roughly 0.8 pixels per timestep over a short final frame gap. The carried memory said crossings=0 on the near side, and the updated memory correctly said crossings=1 (N-1). The velocity-and-side rule said the cube was 'NOT moving away' because |v| was at most 1 px per timestep, so the policy chose C; the correct subgoal was B, because that cube was slow and still some eighty timesteps from reaching the target again, and a press then would have landed far too early. This breaks SUFFICIENCY: the |v| <= 1 threshold cannot distinguish a slow cube still running out (wait) from a fast cube near or at its turnaround (press), since across episodes the cube's speed varies by a factor of three, and in other episodes a cube moving away at 0.7 to 1.0 px per timestep was correctly pressed on. Remove the rule 'the cube is NOT moving away if |v| is at most 1 px per timestep, so press'. Replace the whole decision at steps after the first with a timing rule based on the predicted arrival: the cube starts at rest at one end of its swing at t=0, so the time of the first crossing, first_cross_t, is a quarter period and the Nth arrival at the target is predicted at T_N = (2N-1)*first_cross_t. Compute remaining = T_N - (timestep of this decision step). Choose C 'press button to stop the cube' when crossings == N-1 and any of: (a) remaining <= 35 timesteps (the press takes roughly 25-30 timesteps to land); (b) the cube is heading back toward the target by the velocity sign (on the larger_x side with v < 0, or on the smaller_x side with v > 0, using the last two frames and dividing by their time gap); (c) the cube's x is identical in the last two frames (fully stopped at the turnaround). Otherwise choose B 'remain static': crossings < N-1 regardless of motion, or crossings == N-1 with the cube still moving away from the target and remaining > 35. Keep the first-step rule (empty memory: choose A, no point) and keep 'never choose A after the first step'. Keep the fallback: if crossings exceeds N-1, choose C if the cube is heading toward the target or stopped, otherwise B. Note that the policy must update memory (crossings, cube_side, first_cross_t) before applying these rules, since the crossing that makes crossings reach N-1 often happens inside the frames of the very step where the decision is made.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "first_cross_t",
+    "description": "Carry it unchanged if it is already set. If it is empty and the crossings count you just computed at this step went from 0 to 1 or more, find the first pair of consecutive frames in this step's sequence whose cube side differs (if the flip is between the carried-in cube_side and this step's first frame, use the last frame of the previous step as the earlier frame; its timestep is the previous decision step's timestep, which is the memory's step time; if that is not known, take the first frame of this step minus 8) and write the timestep where cube_x would equal target_x by linear interpolation between those two frames, rounded to the nearest whole timestep. Otherwise leave it empty. e.g. 30"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "first_cross_t",
+    "description": "The timestep at which the cube first crossed the target line, interpolated linearly between the last observed frame on the starting side and the first observed frame on the other side (interpolate on cube_x against target_x and round to the nearest timestep). Empty until the step whose observed frames (or the carried-in side versus this step's first frame) contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    66,
+    "exec",
+    101
+   ],
+   "memory_in": "crossings=0; cube_side=smaller_x",
+   "answered": "C: press button to stop the cube",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

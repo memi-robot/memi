@@ -1,0 +1,106 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "pre_press_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  19,
+  21,
+  72,
+  79,
+  83
+ ],
+ "scored": 10,
+ "failed": 2,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9,
+ "memory_verified": 0.9,
+ "reads": {
+  "pre_press_target": 5
+ },
+ "field_errors": {
+  "pre_press_target": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 10,
+ "critique": "field pre_press_target, ANNOTATOR PROMPT\n  A goal requested the target right after the demonstration press, but the annotation retained the before-press target; after pickup the policy consequently dropped toward the wrong target. This breaks SUFFICIENCY. Separately, a before-press goal was annotated with a target used only after the press, although the policy correctly extracted the earlier placement. This breaks PREDICTABILITY. Generalize this single field to hold the goal-selected demonstration target, retaining the existing field name for compatibility: for 'right before', select the last completed placement of the requested cube before the press; for 'right after', select its first completed target placement after the press, not the unchanged resting position immediately following button contact and not its final placement. Match the selected target through the demonstration to its execution-start center. Write that [y, x] at the first decision and retain it unchanged thereafter. For example, the after-press case must contain [86, 100], not [93, 162]. Correct the inconsistent before-press annotation to [76, 143], not [89, 165]. Do not create separate before and after fields or store the temporal relation already supplied by the goal. Remove episode-specific value prescriptions in favor of this general rule.\n\nfield pre_press_target, POLICY PROMPT\n  When the goal asked for the target right after the press, the policy prompt extracted only the earlier placement, causing the subsequent drop to use that earlier target. This breaks SUFFICIENCY. In another demonstration the policy's before-press extraction disagreed with an annotation that incorrectly selected a later placement, breaking PREDICTABILITY; no additional historical field resolves that inconsistency. Define this existing field as the goal-selected target despite its legacy name. When incoming memory is empty and the demonstration is visible, identify the button press from closed-gripper descent at the button and contact/depression, allowing temporary button occlusion. Read the temporal relation from the goal. For 'right before', identify the requested cube's last completed target placement before the press; for 'right after', follow its next transfer and identify its first completed target placement after the press. Use release and subsequent resting evidence, allowing occlusion; merely remaining on the old target immediately after button contact is not a new placement. Match that target to the execution-start scene and write its center as [y, x], for example [86, 100] for an after-press selection. Ignore placements later than the selected event. Once populated, copy the value unchanged rather than recomputing from current cube or target centroids. Preserve 'unknown' only when the selected target cannot be identified. Remove the unconditional instruction to ignore all post-press placements.\n\nthe policy prompt for subgoal\n  For an after-press goal, the requested cube had been picked up successfully, but the unconditional rule to drop onto the before-press target sent the policy to the earlier demonstration placement. The annotated memory contained only that earlier target, so SUFFICIENCY failed. Replace the description of B's destination with the goal-selected demonstration target stored in pre_press_target under its revised definition: last completed target placement before the press for 'right before', first completed target placement after the press for 'right after'. Match the remembered point to the corresponding visible target, or use the remembered point when occluded. Do not infer the temporal destination from the cube's current execution position. Preserve the pickup and closure-and-lift evidence rules, including their handling of stale cube coordinates and absent held labels. Preserve the rule that the demonstration button press is only a temporal reference and C must not be reenacted. A release onto the selected target completes the task. The inconsistent before-press recording must not motivate an exception that selects a post-press target: correct its annotation instead; its recorded later-target drop remains inconsistent with the goal and demonstration.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "For an after-press goal, the requested cube had been picked up successfully, but the unconditional rule to drop onto the before-press target sent the policy to the earlier demonstration placement. The annotated memory contained only that earlier target, so SUFFICIENCY failed. Replace the description of B's destination with the goal-selected demonstration target stored in pre_press_target under its revised definition: last completed target placement before the press for 'right before', first completed target placement after the press for 'right after'. Match the remembered point to the corresponding visible target, or use the remembered point when occluded. Do not infer the temporal destination from the cube's current execution position. Preserve the pickup and closure-and-lift evidence rules, including their handling of stale cube coordinates and absent held labels. Preserve the rule that the demonstration button press is only a temporal reference and C must not be reenacted. A release onto the selected target completes the task. The inconsistent before-press recording must not motivate an exception that selects a post-press target: correct its annotation instead; its recorded later-target drop remains inconsistent with the goal and demonstration.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pre_press_target",
+    "description": "When the goal asked for the target right after the press, the policy prompt extracted only the earlier placement, causing the subsequent drop to use that earlier target. This breaks SUFFICIENCY. In another demonstration the policy's before-press extraction disagreed with an annotation that incorrectly selected a later placement, breaking PREDICTABILITY; no additional historical field resolves that inconsistency. Define this existing field as the goal-selected target despite its legacy name. When incoming memory is empty and the demonstration is visible, identify the button press from closed-gripper descent at the button and contact/depression, allowing temporary button occlusion. Read the temporal relation from the goal. For 'right before', identify the requested cube's last completed target placement before the press; for 'right after', follow its next transfer and identify its first completed target placement after the press. Use release and subsequent resting evidence, allowing occlusion; merely remaining on the old target immediately after button contact is not a new placement. Match that target to the execution-start scene and write its center as [y, x], for example [86, 100] for an after-press selection. Ignore placements later than the selected event. Once populated, copy the value unchanged rather than recomputing from current cube or target centroids. Preserve 'unknown' only when the selected target cannot be identified. Remove the unconditional instruction to ignore all post-press placements."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pre_press_target",
+    "description": "A goal requested the target right after the demonstration press, but the annotation retained the before-press target; after pickup the policy consequently dropped toward the wrong target. This breaks SUFFICIENCY. Separately, a before-press goal was annotated with a target used only after the press, although the policy correctly extracted the earlier placement. This breaks PREDICTABILITY. Generalize this single field to hold the goal-selected demonstration target, retaining the existing field name for compatibility: for 'right before', select the last completed placement of the requested cube before the press; for 'right after', select its first completed target placement after the press, not the unchanged resting position immediately following button contact and not its final placement. Match the selected target through the demonstration to its execution-start center. Write that [y, x] at the first decision and retain it unchanged thereafter. For example, the after-press case must contain [86, 100], not [93, 162]. Correct the inconsistent before-press annotation to [76, 143], not [89, 165]. Do not create separate before and after fields or store the temporal relation already supplied by the goal. Remove episode-specific value prescriptions in favor of this general rule."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    72,
+    "exec",
+    859
+   ],
+   "memory_in": "pre_press_target=[93, 162]",
+   "answered": "B: drop onto at [93, 162]",
+   "recorded": "B: drop onto at [87, 101]",
+   "missing_from_memory": "The identity of the target where the red cube was placed immediately after the demonstration button press: the left-image target, currently at [86, 100], corresponding to the recorded drop point [87, 101]. The carried pre_press_target identifies only the placement before the press.",
+   "missing_from_policy_prompt_for_memory": "For a goal requesting the placement right after the button press, extract and retain the first completed placement of the requested cube after that press, matched to the execution-start target. The current policy prompt instead records the last placement before the press and explicitly ignores subsequent placements.",
+   "missing_from_policy_prompt_for_subgoal": "When the requested cube is held, choose B at the remembered demonstration target selected by the goal's temporal relation to the press. For this 'right after' goal, use the post-press target rather than unconditionally using pre_press_target.",
+   "missing": "The identity of the target where the red cube was placed immediately after the demonstration button press: the left-image target, currently at [86, 100], corresponding to the recorded drop point [87, 101]. The carried pre_press_target identifies only the placement before the press."
+  },
+  {
+   "step": [
+    83,
+    "exec",
+    801
+   ],
+   "memory_in": "pre_press_target=",
+   "answered": "A: pick up the cube at [85, 119]",
+   "recorded": "A: pick up the cube at [85, 121]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The recorded value [89, 165] conflicts with the stated pre-press selection rule and the visible demonstration. The red cube was released at t=208 onto the target corresponding to execution-start [76, 143], before the button press at t=304–320. It was placed on the target [89, 165] only afterward, at t=512. No observed fact supports selecting that later target as the pre-press target; the annotation and policy prompt need reconciliation rather than additional memory.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

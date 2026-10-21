@@ -1,0 +1,85 @@
+{
+ "episodes": [
+  2,
+  28,
+  31,
+  67,
+  79
+ ],
+ "user_chars": 14789,
+ "usage": {
+  "prompt_tokens": 7918,
+  "completion_tokens": 1336,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 7914
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 352
+  }
+ },
+ "reasoning": "This is the first edit round, so I'll commit the proposal to replace frame-to-frame nearest tracking with shuffle-based resting-spot tracking, keeping the subgoal instruction unchanged while revising the annotator prompt to reference cube positions in early frames and the container that lands on each cube when containers first appear, then tracking that container's movement.\n\nI need to replace the policy memory's step (3) and (4) text, which currently describes following a container by nearest-position matching across frames with tie-breaking by arc continuation, and swap it for the shuffle-based description where the entry is determined by the container's final resting position after all shuffles.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_containers",
+    "edits": [
+     {
+      "modify_from": "(3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry.",
+      "modify_to": "(3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "target_containers",
+    "edits": [
+     {
+      "modify_from": "(cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle)",
+      "modify_to": "(cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot)"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing refused. This is the first round and the report's shuffle-based resting-spot tracking is the general rule for the shell game, so it replaces the frame-to-frame nearest matching on both sides. The subgoal instruction and put_down_count were not reported and stay as they are."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "target_containers",
+    "edits": [
+     {
+      "modify_from": "(cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle)",
+      "modify_to": "(cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot)"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_containers",
+    "edits": [
+     {
+      "modify_from": "(3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry.",
+      "modify_to": "(3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "Nothing refused. This is the first round and the report's shuffle-based resting-spot tracking is the general rule for the shell game, so it replaces the frame-to-frame nearest matching on both sides. The subgoal instruction and put_down_count were not reported and stay as they are."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. This is the first round and the report's shuffle-based resting-spot tracking is the general rule for the shell game, so it replaces the frame-to-frame nearest matching on both sides. The subgoal instruction and put_down_count were not reported and stay as they are.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"target_containers\", \"edits\": [{\"modify_from\": \"(cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle)\", \"modify_to\": \"(cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot)\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"target_containers\", \"edits\": [{\"modify_from\": \"(3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry.\", \"modify_to\": \"(3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159].\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"Nothing refused. This is the first round and the report's shuffle-based resting-spot tracking is the general rule for the shell game, so it replaces the frame-to-frame nearest matching on both sides. The subgoal instruction and put_down_count were not reported and stay as they are.\"}"
+}

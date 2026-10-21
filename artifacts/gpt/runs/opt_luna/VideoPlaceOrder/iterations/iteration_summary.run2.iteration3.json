@@ -1,0 +1,115 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "selected_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  3,
+  39,
+  57,
+  73,
+  92
+ ],
+ "scored": 10,
+ "failed": 3,
+ "subgoal_wrong": 0,
+ "memory_wrong": 3,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.7,
+ "reads": {
+  "selected_target": 5
+ },
+ "field_errors": {
+  "selected_target": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3,
+ "verified_of_all": 0.7,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field selected_target, POLICY PROMPT\n  When the goals requested the green cube's third placement and the red cube's second placement, the policy correctly chose to pick up the named cube but stored the target's old location after a shuffle rather than its physical endpoint. The annotated endpoints were [116, 100] and [141, 118], respectively. Another second-placement request produced the first-placement target's location despite no final shuffle. These are PREDICTABILITY failures in computing the first memory, not missing persistent fields. Make initialization a two-stage verification: first build a temporary chronological list of completed releases onto targets and select the requested entry; then follow that selected physical target through every remaining observation. Explicitly verify that the selected entry is not the preceding placement, and that button presses neither count nor reset the count. For motion association, first identify stationary targets across the whole shuffle interval, allowing visible-center wobble; reserve their detections before associating moving targets. Follow the remaining moving branches jointly, allowing curved paths rather than preferring a shorter jump onto a stationary target. Include worked illustrations: a selected target near [143, 116] follows [142, 114] → [148, 85] → [125, 89] → [116, 100], while the nearby target around [140, 86] stays stationary; a selected target near [75, 92] follows [87, 117] → [119, 130] → [141, 118], while the target around [123, 89] stays stationary. These illustrate branch continuity, not coordinate-specific lookup rules. Before writing, verify the release ordinal and branch endpoint separately. If no coherent target movement occurs after the selected release, preserve its identity despite occlusion-related center shifts; do not substitute an earlier placement target. The field still holds only the selected physical target's canonical center in the initial execution scene, for example [116, 100]. Compute and write it when empty incoming memory accompanies the demonstration and initial execution scene; copy it unchanged thereafter. Retain 'unknown' for genuinely unresolved placement or identity. Temporary release lists and motion tracks are discarded, not added to memory.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "selected_target",
+    "description": "When the goals requested the green cube's third placement and the red cube's second placement, the policy correctly chose to pick up the named cube but stored the target's old location after a shuffle rather than its physical endpoint. The annotated endpoints were [116, 100] and [141, 118], respectively. Another second-placement request produced the first-placement target's location despite no final shuffle. These are PREDICTABILITY failures in computing the first memory, not missing persistent fields. Make initialization a two-stage verification: first build a temporary chronological list of completed releases onto targets and select the requested entry; then follow that selected physical target through every remaining observation. Explicitly verify that the selected entry is not the preceding placement, and that button presses neither count nor reset the count. For motion association, first identify stationary targets across the whole shuffle interval, allowing visible-center wobble; reserve their detections before associating moving targets. Follow the remaining moving branches jointly, allowing curved paths rather than preferring a shorter jump onto a stationary target. Include worked illustrations: a selected target near [143, 116] follows [142, 114] → [148, 85] → [125, 89] → [116, 100], while the nearby target around [140, 86] stays stationary; a selected target near [75, 92] follows [87, 117] → [119, 130] → [141, 118], while the target around [123, 89] stays stationary. These illustrate branch continuity, not coordinate-specific lookup rules. Before writing, verify the release ordinal and branch endpoint separately. If no coherent target movement occurs after the selected release, preserve its identity despite occlusion-related center shifts; do not substitute an earlier placement target. The field still holds only the selected physical target's canonical center in the initial execution scene, for example [116, 100]. Compute and write it when empty incoming memory accompanies the demonstration and initial execution scene; copy it unchanged thereafter. Retain 'unknown' for genuinely unresolved placement or identity. Temporary release lists and motion tracks are discarded, not added to memory."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    3,
+    "exec",
+    1124
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [82, 126]",
+   "recorded": "A: pick up the cube at [83, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The tracking rule needed to connect the third release at t=512 to the target's specific path during the final shuffle: [143, 116] at t=1040 → [142, 114] at t=1056 → [148, 85] at t=1072 → [125, 89] at t=1088 → [116, 100] at t=1104 and execution. Thus write selected_target=[116, 100], not [141, 117]. The latter is the old placement location, now occupied by a different physical target.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    39,
+    "exec",
+    757
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [81, 127]",
+   "recorded": "A: pick up the cube at [82, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The tracking instruction needed to make explicit that the second-placement target near [75, 92] follows the branch [87, 117] at t=704, then [119, 130] at t=720, ending at [141, 118] at t=736 and in execution. The return of the unordered target layout does not return this target to [75, 91]. Write selected_target=[141, 118], not the endpoint nearest its release location.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    92,
+    "exec",
+    772
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [81, 127]",
+   "recorded": "A: pick up the cube at [82, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

@@ -1,0 +1,120 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "visits_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  27,
+  45,
+  53,
+  72,
+  78
+ ],
+ "scored": 37,
+ "failed": 3,
+ "subgoal_wrong": 3,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.918918918918919,
+ "memory_verified": 0.918918918918919,
+ "reads": {
+  "visits_done": 33
+ },
+ "field_errors": {
+  "visits_done": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.08108108108108109,
+ "verified_of_all": 0.918918918918919,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 3,
+ "decisions": 37,
+ "critique": "field visits_done, ANNOTATOR PROMPT\n  Keep the field, but state its moment of change by the scene alone so that the policy half can be written the same way. visits_done holds the number of arrivals of the held cube above a target so far. It is 0 at the first step and through the pick-up step. It increases by 1 at every decision step whose final scene shows the cube held in the gripper with a highlighted target directly below the gripper (same x region), when that target was shown as a plain, un-highlighted target in the first execution frame of the step (or no highlighted target was shown at all). The fact that only plain targets were listed early in the step and a highlighted target is listed at the end is itself the arrival. It never changes at the step where the cube is released onto the table or at the press-button step. Example: 1 after the first arrival over the right-side target.\n\nfield visits_done, POLICY PROMPT\n  Carried-in value, 0 when memory is empty. Compute this field BEFORE choosing the subgoal. Add 1 exactly when the scene of this decision step shows the cube 'held in the gripper' and lists a 'highlighted target' under the gripper, while the first execution frame shown for this step listed that same position only as a plain 'target' or listed no highlighted target at all. The typical case is the first arrival: the earlier frames of the step list only plain targets and the final frames list one highlighted target; that is an increment, from 0 to 1. Keep the value when the highlighted target in the final scene is the same one that was already highlighted in the first frame, when the cube is not held (pick-up not yet closed, or cube released on the table with fingers fully open), and at the press-button step. Example: 1.\n\nthe policy prompt for subgoal\n  Three steps failed in the same way: the first arrival of the held cube over the right-side target, where the decision scene newly showed a highlighted target under the gripper. The recorded subgoal was B pointing at the other, un-highlighted (left-side) target. The policy kept visits_done at 0, read rule 2 with that carried-in even value, and pointed at the right-side target, i.e. the very target it was already hovering over. This breaks SUFFICIENCY: rule 2 keys the point on the parity of visits_done without saying which value (carried-in or updated) to use, and only mentions the 'not currently highlighted' target as an aside. Change rule 2 so that the primary pointing rule is: when the cube is held and a highlighted target is visible, point at the target that is NOT highlighted (its listed coordinates); the highlighted one is the target just reached and is never the point. When the cube is held and no target is highlighted (just after pick-up), point at the right-side target (smaller x). The parity of visits_done becomes a check only, and it must be the value computed at this decision step after the increment, not the carried-in value. Also state at the top of the instruction that the policy first updates visits_done from what the step shows, then applies every rule to the updated value; rules 3 and 4 (choose C when held and visits_done >= REQ, choose D when the cube is on the table and visits_done >= REQ) likewise read the updated value. Keep the fallback that when the cube is held the point is the un-highlighted target.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Three steps failed in the same way: the first arrival of the held cube over the right-side target, where the decision scene newly showed a highlighted target under the gripper. The recorded subgoal was B pointing at the other, un-highlighted (left-side) target. The policy kept visits_done at 0, read rule 2 with that carried-in even value, and pointed at the right-side target, i.e. the very target it was already hovering over. This breaks SUFFICIENCY: rule 2 keys the point on the parity of visits_done without saying which value (carried-in or updated) to use, and only mentions the 'not currently highlighted' target as an aside. Change rule 2 so that the primary pointing rule is: when the cube is held and a highlighted target is visible, point at the target that is NOT highlighted (its listed coordinates); the highlighted one is the target just reached and is never the point. When the cube is held and no target is highlighted (just after pick-up), point at the right-side target (smaller x). The parity of visits_done becomes a check only, and it must be the value computed at this decision step after the increment, not the carried-in value. Also state at the top of the instruction that the policy first updates visits_done from what the step shows, then applies every rule to the updated value; rules 3 and 4 (choose C when held and visits_done >= REQ, choose D when the cube is on the table and visits_done >= REQ) likewise read the updated value. Keep the fallback that when the cube is held the point is the un-highlighted target.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "visits_done",
+    "description": "Carried-in value, 0 when memory is empty. Compute this field BEFORE choosing the subgoal. Add 1 exactly when the scene of this decision step shows the cube 'held in the gripper' and lists a 'highlighted target' under the gripper, while the first execution frame shown for this step listed that same position only as a plain 'target' or listed no highlighted target at all. The typical case is the first arrival: the earlier frames of the step list only plain targets and the final frames list one highlighted target; that is an increment, from 0 to 1. Keep the value when the highlighted target in the final scene is the same one that was already highlighted in the first frame, when the cube is not held (pick-up not yet closed, or cube released on the table with fingers fully open), and at the press-button step. Example: 1."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "visits_done",
+    "description": "Keep the field, but state its moment of change by the scene alone so that the policy half can be written the same way. visits_done holds the number of arrivals of the held cube above a target so far. It is 0 at the first step and through the pick-up step. It increases by 1 at every decision step whose final scene shows the cube held in the gripper with a highlighted target directly below the gripper (same x region), when that target was shown as a plain, un-highlighted target in the first execution frame of the step (or no highlighted target was shown at all). The fact that only plain targets were listed early in the step and a highlighted target is listed at the end is itself the arrival. It never changes at the step where the cube is released onto the table or at the press-button step. Example: 1 after the first arrival over the right-side target."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    53,
+    "exec",
+    131
+   ],
+   "memory_in": "visits_done=0",
+   "answered": "B: move to the top of the target at [74, 77]",
+   "recorded": "B: move to the top of the target at [92, 181]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It should state plainly that a highlighted target appearing in the later execution frames (t=128, t=131) when the first frame (t=112) showed only plain 'target' entries counts as a new visit, so visits_done becomes 1 here even though the carried-in value is 0; the condition is correct but easy to misread as 'highlighted target absent in this step'.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 2 reads parity of visits_done but does not say whether to use the carried-in value (0, even, right-side) or the value updated at this very step (1, odd, left-side). The recorded answer uses the updated value. It should say: first compute this step's visits_done, then apply parity to the new value; or simply make 'point at the target that is NOT currently highlighted' the primary rule, since the highlighted target [74,77] is the one just visited and the next point is the other target [91,180].",
+   "missing": ""
+  },
+  {
+   "step": [
+    72,
+    "exec",
+    154
+   ],
+   "memory_in": "visits_done=0",
+   "answered": "B: move to the top of the target at [90, 86]",
+   "recorded": "B: move to the top of the target at [96, 182]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It should state plainly that a highlighted target appearing in the latest frame when the first observed frame of this step showed no highlighted target (as here: t=128 lists only 'target at [95,181]', t=154 lists 'highlighted target at [90,86]') is exactly the increment case, so visits_done goes 0 -> 1 at this step.",
+   "missing_from_policy_prompt_for_subgoal": "It should say that rule 2 is applied with the visits_done value AFTER this step's update (1 here, odd), not the carried-in 0, and should stress that the highlighted target [90,86] is the one just visited and must never be the point; the point is the other, non-highlighted target [95,181].",
+   "missing": ""
+  },
+  {
+   "step": [
+    78,
+    "exec",
+    146
+   ],
+   "memory_in": "visits_done=0",
+   "answered": "B: move to the top of the target at [75, 70]",
+   "recorded": "B: move to the top of the target at [81, 180]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing — the rule did say to add 1 when the cube is held and a highlighted target ([75, 70]) appears at the decision scene that was absent in the first execution frame (t=112 had none); that condition was met here and visits_done should have been written as 1.",
+   "missing_from_policy_prompt_for_subgoal": "It did not say that the visits_done used in rule 2 is the UPDATED value computed at this decision step (after the increment), not the carried-in value. With carried-in 0 the even/odd rule pointed at the right-side target [75, 70], which is the one already highlighted; it should state explicitly: first update visits_done, then apply even/odd, and that the 'not currently highlighted' target ([81, 180] here) takes precedence when a highlighted target is visible.",
+   "missing": ""
+  }
+ ]
+}

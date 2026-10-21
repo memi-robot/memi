@@ -1,0 +1,120 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "target_before_button",
+  "cube_placed"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  19,
+  21,
+  72,
+  79,
+  83
+ ],
+ "scored": 10,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.8,
+ "memory_verified": 1.0,
+ "reads": {
+  "target_before_button": 5,
+  "cube_placed": 4
+ },
+ "field_errors": {
+  "target_before_button": {
+   "in": 0,
+   "sole": 0
+  },
+  "cube_placed": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 10,
+ "critique": "field goal_target, ANNOTATOR PROMPT\n  Replaces target_before_button. The goal instruction varies: it names the target the demonstration used either 'right before' or 'right after' the button was pressed, and the old field always took the before-placement, so on an 'after' goal the policy carried the wrong target and dropped the cube on the before-target (SUFFICIENCY fails at the drop step: the correct target is nowhere in memory and the demonstration is no longer visible). In every demonstration the pattern is the same: the goal cube is picked and released on one target, the gripper closes to 0% and descends low over the button (the press), the cube is picked again and released on a second target, then it is picked once more and released at a spot that is not on any target (a put-away). New filling: find the press frame (fingers 0%, height under 0.05, gripper over the button). A release is a frame where the fingers widen from ~46% to 88% or more with height under 0.05. If the goal says 'before', take the last release before the press frame; if the goal says 'after', take the first release after the press frame (the put-away release later is ignored because the cube there lies more than 8 px from every target). The cube's position in the release frame is the placement point; the field holds the [y, x] of the target entry in the scene at the start of execution nearest that point. Written at the first decision step, unchanged afterwards. e.g. [86, 100]\n\nfield cube_placed, ANNOTATOR PROMPT\n  Unchanged in meaning; only the reference changes: 'yes' from the decision step whose execution steps show the robot release the goal cube within about 6 pixels of goal_target. e.g. no\n\nfield goal_target, POLICY PROMPT\n  Replaces target_before_button. If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): read the goal instruction and note whether it says 'before' or 'after' the button was pressed. In the demonstration steps find the press frame: the first frame with fingers 0% open and height under 0.05, gripper over the button. A release is a frame where the fingers widen from ~46% to 88% or more while height is under 0.05. For 'before', take the last release earlier than the press frame; for 'after', take the first release later than the press frame (do not take the later put-away release, where the cube ends more than 8 px from any target). The cube's [y, x] in that release frame is the placement point. Among the target entries listed in the execution scene at the bottom of this step, write the one nearest that point. e.g. [86, 100]\n\nfield cube_placed, POLICY PROMPT\n  Unchanged except the reference: 'no' until the execution steps shown at this step contain a release (fingers widen from ~46% to ~100%, height under 0.05) with the goal cube lying within about 6 pixels of goal_target; 'yes' from then on. e.g. no\n\nthe policy prompt for subgoal\n  Rule 1 sent the policy wrong on an 'after' goal: it told the policy to compute the before-button target regardless of the goal wording. Replace it with: at the start of the episode (memory empty, gripper raised out of frame, fingers 100% open) read the goal for 'before' or 'after', compute goal_target as the memory instruction says, then choose A: pick up the cube at the goal cube's current position. Rule 2 and rule 4 should refer to goal_target instead of target_before_button: with the cube in hand (fingers ~46% open, gripper raised near height 0.15, after the execution steps showed a descent and closing on the cube; the 'held in the gripper' note may be absent) and cube_placed 'no', choose B: drop onto, pointing at the listed target in the current scene nearest goal_target (within 10 px; if none is listed that close, point at goal_target itself). Rule 3 and rule 5 stay as they are. Add one sentence to the preamble: the goal may name any cube color (red, blue or green) and may say 'before' or 'after' the button press; both words are to be honoured, and the button itself is still never pressed.\n\nrefused\n  One drop step on a 'before' goal reported that the memory should have held the target the demonstration used after the button press, and asked for a 'more robust' recipe to get there. In that demonstration the cube was unmistakably released on one target, the button was then pressed, and only afterwards was the cube released on the second target, so the before-button target is exactly what the memory held and what the memory rule computed. The recorded subgoal at that step contradicts the other three 'before' episodes in this minibatch, where the recorded drop goes to the placement preceding the press, and matches instead what an 'after' goal would ask for. No rule that fits the other episodes can also produce that answer, so the request is not passed on; the before/after distinction added above is drawn from the 'after' episode, not from this one.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 1 sent the policy wrong on an 'after' goal: it told the policy to compute the before-button target regardless of the goal wording. Replace it with: at the start of the episode (memory empty, gripper raised out of frame, fingers 100% open) read the goal for 'before' or 'after', compute goal_target as the memory instruction says, then choose A: pick up the cube at the goal cube's current position. Rule 2 and rule 4 should refer to goal_target instead of target_before_button: with the cube in hand (fingers ~46% open, gripper raised near height 0.15, after the execution steps showed a descent and closing on the cube; the 'held in the gripper' note may be absent) and cube_placed 'no', choose B: drop onto, pointing at the listed target in the current scene nearest goal_target (within 10 px; if none is listed that close, point at goal_target itself). Rule 3 and rule 5 stay as they are. Add one sentence to the preamble: the goal may name any cube color (red, blue or green) and may say 'before' or 'after' the button press; both words are to be honoured, and the button itself is still never pressed.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "goal_target",
+    "description": "Replaces target_before_button. If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): read the goal instruction and note whether it says 'before' or 'after' the button was pressed. In the demonstration steps find the press frame: the first frame with fingers 0% open and height under 0.05, gripper over the button. A release is a frame where the fingers widen from ~46% to 88% or more while height is under 0.05. For 'before', take the last release earlier than the press frame; for 'after', take the first release later than the press frame (do not take the later put-away release, where the cube ends more than 8 px from any target). The cube's [y, x] in that release frame is the placement point. Among the target entries listed in the execution scene at the bottom of this step, write the one nearest that point. e.g. [86, 100]"
+   },
+   {
+    "field": "cube_placed",
+    "description": "Unchanged except the reference: 'no' until the execution steps shown at this step contain a release (fingers widen from ~46% to ~100%, height under 0.05) with the goal cube lying within about 6 pixels of goal_target; 'yes' from then on. e.g. no"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "goal_target",
+    "description": "Replaces target_before_button. The goal instruction varies: it names the target the demonstration used either 'right before' or 'right after' the button was pressed, and the old field always took the before-placement, so on an 'after' goal the policy carried the wrong target and dropped the cube on the before-target (SUFFICIENCY fails at the drop step: the correct target is nowhere in memory and the demonstration is no longer visible). In every demonstration the pattern is the same: the goal cube is picked and released on one target, the gripper closes to 0% and descends low over the button (the press), the cube is picked again and released on a second target, then it is picked once more and released at a spot that is not on any target (a put-away). New filling: find the press frame (fingers 0%, height under 0.05, gripper over the button). A release is a frame where the fingers widen from ~46% to 88% or more with height under 0.05. If the goal says 'before', take the last release before the press frame; if the goal says 'after', take the first release after the press frame (the put-away release later is ignored because the cube there lies more than 8 px from every target). The cube's position in the release frame is the placement point; the field holds the [y, x] of the target entry in the scene at the start of execution nearest that point. Written at the first decision step, unchanged afterwards. e.g. [86, 100]"
+   },
+   {
+    "field": "cube_placed",
+    "description": "Unchanged in meaning; only the reference changes: 'yes' from the decision step whose execution steps show the robot release the goal cube within about 6 pixels of goal_target. e.g. no"
+   }
+  ],
+  "refused": "One drop step on a 'before' goal reported that the memory should have held the target the demonstration used after the button press, and asked for a 'more robust' recipe to get there. In that demonstration the cube was unmistakably released on one target, the button was then pressed, and only afterwards was the cube released on the second target, so the before-button target is exactly what the memory held and what the memory rule computed. The recorded subgoal at that step contradicts the other three 'before' episodes in this minibatch, where the recorded drop goes to the placement preceding the press, and matches instead what an 'after' goal would ask for. No rule that fits the other episodes can also produce that answer, so the request is not passed on; the before/after distinction added above is drawn from the 'after' episode, not from this one."
+ },
+ "critiques": [
+  {
+   "step": [
+    72,
+    "exec",
+    859
+   ],
+   "memory_in": "target_before_button=[93, 162]; cube_placed=no",
+   "answered": "B: drop onto at [93, 162]",
+   "recorded": "B: drop onto at [87, 101]",
+   "missing_from_memory": "target_before_button carried the wrong target: it read [93, 162], but the target the demonstration placed the cube on just before the button press is the one listed at about [86, 100] in the current scene (recorded point [87, 101]). With the carried value I had to pick [93, 162]; the correct value [86, 100] was not there.",
+   "missing_from_policy_prompt_for_memory": "The recipe for computing target_before_button from the demonstration at the first step selected the wrong target. It should state unambiguously how to locate the placement that immediately precedes the button press (e.g. the last release of the goal cube before the gripper closes to 0% and goes down over the button, using the cube's position after release, not the gripper's), and how to map that placement onto the targets listed in the execution scene (e.g. if demonstration and execution target layouts differ, match by which target the cube rested on in the demonstration, not by raw pixel nearness).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "target_before_button carried the wrong target: it read [93, 162], but the target the demonstration placed the cube on just before the button press is the one listed at about [86, 100] in the current scene (recorded point [87, 101]). With the carried value I had to pick [93, 162]; the correct value [86, 100] was not there."
+  },
+  {
+   "step": [
+    83,
+    "exec",
+    915
+   ],
+   "memory_in": "target_before_button=[76, 143]; cube_placed=no",
+   "answered": "B: drop onto at [76, 143]",
+   "recorded": "B: drop onto at [90, 165]",
+   "missing_from_memory": "target_before_button held [76, 143], but the target the demonstration placed the cube on right before the button press was the one at [89, 165] (now listed at [89, 165]). The memory carried the wrong target identity; at this step the demonstration is no longer visible so the correct target could not be recovered.",
+   "missing_from_policy_prompt_for_memory": "The procedure for computing target_before_button from the demonstration at the first step selected the wrong target. It needs a more robust criterion: e.g. find the LAST release (fingers ~46% -> 100%, height under 0.05) that occurs before the button-press frame (gripper low over the button at ~[128,123], fingers 0%), take the cube's position in the frame just after that release (not an earlier release), and pick the listed target nearest that position; also state that targets listed in the demonstration frames should be matched by position to the execution scene's target list (within ~10 px), and that multiple drops in the demo must be disambiguated by taking the one immediately preceding the press.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "target_before_button held [76, 143], but the target the demonstration placed the cube on right before the button press was the one at [89, 165] (now listed at [89, 165]). The memory carried the wrong target identity; at this step the demonstration is no longer visible so the correct target could not be recovered."
+  }
+ ]
+}

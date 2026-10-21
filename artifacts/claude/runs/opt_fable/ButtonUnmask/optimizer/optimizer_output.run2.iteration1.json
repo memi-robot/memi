@@ -1,0 +1,85 @@
+{
+ "episodes": [
+  9,
+  43,
+  48,
+  60,
+  80
+ ],
+ "user_chars": 13965,
+ "usage": {
+  "prompt_tokens": 7883,
+  "completion_tokens": 695,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 7879
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "picks_done",
+    "edits": [
+     {
+      "modify_from": "Number of container pick-ups completed. Start at 0. If any execution step shown at this decision step says a container is held in the gripper, write carried-in value + 1; otherwise copy the carried-in value. e.g. 1",
+      "modify_to": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "picks_done",
+    "edits": [
+     {
+      "modify_from": "Count of container pick-ups completed so far. 0 at step #1. Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1",
+      "modify_to": "Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "No change to the policy prompt for subgoal: the report itself found the subgoal rules settle every step once picks_done is kept correctly, and the only failure was the memory count. Both picks_done edits are committed as proposed; they refine the earlier wording rather than undo it, keeping the count tied to the final scene of the decision step so a put-down step is not double-counted."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "picks_done",
+    "edits": [
+     {
+      "modify_from": "Count of container pick-ups completed so far. 0 at step #1. Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1",
+      "modify_to": "Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "picks_done",
+    "edits": [
+     {
+      "modify_from": "Number of container pick-ups completed. Start at 0. If any execution step shown at this decision step says a container is held in the gripper, write carried-in value + 1; otherwise copy the carried-in value. e.g. 1",
+      "modify_to": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "No change to the policy prompt for subgoal: the report itself found the subgoal rules settle every step once picks_done is kept correctly, and the only failure was the memory count. Both picks_done edits are committed as proposed; they refine the earlier wording rather than undo it, keeping the count tied to the final scene of the decision step so a put-down step is not double-counted."
+ },
+ "not_applied": [],
+ "refused": "No change to the policy prompt for subgoal: the report itself found the subgoal rules settle every step once picks_done is kept correctly, and the only failure was the memory count. Both picks_done edits are committed as proposed; they refine the earlier wording rather than undo it, keeping the count tied to the final scene of the decision step so a put-down step is not double-counted.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"picks_done\", \"edits\": [{\"modify_from\": \"Count of container pick-ups completed so far. 0 at step #1. Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1\", \"modify_to\": \"Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"picks_done\", \"edits\": [{\"modify_from\": \"Number of container pick-ups completed. Start at 0. If any execution step shown at this decision step says a container is held in the gripper, write carried-in value + 1; otherwise copy the carried-in value. e.g. 1\", \"modify_to\": \"Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"No change to the policy prompt for subgoal: the report itself found the subgoal rules settle every step once picks_done is kept correctly, and the only failure was the memory count. Both picks_done edits are committed as proposed; they refine the earlier wording rather than undo it, keeping the count tied to the final scene of the decision step so a put-down step is not double-counted.\"}"
+}

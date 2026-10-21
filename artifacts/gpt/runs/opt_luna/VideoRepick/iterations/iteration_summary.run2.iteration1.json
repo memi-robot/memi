@@ -1,0 +1,153 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "target_anchor",
+  "completed_cycles"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  0,
+  12,
+  36,
+  94,
+  95
+ ],
+ "scored": 25,
+ "failed": 5,
+ "subgoal_wrong": 5,
+ "memory_wrong": 4,
+ "subgoal_verified": 0.8,
+ "memory_verified": 0.84,
+ "reads": {
+  "target_anchor": 6,
+  "completed_cycles": 8
+ },
+ "field_errors": {
+  "target_anchor": {
+   "in": 2,
+   "sole": 2
+  },
+  "completed_cycles": {
+   "in": 2,
+   "sole": 2
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 1,
+ "choice_wrong": 2,
+ "point_wrong": 2,
+ "decisions": 25,
+ "critique": "field target_anchor, POLICY PROMPT\n  At initialization, demonstrations showed the grasped cube undergoing successive exchanges with different partners. The policy selected either its original endpoint or the cube left near its original grasp site, whereas the annotated anchor identified the demonstrated cube at its final endpoint. This breaks PREDICTABILITY and SUFFICIENCY: the blanket statement that two exchanges return the target permits an incorrect identity assignment. Replace that statement with sequential identity tracking: follow the grasped cube through release, resolve each exchange using continuous trajectories, and carry the resulting identity into the next exchange. Two exchanges return a target only if they exchange the same pair of locations; exchanges with different partners can move it to a third location. At the first decision, store the tracked cube's visible center in the initial execution scene, not its original demonstration center or the recorded grasp point. For example, a target moving from [101, 147] to [112, 119] and then to [85, 109] yields target_anchor=[85, 109]. Copy this anchor unchanged at later decisions. Remove episode-specific lookup values from the operational instruction; the initialization procedure must determine the value from the demonstration currently shown.\n\nfield completed_cycles, POLICY PROMPT\n  After the final release of a three-cycle instruction, the gripper descended to table height, opened, and retreated fully open, but a cube was still reported airborne. The policy retained the incoming count of 2 and selected another put-down instead of writing the annotated count of 3 and finishing. This breaks PREDICTABILITY and SUFFICIENCY because object-status reports were allowed to veto an otherwise completed release. Keep this field as the number of completed execution pick-up-and-put-down cycles, initialized to 0 independently of the demonstration. Increment once when the current execution interval shows a partially closed grasp posture descending to table height, fingers opening there, and a retreat ending fully open. The first visible sample may already be partway through the descent; a raised starting sample is not required. Opening can be sampled at approximately 88–99% before reaching 100% during retreat. A lingering held or airborne cube report does not veto this recognized release sequence. For example, incoming completed_cycles=2 becomes 3 after such a release. Preserve the exclusion of internal retries in an interval ending in a raised grasp posture, and never count the command currently being selected.\n\nthe policy prompt for subgoal\n  Two failures need correction. First, after the final release required by a three-times instruction, a fully open retreat was accompanied by an airborne-cube report. The policy chose B, while the completed-release annotation required an updated count of 3 and C. This breaks SUFFICIENCY: the policy prompt omits the explicit three-times mapping and its ambiguous-retention fallback can override clear release evidence. Read N from the current goal, including 'again'=1, 'two times'=2, and 'three times'=3; do not add a memory field for information supplied by the goal. Update completed_cycles before choosing the subgoal. A recognized table-height release followed by fully open retreat takes precedence over lingering held or airborne object labels: choose A if the updated count is below N, otherwise C. Retain B for an interval ending in a raised partially closed grasp posture, including when the object listing still places the cube on the table. Remove the fallback's permission to infer retention solely from an airborne-object report after a recognized release. For A, continue selecting the current table cube identified by target_anchor, allowing small placement shifts and using the current release trajectory for disambiguation. Second, an initial choice selected the correct cube but emitted the menu label together with its description, making the command non-executable. This is an output-contract failure rather than missing historical information. Add an explicit rule to emit only the exact menu label as the choice: A, B, or C in this menu. Supply a separate [y, x] point only for A; do not include the action description in the choice.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Two failures need correction. First, after the final release required by a three-times instruction, a fully open retreat was accompanied by an airborne-cube report. The policy chose B, while the completed-release annotation required an updated count of 3 and C. This breaks SUFFICIENCY: the policy prompt omits the explicit three-times mapping and its ambiguous-retention fallback can override clear release evidence. Read N from the current goal, including 'again'=1, 'two times'=2, and 'three times'=3; do not add a memory field for information supplied by the goal. Update completed_cycles before choosing the subgoal. A recognized table-height release followed by fully open retreat takes precedence over lingering held or airborne object labels: choose A if the updated count is below N, otherwise C. Retain B for an interval ending in a raised partially closed grasp posture, including when the object listing still places the cube on the table. Remove the fallback's permission to infer retention solely from an airborne-object report after a recognized release. For A, continue selecting the current table cube identified by target_anchor, allowing small placement shifts and using the current release trajectory for disambiguation. Second, an initial choice selected the correct cube but emitted the menu label together with its description, making the command non-executable. This is an output-contract failure rather than missing historical information. Add an explicit rule to emit only the exact menu label as the choice: A, B, or C in this menu. Supply a separate [y, x] point only for A; do not include the action description in the choice.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_anchor",
+    "description": "At initialization, demonstrations showed the grasped cube undergoing successive exchanges with different partners. The policy selected either its original endpoint or the cube left near its original grasp site, whereas the annotated anchor identified the demonstrated cube at its final endpoint. This breaks PREDICTABILITY and SUFFICIENCY: the blanket statement that two exchanges return the target permits an incorrect identity assignment. Replace that statement with sequential identity tracking: follow the grasped cube through release, resolve each exchange using continuous trajectories, and carry the resulting identity into the next exchange. Two exchanges return a target only if they exchange the same pair of locations; exchanges with different partners can move it to a third location. At the first decision, store the tracked cube's visible center in the initial execution scene, not its original demonstration center or the recorded grasp point. For example, a target moving from [101, 147] to [112, 119] and then to [85, 109] yields target_anchor=[85, 109]. Copy this anchor unchanged at later decisions. Remove episode-specific lookup values from the operational instruction; the initialization procedure must determine the value from the demonstration currently shown."
+   },
+   {
+    "field": "completed_cycles",
+    "description": "After the final release of a three-cycle instruction, the gripper descended to table height, opened, and retreated fully open, but a cube was still reported airborne. The policy retained the incoming count of 2 and selected another put-down instead of writing the annotated count of 3 and finishing. This breaks PREDICTABILITY and SUFFICIENCY because object-status reports were allowed to veto an otherwise completed release. Keep this field as the number of completed execution pick-up-and-put-down cycles, initialized to 0 independently of the demonstration. Increment once when the current execution interval shows a partially closed grasp posture descending to table height, fingers opening there, and a retreat ending fully open. The first visible sample may already be partway through the descent; a raised starting sample is not required. Opening can be sampled at approximately 88–99% before reaching 100% during retreat. A lingering held or airborne cube report does not veto this recognized release sequence. For example, incoming completed_cycles=2 becomes 3 after such a release. Preserve the exclusion of internal retries in an interval ending in a raised grasp posture, and never count the command currently being selected."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    0,
+    "exec",
+    321
+   ],
+   "memory_in": "target_anchor=; completed_cycles=",
+   "answered": "NOT EXECUTABLE (not_in_menu). The choice \"A  pick up the cube\" is not a label of the menu. The choice must be the label alone, copied verbatim. The answer was choice='A  pick up the cube', point=[100, 177].",
+   "recorded": "A: pick up the cube at [102, 179]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    12,
+    "exec",
+    312
+   ],
+   "memory_in": "target_anchor=; completed_cycles=",
+   "answered": "A: pick up the cube at [100, 147]",
+   "recorded": "A: pick up the cube at [85, 111]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The tracking rule needed to make explicit that these are two successive exchanges involving different pairs, not two exchanges that return the target to its original location. The demonstrated target moves from [101, 147] through [95, 122] and [118, 130] to [112, 119] in the first exchange, then through [107, 102] and [94, 99] to [85, 109] in the second. Write target_anchor=[85, 109]; two exchanges return the target only when they swap the same pair of locations.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    12,
+    "exec",
+    753
+   ],
+   "memory_in": "target_anchor=[85, 109]; completed_cycles=2",
+   "answered": "B: put it down",
+   "recorded": "C: press the button to finish",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Clarify that the descent to height 0.019 followed by fingers opening to 100% and a raised open retreat counts as a completed put-down even when the cube is still labeled lifted off the table. Here that transition increments completed_cycles from 2 to 3; the airborne-cube label must not veto it.",
+   "missing_from_policy_prompt_for_subgoal": "Explicitly map 'three times' to N=3. After this release and fully open retreat, use the updated completed_cycles=3 to choose C. Clarify that a lingering lifted-cube label does not trigger the fallback to B when the hand has fully opened following a table-height release.",
+   "missing": ""
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    316
+   ],
+   "memory_in": "target_anchor=; completed_cycles=",
+   "answered": "A: pick up the cube at [116, 103]",
+   "recorded": "A: pick up the cube at [84, 168]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The demonstration tracking rule did not resolve the exchanges in this episode: the initially grasped cube near [117, 100] moves to the middle cube's endpoint during t=192–240, then to the rightmost endpoint during t=240–304. The policy prompt should specify tracking identity through these crossings rather than treating the cube ending near [116, 103] as the original target. This yields target_anchor=[83, 167] at initialization.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    746
+   ],
+   "memory_in": "target_anchor=[83, 167]; completed_cycles=2",
+   "answered": "B: put it down",
+   "recorded": "C: press the button to finish",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Clarify that the observed descent to table height, opening to 96%, and retreat with fingers 100% open counts as a completed put-down even when the cube is subsequently reported airborne near the wrist. Here that release sequence increments completed_cycles from 2 to 3; the airborne label must not veto the increment.",
+   "missing_from_policy_prompt_for_subgoal": "Explicitly map 'three times' to N=3. After this completed release and fully open retreat, choose C because the updated count is 3. The airborne cube report must not trigger the ambiguous-retention fallback to B when the release sequence and fully open fingers establish a completed put-down.",
+   "missing": ""
+  }
+ ]
+}

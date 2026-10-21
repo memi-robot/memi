@@ -1,0 +1,386 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "placed"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  27,
+  33,
+  55,
+  92,
+  94
+ ],
+ "scored": 37,
+ "failed": 22,
+ "subgoal_wrong": 14,
+ "memory_wrong": 19,
+ "subgoal_verified": 0.6216216216216216,
+ "memory_verified": 0.4864864864864865,
+ "reads": {
+  "placed": 19
+ },
+ "field_errors": {
+  "placed": {
+   "in": 19,
+   "sole": 19
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.5945945945945946,
+ "verified_of_all": 0.40540540540540543,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 12,
+ "decisions": 37,
+ "critique": "field placed, ANNOTATOR PROMPT\n  Keep the field as it is, with two points made literal so the written value and the policy's value coincide character for character. (1) The value is always written as a JSON array of double-quoted color strings, e.g. [] or [\"green\", \"blue\"]; at the first decision step of every episode the value is the literal [] (an explicit empty array, never a blank). (2) The append event is: the execution steps of this decision step contain at least one frame with a cube reported 'is held in the gripper', and the last frame of the step (the scene at the decision step) reports no held cube with the fingers about 100% open. That event is always one completed bin placement, regardless of where the gripper was reported when the fingers opened (it is often 30-50 px from the bin's reported center) and regardless of any same-color cube detection appearing on the table at or near the release point in the same frames; append the held cube's color once. One example sequence over an episode: [] -> [] -> [\"green\"] -> [\"green\"] -> [\"green\", \"green\"].\n\nfield placed, POLICY PROMPT\n  Three failures of PREDICTABILITY. First, at the first decision step (no execution steps, empty carried-in memory) the policy left the field blank where the annotation holds []; the instruction must say: when the carried-in memory is empty, write the literal [] as this step's value. Second, in most steps the policy produced the right colors but wrote them Python-style with single quotes; the instruction must say the value is a JSON array of double-quoted strings exactly like the carried-in value and the example, e.g. [\"green\", \"green\"], never ['green', 'green']. Third, twice the policy declined to append because the release looked like a miss: the fingers opened with the gripper reported some 40-50 px from the bin's center, and in the same frames a cube of the held color was newly detected on the table near the release point. The instruction must say: the oracle always runs the put-into-bin subgoal to completion, so the pattern 'some execution frame of this step reports a cube held in the gripper, and the last frame reports no held cube with the fingers about 100% open' is always a successful placement; append the held cube's color once, whatever the gripper position at release and whatever cubes appear or move on the table. Value after such a step, e.g. carried-in [\"red\"] becomes [\"red\", \"red\"].\n\nthe policy prompt for subgoal\n  Four things, in order of how often they broke SUFFICIENCY. (a) Reading the scene. Twice the policy, carrying an empty list and seeing many table cubes, chose a pick even though the last frame of the step reported a cube 'is held in the gripper' with the fingers 46% open and the gripper raised; it had read the earlier open-gripper frames. Rule 1 must say explicitly: the scene at this decision step is the LAST listed observed step; check that frame first, and if any object line there ends in 'is held in the gripper', or the fingers there are partly closed (about 46%), the answer is B before any other rule is considered. (b) Color priority. Rule 3's 'larger remaining count' is wrong and sent the policy to the other color three times. Every recorded episode with two goal colors finishes one color before starting the other: with placed=[\"green\"] under a goal of three blue and two green, the next pick is green again; with placed=[\"green\",\"green\"] under a goal of two red and three green, the next pick is green again. Replace the rule with: if the last entry of `placed` is a color whose required count is not yet met, pick that color; otherwise pick any color that still has fewer entries than required. When `placed` is empty the recorded first choice does not follow the named order nor the larger or smaller count, so the rule should say any needed color is acceptable there. (c) Ghost and drifting detections. Twice the policy pointed at a detection that was not a real resting cube: once a cube of the needed color that first appeared exactly where the just-released cube had been held and whose coordinates shifted frame to frame, once a cube next to the gripper whose coordinates moved along with the gripper. The rule should say: a candidate must be reported as a table cube (not held) at the same coordinates, within about 2 px, in every execution frame of this decision step including the first one; a detection that first appears during the step, that sits where the held cube was last reported, or whose position moves between frames is not a candidate while any stable one exists. (d) Tie-break among several stable cubes of the needed color. The instruction gives none, and the policy picked the first listed or an arbitrary one in seven steps. The recorded choices in this minibatch most often fall on the stable needed-color cube nearest the bin's reported center (in roughly three quarters of the cases), and never on a cube reported within about 25 px of the bin center, so the rule should say: among stable candidates, prefer the one nearest the bin but not overlapping it, and state that the point is the candidate's center as reported in the last frame, which may differ from any single listed coordinate by a pixel or two. The fallback clause 'nearest the gripper' should go, since the recorded picks are not nearest the gripper.\n\nrefused\n  Several steps asked for one exact geometric rule that reproduces every recorded choice among same-color cubes (nearest the bin, largest y, image center, nearest the gripper). Read across the whole minibatch no single such rule holds: the nearest-bin preference fails in a few steps and every other candidate rule fails more often, so I pass nearest-bin on as a preference, not a guarantee, and do not pass on largest-y, image-center or gripper-nearest. One step asked whether a cube within about 30 px of the bin counts as on the bin; the one such case was also a ghost detection at the release point, so it is covered by the stability rule rather than a distance threshold. One step asked which color to start with when nothing has been placed yet; the three first picks in the minibatch go to the second-named color twice and the first-named once, to the color needing more once and fewer twice, so no rule is supported and I report only that any needed color is allowed there. One step suggested the recorded first-step point was a composite of several detections; it is within 2 px of a listed green cube, so that suggestion stays out.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Four things, in order of how often they broke SUFFICIENCY. (a) Reading the scene. Twice the policy, carrying an empty list and seeing many table cubes, chose a pick even though the last frame of the step reported a cube 'is held in the gripper' with the fingers 46% open and the gripper raised; it had read the earlier open-gripper frames. Rule 1 must say explicitly: the scene at this decision step is the LAST listed observed step; check that frame first, and if any object line there ends in 'is held in the gripper', or the fingers there are partly closed (about 46%), the answer is B before any other rule is considered. (b) Color priority. Rule 3's 'larger remaining count' is wrong and sent the policy to the other color three times. Every recorded episode with two goal colors finishes one color before starting the other: with placed=[\"green\"] under a goal of three blue and two green, the next pick is green again; with placed=[\"green\",\"green\"] under a goal of two red and three green, the next pick is green again. Replace the rule with: if the last entry of `placed` is a color whose required count is not yet met, pick that color; otherwise pick any color that still has fewer entries than required. When `placed` is empty the recorded first choice does not follow the named order nor the larger or smaller count, so the rule should say any needed color is acceptable there. (c) Ghost and drifting detections. Twice the policy pointed at a detection that was not a real resting cube: once a cube of the needed color that first appeared exactly where the just-released cube had been held and whose coordinates shifted frame to frame, once a cube next to the gripper whose coordinates moved along with the gripper. The rule should say: a candidate must be reported as a table cube (not held) at the same coordinates, within about 2 px, in every execution frame of this decision step including the first one; a detection that first appears during the step, that sits where the held cube was last reported, or whose position moves between frames is not a candidate while any stable one exists. (d) Tie-break among several stable cubes of the needed color. The instruction gives none, and the policy picked the first listed or an arbitrary one in seven steps. The recorded choices in this minibatch most often fall on the stable needed-color cube nearest the bin's reported center (in roughly three quarters of the cases), and never on a cube reported within about 25 px of the bin center, so the rule should say: among stable candidates, prefer the one nearest the bin but not overlapping it, and state that the point is the candidate's center as reported in the last frame, which may differ from any single listed coordinate by a pixel or two. The fallback clause 'nearest the gripper' should go, since the recorded picks are not nearest the gripper.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "placed",
+    "description": "Three failures of PREDICTABILITY. First, at the first decision step (no execution steps, empty carried-in memory) the policy left the field blank where the annotation holds []; the instruction must say: when the carried-in memory is empty, write the literal [] as this step's value. Second, in most steps the policy produced the right colors but wrote them Python-style with single quotes; the instruction must say the value is a JSON array of double-quoted strings exactly like the carried-in value and the example, e.g. [\"green\", \"green\"], never ['green', 'green']. Third, twice the policy declined to append because the release looked like a miss: the fingers opened with the gripper reported some 40-50 px from the bin's center, and in the same frames a cube of the held color was newly detected on the table near the release point. The instruction must say: the oracle always runs the put-into-bin subgoal to completion, so the pattern 'some execution frame of this step reports a cube held in the gripper, and the last frame reports no held cube with the fingers about 100% open' is always a successful placement; append the held cube's color once, whatever the gripper position at release and whatever cubes appear or move on the table. Value after such a step, e.g. carried-in [\"red\"] becomes [\"red\", \"red\"]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "placed",
+    "description": "Keep the field as it is, with two points made literal so the written value and the policy's value coincide character for character. (1) The value is always written as a JSON array of double-quoted color strings, e.g. [] or [\"green\", \"blue\"]; at the first decision step of every episode the value is the literal [] (an explicit empty array, never a blank). (2) The append event is: the execution steps of this decision step contain at least one frame with a cube reported 'is held in the gripper', and the last frame of the step (the scene at the decision step) reports no held cube with the fingers about 100% open. That event is always one completed bin placement, regardless of where the gripper was reported when the fingers opened (it is often 30-50 px from the bin's reported center) and regardless of any same-color cube detection appearing on the table at or near the release point in the same frames; append the held cube's color once. One example sequence over an episode: [] -> [] -> [\"green\"] -> [\"green\"] -> [\"green\", \"green\"]."
+   }
+  ],
+  "refused": "Several steps asked for one exact geometric rule that reproduces every recorded choice among same-color cubes (nearest the bin, largest y, image center, nearest the gripper). Read across the whole minibatch no single such rule holds: the nearest-bin preference fails in a few steps and every other candidate rule fails more often, so I pass nearest-bin on as a preference, not a guarantee, and do not pass on largest-y, image-center or gripper-nearest. One step asked whether a cube within about 30 px of the bin counts as on the bin; the one such case was also a ghost detection at the release point, so it is covered by the stability rule rather than a distance threshold. One step asked which color to start with when nothing has been placed yet; the three first picks in the minibatch go to the second-named color twice and the first-named once, to the color needing more once and fewer twice, so no rule is supported and I report only that any needed color is allowed there. One step suggested the recorded first-step point was a composite of several detections; it is within 2 px of a listed green cube, so that suggestion stays out."
+ },
+ "critiques": [
+  {
+   "step": [
+    27,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [83, 84]",
+   "recorded": "A: pick up the cube at [100, 83]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It should say that at step #1, when the memory is empty, the field must be written explicitly as an empty list `[]` (a change from the blank carried-in value), not left blank.",
+   "missing_from_policy_prompt_for_subgoal": "The recorded point [100, 83] is not the center of any detection in the scene; it lies between the green cubes at [99, 82] and [97, 106] / [118, 81] and the blue cube at [83, 84]. The instruction should state which cube to pick when both colors are needed (here blue needs 3 and green needs 2, so I chose blue; the recorded answer seems to be a green cube) and whether the point may be a composite/approximate location rather than a listed detection center. In particular it should say to prefer green (or whichever rule produced [100,83]) and clarify tie/priority ordering, since 'larger remaining count' gave blue.",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    165
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [84, 84]",
+   "recorded": "A: pick up the cube at [119, 83]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not state the exact output format for the list: the value must be written as JSON with double-quoted strings, e.g. [\"green\"], not Python-style ['green'].",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3's color choice is wrong for this step. With placed=[\"green\"] and goal 'three blue and two green', the instruction says to take the color with the larger remaining count (blue, 3 left vs green 1 left), so I pointed at a blue cube at [84, 84]. The recorded answer continues with green at [119, 83] (the green cube at [118, 81]). The instruction should say: when a color has already been started (appears in `placed`) and is not yet complete, keep picking that same color until its count is satisfied before switching to another color; only when no started color is incomplete pick by the goal's named order or by largest remaining count. It should also say which of several same-color cubes to pick: here the recorded choice was the green cube at [118, 81] rather than [97, 106], i.e. apparently the one farther from the bin / with the larger y (more forward), not the one nearest the gripper.",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    355
+   ],
+   "memory_in": "placed=[\"green\"]",
+   "answered": "A: pick up the cube at [61, 171]",
+   "recorded": "A: pick up the cube at [63, 171]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The value I wrote (placed=['green','green']) matches the recorded value in content; the disagreement is only in quoting style (single quotes vs double quotes). The instruction should state that list values must be written as JSON with double-quoted strings exactly as in the example, e.g. [\"green\", \"green\"].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    531
+   ],
+   "memory_in": "placed=[\"green\", \"green\"]",
+   "answered": "A: pick up the cube at [84, 83]",
+   "recorded": "A: pick up the cube at [113, 153]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing substantive: the appended value matched; only the quoting differed (I wrote ['green','green','blue'] with single quotes instead of the double-quoted JSON form [\"green\", \"green\", \"blue\"] the field was handed in), so the instruction could state that the list is written exactly in JSON form with double quotes.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3 gave no tie-break among several visible cubes of the needed color. Here five blue cubes were stable at [71, 94], [84, 83], [88, 184], [105, 182], [112, 152]; I picked [84, 83] arbitrarily, while the recorded target was [113, 153] i.e. the cube at [112, 152], which is the blue cube nearest the bin at [90, 148] (and also the one furthest forward, largest y). The instruction should say which of the candidate cubes to point at when more than one of the needed color is visible, e.g. the one closest to the bin (or largest y), not the gripper-nearest or an arbitrary one.",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    695
+   ],
+   "memory_in": "placed=[\"green\", \"green\", \"blue\"]",
+   "answered": "A: pick up the cube at [84, 83]",
+   "recorded": "A: pick up the cube at [90, 185]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing (my value matched; only the quote style differed, so it should say to write the list with double-quoted strings exactly as handed in)",
+   "missing_from_policy_prompt_for_subgoal": "When several cubes of the needed color are visible (here four blue cubes at [71,94], [84,83], [88,184], [105,182], all stable across the execution steps and none on the bin), the instruction gives no tie-break among them. The recorded answer picked the one at about [88,184]/[90,185], which is the blue cube nearest the gripper's current position [24,153] and nearest the bin [90,147]; the instruction should say to choose the needed-color cube nearest the gripper (or nearest the bin), not an arbitrary one.",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    858
+   ],
+   "memory_in": "placed=[\"green\", \"green\", \"blue\", \"blue\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The value content matched; the only difference is quoting style (single quotes vs double quotes). The instruction should say the list must be written as a JSON array with double-quoted strings, exactly like the example [\"green\", \"green\"], and never Python-style single quotes.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    33,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [61, 81]",
+   "recorded": "A: pick up the cube at [80, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At the first step with an empty carried-in memory, the value to write is the explicit empty list `[]` (a memory update), not a blank; it should say the empty list is written as `[]` and that step #1 must emit `placed=[]`.",
+   "missing_from_policy_prompt_for_subgoal": "When several cubes of the needed color are visible at step #1 (five red cubes here: [61,81], [79,127], [87,178], [106,113], [115,96]), it gave no tie-break; the recorded pick was [79,127], the cube roughly centered in the scene (nearest the middle of the table / nearest the robot's start position), not the first listed. It should state which of several same-colored candidates to choose, e.g. the one closest to the gripper's home position or to the image center, and that the bin-overlapping cube ([87,178] near the bin at [112,177]) is excluded.",
+   "missing": ""
+  },
+  {
+   "step": [
+    33,
+    "exec",
+    113
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [79, 127]",
+   "recorded": "B: put it into the bin",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It did not say plainly that the last listed observed step (here t=113, which reports 'red cube at [50, 127] is held in the gripper', fingers 46% open) is the scene at this decision step and that Rule 1 must be checked on that last step before any pick rule is considered; I read the earlier open-gripper frames and the table cubes and applied Rule 3, instead of first testing the final frame for a held cube and choosing B.",
+   "missing": ""
+  },
+  {
+   "step": [
+    33,
+    "exec",
+    192
+   ],
+   "memory_in": "placed=[]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The value was correct in substance (placed = red); the disagreement is only in notation: I wrote ['red'] with single quotes, the record uses [\"red\"] with double quotes. The instruction should state the exact string form of the list value, e.g. a JSON list with double-quoted color strings, exactly as in its example [\"green\", \"green\"], so the written value matches character for character.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    183
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [71, 75]",
+   "recorded": "A: pick up the cube at [73, 76]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It should have said plainly that this exact pattern counts as a release: execution frames at t=128 and t=144 report 'green cube ... is held in the gripper', then from t=160 on the fingers read 99-100% open with no 'held' entry, so `placed` must become [\"green\"] at this step even though the gripper at release ([47,165], height 0.200) is not over the bin's reported center [94,155] and even though a new red cube at [67,162] appears on the table at the same moment; the oracle runs B to completion, so a held-then-open transition within the step is always a successful drop and the drop location or any newly detected table cube must not cause the append to be skipped.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    364
+   ],
+   "memory_in": "placed=[\"green\"]",
+   "answered": "A: pick up the cube at [54, 99]",
+   "recorded": "A: pick up the cube at [92, 182]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It should state that the list is written exactly in the JSON form of the carried-in value, with double-quoted strings (e.g. [\"green\", \"green\"]), never Python-style single quotes; my value differed only in quoting.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3's color-priority is wrong for this step: with placed=[\"green\",\"green\"] (green needs 1 more, red needs 2 more) it told me to take the larger remaining count, i.e. red at [54, 99], but the recorded answer keeps collecting green at [90, 181]. The instruction should say that when more than one goal color is still needed, continue with the color of the most recent entry in `placed` (the color currently being collected) until its required count is reached, and only then switch to another needed color; the larger-remaining-count rule applies only when `placed` is empty or the last-placed color is complete.",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    509
+   ],
+   "memory_in": "placed=[\"green\", \"green\"]",
+   "answered": "A: pick up the cube at [67, 162]",
+   "recorded": "A: pick up the cube at [54, 101]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It should state that the list is written exactly in the form handed in, JSON with double-quoted strings (e.g. [\"green\", \"green\", \"green\"]), not Python-style single quotes; the content I wrote was correct and only the quoting differed.",
+   "missing_from_policy_prompt_for_subgoal": "Both red cubes were needed-color candidates; the instruction told me to avoid flickering detections but did not make clear that a cube whose reported position shifts between frames of this step (the red at [69,162] -> [72,163] -> [67,162], right where the held green cube was released) counts as unstable and must be skipped in favor of a cube whose position is identical in every frame (the red at [54,99], present at the same spot at t=464, 480, 496, 509). It should say: among candidates of the needed color, pick the one with a constant position across all execution frames and farthest from the just-released spot; only fall back to a moving detection if no stable one exists.",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    704
+   ],
+   "memory_in": "placed=[\"green\", \"green\", \"green\"]",
+   "answered": "A: pick up the cube at [80, 98]",
+   "recorded": "A: pick up the cube at [102, 122]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing (my value ['green','green','green','red'] is the recorded value; only the quoting differed)",
+   "missing_from_policy_prompt_for_subgoal": "Three red cubes were visible at [67, 162], [80, 98], [100, 121] and all were stable across the execution steps; the instruction gives no tie-break among several visible cubes of the needed color, so I took [80, 98] while the recorded answer took [100, 121]. It should state the selection rule when more than one cube of the needed color is on the table (e.g. the most forward one / largest y, or the one nearest the bin, or whichever ordering the recorded trajectories follow), and whether a cube lying within ~30 px of the bin such as [67, 162] counts as 'on the bin's position' and is excluded.",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    856
+   ],
+   "memory_in": "placed=[\"green\", \"green\", \"green\", \"red\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The value content matched; the disagreement is only single quotes versus double quotes around the list entries. The instruction should state explicitly that the list must be written as JSON with double-quoted strings, exactly as in the example [\"green\", \"green\"], not Python-style ['green'].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    92,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [76, 109]",
+   "recorded": "A: pick up the cube at [92, 164]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At step #1 with an empty carried-in memory, the instruction says to 'start with an empty list' but does not say that this counts as a change that must be written explicitly as `[]` in memory_updates rather than left blank; it should state that the first step always writes placed=[].",
+   "missing_from_policy_prompt_for_subgoal": "When several cubes of the needed color are visible and none is held, the instruction gives no rule for which one to pick; the recorded answer chose the blue cube at [91, 163] (nearer the bin / larger y, larger x) rather than the one at [76, 109]. It should state the tie-break among same-color candidates, e.g. prefer the cube closest to the bin, or the one farthest forward (largest y), rather than leaving it unspecified.",
+   "missing": ""
+  },
+  {
+   "step": [
+    92,
+    "exec",
+    180
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [59, 174]",
+   "recorded": "A: pick up the cube at [98, 117]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It did not say that a blue cube detection appearing at the spot where the held cube was reported at the start of these execution steps (here [59,174], the same place as the held cube at [61,173] at t=112, absent at t=112 as a table cube) is a stale/ghost detection of the cube just carried away and must not be picked. It should say: only pick a cube that was reported as a table cube (not held) in every execution step of this decision step, including the first one, e.g. [97,117]/[98,117]; among such cubes, which to prefer (e.g. the one nearest the gripper or farthest from the bin/released cube).",
+   "missing": ""
+  },
+  {
+   "step": [
+    92,
+    "exec",
+    352
+   ],
+   "memory_in": "placed=[\"blue\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not state the exact serialization of the list: write it as a JSON array with double-quoted strings, e.g. [\"blue\", \"blue\"], never Python-style ['blue', 'blue']. My value ['blue', 'blue'] matched in content but differed in quoting.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [64, 83]",
+   "recorded": "A: pick up the cube at [75, 100]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It says to 'start with an empty list' but does not say to write it literally as `[]`; I left the field blank (`placed=`) while the recorded value is `placed=[]`. The instruction should state the exact literal to write at step #1 (and whenever the list is empty).",
+   "missing_from_policy_prompt_for_subgoal": "Four red cubes were visible ([64, 83], [74, 98], [108, 138], [118, 170]) and the instruction said 'at step #1, simply any cube of that color', giving no tie-break. I took the first listed, [64, 83]; the recorded choice was [74, 98] (reported as [75, 100]). The instruction needs a deterministic rule for choosing among several cubes of the needed color, e.g. prefer the one nearest the bin / the button / the image center, or avoid cubes near the frame edge (small y), whatever rule yields [74, 98] over [64, 83] here.",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    119
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [64, 83]",
+   "recorded": "B: put it into the bin",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It should have said explicitly that 'the scene at this decision step' is the LAST observed step (here t=119), and that any object line there ending in 'is held in the gripper' (here 'red cube at [43, 90] is held in the gripper', with fingers 46% open and gripper raised to height 0.146) triggers Rule 1 -> B immediately, before any consideration of which cubes are on the table; the long list of table cubes and the still-empty `placed` must not be read as a pick situation.",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    186
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [64, 83]",
+   "recorded": "A: pick up the cube at [66, 84]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The release in these steps happened with the gripper at [63, 68], far from the bin at [107, 86], and a red cube at [65, 81] appeared on the table right under the release point, so I judged it a failed drop onto the table rather than a release into the bin and did not append. The instruction should state explicitly that a held-then-open event counts as a bin placement regardless of where the gripper is reported when the fingers open, and regardless of a same-color cube appearing on the table near the release point (that detection is the bin/placed cube or a distractor, not evidence of a miss). Here that would have given placed=[\"red\"].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    366
+   ],
+   "memory_in": "placed=[\"red\"]",
+   "answered": "A: pick up the cube at [58, 99]",
+   "recorded": "A: pick up the cube at [107, 118]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Only form: the example uses JSON double quotes ([\"red\", \"red\"]); it should state the value must be written exactly in that JSON form, not Python-style ['red', 'red'].",
+   "missing_from_policy_prompt_for_subgoal": "It did not tell me how to choose between two green cubes when both are visible throughout the execution steps. Here the green cube near the gripper at [58, 99] shifted position frame to frame ([58,99] -> [61,102] -> [60,100] -> [58,99], moving along with the gripper), while the green cube at [105, 117] stayed at exactly the same place in every frame. The instruction should say that a detection whose position drifts between frames (especially one close to / tracking the gripper) counts as unstable and must be avoided, and that the pick target should be the needed-color cube whose position is identical across all execution steps shown, choosing among those the one on the far side of the table (larger y, near the other cubes) rather than the one nearest the gripper.",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    526
+   ],
+   "memory_in": "placed=[\"red\", \"red\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The content matched (red, red, green); only the quoting differed. The instruction should state explicitly that the `placed` value must be written as a JSON list with double-quoted strings, exactly like the example [\"red\", \"red\", \"green\"], never Python-style single quotes.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

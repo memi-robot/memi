@@ -1,0 +1,13 @@
+{
+ "task": "PickHighlight",
+ "fields": [
+  {
+   "name": "button_pressed",
+   "description": "`no` at step #1 (nothing has happened yet), written explicitly, never left blank. `yes` at every step from the one whose execution steps show the press onward, i.e. from step #2 to the end of the episode. The press is shown by EITHER of two signs: the button labelled pressed down, OR the gripper at the button's [y, x] (within a few pixels) at a height near 0.03 with fingers closed (0-2% open); the highlighted areas vanishing afterwards confirms it. Either sign alone is the press. Never reverts to `no`. e.g. yes"
+  },
+  {
+   "name": "pending_cubes",
+   "description": "Ordered list of the [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up; the FIRST entry is always the next cube to pick. `[]` at step #1, written explicitly, never left blank. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, ordered by where those cubes stand in the observation's object listing at that step (the cube listed earlier among the observed objects comes first; colour groups in the order the listing gives them, and within one colour the instance listed earlier first). Do not order by the order the highlighted areas are listed, by distance to the gripper, by x or by y. At each later step, drop the one entry whose stored [y, x] is nearest the cube that the execution steps show being picked up (gripper descends onto it with open fingers, closes, and the cube is then marked held), whatever its place in the list, and keep every other entry in its existing order; the list shrinks by one at each pick-up step. A place step (first execution frame already shows the cube held, later frames show the fingers reopening and the cube resting on the table) leaves the list unchanged. An entry stays in the list even when its cube is not currently among the observed objects (it can be hidden by the arm); only a pick-up drops it. e.g. [[106, 104], [53, 101]] when the blue cube at [106, 104] is listed before the green cube at [53, 101] and both sit on highlighted areas."
+  }
+ ]
+}

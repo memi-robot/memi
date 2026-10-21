@@ -1,0 +1,218 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "placed"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  27,
+  33,
+  55,
+  92,
+  94
+ ],
+ "scored": 37,
+ "failed": 10,
+ "subgoal_wrong": 9,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.7567567567567568,
+ "memory_verified": 0.972972972972973,
+ "reads": {
+  "placed": 16
+ },
+ "field_errors": {
+  "placed": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2702702702702703,
+ "verified_of_all": 0.7297297297297297,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 9,
+ "decisions": 37,
+ "critique": "field placed, ANNOTATOR PROMPT\n  No change to what it holds or when it changes. Only make the first-step value explicit: at the first decision step the field is written as the literal empty list [] (not left blank), and it stays an explicit list thereafter. Example: [] at the first step, [\"green\"] after the first release over the bin.\n\nfield placed, POLICY PROMPT\n  At the first decision step the carried-in memory is blank (no value at all). This counts as a write: the policy must output placed=[] explicitly so the field holds an empty list. The failure was PREDICTABILITY at the first step of an episode: the policy chose the right pick subgoal but wrote nothing for `placed`, because the instruction said 'start with an empty list' without saying that this is a value to be written. Otherwise the field is unchanged: copy the carried-in list, and append the held cube's color only when the execution steps shown contain a frame with a cube held in the gripper and the scene at this decision step shows the gripper fully open with nothing held. Example: [\"green\", \"green\", \"blue\"].\n\nthe policy prompt for subgoal\n  Every failure in this batch is a SUFFICIENCY failure of Rule 3 (pick) on which cube to point at; the memory was correct at every one of them and Rules 1 and 2 were never at fault. Two things in Rule 3 have to change. First, the color-ordering clause 'take the color with the larger remaining count' is wrong and must be removed. Across all episodes with two goal colors the robot finishes one color completely before touching the other: a goal of three blue and two green was done green, green, blue, blue, blue; a goal of two red and three green was done green, green, green, red, red; a goal of two red and one green was done red, red, green. So the rule must be: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again; only when the last-placed color is complete move to another needed color. Neither 'larger remaining count' nor 'larger total count' nor a fixed color preference explains which color is started first (the smaller-count color was started in one episode, the larger-count color in the other two), so the first color is not derivable from the goal; the instruction should say that when `placed` is empty any needed color may be started, and should name one deterministic default so the answer is at least fixed (e.g. the needed color with the larger required count, ties to the color listed first in the goal), while stressing that once a color is started it is finished before the other. Second, the clause 'simply any cube of that color' and the preference list (stable detection, not on the bin) leave the choice among several same-color cubes open, and the reports asked for a tie-break. I checked the recorded picks against the candidates: they are not the cube nearest the gripper, not the nearest to the bin, not the forward-most (largest y), not the nearest to the robot, not the first or last listed; none of these orders reproduces the recorded choices in more than a minority of steps, so the recorded cube appears to be fixed by the oracle's internal object order and not by anything the step shows. The instruction should therefore keep the hard constraints (never a cube of a non-needed color, never the bin or the button, prefer a detection present at the same place in every execution step of this decision step over one that appeared or moved mid-step) and then give one explicit deterministic tie-break so that the policy's answer is stable, stated as: among the remaining candidates of the chosen color take the one with the largest y, and on equal y the smallest x. It should also say that the point may be offset by a pixel or two from the listed detection center, which is acceptable. The fallback clauses and Rules 1 and 2 stay as they are.\n\nrefused\n  Several steps proposed specific spatial tie-breaks (nearest the bin, nearest the gripper, forward-most cube, nearest the workspace center, excluding the cube near the button) each derived from the single step the policy stood at. Each of them contradicts the recorded pick at other steps in the same episodes: the recorded cube is sometimes the nearest to the bin and sometimes the farthest, sometimes the forward-most and more often not, and the cube nearest the gripper is passed over in most pick steps. None of them is passed on as a rule that explains the data; one is kept only as an arbitrary deterministic default so the policy's output is stable. Likewise the proposals to order colors by total required count or by a fixed color preference are refused, since one episode starts with the smaller-count color and another with the larger, and green is started first in two episodes but red in the third; only 'finish the color most recently placed' holds across all of them.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Every failure in this batch is a SUFFICIENCY failure of Rule 3 (pick) on which cube to point at; the memory was correct at every one of them and Rules 1 and 2 were never at fault. Two things in Rule 3 have to change. First, the color-ordering clause 'take the color with the larger remaining count' is wrong and must be removed. Across all episodes with two goal colors the robot finishes one color completely before touching the other: a goal of three blue and two green was done green, green, blue, blue, blue; a goal of two red and three green was done green, green, green, red, red; a goal of two red and one green was done red, red, green. So the rule must be: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again; only when the last-placed color is complete move to another needed color. Neither 'larger remaining count' nor 'larger total count' nor a fixed color preference explains which color is started first (the smaller-count color was started in one episode, the larger-count color in the other two), so the first color is not derivable from the goal; the instruction should say that when `placed` is empty any needed color may be started, and should name one deterministic default so the answer is at least fixed (e.g. the needed color with the larger required count, ties to the color listed first in the goal), while stressing that once a color is started it is finished before the other. Second, the clause 'simply any cube of that color' and the preference list (stable detection, not on the bin) leave the choice among several same-color cubes open, and the reports asked for a tie-break. I checked the recorded picks against the candidates: they are not the cube nearest the gripper, not the nearest to the bin, not the forward-most (largest y), not the nearest to the robot, not the first or last listed; none of these orders reproduces the recorded choices in more than a minority of steps, so the recorded cube appears to be fixed by the oracle's internal object order and not by anything the step shows. The instruction should therefore keep the hard constraints (never a cube of a non-needed color, never the bin or the button, prefer a detection present at the same place in every execution step of this decision step over one that appeared or moved mid-step) and then give one explicit deterministic tie-break so that the policy's answer is stable, stated as: among the remaining candidates of the chosen color take the one with the largest y, and on equal y the smallest x. It should also say that the point may be offset by a pixel or two from the listed detection center, which is acceptable. The fallback clauses and Rules 1 and 2 stay as they are.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "placed",
+    "description": "At the first decision step the carried-in memory is blank (no value at all). This counts as a write: the policy must output placed=[] explicitly so the field holds an empty list. The failure was PREDICTABILITY at the first step of an episode: the policy chose the right pick subgoal but wrote nothing for `placed`, because the instruction said 'start with an empty list' without saying that this is a value to be written. Otherwise the field is unchanged: copy the carried-in list, and append the held cube's color only when the execution steps shown contain a frame with a cube held in the gripper and the scene at this decision step shows the gripper fully open with nothing held. Example: [\"green\", \"green\", \"blue\"]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "placed",
+    "description": "No change to what it holds or when it changes. Only make the first-step value explicit: at the first decision step the field is written as the literal empty list [] (not left blank), and it stays an explicit list thereafter. Example: [] at the first step, [\"green\"] after the first release over the bin."
+   }
+  ],
+  "refused": "Several steps proposed specific spatial tie-breaks (nearest the bin, nearest the gripper, forward-most cube, nearest the workspace center, excluding the cube near the button) each derived from the single step the policy stood at. Each of them contradicts the recorded pick at other steps in the same episodes: the recorded cube is sometimes the nearest to the bin and sometimes the farthest, sometimes the forward-most and more often not, and the cube nearest the gripper is passed over in most pick steps. None of them is passed on as a rule that explains the data; one is kept only as an arbitrary deterministic default so the policy's output is stable. Likewise the proposals to order colors by total required count or by a fixed color preference are refused, since one episode starts with the smaller-count color and another with the larger, and green is started first in two episodes but red in the third; only 'finish the color most recently placed' holds across all of them."
+ },
+ "critiques": [
+  {
+   "step": [
+    27,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [70, 95]",
+   "recorded": "A: pick up the cube at [100, 83]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The color-priority rule is wrong for this step: it told me to pick the color with the larger remaining count (blue, 3 needed vs green, 2 needed), so I chose the blue cube at [70, 95], but the recorded answer picks the green cube at [99, 82] (recorded point [100, 83]) while three blue cubes are still needed. The instruction needs to say which needed-color cube to pick when several colors are still required (apparently not 'larger remaining count'; e.g. green before blue, or a spatial criterion such as the needed-color cube nearest some reference), and which of the three green cubes ([97, 106], [99, 82], [118, 81]) to point at, since nothing distinguished [99, 82].",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    165
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [84, 84]",
+   "recorded": "A: pick up the cube at [119, 83]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "With placed=[\"green\"] and both colors still needed (blue 3 remaining, green 1 remaining), Rule 3 told me to take the color with the larger remaining count, so I pointed at a blue cube at [84, 84]. The recorded answer picks the green cube at [118, 81] (point [119, 83]). The instruction's color-ordering rule is wrong for this trajectory: it should say that when more than one goal color is still needed, continue with the color that was most recently placed (finish one color before starting the other), rather than the color with the larger remaining count. It should also say that the point can be slightly offset from the listed detection center (here [119, 83] for the cube listed at [118, 81]).",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    531
+   ],
+   "memory_in": "placed=[\"green\", \"green\"]",
+   "answered": "A: pick up the cube at [71, 94]",
+   "recorded": "A: pick up the cube at [113, 153]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Five blue cubes were visible ([71, 94], [84, 83], [88, 184], [105, 182], [112, 152]) and all were stable across the execution steps, so the instruction's preference rules did not pick one. The recorded answer chose [112, 152], the blue cube with the largest y (farthest forward) and also the one nearest the bin at [90, 148]. The instruction needs an explicit tie-break among several visible cubes of the needed color, e.g. pick the one closest to the bin (or the most forward one, largest y), rather than leaving the choice open.",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    695
+   ],
+   "memory_in": "placed=[\"green\", \"green\", \"blue\"]",
+   "answered": "A: pick up the cube at [71, 94]",
+   "recorded": "A: pick up the cube at [90, 185]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "When several cubes of the needed color are visible and all were stable across the execution steps (here blue at [71,94], [84,83], [88,184], [105,182]), the instruction gives no tie-break for which one to point at. The recorded answer took the one at [88,184] (about [90,185]), which is the needed-color cube closest to the gripper's current position [24,153] / closest to the bin at [90,147]; the instruction should state that tie-break explicitly (e.g. choose the needed-color cube nearest the gripper, measured in [y,x] distance, not the first listed).",
+   "missing": ""
+  },
+  {
+   "step": [
+    33,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [61, 81]",
+   "recorded": "A: pick up the cube at [80, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "At step #1 with five red cubes visible at [61, 81], [79, 127], [87, 178], [106, 113], [115, 96], the instruction says 'simply any cube of that color', so I took the first listed one at [61, 81]. The recorded pick is [79, 127] (recorded as [80, 128]). The instruction needs a tie-break rule among several same-color candidates: e.g. pick the cube nearest the center of the workspace / nearest the robot's reach, or exclude the one nearest the button ([61, 81] is close to the button at [60, 120]) and the one on top of the bin position ([87, 178] near bin [112, 177]), and then choose the nearest remaining to the robot (smallest y) or to the bin. Whatever the rule, it must say which of several valid red cubes to point at.",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [68, 178]",
+   "recorded": "A: pick up the cube at [70, 179]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At the first decision step, where the carried-in memory is empty (placed= with no value), the instruction says 'start with an empty list' but does not say that this counts as a change to be written explicitly as the literal value [] in memory_updates; it should say: when the carried-in placed is blank, write placed=[] at step #1 so the field holds an explicit empty list.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    183
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [53, 100]",
+   "recorded": "A: pick up the cube at [73, 76]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The tie rule 'ties: either' left the choice open. Here placed=[\"green\"] leaves red 2 remaining and green 2 remaining, a tie, and I took red at [53, 100]; the recorded answer takes the green cube at [71, 75] (stable across all execution steps). The instruction should say: order colors by the TOTAL count the goal asks for (green 3 before red 2), and keep picking that same color until its full count is in `placed` before moving to the next color; only then pick the other color. Also on ties never switch away from the color most recently appended to `placed`. And when two cubes of the chosen color are visible, point at the one present at the same place in every execution step of this decision step ([71, 75]), not the one that first appeared mid-step ([58, 79]).",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    364
+   ],
+   "memory_in": "placed=[\"green\"]",
+   "answered": "A: pick up the cube at [54, 99]",
+   "recorded": "A: pick up the cube at [92, 182]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The color-priority rule is wrong for this step. With placed=[\"green\",\"green\"] after the update, red still needs 2 and green needs 1; the instruction's 'take the color with the larger remaining count' tells me to pick red at [54, 99], but the recorded answer picks the green cube at [90, 181] (recorded as [92, 182]). The instruction should say to keep working on the color already started (the color of the most recent entry in `placed`, here green) until its required count is reached, and only then move to the other goal color; or alternatively that green is finished before red. It also does not say which of several visible cubes of the chosen color to pick (here the far green at [90, 181] rather than the near one at [58, 81]).",
+   "missing": ""
+  },
+  {
+   "step": [
+    55,
+    "exec",
+    704
+   ],
+   "memory_in": "placed=[\"green\", \"green\", \"green\"]",
+   "answered": "A: pick up the cube at [80, 98]",
+   "recorded": "A: pick up the cube at [102, 122]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Three red cubes were steadily visible ([67, 162], [80, 98], [100, 121]) and all pass the stated filters, but the instruction gives no tie-break for choosing among several candidates of the needed color. The recorded answer took [100, 121], the farthest-forward (largest y) red cube, not the one nearest the gripper or the one I took at [80, 98]; the instruction needs to state the selection rule among multiple valid cubes of the needed color (e.g. the one with the largest y / farthest from the bin, or whichever rule actually generates the recorded choice).",
+   "missing": ""
+  },
+  {
+   "step": [
+    92,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [76, 136]",
+   "recorded": "A: pick up the cube at [92, 164]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "At step #1 with six blue cubes visible ([59,176], [76,109], [76,136], [91,163], [97,117], [110,147]), the instruction said 'simply any cube of that color' and gave no tie-break, so I chose [76,136] while the recorded answer picked [91,163] (reported as [92,164]). It needs a deterministic selection rule among equally valid cubes of the needed color, e.g. prefer the cube closest to the bin at [122,181] that is not on the bin (here [91,163]), or the forward-most/right-most cube, or whatever ordering produces [91,163] here, stated in terms of y/x so the same cube is chosen every time.",
+   "missing": ""
+  }
+ ]
+}

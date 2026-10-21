@@ -1,0 +1,23 @@
+{
+ "task": "SwingXtimes",
+ "run": 1,
+ "stage": "init",
+ "initialized_on": [
+  44,
+  53,
+  56,
+  69,
+  72
+ ],
+ "seed": 7,
+ "provider": "anthropic",
+ "model": "claude-fable-5-1",
+ "reasoning_effort": "low",
+ "policy_prompt_for_subgoal": "Coordinates are [y, x]. The right-side target is the one with the SMALLER x; the left-side target is the one with the LARGER x. First read the goal to get the required number of target visits REQ: if it says 'repeating this back and forth motion N times' then REQ = 2*N (two=4, three=6); if it instead says 'then put it down on the left-side target' then REQ = 2. Every episode starts with subgoal A. Rules (apply whichever matches the current step and memory): 1. If the cube is NOT held in the gripper and visits_done is 0 (cube resting on the table, fingers open, nothing done yet): choose A, pick up the cube, pointing at the cube's center coordinates. 2. If the cube IS held in the gripper and visits_done < REQ: choose B, move to the top of the target. If visits_done is even (0, 2, 4...), point at the right-side target (smaller x); if visits_done is odd (1, 3, 5...), point at the left-side target (larger x). Equivalently, point at the target that is NOT currently highlighted. Use that target's listed coordinates. 3. If the cube IS held in the gripper and visits_done >= REQ (the cube is now above the left-side target after the last required visit): choose C, put the cube on the table. 4. If the cube is NOT held in the gripper and visits_done >= REQ (cube resting on the table after the put-down, fingers fully open, gripper raised): choose D, press the button. If no rule matches: when the cube is held, choose B pointing at the target that is not highlighted; when the cube is on the table and visits_done is 0, choose A at the cube; when the cube is on the table and visits_done > 0, choose D.",
+ "fields": [
+  {
+   "name": "visits_done",
+   "description": "Carry in the previous value (start at 0 on the first step, where memory is empty). Add 1 if and only if, at the scene of this decision step, the cube is 'held in the gripper' AND a 'highlighted target' is shown under/near the gripper AND that highlighted target either was absent or was a different target in the first execution frame shown for this step. Otherwise keep the carried-in value unchanged (the pick-up step, the put-down step where the cube ends on the table with fingers fully open, and the press-button step do not change it). e.g. 3"
+  }
+ ]
+}

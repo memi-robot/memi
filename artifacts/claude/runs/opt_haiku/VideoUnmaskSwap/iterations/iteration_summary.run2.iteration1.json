@@ -1,0 +1,112 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "target_containers",
+  "put_down_count"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  28,
+  31,
+  67,
+  79
+ ],
+ "scored": 13,
+ "failed": 2,
+ "subgoal_wrong": 1,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.9230769230769231,
+ "memory_verified": 0.8461538461538461,
+ "reads": {
+  "target_containers": 5,
+  "put_down_count": 5
+ },
+ "field_errors": {
+  "target_containers": {
+   "in": 2,
+   "sole": 2
+  },
+  "put_down_count": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.15384615384615385,
+ "verified_of_all": 0.8461538461538461,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 13,
+ "critique": "field target_containers, ANNOTATOR PROMPT\n  Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step and copied unchanged afterwards. Situation that mattered: at the first decision step, with an empty memory and the demonstration shown, the goal named a cube whose container took part in a shuffle; in every demonstration of this task a shuffle is a block of three consecutive frames in which exactly two containers leave their resting slots, circle each other, and come back to rest, and when they come back each of the two sits in the OTHER one's slot. The policy instead took the container resting at the named cube's original slot in the last frame, so it wrote the neighbour's position and pointed at the wrong container (PREDICTABILITY: the value written differed from the annotated one; SUFFICIENCY: the first pick then pointed at the wrong container). The filling is to be stated by slots and swaps rather than by nearest-neighbour arcs: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the remaining frames; each block of frames in which two containers are away from their slots is one shuffle, and when the frame after it shows all containers back at slots, those two containers have exchanged slots (two shuffles of the same pair put them back where they started); (4) the entry is the named cube's container's slot after all shuffles, written with the coordinates listed in the last demonstration frame (slots wobble by a few pixels). e.g. [[84, 110], [93, 163]]\n\nfield target_containers, POLICY PROMPT\n  Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown), then copy it unchanged at every later step. Situation that mattered: the named cube's container was moved during the demonstration and the policy answered with the container that sits at the cube's original spot in the last frame, which after a swap is a different container; the entry and the first pick were both wrong (PREDICTABILITY and SUFFICIENCY). Replace the nearest-neighbour/arc procedure with this one: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; call the positions listed in that frame the slots, and label the named container by its slot; (3) go through the remaining frames; whenever a frame lists two containers at positions that are not slots (they are off by well over 10 pixels), a shuffle is under way between the two containers whose slots are now empty; the shuffle lasts until a frame again shows all containers at slots; at that frame those two containers have SWAPPED slots, so if the named container was one of the two, its slot is now the other container's old slot; a second shuffle of the same pair swaps them back; shuffles of other pairs do not touch it; (4) never assume a container returns to its own starting slot, and never pick the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. e.g. [[84, 110], [93, 163]]\n\nrefused\n  The failed steps asked for the existing nearest-neighbour-plus-arc tracking to be kept and merely decorated with warnings and a swap example. That is not passed on as such: across the minibatch the arc tie-break gives a wrong answer in one demonstration where two containers circle each other and the arc continuation points to the wrong one, so the whole procedure is replaced by the slot-and-swap rule above, which reproduces every annotated entry in the minibatch. The suggestion for the subgoal instruction (that the point may be written as the tracked container's current listed position, small offsets being acceptable) is already how the instruction reads and the policy got the point right once it had the right container, so nothing changes there.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_containers",
+    "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown), then copy it unchanged at every later step. Situation that mattered: the named cube's container was moved during the demonstration and the policy answered with the container that sits at the cube's original spot in the last frame, which after a swap is a different container; the entry and the first pick were both wrong (PREDICTABILITY and SUFFICIENCY). Replace the nearest-neighbour/arc procedure with this one: (1) from the first demonstration frames note each named cube's position; (2) at the first frame listing containers, the named cube's container is the one nearest that cube; call the positions listed in that frame the slots, and label the named container by its slot; (3) go through the remaining frames; whenever a frame lists two containers at positions that are not slots (they are off by well over 10 pixels), a shuffle is under way between the two containers whose slots are now empty; the shuffle lasts until a frame again shows all containers at slots; at that frame those two containers have SWAPPED slots, so if the named container was one of the two, its slot is now the other container's old slot; a second shuffle of the same pair swaps them back; shuffles of other pairs do not touch it; (4) never assume a container returns to its own starting slot, and never pick the container resting nearest the cube's original position in the last frame; the entry is the named container's slot after every swap, written with that slot's coordinates as listed in the last demonstration frame. Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110]. e.g. [[84, 110], [93, 163]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_containers",
+    "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step and copied unchanged afterwards. Situation that mattered: at the first decision step, with an empty memory and the demonstration shown, the goal named a cube whose container took part in a shuffle; in every demonstration of this task a shuffle is a block of three consecutive frames in which exactly two containers leave their resting slots, circle each other, and come back to rest, and when they come back each of the two sits in the OTHER one's slot. The policy instead took the container resting at the named cube's original slot in the last frame, so it wrote the neighbour's position and pointed at the wrong container (PREDICTABILITY: the value written differed from the annotated one; SUFFICIENCY: the first pick then pointed at the wrong container). The filling is to be stated by slots and swaps rather than by nearest-neighbour arcs: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the remaining frames; each block of frames in which two containers are away from their slots is one shuffle, and when the frame after it shows all containers back at slots, those two containers have exchanged slots (two shuffles of the same pair put them back where they started); (4) the entry is the named cube's container's slot after all shuffles, written with the coordinates listed in the last demonstration frame (slots wobble by a few pixels). e.g. [[84, 110], [93, 163]]"
+   }
+  ],
+  "refused": "The failed steps asked for the existing nearest-neighbour-plus-arc tracking to be kept and merely decorated with warnings and a swap example. That is not passed on as such: across the minibatch the arc tie-break gives a wrong answer in one demonstration where two containers circle each other and the arc continuation points to the wrong one, so the whole procedure is replaced by the slot-and-swap rule above, which reproduces every annotated entry in the minibatch. The suggestion for the subgoal instruction (that the point may be written as the tracked container's current listed position, small offsets being acceptable) is already how the instruction reads and the policy got the point right once it had the right container, so nothing changes there."
+ },
+ "critiques": [
+  {
+   "step": [
+    67,
+    "exec",
+    168
+   ],
+   "memory_in": "target_containers=; put_down_count=",
+   "answered": "A: pick up the container at [66, 118]",
+   "recorded": "A: pick up the container at [81, 109]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The procedure was there but it did not warn that the red cube's container ([66,120] at t=32) swaps places with its neighbour during t=112..t=160: tracked frame by frame it goes [66,120] -> [71,125] (t=128) -> [82,129] (t=144) -> tie at t=160 between [66,118] and [84,110], resolved by the arc toward larger y to [84,110]. The instruction should say explicitly that the container nearest the cube's ORIGINAL position in the last frame is NOT the answer when a shuffle happened near it, that the tie-break step must be applied whenever two containers move in the same frames, and should give a worked example of a swap so the final entry is taken from the tracked chain ([84,110] here) rather than from the container that ends up sitting where the cube was ([66,118]).",
+   "missing_from_policy_prompt_for_subgoal": "nothing (the recorded point [81,109] is simply the container listed at [84,110]; the instruction could note that the point may be written as the tracked container's current listed position, small offsets being acceptable)",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    216
+   ],
+   "memory_in": "target_containers=; put_down_count=",
+   "answered": "A: pick up the container at [90, 96]",
+   "recorded": "A: pick up the container at [87, 96]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not warn that the container over a named cube ends the shuffle at a different listed position than where it started, and that step (3) must be applied frame by frame rather than taking the container that sits at the cube's original position in the last frame. At this step the red cube's container starts at [122, 163], moves to [111, 147] (t=80), then [93, 142] (t=96), then [81, 155] (t=112), ending at [80, 157], while the green cube's container takes the [122, 163] slot. The instruction should state explicitly: 'do not assume a container returns to its starting slot; the entry is wherever the frame-by-frame nearest-neighbour chain ends, which may be another cube's original slot', with a worked swap example like this one.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

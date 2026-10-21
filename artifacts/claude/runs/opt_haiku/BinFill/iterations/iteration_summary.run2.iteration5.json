@@ -1,0 +1,154 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "placed",
+  "arrivals"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  46,
+  87,
+  89,
+  99
+ ],
+ "scored": 31,
+ "failed": 5,
+ "subgoal_wrong": 2,
+ "memory_wrong": 5,
+ "subgoal_verified": 0.9354838709677419,
+ "memory_verified": 0.8387096774193549,
+ "reads": {
+  "placed": 21,
+  "arrivals": 23
+ },
+ "field_errors": {
+  "placed": {
+   "in": 0,
+   "sole": 0
+  },
+  "arrivals": {
+   "in": 5,
+   "sole": 5
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.16129032258064516,
+ "verified_of_all": 0.8387096774193549,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 31,
+ "critique": "field arrivals, ANNOTATOR PROMPT\n  Two changes, both so that the value the annotator writes is one the policy can compute from the same step. (1) First-step ordering. The current rule orders the pre-existing cubes by which ones the oracle later picks, which the policy cannot see, and the goal-naming order the policy was told does not reproduce it either: with a goal asking for three cubes of one color and one of another, the first pick was the single-count color even though the goal named it second and it lay farther from the bin. Across the batch the first pick always went to the color with the SMALLEST required count (goal naming order only as a tie between equal counts), then within a color to the cube nearest the bin's reported center while at least about 28 px from it; when two cubes of that color are within about 3 px of the same distance to the bin, the one with the larger x (the robot's left) comes first. The step-1 list is written in exactly that order: all cubes of the smallest-count color (nearest bin first, larger-x tie-break), then the next color by count, and so on; cubes of a color not named in the goal are never listed. Drop the look-ahead to the oracle's later picks. Example with a goal of three blue and one green, green at [65, 109] and blue at [84, 112]: [[65, 109], [84, 112]]. (2) Bin-echo exclusion. A real cube that appeared mid-step 26 px from the bin center while nothing had yet been placed was (correctly) appended, which the 28 px rule as written forbids. The 28 px exclusion applies to detections present in the scene at step #1 and to detections of a color that is already in `placed` or is being released in this step. A detection of a color not yet placed that first appears during a step and stays at the same place through the scene at the decision step is a genuine new cube wherever it lies and is appended in order of first appearance. (3) Matching is one-to-one with a hard cutoff: each carried entry is matched to at most one detection of its color, the nearest within 12 px; a detection 13 px or more from every unmatched entry is new. (4) In a pick-up step (one that ends with a cube held and has no release frame) there is no release echo and no gripper-tracking exclusion: every new goal-color detection in the last frame that is not a bin echo under (2) is appended, even if it sits within a dozen or so px of the gripper or of the just-grasped cube. e.g. [[63, 132], [62, 159], [108, 152], [71, 164], [105, 181]]\n\nfield arrivals, POLICY PROMPT\n  Replace the first-step ordering: when several goal-color cubes are in the scene at the very first decision step, list first every cube of the color with the SMALLEST required count in the goal instruction (if two colors need the same count, the one the goal names first), then the next color by count; within a color order by distance to the bin's reported center, nearest first, skipping detections within about 28 px of it, and when two cubes of one color are within about 3 px of the same distance put the one with the larger x (the robot's left) first. The order the goal names the colors is not the criterion. Example with a goal of three blue and one green, green at [65, 109] and blue at [84, 112]: [[65, 109], [84, 112]]. Replace the bin-echo test: a detection within about 28 px of the bin center is a bin echo only if it was present in the scene at the first decision step, or its color already appears in the carried `placed`, or this step released a cube of that color. A detection of a color that is not in `placed`, that first appears in some execution frame of this step and is still at the same place (within about 12 px) in the last frame, is a genuine new cube however near the bin it is: append it, in the order of the frame where it first appeared. Add to the matching step: match one-to-one, each carried entry to at most one detection of its color, the nearest within about 12 px; 12 px is a hard cutoff, so a detection 13 px or more from every still-unmatched entry is new and is appended (subject only to the echo tests). Add to step (3): in a step that ends with a cube held (a pick-up step, where the first execution frame shows no held line and the last shows one) there is no release frame, so the release-echo test and the moved-with-the-gripper test do not apply; a new goal-color detection that appears near the gripper or near the just-grasped cube during such a step and is in the last frame is appended like any other, excluding only bin echoes. e.g. [[63, 132], [62, 159], [108, 152], [71, 164], [105, 181]]\n\nthe policy prompt for subgoal\n  Rule 3's first-step clause and the closing 'An episode starts in A at step #1' clause both say to pick the cube of the color named first in the goal, nearest the bin. That sent the policy wrong on a goal asking for three cubes of one color and one of another: the recorded first pick was the single-count color, named second and farther from the bin. In their place: at the first decision step the working color is the color with the SMALLEST required count in the goal instruction (goal naming order only as a tie between equal counts); within that color pick the cube nearest the bin's reported center that is at least about 28 px from it, and when two such cubes are within about 3 px of the same distance to the bin, pick the one with the larger x (the robot's left). Since `arrivals` as written at step #1 now begins with that same cube, 'point at the first entry of arrivals of a needed color' and this rule agree. The candidate-exclusion list must also carry the revised bin-echo test: a detection within about 28 px of the bin is excluded only if it was there at step #1 or its color is already in `placed` or was released this step; a cube of a not-yet-placed color that appeared mid-step and stayed put is a candidate wherever it lies. Everything else (Rule 1 holding, Rule 2 done, finished colors never picked again, last placed color continues while short, first-in-arrivals among candidates) stays.\n\nrefused\n  Two alternative first-step criteria the policy proposed are not passed on: 'nearest the robot (smallest y) first' and 'farthest from the bin first'. The smallest-y rule contradicts the other multi-cube first step in the batch, where the chosen cube of the working color had the larger y of the two; the farthest-from-bin rule contradicts the later picks in that same episode, where the next cubes of the working color were taken nearest the bin first. The smallest-required-count rule and the larger-x tie-break fit every first step in the batch and are what is passed on. Also not passed on: tightening the bin-echo radius so that 26 px no longer counts. Another episode has a pre-existing cube 27-28 px from the bin center that is never picked while a cube 31 px away is, so a smaller radius would make the first pick wrong there; the exclusion is instead conditioned on whether the cube pre-existed or its color has already been placed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 3's first-step clause and the closing 'An episode starts in A at step #1' clause both say to pick the cube of the color named first in the goal, nearest the bin. That sent the policy wrong on a goal asking for three cubes of one color and one of another: the recorded first pick was the single-count color, named second and farther from the bin. In their place: at the first decision step the working color is the color with the SMALLEST required count in the goal instruction (goal naming order only as a tie between equal counts); within that color pick the cube nearest the bin's reported center that is at least about 28 px from it, and when two such cubes are within about 3 px of the same distance to the bin, pick the one with the larger x (the robot's left). Since `arrivals` as written at step #1 now begins with that same cube, 'point at the first entry of arrivals of a needed color' and this rule agree. The candidate-exclusion list must also carry the revised bin-echo test: a detection within about 28 px of the bin is excluded only if it was there at step #1 or its color is already in `placed` or was released this step; a cube of a not-yet-placed color that appeared mid-step and stayed put is a candidate wherever it lies. Everything else (Rule 1 holding, Rule 2 done, finished colors never picked again, last placed color continues while short, first-in-arrivals among candidates) stays.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "arrivals",
+    "description": "Replace the first-step ordering: when several goal-color cubes are in the scene at the very first decision step, list first every cube of the color with the SMALLEST required count in the goal instruction (if two colors need the same count, the one the goal names first), then the next color by count; within a color order by distance to the bin's reported center, nearest first, skipping detections within about 28 px of it, and when two cubes of one color are within about 3 px of the same distance put the one with the larger x (the robot's left) first. The order the goal names the colors is not the criterion. Example with a goal of three blue and one green, green at [65, 109] and blue at [84, 112]: [[65, 109], [84, 112]]. Replace the bin-echo test: a detection within about 28 px of the bin center is a bin echo only if it was present in the scene at the first decision step, or its color already appears in the carried `placed`, or this step released a cube of that color. A detection of a color that is not in `placed`, that first appears in some execution frame of this step and is still at the same place (within about 12 px) in the last frame, is a genuine new cube however near the bin it is: append it, in the order of the frame where it first appeared. Add to the matching step: match one-to-one, each carried entry to at most one detection of its color, the nearest within about 12 px; 12 px is a hard cutoff, so a detection 13 px or more from every still-unmatched entry is new and is appended (subject only to the echo tests). Add to step (3): in a step that ends with a cube held (a pick-up step, where the first execution frame shows no held line and the last shows one) there is no release frame, so the release-echo test and the moved-with-the-gripper test do not apply; a new goal-color detection that appears near the gripper or near the just-grasped cube during such a step and is in the last frame is appended like any other, excluding only bin echoes. e.g. [[63, 132], [62, 159], [108, 152], [71, 164], [105, 181]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "arrivals",
+    "description": "Two changes, both so that the value the annotator writes is one the policy can compute from the same step. (1) First-step ordering. The current rule orders the pre-existing cubes by which ones the oracle later picks, which the policy cannot see, and the goal-naming order the policy was told does not reproduce it either: with a goal asking for three cubes of one color and one of another, the first pick was the single-count color even though the goal named it second and it lay farther from the bin. Across the batch the first pick always went to the color with the SMALLEST required count (goal naming order only as a tie between equal counts), then within a color to the cube nearest the bin's reported center while at least about 28 px from it; when two cubes of that color are within about 3 px of the same distance to the bin, the one with the larger x (the robot's left) comes first. The step-1 list is written in exactly that order: all cubes of the smallest-count color (nearest bin first, larger-x tie-break), then the next color by count, and so on; cubes of a color not named in the goal are never listed. Drop the look-ahead to the oracle's later picks. Example with a goal of three blue and one green, green at [65, 109] and blue at [84, 112]: [[65, 109], [84, 112]]. (2) Bin-echo exclusion. A real cube that appeared mid-step 26 px from the bin center while nothing had yet been placed was (correctly) appended, which the 28 px rule as written forbids. The 28 px exclusion applies to detections present in the scene at step #1 and to detections of a color that is already in `placed` or is being released in this step. A detection of a color not yet placed that first appears during a step and stays at the same place through the scene at the decision step is a genuine new cube wherever it lies and is appended in order of first appearance. (3) Matching is one-to-one with a hard cutoff: each carried entry is matched to at most one detection of its color, the nearest within 12 px; a detection 13 px or more from every unmatched entry is new. (4) In a pick-up step (one that ends with a cube held and has no release frame) there is no release echo and no gripper-tracking exclusion: every new goal-color detection in the last frame that is not a bin echo under (2) is appended, even if it sits within a dozen or so px of the gripper or of the just-grasped cube. e.g. [[63, 132], [62, 159], [108, 152], [71, 164], [105, 181]]"
+   }
+  ],
+  "refused": "Two alternative first-step criteria the policy proposed are not passed on: 'nearest the robot (smallest y) first' and 'farthest from the bin first'. The smallest-y rule contradicts the other multi-cube first step in the batch, where the chosen cube of the working color had the larger y of the two; the farthest-from-bin rule contradicts the later picks in that same episode, where the next cubes of the working color were taken nearest the bin first. The smallest-required-count rule and the larger-x tie-break fit every first step in the batch and are what is passed on. Also not passed on: tightening the bin-echo radius so that 26 px no longer counts. Another episode has a pre-existing cube 27-28 px from the bin center that is never picked while a cube 31 px away is, so a smaller radius would make the first pick wrong there; the exclusion is instead conditioned on whether the cube pre-existed or its color has already been placed."
+ },
+ "critiques": [
+  {
+   "step": [
+    46,
+    "exec",
+    303
+   ],
+   "memory_in": "placed=red; arrivals=[[91, 162], [62, 132], [58, 160], [108, 152]]",
+   "answered": "B: put it into the bin",
+   "recorded": "B: put it into the bin",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say plainly that in a pick-up step (one with no release frame, ending with a cube held) the only exclusion for a new detection is the bin echo: a goal-color detection in the last frame that appears near the gripper or near the just-grasped held cube, such as [71, 164] (about 13 px from the gripper at [61, 173], and seen earlier at [67, 167] next to the gripper at t=256) and [105, 181] (first appearing only in the last frame), is still appended, in order of first appearance, because the release-echo and gripper-tracking exclusions do not apply when nothing has been released in this step.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=; arrivals=",
+   "answered": "A: pick up the cube at [84, 112]",
+   "recorded": "A: pick up the cube at [66, 110]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The first-step ordering rule for arrivals is wrong for this episode: it says list the cubes of the color named first in the goal (blue) first, which gives [[84, 112], [65, 109]], but the recorded value lists the green cube [65, 109] before the blue cube [84, 112] even though the goal names blue first and the blue cube is nearer the bin (32 px vs 51 px). The instruction needs a first-step ordering that yields green first here, e.g. the cube nearest the robot (smallest y) first, or the cube farthest from the bin first, or the color with the smaller required count first; the goal-naming order and nearest-to-bin tiebreaks both fail on this step.",
+   "missing_from_policy_prompt_for_subgoal": "At step #1 the instruction explicitly says to pick the cube of the color named first in the goal (blue, at [84, 112]) nearest the bin, but the recorded first pick is the green cube at [66, 110], which is the goal's second-named color and farther from the bin. The instruction needs the actual first-step selection rule that picks green here (consistent with the arrivals ordering it should match), e.g. the goal-color cube nearest the robot (smallest y) or farthest from the bin, rather than 'color named first in the goal, nearest the bin'.",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    125
+   ],
+   "memory_in": "placed=none; arrivals=[[65, 109], [84, 112]]",
+   "answered": "B: put it into the bin",
+   "recorded": "B: put it into the bin",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The blue detection at [92, 96] first appeared at t=112 (mid pick-up step, gripper at [53, 109] holding the green cube, far from it) and stayed put at t=125, but it lies about 26 px from the bin's reported center [116, 107], so the 'within about 28 px of the bin center is a bin echo' test told me to drop it. The recorded value appends it. The instruction should say the bin-echo exclusion applies only when a cube of that color can actually be in the bin (placed contains that color, or this step is the put-into-bin release step), and that during a pick-up step with placed=none, or for a color not yet placed, a detection near the bin that appears mid-step and stays put is a genuine new cube and is appended in order of first appearance (so [92, 96] from t=112 goes before [54, 130] per the t=112 listing order). Alternatively tighten the bin-echo radius so 26 px does not count.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    99,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=; arrivals=",
+   "answered": "A: pick up the cube at [52, 80]",
+   "recorded": "A: pick up the cube at [56, 145]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The first-step ordering rule does not produce the recorded list. The instruction says group by goal color (red first) and within a color order by distance to the bin's reported center; by that rule red [52, 80] (about 72 px from the bin at [118, 108]) comes before red [55, 144] (about 73 px), and all reds precede all blues. The recorded list puts red [55, 144] first, then blues [90, 96], [113, 168], [76, 148], [63, 77], then red [52, 80], then blues [72, 163], [63, 157], so it is neither grouped by color nor strictly by distance (e.g. [113, 168] at ~60 px precedes [76, 148] at ~58 px). The instruction needs to state the actual first-step ordering criterion and its tie-break for near-equal distances (within a few px), e.g. which axis or side breaks the tie, and whether colors are interleaved.",
+   "missing_from_policy_prompt_for_subgoal": "The first-pick rule 'cube of the color named first in the goal nearest the bin's reported center' selects red [52, 80] (~72 px) over red [55, 144] (~73 px), but the recorded pick is [56, 145]. The instruction needs a tie-break for the first pick when two candidates of the working color are within a few px of the same distance to the bin (here the recorded choice is the one with the larger x, i.e. on the robot's left), or a different criterion than Euclidean distance to the bin, stated explicitly.",
+   "missing": ""
+  },
+  {
+   "step": [
+    99,
+    "exec",
+    531
+   ],
+   "memory_in": "placed=red blue; arrivals=[[78, 147], [63, 77], [53, 79], [77, 163]]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At this step the blue detection [64, 158] first appeared at t=496 (before the release frame t=512), stayed put through t=531, is ~73 px from the bin center and ~56 px from the release gripper, so it is a genuine new cube to append. I left it out because it lies 13.9 px from the carried entry [77, 163], which the 'about 12 px' wording let me read as a match, and that entry was already refreshed by [74, 163]. The instruction should say: each carried entry is matched to at most one last-frame detection, the nearest one; once an entry is consumed by a refresh (here [77, 163] -> [74, 163]), any other detection of that color is unmatched and must be appended if it is not a bin echo or release echo; and 'about 12 px' is a hard cutoff, so a detection 13+ px away is new, not a match.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

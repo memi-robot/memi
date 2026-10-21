@@ -1,0 +1,92 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "placements_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  7,
+  55,
+  68,
+  95
+ ],
+ "scored": 45,
+ "failed": 1,
+ "subgoal_wrong": 0,
+ "memory_wrong": 1,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9777777777777777,
+ "reads": {
+  "placements_done": 32
+ },
+ "field_errors": {
+  "placements_done": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.022222222222222223,
+ "verified_of_all": 0.9777777777777777,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 45,
+ "critique": "field placements_done, ANNOTATOR PROMPT\n  Situation: the goal asked for five placements of the green cube. In one placement step the robot lowered the held cube onto the target and the frames showed the release in progress: at the lowest frame the fingers were only part-way open (around 80-90%) and the cube was still labelled 'is held', and by the frame where the fingers reached 100% the gripper had already risen above the 0.03 height. The annotated memory counted that placement (the carried-in value at the next step was one higher), but the rule as written demands one frame with fingers ~100% open AND height below 0.03, which that step never showed. This is a PREDICTABILITY fault: the rule's wording and the value written disagree at such a step. Change: the field still holds the integer count of completed placements of the goal-colored cube onto the target, never decreasing, 0 at the first step. It increases by exactly one at each decision step whose execution frames show the goal-colored cube labelled 'is held in the gripper' at some frame AND whose final scene shows that cube no longer labelled held, lying within a few pixels of the target position, with the fingers ~100% open. No condition on finger percentage or height at any intermediate frame; the intermediate 'is held' label may lag one frame behind the actual release and must be ignored. A step in which the gripper closed on nothing (fingers ~0%, cube never labelled held) does not count even though the cube already sits on the target from an earlier placement. A step that ends with the cube held (a pick-up) does not count. e.g. 2\n\nfield placements_done, POLICY PROMPT\n  Situation: same as above; the policy, following the instruction literally, found no frame with both fingers ~100% open and height below 0.03 (the low frame had fingers ~87% open and the cube still marked held; the fully-open frame was already raised) and so kept the count at 1 where the annotation had 2. PREDICTABILITY fault. Change: integer count of completed placements, start at 0 on the first step, never decrease. At each decision step take the value carried in and add 1 if BOTH hold: (a) at least one execution frame shown at this step has the goal-colored cube labelled 'is held in the gripper', and (b) in the final scene of this step the goal-colored cube is NOT labelled held, the fingers are about 100% open, and the cube lies within a few pixels of the target position. Do not require any particular finger percentage or height at an intermediate frame; a release frame may show fingers only 80-90% open with the cube still labelled held, and that still counts once the final scene meets (b). Do not add 1 if the cube was never labelled held during this step (a missed grasp, fingers closed to ~0%, with the cube already resting on the target from before). Do not add 1 if the final scene shows the cube held. e.g. 2",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "placements_done",
+    "description": "Situation: same as above; the policy, following the instruction literally, found no frame with both fingers ~100% open and height below 0.03 (the low frame had fingers ~87% open and the cube still marked held; the fully-open frame was already raised) and so kept the count at 1 where the annotation had 2. PREDICTABILITY fault. Change: integer count of completed placements, start at 0 on the first step, never decrease. At each decision step take the value carried in and add 1 if BOTH hold: (a) at least one execution frame shown at this step has the goal-colored cube labelled 'is held in the gripper', and (b) in the final scene of this step the goal-colored cube is NOT labelled held, the fingers are about 100% open, and the cube lies within a few pixels of the target position. Do not require any particular finger percentage or height at an intermediate frame; a release frame may show fingers only 80-90% open with the cube still labelled held, and that still counts once the final scene meets (b). Do not add 1 if the cube was never labelled held during this step (a missed grasp, fingers closed to ~0%, with the cube already resting on the target from before). Do not add 1 if the final scene shows the cube held. e.g. 2"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "placements_done",
+    "description": "Situation: the goal asked for five placements of the green cube. In one placement step the robot lowered the held cube onto the target and the frames showed the release in progress: at the lowest frame the fingers were only part-way open (around 80-90%) and the cube was still labelled 'is held', and by the frame where the fingers reached 100% the gripper had already risen above the 0.03 height. The annotated memory counted that placement (the carried-in value at the next step was one higher), but the rule as written demands one frame with fingers ~100% open AND height below 0.03, which that step never showed. This is a PREDICTABILITY fault: the rule's wording and the value written disagree at such a step. Change: the field still holds the integer count of completed placements of the goal-colored cube onto the target, never decreasing, 0 at the first step. It increases by exactly one at each decision step whose execution frames show the goal-colored cube labelled 'is held in the gripper' at some frame AND whose final scene shows that cube no longer labelled held, lying within a few pixels of the target position, with the fingers ~100% open. No condition on finger percentage or height at any intermediate frame; the intermediate 'is held' label may lag one frame behind the actual release and must be ignored. A step in which the gripper closed on nothing (fingers ~0%, cube never labelled held) does not count even though the cube already sits on the target from an earlier placement. A step that ends with the cube held (a pick-up) does not count. e.g. 2"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    7,
+    "exec",
+    369
+   ],
+   "memory_in": "placements_done=1",
+   "answered": "A: pick up the cube at [65, 99]",
+   "recorded": "A: pick up the cube at [67, 100]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The increment condition required a single observed frame with fingers ~100% open AND gripper height below 0.03; here the low frame (t=336, height 0.010) showed fingers only 87% open and the 100%-open frame (t=352) was already at height 0.061, so no frame met both and I kept the count. It should say: add 1 whenever the step's execution frames show the green cube 'is held in the gripper' at some frame and in the final scene it is no longer held and lies on or near the target (within a few pixels of the target position), regardless of the exact finger percentage or height at any intermediate frame.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

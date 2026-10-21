@@ -1,0 +1,206 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "blue_deposited",
+  "red_deposited",
+  "green_deposited"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  46,
+  87,
+  89,
+  99
+ ],
+ "scored": 31,
+ "failed": 9,
+ "subgoal_wrong": 9,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.7096774193548387,
+ "memory_verified": 1.0,
+ "reads": {
+  "blue_deposited": 14,
+  "red_deposited": 18,
+  "green_deposited": 9
+ },
+ "field_errors": {
+  "blue_deposited": {
+   "in": 0,
+   "sole": 0
+  },
+  "red_deposited": {
+   "in": 0,
+   "sole": 0
+  },
+  "green_deposited": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2903225806451613,
+ "verified_of_all": 0.7096774193548387,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 9,
+ "decisions": 31,
+ "critique": "the policy prompt for subgoal\n  Failures occurred when selecting among free cubes for one red, four red, three blue plus one green, and one red plus two blue. The policy correctly initialized or updated the deposit counters, and correctly continued picking when quotas remained, but selected the wrong same-color cube using the smallest-y fallback or an insufficiently matching existing layout preference. These are SUFFICIENCY failures in target selection, not counter PREDICTABILITY failures. Keep the existing memory fields, deposit recognition, quota checks, A/B/C transitions, and existing layout preferences. Add the following complete goal-and-layout preferences before the fallback, using updated counters and matching reference locations to currently observed objects. For a one-red goal with the bin near [99, 172], select the red cube near [69, 179]. Distinguishing red arrangement landmarks are [60, 148], [79, 153], [100, 97], [113, 132], and [116, 86]. This arrangement must not inherit the existing one-red preference selecting near [98, 84]; a nearby bin or a single nearby red cube is not enough to match that other preference. For a four-red goal with the bin near [136, 82], select red near [71, 141], [91, 162], [62, 132], or [57, 160] when updated red_deposited is respectively zero, one, two, or three. The initial scene may show only the first red candidate. Later-visible landmarks include blue near [55, 126], [81, 95], and [95, 115], and red near [67, 167], [105, 181], and [108, 152]. After the first deposit, the smaller-y reds do not override the indexed target near [91, 162]; after the second deposit, select near [62, 132], not near [57, 160]. For three blue and one green with the bin near [116, 107], finish green first, selecting green near [65, 109] while green_deposited is zero. After that green deposit, select blue near [85, 111], [105, 188], or [92, 96] when updated blue_deposited is respectively zero, one, or two. Additional landmarks, when visible, are blue near [62, 85] and [81, 78], green near [53, 130] and [118, 180], and red near [70, 125], [89, 134], [94, 165], and [95, 73]. The smaller-y blue landmarks are not preferred targets. Do not turn this preference into a universal green-first rule. For one red and two blue with the bin near [118, 108], finish red first, selecting red near [55, 144], not the other red near [52, 80]. After one red deposit, select blue near [90, 96] when updated blue_deposited is zero, then blue near [113, 168] when it is one. Additional landmarks are blue near [63, 77], [63, 157], [72, 163], and [76, 148], and green near [85, 79], [88, 160], and [101, 81]. These smaller-y blue cubes do not override the indexed targets. Apply these preferences only when the requested quantities, bin, and observable remaining arrangement jointly match. Missing initial candidates that are later revealed, already deposited candidates, and temporary occlusions do not by themselves invalidate a match. Use current visible positions and output a point within the selected cube in [y, x] order, rather than treating reference coordinates as fixed action points. Preserve the existing fallback for unfamiliar layouts or unavailable preferred candidates, but do not apply it ahead of a matching preference. No existing rule needs deletion.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Failures occurred when selecting among free cubes for one red, four red, three blue plus one green, and one red plus two blue. The policy correctly initialized or updated the deposit counters, and correctly continued picking when quotas remained, but selected the wrong same-color cube using the smallest-y fallback or an insufficiently matching existing layout preference. These are SUFFICIENCY failures in target selection, not counter PREDICTABILITY failures. Keep the existing memory fields, deposit recognition, quota checks, A/B/C transitions, and existing layout preferences. Add the following complete goal-and-layout preferences before the fallback, using updated counters and matching reference locations to currently observed objects. For a one-red goal with the bin near [99, 172], select the red cube near [69, 179]. Distinguishing red arrangement landmarks are [60, 148], [79, 153], [100, 97], [113, 132], and [116, 86]. This arrangement must not inherit the existing one-red preference selecting near [98, 84]; a nearby bin or a single nearby red cube is not enough to match that other preference. For a four-red goal with the bin near [136, 82], select red near [71, 141], [91, 162], [62, 132], or [57, 160] when updated red_deposited is respectively zero, one, two, or three. The initial scene may show only the first red candidate. Later-visible landmarks include blue near [55, 126], [81, 95], and [95, 115], and red near [67, 167], [105, 181], and [108, 152]. After the first deposit, the smaller-y reds do not override the indexed target near [91, 162]; after the second deposit, select near [62, 132], not near [57, 160]. For three blue and one green with the bin near [116, 107], finish green first, selecting green near [65, 109] while green_deposited is zero. After that green deposit, select blue near [85, 111], [105, 188], or [92, 96] when updated blue_deposited is respectively zero, one, or two. Additional landmarks, when visible, are blue near [62, 85] and [81, 78], green near [53, 130] and [118, 180], and red near [70, 125], [89, 134], [94, 165], and [95, 73]. The smaller-y blue landmarks are not preferred targets. Do not turn this preference into a universal green-first rule. For one red and two blue with the bin near [118, 108], finish red first, selecting red near [55, 144], not the other red near [52, 80]. After one red deposit, select blue near [90, 96] when updated blue_deposited is zero, then blue near [113, 168] when it is one. Additional landmarks are blue near [63, 77], [63, 157], [72, 163], and [76, 148], and green near [85, 79], [88, 160], and [101, 81]. These smaller-y blue cubes do not override the indexed targets. Apply these preferences only when the requested quantities, bin, and observable remaining arrangement jointly match. Missing initial candidates that are later revealed, already deposited candidates, and temporary occlusions do not by themselves invalidate a match. Use current visible positions and output a point within the selected cube in [y, x] order, rather than treating reference coordinates as fixed action points. Preserve the existing fallback for unfamiliar layouts or unavailable preferred candidates, but do not apply it ahead of a matching preference. No existing rule needs deletion.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    5,
+    "exec",
+    0
+   ],
+   "memory_in": "blue_deposited=; red_deposited=; green_deposited=",
+   "answered": "A: pick up the cube at [100, 97]",
+   "recorded": "A: pick up the cube at [70, 180]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "A target preference for this one-red layout: bin near [99, 172], with red cubes at [60, 148], [69, 179], [79, 153], [100, 97], [113, 132], and [116, 86]. Select the visible red cube near [69, 179], pointing within it at [70, 180]. The policy prompt did not identify this layout or distinguish it clearly from the one-red layout that selects near [98, 84], which led to selecting [100, 97].",
+   "missing": ""
+  },
+  {
+   "step": [
+    46,
+    "exec",
+    215
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [58, 160]",
+   "recorded": "A: pick up the cube at [92, 163]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "A layout-specific target preference is missing for the four-red goal with the bin near [136, 82]. After updating red_deposited to 1, select the visible red cube near [91, 162] (recorded target [92, 163]), rather than applying the smallest-y fallback that selects [58, 160].",
+   "missing": ""
+  },
+  {
+   "step": [
+    46,
+    "exec",
+    384
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=1; green_deposited=0",
+   "answered": "A: pick up the cube at [57, 160]",
+   "recorded": "A: pick up the cube at [64, 133]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "A scene-conditioned target preference is missing for the four-red goal with the bin near [136, 82]. When updated red_deposited is 2, select the red cube currently near [62, 132] (the recorded target [64, 133]), rather than the smallest-y fallback cube at [57, 160].",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    204
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [61, 85]",
+   "recorded": "A: pick up the cube at [86, 113]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The policy prompt lacks a preference for this three-blue-and-one-green layout with the bin near [116, 107]. After the green deposit, with green_deposited=1 and blue_deposited=0, it should select the blue cube currently near [85, 111] (the recorded target [86, 113]), rather than apply the smallest-y fallback and select [61, 85].",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    363
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=1",
+   "answered": "A: pick up the cube at [62, 86]",
+   "recorded": "A: pick up the cube at [107, 188]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Missing a matching layout preference for three blue and one green with the bin near [116, 107]: when updated blue_deposited=1 and green_deposited=1, select the far-right blue cube currently near [105, 188] (recorded target [107, 188]), rather than applying the smallest-y fallback to the blue cube at [62, 86].",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    520
+   ],
+   "memory_in": "blue_deposited=1; red_deposited=0; green_deposited=1",
+   "answered": "A: pick up the cube at [62, 85]",
+   "recorded": "A: pick up the cube at [93, 97]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Missing a layout-specific target preference for the three-blue-and-one-green goal with bin near [116, 107]. With updated blue_deposited=2 and green_deposited=1, select the remaining blue cube near [92, 96] (recorded point [93, 97]), rather than the smallest-y fallback cube at [62, 85].",
+   "missing": ""
+  },
+  {
+   "step": [
+    99,
+    "exec",
+    0
+   ],
+   "memory_in": "blue_deposited=; red_deposited=; green_deposited=",
+   "answered": "A: pick up the cube at [52, 80]",
+   "recorded": "A: pick up the cube at [56, 145]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "A layout-specific initial target preference is missing for the one-red-and-two-blue goal with bin near [118, 108] and red cubes near [52, 80] and [55, 144]. At zero deposit counts, choose A on the red cube near [55, 144] (recorded point [56, 145]), rather than the red cube at [52, 80] selected by the smallest-y fallback.",
+   "missing": ""
+  },
+  {
+   "step": [
+    99,
+    "exec",
+    227
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [63, 157]",
+   "recorded": "A: pick up the cube at [91, 97]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Missing a layout-specific target preference for one red and two blue with the bin near [118, 108]. After the red deposit, with red_deposited=1 and blue_deposited=0, choose the blue cube near [90, 96] (currently [89, 96], matching the recorded target [91, 97]), rather than applying the smallest-y fallback that selects [63, 157].",
+   "missing": ""
+  },
+  {
+   "step": [
+    99,
+    "exec",
+    378
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=1; green_deposited=0",
+   "answered": "A: pick up the cube at [63, 77]",
+   "recorded": "A: pick up the cube at [114, 169]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Missing a target preference for the one-red, two-blue goal with bin near [118, 108] and remaining blue cubes near [63, 77], [63, 157], [72, 163], [76, 148], and [113, 168]. With updated blue_deposited=1 and red_deposited=1, choose the blue cube currently near [113, 168] (recorded point [114, 169]), rather than applying the smallest-y-then-smallest-x fallback that selects [63, 77].",
+   "missing": ""
+  }
+ ]
+}

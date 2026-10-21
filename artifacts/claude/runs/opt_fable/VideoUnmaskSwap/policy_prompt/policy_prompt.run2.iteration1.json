@@ -1,0 +1,14 @@
+{
+ "task": "VideoUnmaskSwap",
+ "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+ "fields": [
+  {
+   "name": "target_containers",
+   "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry. e.g. [[81, 90], [87, 134]]"
+  },
+  {
+   "name": "put_down_count",
+   "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1"
+  }
+ ]
+}

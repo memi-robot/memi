@@ -1,0 +1,81 @@
+{
+ "task": "RouteStick",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 3,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    44,
+    76,
+    79,
+    85,
+    86
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    2,
+    32,
+    40,
+    65,
+    85
+   ],
+   "verified_of_all": 0.875,
+   "subgoal_verified": 0.9375
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    2,
+    48,
+    75,
+    79,
+    80
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    8,
+    17,
+    18,
+    40,
+    70
+   ],
+   "verified_of_all": 0.9375,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    10,
+    22,
+    38,
+    73
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+ "fields": [
+  {
+   "name": "demo_moves",
+   "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. First fix the target slots from the first demonstration frame (the highlighted target plus every listed target; slots are spaced roughly 30 px or more apart in x). Then walk through the demonstration frames and, at every frame, assign the highlighted target to the nearest slot; every frame where the highlighted target is assigned to a different slot than in the previous frame ends one leg and starts the next, so the number of letters is exactly the number of such slot changes. A slot change always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target with coordinate jitter and nothing has changed; do not count it. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame; a visited target means a visited slot. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one. For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']"
+  },
+  {
+   "name": "legs_done",
+   "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1"
+  }
+ ],
+ "stage": "optimized"
+}

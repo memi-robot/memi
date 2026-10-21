@@ -1,0 +1,77 @@
+{
+ "task": "PickHighlight",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 5,
+ "stopped_because": "ran the 1 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    22,
+    53,
+    63,
+    65,
+    66
+   ],
+   "verified_of_all": 0.8333333333333334,
+   "subgoal_verified": 0.8333333333333334
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    45,
+    64,
+    79,
+    83
+   ],
+   "verified_of_all": 0.9090909090909091,
+   "subgoal_verified": 0.9090909090909091
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    8,
+    18,
+    38,
+    58,
+    61
+   ],
+   "verified_of_all": 0.9375,
+   "subgoal_verified": 0.9375
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    11,
+    16,
+    37,
+    97
+   ],
+   "verified_of_all": 0.8571428571428571,
+   "subgoal_verified": 0.8571428571428571
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    8,
+    21,
+    54,
+    61,
+    77
+   ],
+   "verified_of_all": 0.9166666666666666,
+   "subgoal_verified": 0.9166666666666666
+  }
+ ],
+ "policy_prompt_for_subgoal": "Apply the memory update before choosing the next subgoal. Each episode starts with A, press button: the initial scene has no held cube and remaining_targets is null. If remaining_targets is still null and no completed reveal is available, choose A. When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting any eligible cube represented in remaining_targets. The list order is a storage convention, not a required pickup order. Point at that cube's current center, allowing minor centroid wobble; do not point at the former white area or substitute another cube of the same color.  If the current scene shows a cube held after pickup, choose C, place the cube onto the table, even though that cube has already been removed from remaining_targets. After placement, an empty gripper and a nonempty remaining_targets list lead back to B for any eligible cube in that list; never pick up an already removed cube again. If pickup failed, retain the target and retry B. If placement failed and the cube remains held, retry C. If the target is temporarily occluded, use its stored table coordinate for B rather than switching targets. If remaining_targets is empty and the gripper is empty, the task is complete; no further pickup or button press is required. If nevertheless forced to select a menu option after completion, choose C as the non-pickup fallback. For other unmodeled situations, choose C if holding a cube, otherwise B at any eligible remaining target if one exists, otherwise A only when remaining_targets is null.",
+ "fields": [
+  {
+   "name": "remaining_targets",
+   "description": "Initialize to null when the incoming memory is empty. Inspect all execution frames provided at this decision, not just the final scene. If the incoming value is null and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x]. Deduplicate repeated sightings. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. Once initialized, retain this list. If the supplied frames show a cube being grasped at a listed table location and subsequently lifted while held, remove that entry at this decision. Use its pre-lift table position to identify it, not its raised position. An unsuccessful closure or temporary disappearance is not sufficient for removal. Placement does not add an entry back. Keep stored coordinates unchanged despite occlusion or small visible centroid changes. An empty list means all revealed targets have been picked up; null means the reveal has not yet been recorded. e.g. [[63, 150]]"
+  }
+ ],
+ "stage": "optimized"
+}

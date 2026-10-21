@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "target_containers",
+  "put_down_count"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  28,
+  31,
+  67,
+  79
+ ],
+ "scored": 13,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9230769230769231,
+ "memory_verified": 0.9230769230769231,
+ "reads": {
+  "target_containers": 4,
+  "put_down_count": 4
+ },
+ "field_errors": {
+  "target_containers": {
+   "in": 1,
+   "sole": 1
+  },
+  "put_down_count": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.07692307692307693,
+ "verified_of_all": 0.9230769230769231,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 13,
+ "critique": "field target_containers, ANNOTATOR PROMPT\n  Situation: the goal named one cube; the demonstration showed the cube's container and a neighbouring container trade places in a three-frame shuffle, and the policy's tracking kept the wrong container, so its memory held the container that returned to the cube's original spot instead of the one that actually covered the cube. Condition broken: PREDICTABILITY (the annotated value and the value the policy computed from the same demonstration differ). Keep the field as is (ordered list of [y, x], one per named cube in goal order, position at the last demonstration frame of the container hiding that cube; written at the first decision step, copied unchanged afterwards), but state how the hiding container is found in terms of shuffles rather than frame-to-frame nearest matching: at the frame containers first appear, each cube's container is the one nearest it; thereafter the demonstration consists of shuffles, each a run of consecutive frames in which exactly two containers are displaced from their resting positions while the others stay put, and at the end of every shuffle those two containers have exchanged resting positions. Apply each shuffle in order to the tracked container: if it was one of the two that moved, its new resting position is the other mover's old resting position; otherwise it stays. The entry is its resting position in the last demonstration frame. Example: [[103, 159]] when the cube started under the container at [71, 123] and that container swapped with the one at [103, 159].\n\nfield target_containers, POLICY PROMPT\n  Situation: at the first decision step the policy had to follow the named cube's container through a shuffle in which it and another container swapped places; the two candidates at the middle frame were nearly equally near, both had moved toward larger y, and the y-only tie-break chose the wrong one, so the memory held the container that ended at the cube's original spot and the pick-up point was wrong. Condition broken: PREDICTABILITY. Replace step (3) of the procedure with this: after the frame where containers first appear, the demonstration is a sequence of shuffles; a shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting positions while all others are unchanged, and it ends at the frame where all containers are back on resting positions. At the end of every shuffle the two containers that moved have exchanged resting positions (compare the resting positions before and after the run: the two spots that are occupied again are the same two spots, and the movers have swapped them). So track the named cube's container by resting spot only: if the spot it rests on is one of the two spots vacated during a shuffle, after that shuffle it rests on the other vacated spot; otherwise it keeps its spot. Do this for each shuffle in order; the entry is its resting position in the last demonstration frame (use that frame's listed coordinates, which may wobble a few pixels from the earlier value). Never match frame to frame by nearest position inside a shuffle. Example: cube at [74, 123] covered by the container at [71, 123]; a shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]. Two shuffles of the same pair return it to its first spot.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_containers",
+    "description": "Situation: at the first decision step the policy had to follow the named cube's container through a shuffle in which it and another container swapped places; the two candidates at the middle frame were nearly equally near, both had moved toward larger y, and the y-only tie-break chose the wrong one, so the memory held the container that ended at the cube's original spot and the pick-up point was wrong. Condition broken: PREDICTABILITY. Replace step (3) of the procedure with this: after the frame where containers first appear, the demonstration is a sequence of shuffles; a shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting positions while all others are unchanged, and it ends at the frame where all containers are back on resting positions. At the end of every shuffle the two containers that moved have exchanged resting positions (compare the resting positions before and after the run: the two spots that are occupied again are the same two spots, and the movers have swapped them). So track the named cube's container by resting spot only: if the spot it rests on is one of the two spots vacated during a shuffle, after that shuffle it rests on the other vacated spot; otherwise it keeps its spot. Do this for each shuffle in order; the entry is its resting position in the last demonstration frame (use that frame's listed coordinates, which may wobble a few pixels from the earlier value). Never match frame to frame by nearest position inside a shuffle. Example: cube at [74, 123] covered by the container at [71, 123]; a shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]. Two shuffles of the same pair return it to its first spot."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_containers",
+    "description": "Situation: the goal named one cube; the demonstration showed the cube's container and a neighbouring container trade places in a three-frame shuffle, and the policy's tracking kept the wrong container, so its memory held the container that returned to the cube's original spot instead of the one that actually covered the cube. Condition broken: PREDICTABILITY (the annotated value and the value the policy computed from the same demonstration differ). Keep the field as is (ordered list of [y, x], one per named cube in goal order, position at the last demonstration frame of the container hiding that cube; written at the first decision step, copied unchanged afterwards), but state how the hiding container is found in terms of shuffles rather than frame-to-frame nearest matching: at the frame containers first appear, each cube's container is the one nearest it; thereafter the demonstration consists of shuffles, each a run of consecutive frames in which exactly two containers are displaced from their resting positions while the others stay put, and at the end of every shuffle those two containers have exchanged resting positions. Apply each shuffle in order to the tracked container: if it was one of the two that moved, its new resting position is the other mover's old resting position; otherwise it stays. The entry is its resting position in the last demonstration frame. Example: [[103, 159]] when the cube started under the container at [71, 123] and that container swapped with the one at [103, 159]."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    2,
+    "exec",
+    114
+   ],
+   "memory_in": "target_containers=; put_down_count=",
+   "answered": "A: pick up the container at [73, 123]",
+   "recorded": "A: pick up the container at [101, 161]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The tie-break at the near-equal frame (t=80 to t=96: tracked container at [73,140] is ~22 from [86,158] and ~24 from [88,121]) is decided only by y-direction, which here is tiny (71->73, 103->101) and gives the wrong container. It should say: extrapolate the container's previous displacement (here [73,140]-[71,123] = +2 y, +17 x, predicted [75,157]) and keep the listed container nearest the predicted position, i.e. use the dominant axis of motion / full velocity, not y alone. With that, the track goes [71,123] -> [73,140] -> [86,158] -> [103,159], so target_containers=[[103,159]]: the two containers swapped places during the demonstration.",
+   "missing_from_policy_prompt_for_subgoal": "nothing (the point follows from target_containers; though the recorded point [101,161] differs slightly from the listed [103,159], the instruction says to write the listed position)",
+   "missing": ""
+  }
+ ]
+}

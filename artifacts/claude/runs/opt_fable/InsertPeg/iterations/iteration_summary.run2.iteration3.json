@@ -1,0 +1,75 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "grasp_point",
+  "insert_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  12,
+  36,
+  45,
+  64,
+  65
+ ],
+ "scored": 10,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "grasp_point": 0,
+  "insert_side": 5
+ },
+ "field_errors": {
+  "grasp_point": {
+   "in": 0,
+   "sole": 0
+  },
+  "insert_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "grasp_point": "read at no step of 10"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "refused\n  No step of the minibatch failed: at every first decision step the policy chose the pick subgoal at the end the demonstration gripper closed on, and at every second decision step a peg end was shown held in the gripper and the policy chose the insertion side it had written from the demonstration's final approach, matching the recorded subgoals. The only report is that grasp_point was carried and never read. I am keeping that field, not dropping or folding it. It is written at the first decision step straight from the demonstration, which is shown once and never again, and it is only ever read when the pick has to be repeated: a later decision step that shows no peg held and fingers fully open, with no demonstration in view. In these episodes every pick succeeded on the first attempt, so that retry situation never occurred and nothing read the field, but no later step can recover which end to grasp without it, so NECESSITY holds for the situation the field exists for. insert_side cannot absorb it since it holds an unrelated fact. The three documents stay as they are.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "No step of the minibatch failed: at every first decision step the policy chose the pick subgoal at the end the demonstration gripper closed on, and at every second decision step a peg end was shown held in the gripper and the policy chose the insertion side it had written from the demonstration's final approach, matching the recorded subgoals. The only report is that grasp_point was carried and never read. I am keeping that field, not dropping or folding it. It is written at the first decision step straight from the demonstration, which is shown once and never again, and it is only ever read when the pick has to be repeated: a later decision step that shows no peg held and fingers fully open, with no demonstration in view. In these episodes every pick succeeded on the first attempt, so that retry situation never occurred and nothing read the field, but no later step can recover which end to grasp without it, so NECESSITY holds for the situation the field exists for. insert_side cannot absorb it since it holds an unrelated fact. The three documents stay as they are."
+ },
+ "critiques": []
+}

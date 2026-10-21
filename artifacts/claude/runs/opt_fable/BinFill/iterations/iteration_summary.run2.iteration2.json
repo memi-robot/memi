@@ -1,0 +1,194 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "placed"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  9,
+  38,
+  49,
+  71,
+  94
+ ],
+ "scored": 33,
+ "failed": 8,
+ "subgoal_wrong": 7,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.7878787878787878,
+ "memory_verified": 0.9696969696969697,
+ "reads": {
+  "placed": 14
+ },
+ "field_errors": {
+  "placed": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.24242424242424243,
+ "verified_of_all": 0.7575757575757576,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 7,
+ "decisions": 33,
+ "critique": "field cubes, ANNOTATOR PROMPT\n  Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. It is the age order of cubes that decides which one is picked next, and age is not recoverable from a later step: across the minibatch every pick with several same-colored candidates went to the cube that had been on the table longest (the one present at the start, or the one that appeared earliest during an earlier execution), while nearest-to-gripper, nearest-to-bin and largest-y each explain some picks and contradict others. Fill it at step #1 with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step, copy the carried list, then (a) remove the entry of the cube that the execution steps show being lifted in the gripper, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (two detections within about 10 px are the same cube; a cube that is briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube), and (c) update each entry's position to its latest reported position. Ignore cubes of colors the goal does not name. Example: [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]. Write it as a JSON array with double-quoted color strings.\n\nfield cubes, POLICY PROMPT\n  Ordered list of the cubes of the goal colors on the table, oldest first, each as [color, [y, x]]. When the carried-in memory is blank, list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove the entry nearest the place where the execution steps show the gripper closing on and lifting a cube (within about 10 px); append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Cubes of colors not named in the goal are never entered. Example: [[\"blue\", [54, 118]], [\"blue\", [87, 181]]].\n\nfield placed, POLICY PROMPT\n  Unchanged in meaning. Add: write the list as a JSON array with double-quoted strings, e.g. [\"red\", \"green\"], never Python-style single quotes; the field is compared literally.\n\nthe policy prompt for subgoal\n  Rule 3's candidate selection ('prefer a detection present in every execution step, then largest y, then smallest x') is the rule that sent the policy wrong at every unsettled pick step; it fits none of the recorded picks with several same-colored cubes and must be removed. The individual steps proposed nearest-to-gripper, nearest-to-bin, nearest-to-button and newly-appeared-cube; each contradicts another step. What holds across all episodes is age: when several cubes of the needed color are on the table, the recorded pick is the one that has been there longest, i.e. a cube present at the start before any that appeared during execution, and among cubes that appeared during execution the one that appeared first. This breaks SUFFICIENCY, because age cannot be seen at the decision step; it is read from the new memory field `cubes`. Replace the selection with: the needed color is chosen as before (continue the color last appended to `placed` while it is still short; otherwise the needed color with the larger count, ties to the color named first); then point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene shows a detection of that color within about 10 px of that entry, point at the detection's center; if not (the arm may be covering it), point at the remembered position. Do not discard a detection for drifting by a few pixels between frames. At step #1 with an empty carried-in memory, the first entry is the needed-color cube nearest the bin's center, which is the step #1 entry order of `cubes`. Rules 1 and 2 and the fallback for an unmatched situation stay as they are, except that the fallback 'nearest the gripper' is replaced by 'first entry of `cubes` of a needed color, or any visible cube if the list is empty'.\n\nrefused\n  Several steps each proposed a different geometric criterion for choosing among same-colored cubes: nearest to the current gripper position, nearest to the bin, nearest to the button, smallest y, or the cube that newly appeared near where the released cube had been. Each one explains the step that reported it and is contradicted by at least one other recorded pick in the minibatch (for example the pick that went to the cube farthest from the gripper, and the pick that went to a cube farther from the bin than another candidate). They are not passed on separately; the single fact that fits all picks with several candidates is the cube's age on the table, now carried in `cubes`. One caveat is kept out of the instructions but stated here: for cubes already present at the start of an episode, no visible ordering fits every recorded first pick (nearest-to-bin fits all initial picks in one episode and misses the one in another, where the recorded pick was the red cube nearest the button instead); nearest-to-bin was chosen as the initial order because it fits more of the recorded picks, and the remaining first-step disagreement is left unresolved rather than papered over with a rule that contradicts the other episodes.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 3's candidate selection ('prefer a detection present in every execution step, then largest y, then smallest x') is the rule that sent the policy wrong at every unsettled pick step; it fits none of the recorded picks with several same-colored cubes and must be removed. The individual steps proposed nearest-to-gripper, nearest-to-bin, nearest-to-button and newly-appeared-cube; each contradicts another step. What holds across all episodes is age: when several cubes of the needed color are on the table, the recorded pick is the one that has been there longest, i.e. a cube present at the start before any that appeared during execution, and among cubes that appeared during execution the one that appeared first. This breaks SUFFICIENCY, because age cannot be seen at the decision step; it is read from the new memory field `cubes`. Replace the selection with: the needed color is chosen as before (continue the color last appended to `placed` while it is still short; otherwise the needed color with the larger count, ties to the color named first); then point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene shows a detection of that color within about 10 px of that entry, point at the detection's center; if not (the arm may be covering it), point at the remembered position. Do not discard a detection for drifting by a few pixels between frames. At step #1 with an empty carried-in memory, the first entry is the needed-color cube nearest the bin's center, which is the step #1 entry order of `cubes`. Rules 1 and 2 and the fallback for an unmatched situation stay as they are, except that the fallback 'nearest the gripper' is replaced by 'first entry of `cubes` of a needed color, or any visible cube if the list is empty'.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "cubes",
+    "description": "Ordered list of the cubes of the goal colors on the table, oldest first, each as [color, [y, x]]. When the carried-in memory is blank, list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove the entry nearest the place where the execution steps show the gripper closing on and lifting a cube (within about 10 px); append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Cubes of colors not named in the goal are never entered. Example: [[\"blue\", [54, 118]], [\"blue\", [87, 181]]]."
+   },
+   {
+    "field": "placed",
+    "description": "Unchanged in meaning. Add: write the list as a JSON array with double-quoted strings, e.g. [\"red\", \"green\"], never Python-style single quotes; the field is compared literally."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "cubes",
+    "description": "Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. It is the age order of cubes that decides which one is picked next, and age is not recoverable from a later step: across the minibatch every pick with several same-colored candidates went to the cube that had been on the table longest (the one present at the start, or the one that appeared earliest during an earlier execution), while nearest-to-gripper, nearest-to-bin and largest-y each explain some picks and contradict others. Fill it at step #1 with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step, copy the carried list, then (a) remove the entry of the cube that the execution steps show being lifted in the gripper, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (two detections within about 10 px are the same cube; a cube that is briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube), and (c) update each entry's position to its latest reported position. Ignore cubes of colors the goal does not name. Example: [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]. Write it as a JSON array with double-quoted color strings."
+   }
+  ],
+  "refused": "Several steps each proposed a different geometric criterion for choosing among same-colored cubes: nearest to the current gripper position, nearest to the bin, nearest to the button, smallest y, or the cube that newly appeared near where the released cube had been. Each one explains the step that reported it and is contradicted by at least one other recorded pick in the minibatch (for example the pick that went to the cube farthest from the gripper, and the pick that went to a cube farther from the bin than another candidate). They are not passed on separately; the single fact that fits all picks with several candidates is the cube's age on the table, now carried in `cubes`. One caveat is kept out of the instructions but stated here: for cubes already present at the start of an episode, no visible ordering fits every recorded first pick (nearest-to-bin fits all initial picks in one episode and misses the one in another, where the recorded pick was the red cube nearest the button instead); nearest-to-bin was chosen as the initial order because it fits more of the recorded picks, and the remaining first-step disagreement is left unresolved rather than papered over with a rule that contradicts the other episodes."
+ },
+ "critiques": [
+  {
+   "step": [
+    9,
+    "exec",
+    331
+   ],
+   "memory_in": "placed=[\"blue\"]",
+   "answered": "A: pick up the cube at [87, 181]",
+   "recorded": "A: pick up the cube at [55, 119]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The candidate-selection rule points the wrong way for this step. It told me to prefer a detection present at the same place in every execution step and then take the largest y, which gives [87, 181]. The recorded answer is the cube at [54, 118], which was NOT present at t=288 (it appeared at t=304 after the held cube was released) and does not have the largest y. The instruction needs to say which cube to prefer after a release: apparently the cube that newly appeared during this step near where the held cube was (the respawned/next cube), or otherwise a nearest-to-gripper / smallest-y rule, rather than 'stable detection with largest y'.",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    190
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [113, 93]",
+   "recorded": "A: pick up the cube at [97, 105]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The candidate-selection rule for the pick target is wrong for this step. Three green cubes were stable across every execution step ([82, 99], [96, 104], [113, 93]); the instruction says take the largest y, which gives [113, 93], but the recorded answer picks [96, 104] (recorded as [97, 105]). The instruction needs to state the actual selection criterion among same-color stable candidates — e.g. the green cube closest to the bin at [101, 173] (distances 69 for [96, 104] vs 76 and 80), or whatever rule the recordings follow — rather than 'largest y, then smallest x'.",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    334
+   ],
+   "memory_in": "placed=[\"red\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The disagreement is only in quoting: I wrote placed=['red', 'green'] with single quotes while the recorded value uses JSON double quotes, placed=[\"red\", \"green\"]. The instruction should state that the list must be written as a JSON array with double-quoted strings exactly as in the example form, e.g. [\"red\", \"green\"], never Python-style single quotes.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    49,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [117, 82]",
+   "recorded": "A: pick up the cube at [99, 85]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The candidate-selection rule for Rule 3 at step #1 is wrong for this step. It told me to take the needed-color cube with the largest y (which is [117, 82] among red cubes at [56, 177], [98, 84], [110, 112], [111, 65], [117, 82]), but the recorded pick is [98, 84]/[99, 85], which is neither the largest-y nor the smallest-y candidate. It is the red cube closest to the button at [60, 87] (distance ~38 px, versus 55-90 px for the others) and the one nearest the top-middle of the frame on the robot's near side where the raised gripper enters. The instruction needed to state that tie-break: among candidate cubes of the needed color, prefer the one nearest the button / nearest the gripper's entry point (smallest distance to the button position, or smallest y among cubes not lying over toward the bin's x), rather than the largest y.",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    715
+   ],
+   "memory_in": "placed=[\"blue\", \"blue\", \"blue\"]",
+   "answered": "A: pick up the cube at [78, 113]",
+   "recorded": "A: pick up the cube at [54, 124]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The candidate-selection rule among same-colored cubes is wrong for this step. Four green cubes were stable in every frame ([52,122], [64,123], [70,101], [78,113]) and none sat on the bin; the instruction says take the largest y, which gives [78,113], but the recorded point [54,124] corresponds to the green cube at [52,122] — the one with the SMALLEST y and the one nearest the gripper (gripper at [34,144]). The instruction should say which of these criteria actually governs (nearest to the current gripper position, or smallest y / nearest the robot), and that the recorded point may sit a couple of pixels off the detection center.",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [118, 170]",
+   "recorded": "A: pick up the cube at [75, 100]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The candidate-selection order among same-color cubes is wrong for this step. It told me to take the largest y (giving red at [118, 170]); the recorded choice is the red cube at [74, 98], which is neither the largest-y nor the smallest-y red cube but the red cube closest to the opaque bin at [107, 86] (distance ~35 vs ~43, ~52, ~85 for the others). The rule should say: among cubes of the needed color, pick the one nearest the bin (smallest Euclidean distance to the bin's center), not the one with the largest y.",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    186
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [118, 170]",
+   "recorded": "A: pick up the cube at [66, 84]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The candidate-selection rule for Rule 3 sent me to the wrong red cube. It says to prefer detections present at the same place in every execution step and, among remaining candidates, take the largest y; that gave [118, 170]. The recorded pick is [66, 84], the red cube nearest the gripper (gripper at [40, 75], cube at [64, 83]), which also drifted by a pixel or two across the execution steps ([65,82], [67,86], [65,81], [64,83]). The instruction should say: among cubes of the needed color not on the bin, pick the one closest to the gripper's current position (smallest y / nearest the gripper), and treat a detection that shifts by only a few pixels between frames as the same stable cube rather than one that 'moved mid-step'. Only a cube that appears or vanishes outright should be discarded.",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    366
+   ],
+   "memory_in": "placed=[\"red\"]",
+   "answered": "A: pick up the cube at [109, 160]",
+   "recorded": "A: pick up the cube at [107, 118]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3's tie-break among same-color candidates is wrong for this step. Green is the needed color; after discarding the green at [58,99] (it moved mid-step: [58,99]→[61,102]→[60,100]) the stable candidates are [97,148], [105,117], [109,160]. The instruction says take the largest y, which gives [109,160], but the recorded pick is [107,118], i.e. the green cube at [105,117]. The instruction needs the selection criterion that actually produces this: e.g. among stable candidates of the needed color, take the one closest to the bin at [107,86] (equivalently here, the smallest x), not the largest y.",
+   "missing": ""
+  }
+ ]
+}

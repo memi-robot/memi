@@ -1,0 +1,179 @@
+{
+ "episodes": [
+  27,
+  63,
+  84,
+  85,
+  93
+ ],
+ "user_chars": 38040,
+ "usage": {
+  "prompt_tokens": 15655,
+  "completion_tokens": 4314,
+  "prompt_tokens_details": {
+   "cached_tokens": 3214,
+   "cache_write_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 1703
+  }
+ },
+ "reasoning": "I need to think through the proposed edits as JSON changes. For demo_placements, I'm tightening the rule to specify copying positions exactly to the pixel from the frames just before the final centre release. For goal_target, I'm considering replacing the frame-by-frame nearest tracking approach with a swap-based method.\n\nChecking round 1's data, the swap rule holds up — two trackers exchanging positions is consistent with what actually happened, so I'll commit to phrasing it as \"the two targets that leave their stable positions exchange places,\" along with a note to use the first execution frame's listed position. I'm also adding a policy to forbid rewriting the goal_target on jitter, and revising subgoal rule 2 so the drop point defaults to goal_target itself unless a target is within a few pixels of it. Now I need to draft these edits with exact quoted text from the original rules.\n\nFor the demo_placements annotator prompt, I'm rewriting the modify_from/modify_to fields so values are always copied from the stable pre-shuffle target list in the frames right before the final release, using the release and parked frames only to match which target received the cube. I also need to swap out the old example coordinates for the new four-target example.\n\nI need to update the example so it's consistent with the swap rule: identify the two movers by comparing parked frames against the entry, then locate the stable spot in the first execution frame. I should keep the policy memory's goal_target quote similarly aligned with this swap-based approach rather than the frame-by-frame tracking method.\n\nI need to account for the case where the gripper occludes that target position in the release frame itself, even though it's part of the stable set. With the subgoal edit done, I'm ready to write the final JSON.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "confirm by taking the target in the current scene nearest to goal_target (within a few pixels) and point at that listed position.",
+    "modify_to": "the drop point is goal_target: look only for a target listed within a few pixels of goal_target in the scene at this decision step and point at that listed position, or at goal_target itself if no target is listed there at the moment (the list jitters under the passing gripper); every other target in the scene, however it shifts, vanishes or reappears between execution frames, is irrelevant and must never be chosen."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "record the target of the STABLE demo target set (the four positions that stay the same through the demo, as listed in the frames just before the final centre release) that is closest to where the cube now rests, even if that target is missing from the release frame itself because the gripper hides it.",
+      "modify_to": "decide by nearest match within a few pixels which target of the STABLE demo target set (the four positions that stay the same through the demo) the cube now rests on, even if that target is missing from the release frame itself because the gripper hides it, and WRITE that target's position exactly as it is listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens). Never write values from the opening frames, from release frames, or from the final parked frames."
+     },
+     {
+      "modify_from": "e.g. [[137, 103], [115, 85]]",
+      "modify_to": "e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "Then look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If across those frames the target list changes, that target may have moved: follow it frame by frame, each time taking the newly listed position nearest to where it was, ignoring positions that belong to targets that did not move, until the list stops changing; write its settled position as a [y, x] point, which must equal one of the four target positions in the first execution frame. If the target list never changes in the parked frames, write the demo_placements entry itself.",
+      "modify_to": "Then scan the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If every parked frame lists the same four positions as the stable set within a few pixels, nothing moved: write the target listed in the scene at the start of execution nearest the ordinal entry. If some parked frame lists positions matching no stable target, exactly two stable targets are missing from it: those two are the movers, and they swap places, each ending at the other's original spot. If the ordinal entry is one of the movers, write the target listed in the scene at the start of execution nearest the OTHER mover's stable position; otherwise write the target nearest the ordinal entry. Do not track targets frame by frame through the parked frames. Write the position as listed in the execution scene, as a [y, x] point."
+     },
+     {
+      "modify_from": "At every later step copy the carried-in value unchanged.",
+      "modify_to": "At every later step copy the carried-in value unchanged, to the pixel: a target drifting, disappearing or reappearing a few pixels away in execution frames because the gripper passes over it is never a reason to rewrite goal_target."
+     },
+     {
+      "modify_from": "e.g. entry 1 is [137, 103]; in the parked frames a target goes [137, 104] -> [115, 110] -> [98, 135] -> [100, 164] -> [101, 166] while the target from [101, 169] goes to [137, 103]; goal_target = [101, 166]",
+      "modify_to": "e.g. entry 2 is [99, 167]; a parked frame lacks both [99, 167] and [99, 88] and shows two new positions, so the other mover is [99, 88]; the execution scene lists [99, 90]; goal_target = [99, 90]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "taken from the STABLE pre-shuffle target set: the four target positions that hold throughout the demonstration, as listed in the frames just before the final centre release and in the first parked frames after it.",
+      "modify_to": "copied to the pixel from the STABLE pre-shuffle target set: the four target positions exactly as listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens there). The opening frames, the release frames themselves and the final parked frames serve only to tell, by nearest match within a few pixels, which of the four stable targets received the cube; the value written is always the position from that pre-release list."
+     },
+     {
+      "modify_from": "e.g. [[137, 103], [115, 85]]",
+      "modify_to": "e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "Procedure: take the ordinal entry (its pre-shuffle position). In the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open), if the target list changes, track that target frame by frame: in each next frame it is the listed position nearest to its previous position among the positions not still occupied by an unmoved target; follow it until the list is stable again and write its settled position, which equals one of the four target positions in the first execution frame. If no target moves in the parked frames, goal_target equals the demo_placements entry.",
+      "modify_to": "Procedure: take the ordinal entry (its pre-shuffle position). Look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open). If every parked frame lists the same four positions as the stable set (within a few pixels), no target moved: goal_target is the target listed in the first execution frame nearest the ordinal entry. If some parked frame lists positions that match no stable target, exactly two stable targets are missing from that frame: those two are the movers, and they exchange places, each ending where the other began. If the ordinal entry is one of the movers, goal_target is the target listed in the first execution frame nearest the OTHER mover's stable position; if it is not a mover, goal_target is the first execution frame's target nearest the ordinal entry. Do not track targets frame by frame through the parked frames; their paths cross and nearest-position tracking swaps the tracks. The value written is the position as listed in the first execution frame, to the pixel."
+     },
+     {
+      "modify_from": "e.g. entry 1 is [137, 103]; in the parked frames that target moved through [115, 110] and [98, 135] and settled at [101, 166], while the target from [101, 169] moved to [137, 103]; goal_target = [101, 166]",
+      "modify_to": "e.g. entry 1 is [137, 103]; a parked frame lacks both [137, 103] and [101, 169] and lists two new positions, so the movers are [137, 103] and [101, 169]; the first execution frame lists [101, 166] nearest the other mover's stable spot; goal_target = [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing in the report is withheld. The swap rule replaces round 1's frame-by-frame tracking, but it does not undo that round's settlement: the shuffle is still absorbed into goal_target as the execution-time drop position, and round 1's own example (the targets from [137, 103] and [101, 169] exchanging places) is exactly what the swap rule predicts, so it is restated under the new rule rather than dropped. No new field is added; the jitter prohibition is written into goal_target's copy clause and into rule 2 rather than as a separate fact."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "taken from the STABLE pre-shuffle target set: the four target positions that hold throughout the demonstration, as listed in the frames just before the final centre release and in the first parked frames after it.",
+      "modify_to": "copied to the pixel from the STABLE pre-shuffle target set: the four target positions exactly as listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens there). The opening frames, the release frames themselves and the final parked frames serve only to tell, by nearest match within a few pixels, which of the four stable targets received the cube; the value written is always the position from that pre-release list."
+     },
+     {
+      "modify_from": "e.g. [[137, 103], [115, 85]]",
+      "modify_to": "e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "Procedure: take the ordinal entry (its pre-shuffle position). In the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open), if the target list changes, track that target frame by frame: in each next frame it is the listed position nearest to its previous position among the positions not still occupied by an unmoved target; follow it until the list is stable again and write its settled position, which equals one of the four target positions in the first execution frame. If no target moves in the parked frames, goal_target equals the demo_placements entry.",
+      "modify_to": "Procedure: take the ordinal entry (its pre-shuffle position). Look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open). If every parked frame lists the same four positions as the stable set (within a few pixels), no target moved: goal_target is the target listed in the first execution frame nearest the ordinal entry. If some parked frame lists positions that match no stable target, exactly two stable targets are missing from that frame: those two are the movers, and they exchange places, each ending where the other began. If the ordinal entry is one of the movers, goal_target is the target listed in the first execution frame nearest the OTHER mover's stable position; if it is not a mover, goal_target is the first execution frame's target nearest the ordinal entry. Do not track targets frame by frame through the parked frames; their paths cross and nearest-position tracking swaps the tracks. The value written is the position as listed in the first execution frame, to the pixel."
+     },
+     {
+      "modify_from": "e.g. entry 1 is [137, 103]; in the parked frames that target moved through [115, 110] and [98, 135] and settled at [101, 166], while the target from [101, 169] moved to [137, 103]; goal_target = [101, 166]",
+      "modify_to": "e.g. entry 1 is [137, 103]; a parked frame lacks both [137, 103] and [101, 169] and lists two new positions, so the movers are [137, 103] and [101, 169]; the first execution frame lists [101, 166] nearest the other mover's stable spot; goal_target = [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "record the target of the STABLE demo target set (the four positions that stay the same through the demo, as listed in the frames just before the final centre release) that is closest to where the cube now rests, even if that target is missing from the release frame itself because the gripper hides it.",
+      "modify_to": "decide by nearest match within a few pixels which target of the STABLE demo target set (the four positions that stay the same through the demo) the cube now rests on, even if that target is missing from the release frame itself because the gripper hides it, and WRITE that target's position exactly as it is listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens). Never write values from the opening frames, from release frames, or from the final parked frames."
+     },
+     {
+      "modify_from": "e.g. [[137, 103], [115, 85]]",
+      "modify_to": "e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "Then look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If across those frames the target list changes, that target may have moved: follow it frame by frame, each time taking the newly listed position nearest to where it was, ignoring positions that belong to targets that did not move, until the list stops changing; write its settled position as a [y, x] point, which must equal one of the four target positions in the first execution frame. If the target list never changes in the parked frames, write the demo_placements entry itself.",
+      "modify_to": "Then scan the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If every parked frame lists the same four positions as the stable set within a few pixels, nothing moved: write the target listed in the scene at the start of execution nearest the ordinal entry. If some parked frame lists positions matching no stable target, exactly two stable targets are missing from it: those two are the movers, and they swap places, each ending at the other's original spot. If the ordinal entry is one of the movers, write the target listed in the scene at the start of execution nearest the OTHER mover's stable position; otherwise write the target nearest the ordinal entry. Do not track targets frame by frame through the parked frames. Write the position as listed in the execution scene, as a [y, x] point."
+     },
+     {
+      "modify_from": "At every later step copy the carried-in value unchanged.",
+      "modify_to": "At every later step copy the carried-in value unchanged, to the pixel: a target drifting, disappearing or reappearing a few pixels away in execution frames because the gripper passes over it is never a reason to rewrite goal_target."
+     },
+     {
+      "modify_from": "e.g. entry 1 is [137, 103]; in the parked frames a target goes [137, 104] -> [115, 110] -> [98, 135] -> [100, 164] -> [101, 166] while the target from [101, 169] goes to [137, 103]; goal_target = [101, 166]",
+      "modify_to": "e.g. entry 2 is [99, 167]; a parked frame lacks both [99, 167] and [99, 88] and shows two new positions, so the other mover is [99, 88]; the execution scene lists [99, 90]; goal_target = [99, 90]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "confirm by taking the target in the current scene nearest to goal_target (within a few pixels) and point at that listed position.",
+    "modify_to": "the drop point is goal_target: look only for a target listed within a few pixels of goal_target in the scene at this decision step and point at that listed position, or at goal_target itself if no target is listed there at the moment (the list jitters under the passing gripper); every other target in the scene, however it shifts, vanishes or reappears between execution frames, is irrelevant and must never be chosen."
+   }
+  ],
+  "refused": "Nothing in the report is withheld. The swap rule replaces round 1's frame-by-frame tracking, but it does not undo that round's settlement: the shuffle is still absorbed into goal_target as the execution-time drop position, and round 1's own example (the targets from [137, 103] and [101, 169] exchanging places) is exactly what the swap rule predicts, so it is restated under the new rule rather than dropped. No new field is added; the jitter prohibition is written into goal_target's copy clause and into rule 2 rather than as a separate fact."
+ },
+ "not_applied": [],
+ "refused": "Nothing in the report is withheld. The swap rule replaces round 1's frame-by-frame tracking, but it does not undo that round's settlement: the shuffle is still absorbed into goal_target as the execution-time drop position, and round 1's own example (the targets from [137, 103] and [101, 169] exchanging places) is exactly what the swap rule predicts, so it is restated under the new rule rather than dropped. No new field is added; the jitter prohibition is written into goal_target's copy clause and into rule 2 rather than as a separate fact.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"demo_placements\", \"edits\": [{\"modify_from\": \"taken from the STABLE pre-shuffle target set: the four target positions that hold throughout the demonstration, as listed in the frames just before the final centre release and in the first parked frames after it.\", \"modify_to\": \"copied to the pixel from the STABLE pre-shuffle target set: the four target positions exactly as listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens there). The opening frames, the release frames themselves and the final parked frames serve only to tell, by nearest match within a few pixels, which of the four stable targets received the cube; the value written is always the position from that pre-release list.\"}, {\"modify_from\": \"e.g. [[137, 103], [115, 85]]\", \"modify_to\": \"e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]\"}]}, {\"kind\": \"modify\", \"field\": \"goal_target\", \"edits\": [{\"modify_from\": \"Procedure: take the ordinal entry (its pre-shuffle position). In the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open), if the target list changes, track that target frame by frame: in each next frame it is the listed position nearest to its previous position among the positions not still occupied by an unmoved target; follow it until the list is stable again and write its settled position, which equals one of the four target positions in the first execution frame. If no target moves in the parked frames, goal_target equals the demo_placements entry.\", \"modify_to\": \"Procedure: take the ordinal entry (its pre-shuffle position). Look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open). If every parked frame lists the same four positions as the stable set (within a few pixels), no target moved: goal_target is the target listed in the first execution frame nearest the ordinal entry. If some parked frame lists positions that match no stable target, exactly two stable targets are missing from that frame: those two are the movers, and they exchange places, each ending where the other began. If the ordinal entry is one of the movers, goal_target is the target listed in the first execution frame nearest the OTHER mover's stable position; if it is not a mover, goal_target is the first execution frame's target nearest the ordinal entry. Do not track targets frame by frame through the parked frames; their paths cross and nearest-position tracking swaps the tracks. The value written is the position as listed in the first execution frame, to the pixel.\"}, {\"modify_from\": \"e.g. entry 1 is [137, 103]; in the parked frames that target moved through [115, 110] and [98, 135] and settled at [101, 166], while the target from [101, 169] moved to [137, 103]; goal_target = [101, 166]\", \"modify_to\": \"e.g. entry 1 is [137, 103]; a parked frame lacks both [137, 103] and [101, 169] and lists two new positions, so the movers are [137, 103] and [101, 169]; the first execution frame lists [101, 166] nearest the other mover's stable spot; goal_target = [101, 166]\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"demo_placements\", \"edits\": [{\"modify_from\": \"record the target of the STABLE demo target set (the four positions that stay the same through the demo, as listed in the frames just before the final centre release) that is closest to where the cube now rests, even if that target is missing from the release frame itself because the gripper hides it.\", \"modify_to\": \"decide by nearest match within a few pixels which target of the STABLE demo target set (the four positions that stay the same through the demo) the cube now rests on, even if that target is missing from the release frame itself because the gripper hides it, and WRITE that target's position exactly as it is listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens). Never write values from the opening frames, from release frames, or from the final parked frames.\"}, {\"modify_from\": \"e.g. [[137, 103], [115, 85]]\", \"modify_to\": \"e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]\"}]}, {\"kind\": \"modify\", \"field\": \"goal_target\", \"edits\": [{\"modify_from\": \"Then look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If across those frames the target list changes, that target may have moved: follow it frame by frame, each time taking the newly listed position nearest to where it was, ignoring positions that belong to targets that did not move, until the list stops changing; write its settled position as a [y, x] point, which must equal one of the four target positions in the first execution frame. If the target list never changes in the parked frames, write the demo_placements entry itself.\", \"modify_to\": \"Then scan the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If every parked frame lists the same four positions as the stable set within a few pixels, nothing moved: write the target listed in the scene at the start of execution nearest the ordinal entry. If some parked frame lists positions matching no stable target, exactly two stable targets are missing from it: those two are the movers, and they swap places, each ending at the other's original spot. If the ordinal entry is one of the movers, write the target listed in the scene at the start of execution nearest the OTHER mover's stable position; otherwise write the target nearest the ordinal entry. Do not track targets frame by frame through the parked frames. Write the position as listed in the execution scene, as a [y, x] point.\"}, {\"modify_from\": \"At every later step copy the carried-in value unchanged.\", \"modify_to\": \"At every later step copy the carried-in value unchanged, to the pixel: a target drifting, disappearing or reappearing a few pixels away in execution frames because the gripper passes over it is never a reason to rewrite goal_target.\"}, {\"modify_from\": \"e.g. entry 1 is [137, 103]; in the parked frames a target goes [137, 104] -> [115, 110] -> [98, 135] -> [100, 164] -> [101, 166] while the target from [101, 169] goes to [137, 103]; goal_target = [101, 166]\", \"modify_to\": \"e.g. entry 2 is [99, 167]; a parked frame lacks both [99, 167] and [99, 88] and shows two new positions, so the other mover is [99, 88]; the execution scene lists [99, 90]; goal_target = [99, 90]\"}]}], \"policy_prompt_for_subgoal\": [{\"modify_from\": \"confirm by taking the target in the current scene nearest to goal_target (within a few pixels) and point at that listed position.\", \"modify_to\": \"the drop point is goal_target: look only for a target listed within a few pixels of goal_target in the scene at this decision step and point at that listed position, or at goal_target itself if no target is listed there at the moment (the list jitters under the passing gripper); every other target in the scene, however it shifts, vanishes or reappears between execution frames, is irrelevant and must never be chosen.\"}], \"refused\": \"Nothing in the report is withheld. The swap rule replaces round 1's frame-by-frame tracking, but it does not undo that round's settlement: the shuffle is still absorbed into goal_target as the execution-time drop position, and round 1's own example (the targets from [137, 103] and [101, 169] exchanging places) is exactly what the swap rule predicts, so it is restated under the new rule rather than dropped. No new field is added; the jitter prohibition is written into goal_target's copy clause and into rule 2 rather than as a separate fact.\"}"
+}

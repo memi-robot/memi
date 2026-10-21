@@ -1,0 +1,85 @@
+{
+ "episodes": [
+  43,
+  50,
+  53,
+  73,
+  74
+ ],
+ "user_chars": 34556,
+ "usage": {
+  "prompt_tokens": 14450,
+  "completion_tokens": 1727,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 14446
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 529
+  }
+ },
+ "reasoning": "I want to make the tracking procedure explicit as a per-frame chain, consistent with Round 1's point that two swaps of the same pair restores position — the new wrinkle is a swap with a different partner. I'll tighten the report's proposed text, replacing the \"exchanging places\" language with an explicit per-frame procedure applied symmetrically, while flagging that the \"two swaps undo themselves\" phrasing could mislead the policy into assuming all swaps are self-reversing.\n\nNow drafting the actual edits: revising the annotator prompt's modify_from/modify_to pair to describe a chain procedure, and similarly updating the policy prompt's phrasing for tracking identity through shuffle frames. The subgoal instruction doesn't need changes, and I'll leave the position example as-is since it's not essential to update.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_cube",
+    "edits": [
+     {
+      "modify_from": "Then follow that cube's identity through every later demonstration frame, including the shuffle, by matching each cube to its nearest position in the previous frame; when two cubes move at once they are exchanging places, so the picked cube ends where its arc ends, not where it started (two swaps of the same pair put it back). Write its position in the scene at the start of execution.",
+      "modify_to": "Then follow that cube as a chain through every remaining demonstration frame, one consecutive pair of frames at a time. In each pair, a cube whose position is within a few px of a position in the previous frame is the same cube; the cubes whose positions changed by more are in motion, and each one is matched to the new position that continues its own arc (closest to where its previous motion was heading), never to the position it started from. Carry the 'picked' label along with the cube it is on. Keep doing this through every frame until the last one, however many swaps occur and whatever partners they involve: a second swap commonly uses a different partner, so the picked cube can end two or more spots away from where it started; only two consecutive swaps of the same pair put it back. Do not decide by which cube is 'back' on the original pick spot: once any swap has touched that spot, the cube resting there afterwards is a different cube. Write the position of the labelled cube at the end of the chain, in the scene at the start of execution."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "target_cube",
+    "edits": [
+     {
+      "modify_from": "That cube's identity is then followed frame by frame through the rest of the demonstration, including every shuffle frame, by nearest-position matching between consecutive frames: when two cubes move at once they are exchanging places and each keeps its own identity along its own arc, so the picked cube ends where its arc ends, not where it started (two consecutive swaps of the same pair return it to its original spot). The value is its position in the scene at the start of execution.",
+      "modify_to": "That cube's identity is then followed as a chain through every remaining demonstration frame, one consecutive pair of frames at a time. In each pair, a cube whose listed position moved by only a few px is the same cube and keeps its label. The cubes whose positions changed by more are in motion: each of them is matched to the new position that continues the direction it was already travelling (its own arc), never back to the position it started from. The 'picked' label travels with whichever moving cube carries it. This continues to the last frame however many swaps occur and whoever the partners are: a swap is commonly followed by a second swap with a different partner, so the picked cube can end two or more spots from where it started, and only two consecutive swaps of the same pair return it to its original spot. The cube resting on the original pick position after the shuffle is never chosen by that fact alone: once any swap touched that position, the cube there is a different cube swapped in. The value is the position of the labelled cube at the end of the chain, read in the scene at the start of execution."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing in the report is refused. The subgoal instruction is unchanged: the first pick already points at target_cube, and the failure was in deriving that value, which the two memory-side edits settle. The e.g. values are left as they are since the form of the value does not change. The round-1 commitments (gripper-lowest identification, occlusion caveat, later-step refresh from the released cube, picks_done counting) are all kept; this edit only replaces the one-sentence 'exchanging places' remark with the explicit per-frame chain so that swaps with different partners are followed rather than assumed to return the cube."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "target_cube",
+    "edits": [
+     {
+      "modify_from": "That cube's identity is then followed frame by frame through the rest of the demonstration, including every shuffle frame, by nearest-position matching between consecutive frames: when two cubes move at once they are exchanging places and each keeps its own identity along its own arc, so the picked cube ends where its arc ends, not where it started (two consecutive swaps of the same pair return it to its original spot). The value is its position in the scene at the start of execution.",
+      "modify_to": "That cube's identity is then followed as a chain through every remaining demonstration frame, one consecutive pair of frames at a time. In each pair, a cube whose listed position moved by only a few px is the same cube and keeps its label. The cubes whose positions changed by more are in motion: each of them is matched to the new position that continues the direction it was already travelling (its own arc), never back to the position it started from. The 'picked' label travels with whichever moving cube carries it. This continues to the last frame however many swaps occur and whoever the partners are: a swap is commonly followed by a second swap with a different partner, so the picked cube can end two or more spots from where it started, and only two consecutive swaps of the same pair return it to its original spot. The cube resting on the original pick position after the shuffle is never chosen by that fact alone: once any swap touched that position, the cube there is a different cube swapped in. The value is the position of the labelled cube at the end of the chain, read in the scene at the start of execution."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_cube",
+    "edits": [
+     {
+      "modify_from": "Then follow that cube's identity through every later demonstration frame, including the shuffle, by matching each cube to its nearest position in the previous frame; when two cubes move at once they are exchanging places, so the picked cube ends where its arc ends, not where it started (two swaps of the same pair put it back). Write its position in the scene at the start of execution.",
+      "modify_to": "Then follow that cube as a chain through every remaining demonstration frame, one consecutive pair of frames at a time. In each pair, a cube whose position is within a few px of a position in the previous frame is the same cube; the cubes whose positions changed by more are in motion, and each one is matched to the new position that continues its own arc (closest to where its previous motion was heading), never to the position it started from. Carry the 'picked' label along with the cube it is on. Keep doing this through every frame until the last one, however many swaps occur and whatever partners they involve: a second swap commonly uses a different partner, so the picked cube can end two or more spots away from where it started; only two consecutive swaps of the same pair put it back. Do not decide by which cube is 'back' on the original pick spot: once any swap has touched that spot, the cube resting there afterwards is a different cube. Write the position of the labelled cube at the end of the chain, in the scene at the start of execution."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "Nothing in the report is refused. The subgoal instruction is unchanged: the first pick already points at target_cube, and the failure was in deriving that value, which the two memory-side edits settle. The e.g. values are left as they are since the form of the value does not change. The round-1 commitments (gripper-lowest identification, occlusion caveat, later-step refresh from the released cube, picks_done counting) are all kept; this edit only replaces the one-sentence 'exchanging places' remark with the explicit per-frame chain so that swaps with different partners are followed rather than assumed to return the cube."
+ },
+ "not_applied": [],
+ "refused": "Nothing in the report is refused. The subgoal instruction is unchanged: the first pick already points at target_cube, and the failure was in deriving that value, which the two memory-side edits settle. The e.g. values are left as they are since the form of the value does not change. The round-1 commitments (gripper-lowest identification, occlusion caveat, later-step refresh from the released cube, picks_done counting) are all kept; this edit only replaces the one-sentence 'exchanging places' remark with the explicit per-frame chain so that swaps with different partners are followed rather than assumed to return the cube.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"target_cube\", \"edits\": [{\"modify_from\": \"That cube's identity is then followed frame by frame through the rest of the demonstration, including every shuffle frame, by nearest-position matching between consecutive frames: when two cubes move at once they are exchanging places and each keeps its own identity along its own arc, so the picked cube ends where its arc ends, not where it started (two consecutive swaps of the same pair return it to its original spot). The value is its position in the scene at the start of execution.\", \"modify_to\": \"That cube's identity is then followed as a chain through every remaining demonstration frame, one consecutive pair of frames at a time. In each pair, a cube whose listed position moved by only a few px is the same cube and keeps its label. The cubes whose positions changed by more are in motion: each of them is matched to the new position that continues the direction it was already travelling (its own arc), never back to the position it started from. The 'picked' label travels with whichever moving cube carries it. This continues to the last frame however many swaps occur and whoever the partners are: a swap is commonly followed by a second swap with a different partner, so the picked cube can end two or more spots from where it started, and only two consecutive swaps of the same pair return it to its original spot. The cube resting on the original pick position after the shuffle is never chosen by that fact alone: once any swap touched that position, the cube there is a different cube swapped in. The value is the position of the labelled cube at the end of the chain, read in the scene at the start of execution.\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"target_cube\", \"edits\": [{\"modify_from\": \"Then follow that cube's identity through every later demonstration frame, including the shuffle, by matching each cube to its nearest position in the previous frame; when two cubes move at once they are exchanging places, so the picked cube ends where its arc ends, not where it started (two swaps of the same pair put it back). Write its position in the scene at the start of execution.\", \"modify_to\": \"Then follow that cube as a chain through every remaining demonstration frame, one consecutive pair of frames at a time. In each pair, a cube whose position is within a few px of a position in the previous frame is the same cube; the cubes whose positions changed by more are in motion, and each one is matched to the new position that continues its own arc (closest to where its previous motion was heading), never to the position it started from. Carry the 'picked' label along with the cube it is on. Keep doing this through every frame until the last one, however many swaps occur and whatever partners they involve: a second swap commonly uses a different partner, so the picked cube can end two or more spots away from where it started; only two consecutive swaps of the same pair put it back. Do not decide by which cube is 'back' on the original pick spot: once any swap has touched that spot, the cube resting there afterwards is a different cube. Write the position of the labelled cube at the end of the chain, in the scene at the start of execution.\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"Nothing in the report is refused. The subgoal instruction is unchanged: the first pick already points at target_cube, and the failure was in deriving that value, which the two memory-side edits settle. The e.g. values are left as they are since the form of the value does not change. The round-1 commitments (gripper-lowest identification, occlusion caveat, later-step refresh from the released cube, picks_done counting) are all kept; this edit only replaces the one-sentence 'exchanging places' remark with the explicit per-frame chain so that swaps with different partners are followed rather than assumed to return the cube.\"}"
+}

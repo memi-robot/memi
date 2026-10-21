@@ -1,0 +1,85 @@
+{
+ "episodes": [
+  2,
+  32,
+  40,
+  65,
+  85
+ ],
+ "user_chars": 22472,
+ "usage": {
+  "prompt_tokens": 10711,
+  "completion_tokens": 1287,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 10707
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 289
+  }
+ },
+ "reasoning": "I need to tighten the frame-assignment wording so the leg-frame and reference stick logic is exact, while preserving round 1's edits intact. I'm revising the rule so it precisely defines which frames count as \"strictly between\" the two highlight changes when comparing gripper y against the stick's y.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "Gripper y in the frames strictly between the two change frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD.",
+      "modify_to": "The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side.",
+      "modify_to": "Then take the leg's frames: exactly the demonstration frames whose single highlighted target is the leg's starting target, after the frame where that target first became highlighted (for the first leg that opening frame is the very first demonstration frame, so its frames run from the second frame up to the first change) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare the gripper's y with that cube's y in the same frame (the cube may shift a few pixels when brushed): gripper y smaller than the cube's y means it passed the backward side, larger the forward side. The gripper's y relative to the new target and its travel in the next leg are irrelevant."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing refused. The report's exact leg-frame assignment and reference-stick choice are committed on both sides in the same words, replacing only the vaguer 'frames strictly between the two highlight changes' clause; the round-1 counting rule (one letter per highlight change, returns and short legs included, two-target frame as change frame) and the single-quote form are left intact. The subgoal instruction is unchanged: the one wrong subgoal followed from the wrong list, and demo_moves[legs_done] still matches every recorded subgoal once the list is right."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side.",
+      "modify_to": "Then take the leg's frames: exactly the demonstration frames whose single highlighted target is the leg's starting target, after the frame where that target first became highlighted (for the first leg that opening frame is the very first demonstration frame, so its frames run from the second frame up to the first change) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare the gripper's y with that cube's y in the same frame (the cube may shift a few pixels when brushed): gripper y smaller than the cube's y means it passed the backward side, larger the forward side. The gripper's y relative to the new target and its travel in the next leg are irrelevant."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "Gripper y in the frames strictly between the two change frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD.",
+      "modify_to": "The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "Nothing refused. The report's exact leg-frame assignment and reference-stick choice are committed on both sides in the same words, replacing only the vaguer 'frames strictly between the two highlight changes' clause; the round-1 counting rule (one letter per highlight change, returns and short legs included, two-target frame as change frame) and the single-quote form are left intact. The subgoal instruction is unchanged: the one wrong subgoal followed from the wrong list, and demo_moves[legs_done] still matches every recorded subgoal once the list is right."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. The report's exact leg-frame assignment and reference-stick choice are committed on both sides in the same words, replacing only the vaguer 'frames strictly between the two highlight changes' clause; the round-1 counting rule (one letter per highlight change, returns and short legs included, two-target frame as change frame) and the single-quote form are left intact. The subgoal instruction is unchanged: the one wrong subgoal followed from the wrong list, and demo_moves[legs_done] still matches every recorded subgoal once the list is right.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"demo_moves\", \"edits\": [{\"modify_from\": \"Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side.\", \"modify_to\": \"Then take the leg's frames: exactly the demonstration frames whose single highlighted target is the leg's starting target, after the frame where that target first became highlighted (for the first leg that opening frame is the very first demonstration frame, so its frames run from the second frame up to the first change) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare the gripper's y with that cube's y in the same frame (the cube may shift a few pixels when brushed): gripper y smaller than the cube's y means it passed the backward side, larger the forward side. The gripper's y relative to the new target and its travel in the next leg are irrelevant.\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"demo_moves\", \"edits\": [{\"modify_from\": \"Gripper y in the frames strictly between the two change frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD.\", \"modify_to\": \"The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side.\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"Nothing refused. The report's exact leg-frame assignment and reference-stick choice are committed on both sides in the same words, replacing only the vaguer 'frames strictly between the two highlight changes' clause; the round-1 counting rule (one letter per highlight change, returns and short legs included, two-target frame as change frame) and the single-quote form are left intact. The subgoal instruction is unchanged: the one wrong subgoal followed from the wrong list, and demo_moves[legs_done] still matches every recorded subgoal once the list is right.\"}"
+}

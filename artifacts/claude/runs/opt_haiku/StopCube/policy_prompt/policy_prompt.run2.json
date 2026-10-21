@@ -1,0 +1,93 @@
+{
+ "task": "StopCube",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 5,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    14,
+    20,
+    25,
+    43,
+    99
+   ],
+   "verified_of_all": 0.9130434782608695,
+   "subgoal_verified": 0.9130434782608695
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    2,
+    38,
+    66,
+    93
+   ],
+   "verified_of_all": 0.8235294117647058,
+   "subgoal_verified": 0.8235294117647058
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    14,
+    26,
+    39,
+    80,
+    95
+   ],
+   "verified_of_all": 0.9130434782608695,
+   "subgoal_verified": 0.9565217391304348
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    66,
+    68,
+    72,
+    77,
+    83
+   ],
+   "verified_of_all": 0.8461538461538461,
+   "subgoal_verified": 0.9230769230769231
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    34,
+    36,
+    41,
+    60,
+    88
+   ],
+   "verified_of_all": 0.9615384615384616,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "The cube slides back and forth along a line that passes through the target; every time it crosses the target line counts as one arrival at the target. The goal instruction names the ordinal N (second, third, fifth...). The button must be pressed one arrival early: when N-1 arrivals have happened and the cube is on its way back toward the target, so the press lands as the cube reaches the target for the Nth time. An episode starts in A: at the first step (empty memory, gripper raised out of the frame and not yet above the button) choose A 'move to the top of the button to prepare'. No point is needed. At every later step (gripper is already positioned above the button, fingers closed), first update memory as instructed (crossings, cube_side, peak_speed, last_cube_x, last_t), then decide using the updated crossings and peak_speed values and the cube motion: - Determine the cube's motion from a pair of positions, in this order. Form the pair first: when two or more frames are shown at this step, the pair is the last two frames shown; when exactly one frame is shown, the earlier member of the pair is the carried-in memory (position last_cube_x, side cube_side, time last_t) and the later member is the shown frame, so the x change is cube_x minus last_cube_x and the timestep gap is t of this frame minus last_t. cube_x is always the SECOND number of the cube's [y, x] position, and target_x the SECOND number of the target's [y, x] position; the first numbers are y and are never compared. (1) If the cube is on different sides of the target in the two members of the pair (for a single-frame step: the carried-in cube_side differs from the side in this frame), it is passing the target right now and its next motion is outward: classify it as NOT IN THE PRESS WINDOW, whatever the distances are. (2) Otherwise compute |cube_x - target_x| at each member of the pair, take the change (later minus earlier) and divide by the timestep gap between them: this is the outward rate in px per timestep (negative if the distance shrank). Always divide by the timestep spacing; never judge by the raw pixel change between frames. Then compute distance = |cube_x - target_x| at the scene at this step, and lead = distance / peak_speed, the number of timesteps the cube would need at its peak speed to reach the target (if peak_speed is 0, treat lead as very large). The press is issued a fixed lead before arrival, about 20 to 27 timesteps, whether the cube is finishing its outward sweep or already returning, so classify: if the outward rate is zero or negative (returning or stopped) AND lead <= 27, the cube is IN THE PRESS WINDOW. If the outward rate is positive but at most about 60% of peak_speed (clearly slowed, finishing its outward sweep) AND lead <= 24, the cube is IN THE PRESS WINDOW. Otherwise the cube is NOT IN THE PRESS WINDOW: returning but lead > 27 (it turned around far out and is still too many timesteps away; it will be pressed at a later decision step), moving outward at more than about 60% of peak_speed (still sweeping out near full speed), or moving outward with lead > 24 (too far out for its speed). - Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified IN THE PRESS WINDOW above. No point is needed. A step that shows a single frame is common right after the step at which the cube was seen nearing its extreme; when crossings == N-1 and the pair formed from memory places the cube IN THE PRESS WINDOW, that single-frame step is the press moment, not a reason to wait. Showing only one frame is never by itself a reason to choose B. - Otherwise choose B 'remain static'. This covers: crossings < N-1 (even if the cube is heading toward the target, let it pass), and crossings == N-1 while the cube is NOT IN THE PRESS WINDOW (including the case where the (N-1)th crossing lies between the last two frames, so the cube is just passing the target and about to sweep outward; and the case where the cube has already turned around but is still more than 27 peak-speed timesteps from the target, which is pressed at a later step). If crossings somehow exceeds N-1, or the situation matches no rule above, choose C immediately if the cube is heading toward the target, otherwise B. Never choose A after the first step.",
+ "fields": [
+  {
+   "name": "crossings",
+   "description": "Take the crossings count carried in (0 at the first step, since memory is empty). Build the sequence: the carried-in cube_side (skip if memory is empty), then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x, where cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions) of each frame shown at this step in time order, ending with the scene at this step. Add 1 for every consecutive pair in that sequence whose side differs. Write the result. e.g. 2"
+  },
+  {
+   "name": "cube_side",
+   "description": "The side of the target line the cube is on in the last frame shown at this step (the scene at this decision step): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. cube_x is the SECOND number of the cube's [y, x] position and target_x the SECOND number of the target's [y, x] position; the first numbers are y and are never used here. Worked example: cube at [131, 61] and target at [107, 145] -> compare 61 with 145 -> 61 < 145 -> smaller_x. Overwrite it every step; at the first step read it from the single frame shown. e.g. smaller_x"
+  },
+  {
+   "name": "peak_speed",
+   "description": "Take the carried-in peak_speed (0 if memory is empty). Build the frame list: first the carried-in position (last_cube_x at time last_t) if memory is not empty, then every frame shown at this step in time order, ending with the scene at this step. cube_x is always the SECOND number of the cube's [y, x] position. For every consecutive pair in that list write the x change |cube_x(later) - cube_x(earlier)| and the timestep gap; if the gap is at least 8, write the quotient rounded to one decimal with halves rounding up (3.875 -> 3.9); if the gap is below 8 timesteps (common just before the decision scene, where detection wobble dominates), skip that pair. Write the largest of the carried-in value and all the counted quotients. It never decreases. At the first step (empty memory, one frame) write 0. e.g. 2.0"
+  },
+  {
+   "name": "last_cube_x",
+   "description": "Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. x is the SECOND number of the cube's [y, x] position: a cube at [85, 52] gives 52. Overwrite it every step; at the first step read it from the single frame shown. It is read at the next step as the earlier member of the pair with the first frame shown there, both for peak_speed and, when that step shows a single frame, for judging the cube's motion. e.g. 52"
+  },
+  {
+   "name": "last_t",
+   "description": "Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. It is read at the next step to compute the timestep gap between the carried-in last_cube_x and the first frame shown there: that gap decides whether the pair counts for peak_speed (gap at least 8) and gives the rate for the motion judgement at a single-frame step. e.g. 503"
+  }
+ ],
+ "stage": "optimized"
+}

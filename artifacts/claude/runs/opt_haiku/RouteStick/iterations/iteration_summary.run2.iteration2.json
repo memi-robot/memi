@@ -1,0 +1,112 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "demo_moves",
+  "legs_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  32,
+  40,
+  65,
+  85
+ ],
+ "scored": 16,
+ "failed": 2,
+ "subgoal_wrong": 1,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.9375,
+ "memory_verified": 0.875,
+ "reads": {
+  "demo_moves": 11,
+  "legs_done": 11
+ },
+ "field_errors": {
+  "demo_moves": {
+   "in": 2,
+   "sole": 2
+  },
+  "legs_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.125,
+ "verified_of_all": 0.875,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 16,
+ "critique": "field demo_moves, ANNOTATOR PROMPT\n  Keep the field as is (ordered list of menu letters, one per leg of the demonstration, written at the first decision step and copied unchanged afterwards, e.g. ['B', 'D', 'D', 'D', 'A']) but make the leg-frame assignment and the reference-stick choice exact, because two first-step memories were wrong for the same reason: the policy inspected the wrong frames of the demonstration. In one episode the first leg (gripper swinging forward around the rightmost stick to reach the next target) was read as backward because the frames belonging to the first leg were not clearly stated to start at the very first demonstration frame; in another, a short leg that returned to a target already visited was read from frames after its closing change frame, i.e. from the next leg, which lay on the opposite side. Both break PREDICTABILITY: the annotated list and the policy's list were two answers to one field at one step, and the wrong list then produced a wrong first subgoal. State the rule as: a leg's frames are exactly the demonstration frames whose single highlighted target is the leg's STARTING target, taken after the frame where that target first became highlighted (for the first leg, the first demonstration frame is that opening frame, so its frames are every following frame up to the first frame where another target is highlighted) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target; compare gripper y in each of the leg's frames with that cube's y in the same frame (the cube may shift a few pixels when the gripper brushes it; the comparison still holds). Gripper y larger than the cube's y in those frames means FORWARD, smaller means BACKWARD; the gripper's y relative to the new target, and its direction of travel in the next leg, are irrelevant. Direction: new target x smaller than the starting target x is RIGHT, larger is LEFT. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. Write one letter per highlighted-target change, including returns to a previously visited target and a change visible only in the last frame.\n\nfield demo_moves, POLICY PROMPT\n  At the first decision step (memory carried in empty) build the list from the demonstration by this procedure and no other. (1) Write down, frame by frame, the highlighted target; every frame where it differs from the previous frame is a change frame, and the number of letters is the number of change frames (count returns to an already visited target, legs only a few frames long, and a change that appears only in the last frame; a frame with two highlighted targets is a change frame whose new target is the newly highlighted one). (2) For each leg, the leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. (3) The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed). Gripper y larger than the cube's y means FORWARD, smaller means BACKWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side. (4) New target x smaller than the starting target x is RIGHT, larger is LEFT. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the carried-in list unchanged. Write it single-quoted with comma and space, never double quotes, e.g. ['B', 'C', 'A'].",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "demo_moves",
+    "description": "At the first decision step (memory carried in empty) build the list from the demonstration by this procedure and no other. (1) Write down, frame by frame, the highlighted target; every frame where it differs from the previous frame is a change frame, and the number of letters is the number of change frames (count returns to an already visited target, legs only a few frames long, and a change that appears only in the last frame; a frame with two highlighted targets is a change frame whose new target is the newly highlighted one). (2) For each leg, the leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. (3) The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed). Gripper y larger than the cube's y means FORWARD, smaller means BACKWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side. (4) New target x smaller than the starting target x is RIGHT, larger is LEFT. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the carried-in list unchanged. Write it single-quoted with comma and space, never double quotes, e.g. ['B', 'C', 'A']."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "demo_moves",
+    "description": "Keep the field as is (ordered list of menu letters, one per leg of the demonstration, written at the first decision step and copied unchanged afterwards, e.g. ['B', 'D', 'D', 'D', 'A']) but make the leg-frame assignment and the reference-stick choice exact, because two first-step memories were wrong for the same reason: the policy inspected the wrong frames of the demonstration. In one episode the first leg (gripper swinging forward around the rightmost stick to reach the next target) was read as backward because the frames belonging to the first leg were not clearly stated to start at the very first demonstration frame; in another, a short leg that returned to a target already visited was read from frames after its closing change frame, i.e. from the next leg, which lay on the opposite side. Both break PREDICTABILITY: the annotated list and the policy's list were two answers to one field at one step, and the wrong list then produced a wrong first subgoal. State the rule as: a leg's frames are exactly the demonstration frames whose single highlighted target is the leg's STARTING target, taken after the frame where that target first became highlighted (for the first leg, the first demonstration frame is that opening frame, so its frames are every following frame up to the first frame where another target is highlighted) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target; compare gripper y in each of the leg's frames with that cube's y in the same frame (the cube may shift a few pixels when the gripper brushes it; the comparison still holds). Gripper y larger than the cube's y in those frames means FORWARD, smaller means BACKWARD; the gripper's y relative to the new target, and its direction of travel in the next leg, are irrelevant. Direction: new target x smaller than the starting target x is RIGHT, larger is LEFT. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. Write one letter per highlighted-target change, including returns to a previously visited target and a change visible only in the last frame."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    2,
+    "exec",
+    250
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "B: move to the nearest right target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "For the first leg (highlighted target [89,200] at t=0 changing to [85,164] at t=48) the frames strictly between are t=16 and t=32 with gripper y 96 and 94, which is larger than the y of the stick between those targets ([78,187] / [85,184]), so the side is FORWARD and the letter is B, not D. The instruction should state explicitly that the first leg's opening change frame is t=0, that the comparison is gripper y against the y of the single cube lying between the old and new target (using that cube's position in the same frame, even if it shifts slightly), and that larger gripper y than that cube's y means FORWARD regardless of the gripper's later movement toward smaller y in the following leg; it should also warn not to let the gripper's y relative to the new target decide the side.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    65,
+    "exec",
+    150
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "B: move to the nearest right target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not pin down which demonstration frames belong to a leg. For leg 2 (highlighted target [66,78] -> [75,106], change frame t=96) the frames to inspect are the ones still showing the OLD highlighted target [66,78] after the previous change, i.e. t=64 gripper [69,71] and t=80 gripper [75,81]; both have y larger than the stick between those targets, cube [63,89] (y=63), so the side is FORWARD and LEFT+forward = C. I instead took frames at or after the change frame (t=96 [64,104], t=112 [54,120]), which belong to the next leg and sit on the backward side, giving A. The instruction should say explicitly: a leg's frames are exactly the frames whose highlighted target equals the leg's starting target (excluding the frame where the new target first appears), compare their gripper y to the y of the cube whose x lies between the two targets' x, and the first leg's frames start at t=0.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

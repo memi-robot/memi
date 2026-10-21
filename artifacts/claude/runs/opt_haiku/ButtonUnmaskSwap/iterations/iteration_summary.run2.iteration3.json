@@ -1,0 +1,168 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "buttons_pressed",
+  "green_container",
+  "red_container",
+  "blue_container",
+  "picked_colors"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  2,
+  28,
+  34,
+  53
+ ],
+ "scored": 17,
+ "failed": 3,
+ "subgoal_wrong": 0,
+ "memory_wrong": 3,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.8235294117647058,
+ "reads": {
+  "buttons_pressed": 12,
+  "green_container": 5,
+  "red_container": 6,
+  "blue_container": 6,
+  "picked_colors": 4
+ },
+ "field_errors": {
+  "buttons_pressed": {
+   "in": 0,
+   "sole": 0
+  },
+  "green_container": {
+   "in": 1,
+   "sole": 1
+  },
+  "red_container": {
+   "in": 1,
+   "sole": 0
+  },
+  "blue_container": {
+   "in": 1,
+   "sole": 0
+  },
+  "picked_colors": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.17647058823529413,
+ "verified_of_all": 0.8235294117647058,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 17,
+ "critique": "field green_container, ANNOTATOR PROMPT\n  Keep the field as described, with one addition about how the chain is run: the three color chains (green, red, blue) are run jointly as a one-to-one assignment, frame to frame. In each frame every container gets exactly one color, so no two color fields may end on the same container and no moving container may be left unassigned. When the two nearest candidates for one color are nearly tied (a few pixels apart in displacement), the tie is broken by the assignment that leaves a distinct container for the other colors with the smallest total displacement. A step whose last frame shows the containers in the same arrangement as the previous step's last frame is NOT evidence that nothing moved: when any intermediate frame shows containers displaced, the chain is still run through every frame and usually ends with two colors swapped. Example: carried green [100, 166], first frame container at [101, 168], then [110, 178], [125, 182], [130, 163], last frame [130, 160]; write [130, 160] even though the goal names only blue. e.g. [130, 160]\n\nfield red_container, ANNOTATOR PROMPT\n  Same addition as green_container: chained jointly with the other two colors as a one-to-one assignment per frame, near-ties resolved by consistency with the other chains, every color re-chained at any step whose frames show a container displaced, even when the start and end layouts of the step look identical and even when red is not named in the goal. e.g. [101, 152]\n\nfield blue_container, ANNOTATOR PROMPT\n  Same addition as green_container: chained jointly with the other two colors as a one-to-one assignment per frame, near-ties resolved by consistency with the other chains, every color re-chained at any step whose frames show a container displaced, even when the start and end layouts of the step look identical and even when blue is not named in the goal. e.g. [114, 195]\n\nfield picked_colors, ANNOTATOR PROMPT\n  Unchanged in content; state the exact textual form: the value is the literal JSON text with double quotes and no spaces, [] when empty, [\"red\"] after the red cube has been exposed, [\"red\",\"green\"] after both. Single-quoted lists such as ['red'] are not the recorded value. e.g. [\"red\"]\n\nfield green_container, POLICY PROMPT\n  Situation: at the decision step after the second press, while the two non-goal containers had circled each other during the press, the policy re-chained only the goal color and copied the other two fields unchanged, so one non-goal field still held a position where a different container now stood; at another step the start and end layouts of the step were identical and a near-tie between two candidates in a middle frame made the single-color chain ambiguous. This breaks PREDICTABILITY: the recorded values were the jointly chained ones. Change the instruction to a mandatory procedure placed before the worked example: (a) at every step whose frames show containers, rewrite ALL THREE fields green_container, red_container and blue_container, not only the goal color; (b) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for all three colors through every frame as a ONE-TO-ONE ASSIGNMENT: in each frame each container is assigned to exactly one color, so two fields can never end on the same container, and a container that one color leaves must be taken up by another color; (c) when the nearest candidate for one color is a near-tie (displacements within a few pixels of each other), choose the assignment that also gives the other colors a distinct nearest container with the smallest total displacement; (d) an identical container layout in the first and last frames of a step does not mean nothing moved; if middle frames show displacement, the result is usually a swap of two colors, and the chain decides which; (e) consistency check before writing: the three written values must be three different containers of the last frame, and if the goal color's field moved to a new container, the field that carried that container's old position must have moved too. Example: carried green [100, 166] and blue [130, 162]; frames show [101, 168] gliding to [110, 178], [125, 182], [130, 163], [130, 160] while the other glides from [130, 162] to [121, 151], [106, 147], [102, 165], [101, 168]; write green_container=[130, 160] and blue_container=[101, 168]. e.g. [130, 160]\n\nfield red_container, POLICY PROMPT\n  Same change as green_container: rewritten at every step showing containers, chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, identical start/end layouts still chained, and the three written values must be three distinct last-frame containers. Example: carried red [112, 194] passes [121, 184], [119, 162] (chosen over [95, 182] because blue's chain takes that one), [103, 153], last frame [101, 152]; write [101, 152]. e.g. [101, 152]\n\nfield blue_container, POLICY PROMPT\n  Same change as green_container: rewritten at every step showing containers, chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, identical start/end layouts still chained, and the three written values must be three distinct last-frame containers. Example: carried blue [101, 152] passes [95, 163], [95, 182], [112, 194], last frame [114, 195]; write [114, 195]. e.g. [114, 195]\n\nfield picked_colors, POLICY PROMPT\n  Situation: with the red container held in the gripper and the red cube exposed, the policy appended the right color but wrote the list in single-quoted Python form, which did not match the recorded double-quoted JSON text. This breaks PREDICTABILITY on form only. Change: state that the field is written as the exact JSON text, double quotes, no spaces: [] when empty, [\"red\"] after the red cube is exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is a mismatch. The event (a cube visible beneath a lifted or held container in this step's frames) is unchanged. e.g. [\"red\"]\n\nrefused\n  No report is dropped. The subgoal instruction was found sufficient at every reported step: the chosen menu option and the pointed container were the recorded ones in each case, so no subgoal rule changes. The only subgoal-side discrepancy, a point a few pixels off the recorded one on the same container, is within the jitter of container centres and needs no rule.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "green_container",
+    "description": "Situation: at the decision step after the second press, while the two non-goal containers had circled each other during the press, the policy re-chained only the goal color and copied the other two fields unchanged, so one non-goal field still held a position where a different container now stood; at another step the start and end layouts of the step were identical and a near-tie between two candidates in a middle frame made the single-color chain ambiguous. This breaks PREDICTABILITY: the recorded values were the jointly chained ones. Change the instruction to a mandatory procedure placed before the worked example: (a) at every step whose frames show containers, rewrite ALL THREE fields green_container, red_container and blue_container, not only the goal color; (b) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for all three colors through every frame as a ONE-TO-ONE ASSIGNMENT: in each frame each container is assigned to exactly one color, so two fields can never end on the same container, and a container that one color leaves must be taken up by another color; (c) when the nearest candidate for one color is a near-tie (displacements within a few pixels of each other), choose the assignment that also gives the other colors a distinct nearest container with the smallest total displacement; (d) an identical container layout in the first and last frames of a step does not mean nothing moved; if middle frames show displacement, the result is usually a swap of two colors, and the chain decides which; (e) consistency check before writing: the three written values must be three different containers of the last frame, and if the goal color's field moved to a new container, the field that carried that container's old position must have moved too. Example: carried green [100, 166] and blue [130, 162]; frames show [101, 168] gliding to [110, 178], [125, 182], [130, 163], [130, 160] while the other glides from [130, 162] to [121, 151], [106, 147], [102, 165], [101, 168]; write green_container=[130, 160] and blue_container=[101, 168]. e.g. [130, 160]"
+   },
+   {
+    "field": "red_container",
+    "description": "Same change as green_container: rewritten at every step showing containers, chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, identical start/end layouts still chained, and the three written values must be three distinct last-frame containers. Example: carried red [112, 194] passes [121, 184], [119, 162] (chosen over [95, 182] because blue's chain takes that one), [103, 153], last frame [101, 152]; write [101, 152]. e.g. [101, 152]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same change as green_container: rewritten at every step showing containers, chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, identical start/end layouts still chained, and the three written values must be three distinct last-frame containers. Example: carried blue [101, 152] passes [95, 163], [95, 182], [112, 194], last frame [114, 195]; write [114, 195]. e.g. [114, 195]"
+   },
+   {
+    "field": "picked_colors",
+    "description": "Situation: with the red container held in the gripper and the red cube exposed, the policy appended the right color but wrote the list in single-quoted Python form, which did not match the recorded double-quoted JSON text. This breaks PREDICTABILITY on form only. Change: state that the field is written as the exact JSON text, double quotes, no spaces: [] when empty, [\"red\"] after the red cube is exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is a mismatch. The event (a cube visible beneath a lifted or held container in this step's frames) is unchanged. e.g. [\"red\"]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "green_container",
+    "description": "Keep the field as described, with one addition about how the chain is run: the three color chains (green, red, blue) are run jointly as a one-to-one assignment, frame to frame. In each frame every container gets exactly one color, so no two color fields may end on the same container and no moving container may be left unassigned. When the two nearest candidates for one color are nearly tied (a few pixels apart in displacement), the tie is broken by the assignment that leaves a distinct container for the other colors with the smallest total displacement. A step whose last frame shows the containers in the same arrangement as the previous step's last frame is NOT evidence that nothing moved: when any intermediate frame shows containers displaced, the chain is still run through every frame and usually ends with two colors swapped. Example: carried green [100, 166], first frame container at [101, 168], then [110, 178], [125, 182], [130, 163], last frame [130, 160]; write [130, 160] even though the goal names only blue. e.g. [130, 160]"
+   },
+   {
+    "field": "red_container",
+    "description": "Same addition as green_container: chained jointly with the other two colors as a one-to-one assignment per frame, near-ties resolved by consistency with the other chains, every color re-chained at any step whose frames show a container displaced, even when the start and end layouts of the step look identical and even when red is not named in the goal. e.g. [101, 152]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same addition as green_container: chained jointly with the other two colors as a one-to-one assignment per frame, near-ties resolved by consistency with the other chains, every color re-chained at any step whose frames show a container displaced, even when the start and end layouts of the step look identical and even when blue is not named in the goal. e.g. [114, 195]"
+   },
+   {
+    "field": "picked_colors",
+    "description": "Unchanged in content; state the exact textual form: the value is the literal JSON text with double quotes and no spaces, [] when empty, [\"red\"] after the red cube has been exposed, [\"red\",\"green\"] after both. Single-quoted lists such as ['red'] are not the recorded value. e.g. [\"red\"]"
+   }
+  ],
+  "refused": "No report is dropped. The subgoal instruction was found sufficient at every reported step: the chosen menu option and the pointed container were the recorded ones in each case, so no subgoal rule changes. The only subgoal-side discrepancy, a point a few pixels off the recorded one on the same container, is within the jitter of container centres and needs no rule."
+ },
+ "critiques": [
+  {
+   "step": [
+    1,
+    "exec",
+    384
+   ],
+   "memory_in": "buttons_pressed=2; green_container=[90, 92]; red_container=[102, 160]; blue_container=[145, 133]; picked_colors=[]",
+   "answered": "D: put down the container",
+   "recorded": "D: put down the container",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The only disagreement is formatting: I wrote picked_colors=['red'] with single quotes while the recorded value is [\"red\"] with double quotes. The instruction does say 'JSON list with double-quoted strings', but it should state explicitly that the written value must be the exact JSON string [\"red\"] (double quotes, no spaces), and that single-quoted Python-style lists like ['red'] count as a mismatch.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    2,
+    "exec",
+    204
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[99, 91]; red_container=[112, 194]; blue_container=[103, 153]; picked_colors=[]",
+   "answered": "C: pick up the container at [99, 91]",
+   "recorded": "C: pick up the container at [96, 90]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The chain rule was present and, applied frame by frame from t=112 (red [112,194]->[121,184]->[119,162]->[103,153]->[101,152]; blue [101,152]->[95,163]->[95,182]->[112,194]->[114,195]), gives the recorded values; what it did not say is that the two chains must be run jointly so that no two colors end on the same container (at t=144 the red choice between [119,162] (22 px) and [95,182] (26 px) is nearly a tie, and the consistency with blue's chain is what resolves it), and it did not stress that a step whose containers end in the same arrangement as they started (t=112 and t=204 layouts identical) can still be a swap and must be chained, not copied.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    34,
+    "exec",
+    205
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[100, 166]; red_container=[101, 127]; blue_container=[130, 162]; picked_colors=[]",
+   "answered": "C: pick up the container at [101, 168]",
+   "recorded": "C: pick up the container at [98, 171]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The chain had to be run for green and red too, not only for the goal color blue: following the chain from carried green [100,166] gives [101,168]→[110,178]→[125,182]→[130,163]→[130,160], and red [101,127]→[99,126]. The instruction does say to rewrite every color at every step, but it buries that under the long swap example; it should state as a mandatory procedure that at a step with gliding containers all three fields are re-chained and that at least one non-goal field will therefore change whenever two containers circle each other (if blue moved from [130,162] to [101,168], the container that came from [101,168] must now be at [130,160] and the field that carried it must be rewritten).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

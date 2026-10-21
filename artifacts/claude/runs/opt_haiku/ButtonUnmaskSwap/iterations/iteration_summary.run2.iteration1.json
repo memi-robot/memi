@@ -1,0 +1,358 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "buttons_pressed",
+  "green_container",
+  "red_container",
+  "blue_container",
+  "picked_colors"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  22,
+  25,
+  39,
+  85
+ ],
+ "scored": 21,
+ "failed": 16,
+ "subgoal_wrong": 7,
+ "memory_wrong": 16,
+ "subgoal_verified": 0.6666666666666666,
+ "memory_verified": 0.23809523809523808,
+ "reads": {
+  "buttons_pressed": 16,
+  "green_container": 4,
+  "red_container": 4,
+  "blue_container": 2,
+  "picked_colors": 6
+ },
+ "field_errors": {
+  "buttons_pressed": {
+   "in": 5,
+   "sole": 0
+  },
+  "green_container": {
+   "in": 8,
+   "sole": 0
+  },
+  "red_container": {
+   "in": 9,
+   "sole": 1
+  },
+  "blue_container": {
+   "in": 6,
+   "sole": 0
+  },
+  "picked_colors": {
+   "in": 8,
+   "sole": 4
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.7619047619047619,
+ "verified_of_all": 0.23809523809523808,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 5,
+ "point_wrong": 2,
+ "decisions": 21,
+ "critique": "field buttons_pressed, ANNOTATOR PROMPT\n  Situation: during the first press in every episode no frame carries the phrase 'is pressed down'; the press shows only as the gripper lowered to about 0.025 height, fingers closed, directly over a button whose coordinates shift a pixel or two. The rule counted presses by the phrase alone, so it did not define the value the annotator actually wrote (PREDICTABILITY). Change the field to: count of completed presses, where a press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's position at height below about 0.06 with fingers closed. 0 at the first step, 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1\n\nfield green_container, ANNOTATOR PROMPT\n  Situation: two containers glide around each other during each press; in most episodes they finish swapped, but in one episode the pair circled twice during the second press and finished at their starting spots. The rule stated 'end up having swapped places' as a fact, which contradicts that episode (PREDICTABILITY). Change the tracking to: at the first step, the green cube's [y, x]; when containers appear, the one standing on that spot; thereafter the container is followed by chaining through every frame shown, each container matched to the container of the previous frame with the smallest displacement, starting from the previous step's last frame (the gliding may already be under way in the first frame of a step). A single circling pass ends swapped; a double pass ends unswapped. Value is the tracked container's position in the last frame shown. Once the cube beneath it is visible (container lifted or held), the field becomes the cube's position and from then on keeps the cube's last visible position, even after the container is lowered back over it. e.g. [109, 126]\n\nfield red_container, ANNOTATOR PROMPT\n  Same change as green_container: chained smallest-displacement matching frame by frame rather than an assumed swap; once the red cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [82, 152]\n\nfield blue_container, ANNOTATOR PROMPT\n  Same change as green_container: chained smallest-displacement matching frame by frame rather than an assumed swap; once the blue cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [102, 79]\n\nfield picked_colors, ANNOTATOR PROMPT\n  Written form: a JSON list with double-quoted strings, [] when empty, written explicitly at every step including the first. e.g. [\"green\"]\n\nfield buttons_pressed, POLICY PROMPT\n  Situation: at the step after the first press the frames never say 'is pressed down'; they show the gripper descending with closed fingers to height about 0.025 on top of a button while two containers glide. The policy, told to count only the literal phrase, kept 0, then answered A again (PREDICTABILITY, and it broke the subgoal). New text: write 0 at the first step (empty memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1\n\nfield green_container, POLICY PROMPT\n  Situation: (a) at the first step the policy left the field blank instead of writing the cube's position; (b) during presses it either ignored the gliding containers or shortcut to the container nearest the carried-in spot in the last frame, which gives the wrong one when the pair swapped and a container now stands on the old spot; (c) when the container was held with the cube visible beneath it, it wrote the airborne container's position, and after the container was set back down it wrote the container's position instead of the cube's (PREDICTABILITY). New text: at the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame. Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one pass swaps, two passes return). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]\n\nfield red_container, POLICY PROMPT\n  Same as green_container: write the red cube's position at the first step; chain smallest-displacement matches from the first frame shown; once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]\n\nfield blue_container, POLICY PROMPT\n  Same as green_container: write the blue cube's position at the first step; chain smallest-displacement matches from the first frame shown; once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]\n\nfield picked_colors, POLICY PROMPT\n  Situation: the policy left the field blank at the first step and later wrote Python-style single quotes, both read as mismatches (PREDICTABILITY). New text: a JSON list with double-quoted strings; write [] explicitly at the first step and whenever empty; append a color when a frame shows that cube visible beneath a lifted or held container, if not already listed. e.g. [\"red\"]\n\nthe policy prompt for subgoal\n  Rule 1 ('if buttons_pressed is 0: A') sent the policy wrong: at the step after the first press no frame said 'is pressed down', the policy kept the count at 0 and answered A a second time (SUFFICIENCY via a miscounted memory). Replace rules 1 and 2 with: A only at the very first decision step, recognized by empty carried-in memory and a scene with no execution frames and the gripper out of frame. At any step that shows execution frames, A has already been executed; answer B when buttons_pressed (after this step's update) is 1, which includes the case where the frames show the gripper lowered onto a button with closed fingers. Rules 3 to 6 stay. In the fallback, remove the suggestion to point at the container nearest the cube's last known position; instead say to point at the position obtained by chaining the container frame by frame as the memory instruction describes, since after a swap a different container stands on the old spot.\n\nrefused\n  One step proposed that buttons_pressed be 'at least 1 at the first decision step'; the first decision step is the one before any execution frames, where the count is 0, so that wording is dropped in favor of counting the press from the gripper lowered onto a button. Several steps proposed stating as a rule that whenever two containers move during a step they have swapped. One episode shows the same pair circling twice during the second press and finishing at their starting spots, and the correct pick there follows the unswapped positions, so the flat swap rule is not passed on; the chained smallest-displacement match, which yields the swap in the ordinary case and the return in the double-circle case, is given instead.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 1 ('if buttons_pressed is 0: A') sent the policy wrong: at the step after the first press no frame said 'is pressed down', the policy kept the count at 0 and answered A a second time (SUFFICIENCY via a miscounted memory). Replace rules 1 and 2 with: A only at the very first decision step, recognized by empty carried-in memory and a scene with no execution frames and the gripper out of frame. At any step that shows execution frames, A has already been executed; answer B when buttons_pressed (after this step's update) is 1, which includes the case where the frames show the gripper lowered onto a button with closed fingers. Rules 3 to 6 stay. In the fallback, remove the suggestion to point at the container nearest the cube's last known position; instead say to point at the position obtained by chaining the container frame by frame as the memory instruction describes, since after a swap a different container stands on the old spot.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "buttons_pressed",
+    "description": "Situation: at the step after the first press the frames never say 'is pressed down'; they show the gripper descending with closed fingers to height about 0.025 on top of a button while two containers glide. The policy, told to count only the literal phrase, kept 0, then answered A again (PREDICTABILITY, and it broke the subgoal). New text: write 0 at the first step (empty memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1"
+   },
+   {
+    "field": "green_container",
+    "description": "Situation: (a) at the first step the policy left the field blank instead of writing the cube's position; (b) during presses it either ignored the gliding containers or shortcut to the container nearest the carried-in spot in the last frame, which gives the wrong one when the pair swapped and a container now stands on the old spot; (c) when the container was held with the cube visible beneath it, it wrote the airborne container's position, and after the container was set back down it wrote the container's position instead of the cube's (PREDICTABILITY). New text: at the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame. Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one pass swaps, two passes return). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]"
+   },
+   {
+    "field": "red_container",
+    "description": "Same as green_container: write the red cube's position at the first step; chain smallest-displacement matches from the first frame shown; once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same as green_container: write the blue cube's position at the first step; chain smallest-displacement matches from the first frame shown; once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]"
+   },
+   {
+    "field": "picked_colors",
+    "description": "Situation: the policy left the field blank at the first step and later wrote Python-style single quotes, both read as mismatches (PREDICTABILITY). New text: a JSON list with double-quoted strings; write [] explicitly at the first step and whenever empty; append a color when a frame shows that cube visible beneath a lifted or held container, if not already listed. e.g. [\"red\"]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "buttons_pressed",
+    "description": "Situation: during the first press in every episode no frame carries the phrase 'is pressed down'; the press shows only as the gripper lowered to about 0.025 height, fingers closed, directly over a button whose coordinates shift a pixel or two. The rule counted presses by the phrase alone, so it did not define the value the annotator actually wrote (PREDICTABILITY). Change the field to: count of completed presses, where a press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's position at height below about 0.06 with fingers closed. 0 at the first step, 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1"
+   },
+   {
+    "field": "green_container",
+    "description": "Situation: two containers glide around each other during each press; in most episodes they finish swapped, but in one episode the pair circled twice during the second press and finished at their starting spots. The rule stated 'end up having swapped places' as a fact, which contradicts that episode (PREDICTABILITY). Change the tracking to: at the first step, the green cube's [y, x]; when containers appear, the one standing on that spot; thereafter the container is followed by chaining through every frame shown, each container matched to the container of the previous frame with the smallest displacement, starting from the previous step's last frame (the gliding may already be under way in the first frame of a step). A single circling pass ends swapped; a double pass ends unswapped. Value is the tracked container's position in the last frame shown. Once the cube beneath it is visible (container lifted or held), the field becomes the cube's position and from then on keeps the cube's last visible position, even after the container is lowered back over it. e.g. [109, 126]"
+   },
+   {
+    "field": "red_container",
+    "description": "Same change as green_container: chained smallest-displacement matching frame by frame rather than an assumed swap; once the red cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [82, 152]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same change as green_container: chained smallest-displacement matching frame by frame rather than an assumed swap; once the blue cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [102, 79]"
+   },
+   {
+    "field": "picked_colors",
+    "description": "Written form: a JSON list with double-quoted strings, [] when empty, written explicitly at every step including the first. e.g. [\"green\"]"
+   }
+  ],
+  "refused": "One step proposed that buttons_pressed be 'at least 1 at the first decision step'; the first decision step is the one before any execution frames, where the count is 0, so that wording is dropped in favor of counting the press from the gripper lowered onto a button. Several steps proposed stating as a rule that whenever two containers move during a step they have swapped. One episode shows the same pair circling twice during the second press and finishing at their starting spots, and the correct pick there follows the unswapped positions, so the flat swap rule is not passed on; the chained smallest-displacement match, which yields the swap in the ordinary case and the return in the double-circle case, is given instead."
+ },
+ "critiques": [
+  {
+   "step": [
+    1,
+    "exec",
+    0
+   ],
+   "memory_in": "buttons_pressed=; green_container=; red_container=; blue_container=; picked_colors=",
+   "answered": "A: press the first button",
+   "recorded": "A: press the first button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction says 'Start with the cube position seen at the first step' and 'If a frame shows the green cube uncovered and no containers, write the cube's position', but it did not make explicit that at the very first decision step, when the carried-in fields are empty, the three <color>_container fields must be WRITTEN from the cube positions in the scene (green [93, 93], red [146, 132], blue [105, 161]) rather than left blank, and that picked_colors must be written as an explicit empty list [] rather than left blank.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    1,
+    "exec",
+    119
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[93, 93]; red_container=[146, 132]; blue_container=[105, 161]; picked_colors=[]",
+   "answered": "A: press the first button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to count a press only when a frame literally says a button 'is pressed down'. No frame here says that; what the frames show is the gripper closed and descending to height 0.027 at [62, 148], on top of the button at [63, 147], while two containers leave their spots ([102, 162] and [145, 132] become [117, 168]/[125, 127], then [106, 140]/[140, 157], then [102, 160]/[145, 133]). The instruction should say a press is counted whenever the gripper is shown low (height near 0.03) over a button position, or whenever two containers move between frames, and that the red/blue swap must then be applied: following each container to its nearest predecessor, the container that started at [145, 132] (red) ends at [102, 160] and the one from [102, 162] (blue) ends at [145, 133]. Because I did not recognize the press, I also did not apply the swap and left red at [145, 133], blue at [102, 160].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    1,
+    "exec",
+    384
+   ],
+   "memory_in": "buttons_pressed=2; green_container=[90, 92]; red_container=[102, 160]; blue_container=[145, 133]; picked_colors=[]",
+   "answered": "D: put down the container",
+   "recorded": "D: put down the container",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The only disagreement is formatting: I wrote picked_colors as ['red'] with single quotes while the recorded value is [\"red\"] with double quotes. The instruction should state that list values must be written as JSON lists with double-quoted strings, e.g. [\"red\"], not Python-style ['red'].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    22,
+    "exec",
+    0
+   ],
+   "memory_in": "buttons_pressed=; green_container=; red_container=; blue_container=; picked_colors=",
+   "answered": "A: press the first button",
+   "recorded": "A: press the first button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The picked_colors field says 'Start empty' but does not state the written form of an empty list: it should say write `[]` (an empty JSON list) at the first step, not a blank value, so the policy knows to emit picked_colors=[] when initializing.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    22,
+    "exec",
+    114
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[108, 93]; red_container=[97, 164]; blue_container=[123, 183]; picked_colors=[]",
+   "answered": "A: press the first button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The increment of buttons_pressed is tied to a frame literally saying a button 'is pressed down', but no frame here says that. What this step shows instead is the gripper descending onto a button (gripper at [60, 153], height 0.025, fingers 0% open, directly on the button at [60, 152], the button's y shifting to 62) while two containers glide around each other. The instruction should say that a press is recognized from the gripper reaching a button position at low height with fingers closed (or from two containers swapping during the execution frames), or simply that any decision step reached after execution frames of a button-press command counts that press. Because the press was not recognized, the container swap was also not applied; it should state that the swap rule applies whenever two containers move between the frames shown, regardless of the 'is pressed down' phrase, so green_container is followed [106, 92] -> [102, 108] -> [108, 123] -> [128, 122].",
+   "missing_from_policy_prompt_for_subgoal": "It should note that a decision step showing execution frames is never the start of the episode, so the first button press has already been executed and B is next even if the press phrase is absent; A applies only at the very first decision step.",
+   "missing": ""
+  },
+  {
+   "step": [
+    22,
+    "exec",
+    207
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[128, 122]; red_container=[94, 165]; blue_container=[120, 185]; picked_colors=[]",
+   "answered": "C: pick up the container at [95, 165]",
+   "recorded": "C: pick up the container at [118, 189]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say plainly that the carried-in position must never be matched straight to the last frame shown. Here the carried-in red_container=[94,165] and blue_container=[120,185] were the two containers that moved during this button press (t=128 already shows them mid-glide at [95,178] and [120,171], t=144 at [105,192] and [109,156], t=160 at [95,165] and [120,186]). The instruction should state: whenever exactly two containers are at positions different from the carried-in ones, or are seen moving in any frame of this step, those two have swapped, so the color whose carried-in spot is now occupied again gets the OTHER mover's final spot (red -> [120,186], blue -> [95,165]), even though a container is standing on red's old spot. Chaining nearest-neighbor from the carried-in position through t=128, t=144, t=160 gives this result, but the shortcut of 'nearest container to the carried-in position in the last frame' gives the wrong one and must be forbidden explicitly.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    25,
+    "exec",
+    0
+   ],
+   "memory_in": "buttons_pressed=; green_container=; red_container=; blue_container=; picked_colors=",
+   "answered": "A: press the first button",
+   "recorded": "A: press the first button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction said 'Start with the cube position seen at the first step' and 'If a frame shows the green cube uncovered and no containers, write the cube's position', but it did not say plainly that at the very first decision step, when memory is empty and the scene shows the bare cubes, each <color>_container field must be written immediately with that cube's [y, x] from the observed step (green [129, 123], red [106, 95], blue [108, 167]) and picked_colors must be written as an explicit empty list []; I left them blank because the instruction read as a description of the starting state rather than a value to write at this step.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    25,
+    "exec",
+    114
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[129, 123]; red_container=[106, 95]; blue_container=[108, 167]; picked_colors=[]",
+   "answered": "A: press the first button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to count a press only when a frame literally says a button 'is pressed down'. No frame here says that; the press shows as the gripper at the button position [63,146] with height 0.027 and fingers closed at t=80, the button's listed coordinates shifting ([63,146] to [65,145]), and two containers ([103,94] and [128,122]) leaving their spots and gliding around each other across t=80/t=96/t=112. The instruction should say that a press is recognized from any of these signs (gripper at a button position at height below ~0.05, or two containers in motion among the frames), and that buttons_pressed is then incremented and the two moving containers are followed to their swapped final positions ([104,94] for green, [128,122] for red).",
+   "missing_from_policy_prompt_for_subgoal": "It should state that the execution frames shown at this step are the outcome of the previous command (a press of the first button), so a gripper seen touching a button at low height means that press is complete and the next subgoal is B regardless of whether the count was carried in as 0; i.e. do not answer A again when the frames show a button already pressed.",
+   "missing": ""
+  },
+  {
+   "step": [
+    25,
+    "exec",
+    206
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[104, 94]; red_container=[128, 122]; blue_container=[105, 168]; picked_colors=[]",
+   "answered": "C: pick up the container at [104, 94]",
+   "recorded": "C: pick up the container at [126, 123]",
+   "missing_from_memory": "nothing (though the carried-in positions [104, 94] and [128, 122] did not correspond to any container in the first frame shown here (t=128: [101, 106], [131, 108]); they already matched the post-swap final frame, which invited reading them as unchanged)",
+   "missing_from_policy_prompt_for_memory": "It should say explicitly: match the carried-in position to the nearest container in the FIRST frame of this step (not the last), then follow it frame to frame; when a button press occurs in these frames and two containers move, the tracked container ends at the other mover's starting spot, even if that leaves the final coordinates looking identical to the carried-in values. Here green matched [101, 106] at t=128, the other mover was [131, 108], so after the press green is at [128, 122] and red at [104, 94].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "nothing (though the carried-in positions [104, 94] and [128, 122] did not correspond to any container in the first frame shown here (t=128: [101, 106], [131, 108]); they already matched the post-swap final frame, which invited reading them as unchanged)"
+  },
+  {
+   "step": [
+    39,
+    "exec",
+    0
+   ],
+   "memory_in": "buttons_pressed=; green_container=; red_container=; blue_container=; picked_colors=",
+   "answered": "A: press the first button",
+   "recorded": "A: press the first button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not state plainly that at the first decision step, with empty carried-in memory, green_container/red_container/blue_container must be written immediately as the cube positions visible in the scene ([108, 120], [92, 172], [122, 180]) and picked_colors must be written as an explicit empty list [], rather than left blank. The 'Start with the cube position seen at the first step' clause reads as a default, not as an instruction to emit those values as changed fields at t=0.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    39,
+    "exec",
+    114
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[108, 120]; red_container=[92, 172]; blue_container=[122, 180]; picked_colors=[]",
+   "answered": "A: press the first button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to count a press only when a frame literally says a button 'is pressed down'. No frame here says that; the press is shown only by the gripper descending onto the button at [60,154] (height 0.025 at t=80, button shifting to [63,153]) and two containers gliding and swapping during the descent. The instruction should say a press is counted whenever the execution frames show the gripper lowered to near-zero height at a button position, or whenever two containers swap places during this step's frames, and that the first decision step of an episode always follows the execution of A so buttons_pressed is at least 1 there.",
+   "missing_from_policy_prompt_for_subgoal": "It should say that if the frames shown at this step contain the gripper descending to a button (or a container swap), the first button has just been pressed and the answer is B even if buttons_pressed was not updated; A is only correct at the very start of execution with no gripper movement shown.",
+   "missing": ""
+  },
+  {
+   "step": [
+    39,
+    "exec",
+    319
+   ],
+   "memory_in": "buttons_pressed=2; green_container=[134, 107]; red_container=[91, 170]; blue_container=[117, 185]; picked_colors=[]",
+   "answered": "D: put down the container",
+   "recorded": "D: put down the container",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The list field picked_colors must be written in JSON form with double-quoted strings, e.g. [\"green\"], not Python-style single quotes ['green']; the content I wrote was correct, only the quoting differed.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    85,
+    "exec",
+    0
+   ],
+   "memory_in": "buttons_pressed=; green_container=; red_container=; blue_container=; picked_colors=",
+   "answered": "A: press the first button",
+   "recorded": "A: press the first button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The picked_colors field says 'Start empty' but does not state the literal form of the empty value. The recorded answer writes it as `[]`, while I left it blank. The instruction should say: write the empty list as `[]` at the first step (and whenever it is empty), e.g. picked_colors=[].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    85,
+    "exec",
+    114
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[104, 126]; red_container=[96, 168]; blue_container=[92, 86]; picked_colors=[]",
+   "answered": "A: press the first button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to count a press only when a frame literally says a button 'is pressed down'. No frame here says that; the press is shown by the gripper descending to the button position [60, 154] at height 0.025 (t=80) with fingers closed while two containers start gliding. It should say a press is recognized by the gripper reaching a button's position at near-zero height (and/or containers moving) during this step's frames, so buttons_pressed becomes 1. It also told me to match containers nearest-frame-to-frame, which with the mid-swap frames ([83,99]/[109,110] then [86,119]/[104,89]) led me to keep green at [101,126] and blue at [89,85]; it should state plainly that when exactly two containers move during a press, their end positions are swapped relative to their start positions (the container that started at [89,85] ends at [101,126] and vice versa), overriding nearest matching.",
+   "missing_from_policy_prompt_for_subgoal": "It keyed the A-vs-B choice only on buttons_pressed, which I had left at 0. It should say that if the frames of this step show the gripper descending onto a button at low height (a press just executed), answer B regardless of the carried count.",
+   "missing": ""
+  },
+  {
+   "step": [
+    85,
+    "exec",
+    318
+   ],
+   "memory_in": "buttons_pressed=2; green_container=[89, 85]; red_container=[93, 170]; blue_container=[101, 126]; picked_colors=[]",
+   "answered": "D: put down the container",
+   "recorded": "D: put down the container",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The red_container field said to follow the container and write its position in the last frame, and also said 'if the green cube is exposed by lifting its container, write the exposed cube's position' — but it did not state clearly that when the container is lifted and shown 'held in the gripper' while the cube is visible beneath it, the field must take the exposed cube's position ([96, 168]) rather than the held container's position ([62, 181]). It should say: once a container is held and its cube is visible, the field tracks the cube's position, not the airborne container.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    85,
+    "exec",
+    366
+   ],
+   "memory_in": "buttons_pressed=2; green_container=[89, 85]; red_container=[96, 168]; blue_container=[101, 126]; picked_colors=[\"red\"]",
+   "answered": "C: pick up the container at [101, 126]",
+   "recorded": "C: pick up the container at [99, 127]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "After a lifted container is put back down over a cube that was exposed (here the red cube seen at [96,168] then [100,166] under the held container, which was then set down at [90,168]), the instruction does not say which position to write: I wrote the put-down container's position [90,168], the recorded value is the cube's last exposed position [100,166]. It should state that once a cube has been exposed, its field keeps the cube's last visible position and is not switched back to the container that is lowered onto it.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

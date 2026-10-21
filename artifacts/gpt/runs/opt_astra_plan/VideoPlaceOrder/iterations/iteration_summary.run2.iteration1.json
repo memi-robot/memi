@@ -1,0 +1,120 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "selected_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  23,
+  39,
+  51,
+  66,
+  87
+ ],
+ "scored": 10,
+ "failed": 3,
+ "subgoal_wrong": 0,
+ "memory_wrong": 3,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.7,
+ "reads": {
+  "selected_target": 5
+ },
+ "field_errors": {
+  "selected_target": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3,
+ "verified_of_all": 0.7,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field selected_target, ANNOTATOR PROMPT\n  When the goal requested an ordinal demonstrated placement, the policy correctly chose to pick up the named cube but stored the target's old location. The annotated memory instead identified that target after a late shuffle. This affected first-placement goals and a second-placement goal: in the latter, the second-placement target moved into the former first-placement location. The rule's reference only to occlusion and small coordinate shifts leaves these different values unresolved, breaking PREDICTABILITY and jeopardizing later SUFFICIENCY. Clarify that selected_target holds the first execution scene's center of the physical target that received the requested chronological placement, tracked through all subsequent demonstration motion, including large shuffles. Identify the placement by release onto a marked target, then follow that target through the remaining demonstration rather than matching its placement-time location to the execution scene. Use successive motion and a consistent one-to-one correspondence among moving targets; do not treat coordinate-list order or final spatial position as identity. Write the resulting [y, x] point at the first decision and retain it unchanged thereafter. For example, a first-placement target initially near [137, 104] moves through [115, 110], [98, 135], and [100, 164], ending at the execution target [101, 166]; store [101, 166].\n\nfield selected_target, POLICY PROMPT\n  At the initial decision, the demonstration includes completed cube placements followed by target motion while the cube rests in the central workspace. The policy chose the correct pickup but selected the placement-time location for memory, whereas the annotation selected the same physical target's post-shuffle location. The existing small-wobble matching instruction does not explain this difference, breaking PREDICTABILITY and risking a later drop onto the wrong object. When incoming memory is empty and the demonstration is present, count completed target placements of the goal-named cube chronologically as before. Identify the requested placement's target, then scan every remaining demonstration frame and track that target through any shuffle. Establish one-to-one correspondences between successive target sets using continuous motion, considering the moving targets jointly and keeping stationary targets separate. Neither sorted coordinate-list position nor return to a previously occupied location establishes identity. For example, a second-placement target near [75, 92] subsequently moves through [87, 117] and [119, 130] to the bottom target in the execution scene; write selected_target=[141, 118], not the execution target remaining near its original upper location. Canonicalize the tracked endpoint to its center in the first execution scene, write it at this decision, and copy it unchanged at subsequent decisions. Keep the existing exclusions for initial cube positions, flyovers, button presses, and central-workspace releases. If the visible sequence genuinely cannot establish target identity, use \"unknown\" rather than inventing a correspondence.\n\nrefused\n  Do not change chronological placement counting or correct the annotated second-placement memory to the target at the original second-placement location. The report suggesting that the annotated bottom target represented the first placement overlooked the late shuffle: the upper target that received the second release moves through the center and finishes at the bottom. The first-placement reports likewise concern physical targets moving to different locations, not incorrect release counting. No additional memory field or subgoal-rule change is needed: the existing pickup and drop rules select the correct objects once selected_target is derived by tracking the demonstrated target through the shuffle.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "selected_target",
+    "description": "At the initial decision, the demonstration includes completed cube placements followed by target motion while the cube rests in the central workspace. The policy chose the correct pickup but selected the placement-time location for memory, whereas the annotation selected the same physical target's post-shuffle location. The existing small-wobble matching instruction does not explain this difference, breaking PREDICTABILITY and risking a later drop onto the wrong object. When incoming memory is empty and the demonstration is present, count completed target placements of the goal-named cube chronologically as before. Identify the requested placement's target, then scan every remaining demonstration frame and track that target through any shuffle. Establish one-to-one correspondences between successive target sets using continuous motion, considering the moving targets jointly and keeping stationary targets separate. Neither sorted coordinate-list position nor return to a previously occupied location establishes identity. For example, a second-placement target near [75, 92] subsequently moves through [87, 117] and [119, 130] to the bottom target in the execution scene; write selected_target=[141, 118], not the execution target remaining near its original upper location. Canonicalize the tracked endpoint to its center in the first execution scene, write it at this decision, and copy it unchanged at subsequent decisions. Keep the existing exclusions for initial cube positions, flyovers, button presses, and central-workspace releases. If the visible sequence genuinely cannot establish target identity, use \"unknown\" rather than inventing a correspondence."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "selected_target",
+    "description": "When the goal requested an ordinal demonstrated placement, the policy correctly chose to pick up the named cube but stored the target's old location. The annotated memory instead identified that target after a late shuffle. This affected first-placement goals and a second-placement goal: in the latter, the second-placement target moved into the former first-placement location. The rule's reference only to occlusion and small coordinate shifts leaves these different values unresolved, breaking PREDICTABILITY and jeopardizing later SUFFICIENCY. Clarify that selected_target holds the first execution scene's center of the physical target that received the requested chronological placement, tracked through all subsequent demonstration motion, including large shuffles. Identify the placement by release onto a marked target, then follow that target through the remaining demonstration rather than matching its placement-time location to the execution scene. Use successive motion and a consistent one-to-one correspondence among moving targets; do not treat coordinate-list order or final spatial position as identity. Write the resulting [y, x] point at the first decision and retain it unchanged thereafter. For example, a first-placement target initially near [137, 104] moves through [115, 110], [98, 135], and [100, 164], ending at the execution target [101, 166]; store [101, 166]."
+   }
+  ],
+  "refused": "Do not change chronological placement counting or correct the annotated second-placement memory to the target at the original second-placement location. The report suggesting that the annotated bottom target represented the first placement overlooked the late shuffle: the upper target that received the second release moves through the center and finishes at the bottom. The first-placement reports likewise concern physical targets moving to different locations, not incorrect release counting. No additional memory field or subgoal-rule change is needed: the existing pickup and drop rules select the correct objects once selected_target is derived by tracking the demonstrated target through the shuffle."
+ },
+ "critiques": [
+  {
+   "step": [
+    23,
+    "exec",
+    729
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [80, 127]",
+   "recorded": "A: pick up the cube at [83, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The policy prompt does not establish how the first placement target maps to [101, 166]. The first green-cube release at t=176–192 is onto the target near [137, 103], but targets visibly move at t=672–704. If the recorded value is correct, the policy prompt needs an observable identity-tracking rule through that motion that maps the first-placement target to [101, 166], rather than matching its old location. Otherwise the recorded memory should be reconsidered.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    39,
+    "exec",
+    757
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [81, 127]",
+   "recorded": "A: pick up the cube at [82, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The stated chronological release-counting rule yields [75, 91]: the first placement is onto the bottom target at t=176, and the second is onto the upper-left target at t=464. The recorded [141, 118] instead identifies the first placement. No stated rule connects 'second' to that bottom target; either the recorded annotation needs correction or the policy prompt needs an explicitly justified different ordinal convention.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    1113
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [83, 128]",
+   "recorded": "A: pick up the cube at [82, 129]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The policy prompt should require tracking the first-placement target through the late target shuffle, not merely matching its old location or allowing small center wobble. The blue cube's first release at t=176–208 was onto the target originally at [130, 170]; to obtain the recorded memory, that target must be identified after the t=1056–1088 shuffle as the execution target at [111, 91], rather than [129, 170]. The policy prompt did not explain this identity change across the shuffle.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

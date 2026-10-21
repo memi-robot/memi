@@ -1,0 +1,95 @@
+{
+ "episodes": [
+  44,
+  76,
+  79,
+  85,
+  86
+ ],
+ "user_chars": 13287,
+ "usage": {
+  "prompt_tokens": 7847,
+  "completion_tokens": 747,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 7843
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on.",
+    "modify_to": "At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. Worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4]."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "modify_to": "At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "modify_to": "The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing refused. All three requested changes are serialization or indexing clarifications that leave the fields' meaning and the earlier committed text intact."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "modify_to": "The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "modify_to": "At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on.",
+    "modify_to": "At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. Worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4]."
+   }
+  ],
+  "refused": "Nothing refused. All three requested changes are serialization or indexing clarifications that leave the fields' meaning and the earlier committed text intact."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. All three requested changes are serialization or indexing clarifications that leave the fields' meaning and the earlier committed text intact.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"demo_moves\", \"edits\": [{\"modify_from\": \"The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. e.g. [\\\"A\\\", \\\"B\\\", \\\"A\\\", \\\"D\\\"]\", \"modify_to\": \"The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']\"}]}],\n \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"demo_moves\", \"edits\": [{\"modify_from\": \"At every later step copy the list carried in unchanged. e.g. [\\\"A\\\", \\\"B\\\", \\\"A\\\", \\\"D\\\"]\", \"modify_to\": \"At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']\"}]}],\n \"policy_prompt_for_subgoal\": [{\"modify_from\": \"At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on.\", \"modify_to\": \"At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. Worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4].\"}],\n \"refused\": \"Nothing refused. All three requested changes are serialization or indexing clarifications that leave the fields' meaning and the earlier committed text intact.\"}"
+}

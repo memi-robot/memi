@@ -1,0 +1,69 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "method"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  6,
+  37,
+  51,
+  81,
+  99
+ ],
+ "scored": 9,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "method": 0
+ },
+ "field_errors": {
+  "method": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "method": "read at no step of 9"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 9,
+ "critique": "the policy prompt for subgoal\n  No step failed; every recorded subgoal was reproduced. The one reported fault is that the single field `method` was carried through all nine steps and read at none. The reason is visible in the episodes: at the first decision step the demonstration itself is in front of the policy, and at the second decision step the execution steps since the first decision show the descent and the finger closure (about 46% after descending onto the cube, about 22% after descending onto the stick) followed by the rise, which settles E or B without the memory. A push episode has only one decision step. So in a correctly executed episode the field is never consulted. The field is nevertheless kept, not dropped: it is the only record of the demonstration, which is shown once and never again, and it is read at exactly the steps this minibatch does not contain - a decision step after a grasp attempt that did not close on anything (fingers at about 0% or reopened, nothing raised), where the policy must choose between retrying D, A or C and the step in front of it cannot say which. The subgoal instruction should be reordered to make this explicit: first judge from the step - fingers at about 40-60% and risen after a descent onto the cube means E, fingers at about 20-25% and risen after a descent onto the stick means B; only when neither holds (fingers fully open, or closed to about 0% with nothing raised, including the first decision step after `method` has just been filled from the demonstration) read `method` and choose D for `pick`, A for `hook`, C for `push`. Remove the trailing fallback paragraph that begins 'if `method` cannot be told' and re-derives the method from the demonstration or the scene: `method` is always written at the first step and copied afterwards, so that fallback can never be reached and only clutters the instruction. Also drop the parenthetical about which object to point at for B and E 'but prefer the cube'; state plainly that no option on this menu needs a point.\n\nrefused\n  Nothing was reported by any step, so nothing is being withheld. The only input was the unread-field block naming `method` as read at no step. It is not being dropped or folded, for the reason given above: the steps where it would be read are retry steps after a failed grasp, absent from this minibatch because every recorded episode executes correctly, and no other field or later observation can recover the demonstration once it has scrolled past.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No step failed; every recorded subgoal was reproduced. The one reported fault is that the single field `method` was carried through all nine steps and read at none. The reason is visible in the episodes: at the first decision step the demonstration itself is in front of the policy, and at the second decision step the execution steps since the first decision show the descent and the finger closure (about 46% after descending onto the cube, about 22% after descending onto the stick) followed by the rise, which settles E or B without the memory. A push episode has only one decision step. So in a correctly executed episode the field is never consulted. The field is nevertheless kept, not dropped: it is the only record of the demonstration, which is shown once and never again, and it is read at exactly the steps this minibatch does not contain - a decision step after a grasp attempt that did not close on anything (fingers at about 0% or reopened, nothing raised), where the policy must choose between retrying D, A or C and the step in front of it cannot say which. The subgoal instruction should be reordered to make this explicit: first judge from the step - fingers at about 40-60% and risen after a descent onto the cube means E, fingers at about 20-25% and risen after a descent onto the stick means B; only when neither holds (fingers fully open, or closed to about 0% with nothing raised, including the first decision step after `method` has just been filled from the demonstration) read `method` and choose D for `pick`, A for `hook`, C for `push`. Remove the trailing fallback paragraph that begins 'if `method` cannot be told' and re-derives the method from the demonstration or the scene: `method` is always written at the first step and copied afterwards, so that fallback can never be reached and only clutters the instruction. Also drop the parenthetical about which object to point at for B and E 'but prefer the cube'; state plainly that no option on this menu needs a point.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "Nothing was reported by any step, so nothing is being withheld. The only input was the unread-field block naming `method` as read at no step. It is not being dropped or folded, for the reason given above: the steps where it would be read are retry steps after a failed grasp, absent from this minibatch because every recorded episode executes correctly, and no other field or later observation can recover the demonstration once it has scrolled past."
+ },
+ "critiques": []
+}

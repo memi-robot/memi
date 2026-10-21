@@ -1,0 +1,77 @@
+{
+ "task": "ButtonUnmask",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 1 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    9,
+    43,
+    48,
+    60,
+    80
+   ],
+   "verified_of_all": 0.9166666666666666,
+   "subgoal_verified": 0.9166666666666666
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    15,
+    20,
+    47,
+    86,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    5,
+    21,
+    34,
+    38,
+    69
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    26,
+    46,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    7,
+    8,
+    38,
+    87,
+    90
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Start each episode with A, press the button: the initial scene shows uncovered cubes, no held container, and no completed press in the observed execution. After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty. Explicit 'pressed down' text is not required; the low hand contacting the button followed by withdrawal also establishes the press. For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise. Point inside that container's current visible body, not at the button, exposed cube, or another distractor; small differences between stored cube centers and container centers are expected. When a successful lift leaves a container held and the updated remaining_target_positions still has entries, choose C to free the hand. After release, if the list remains nonempty, choose B at the container covering its first position; do not press the button again or pick up the replaced container. A held container with an empty updated list means the requested final pickup is complete, so no further action is needed if execution terminates. For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+ "fields": [
+  {
+   "name": "remaining_target_positions",
+   "description": "With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless the observed execution shows a previously resting container at the first listed position being grasped and lifted, with that container now held and its cube exposed; then remove that first entry. Require a new resting-to-held transition: a container already held at the beginning of a put-down execution must not trigger another removal. Do not remove an entry merely because a pickup is being selected, and do not restore entries after release. Preserve stored coordinates rather than updating them from shifted visible-pixel centers. e.g. [[92, 93], [128, 118]]"
+  }
+ ],
+ "stage": "optimized"
+}

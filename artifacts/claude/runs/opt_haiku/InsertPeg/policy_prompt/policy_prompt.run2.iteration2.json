@@ -1,0 +1,18 @@
+{
+ "task": "InsertPeg",
+ "policy_prompt_for_subgoal": "An episode starts in subgoal A. Rules: 1. If the scene shows no peg held in the gripper (no 'is held in the gripper' entry, fingers 100% open, gripper raised out of frame) and the demonstration steps are shown with an empty memory: choose A, pick up the peg by grasping one end, and point at the peg end (head or tail) nearest the demonstration gripper in the demonstration frame where the gripper is lowest and the fingers have first dropped from 100% open toward closed, at that end's coordinates in the current start-of-execution scene. Write grasp_point, grasp_end and insert_side at this step (grasp_point is this same point). 2. If the scene shows a peg end 'is held in the gripper' (fingers about 22% open, gripper raised): the pick is done. If insert_side is right, choose B, insert the peg from the right side. If insert_side is left, choose C, insert the peg from the left side. 3. If the scene shows no peg held and the memory already holds grasp_point (the pick failed or dropped): choose A again and point at grasp_point, using the current position of the peg end of class grasp_end nearest that stored point. 4. Any situation not covered: if nothing is held, choose A pointing at grasp_point (or, if grasp_point is unknown, at the peg end nearest the box); if something is held, choose B when insert_side is right or unknown, and C when insert_side is left. Carry all memory fields forward unchanged.",
+ "fields": [
+  {
+   "name": "grasp_point",
+   "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have first dropped from 100% open toward closed (about 22% open, or a frame at about 50% while still closing); pick the peg head or peg tail entry whose coordinates are nearest the gripper in that frame; then write that same end's coordinates as they appear in the start-of-execution scene (pegs are at their demonstration t=0 positions). At every later step copy the carried value unchanged. e.g. [114, 212]"
+  },
+  {
+   "name": "grasp_end",
+   "description": "At the first decision step: head if the nearest entry to the gripper at the demonstration grasp frame (lowest height, fingers first dropped from 100% open toward closed, ~22% or ~50% while closing) is a peg head, tail if it is a peg tail. At every later step copy the carried value unchanged. e.g. tail"
+  },
+  {
+   "name": "insert_side",
+   "description": "At the first decision step: look at the last few demonstration frames, where the gripper is low (height about 0.04), fingers still closed, and gripper y close to the aperture box y. If the gripper x in those frames is SMALLER than the aperture box x, write right; if LARGER, write left. At every later step copy the carried value unchanged. e.g. right"
+  }
+ ]
+}

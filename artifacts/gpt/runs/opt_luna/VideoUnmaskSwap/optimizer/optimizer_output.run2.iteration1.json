@@ -1,0 +1,90 @@
+{
+ "episodes": [
+  2,
+  28,
+  31,
+  67,
+  79
+ ],
+ "user_chars": 14411,
+ "usage": {
+  "prompt_tokens": 5281,
+  "completion_tokens": 865,
+  "total_tokens": 6146,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 2986,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "With empty incoming memory, use the demonstration to associate each requested cube with the container placed over it, then track that container through all subsequent movement. Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. In these observations the initial lists are: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]].",
+      "modify_to": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it, then independently follow each requested container's identity along its entire moving trajectory, including exchanges with unrequested or extra containers. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "At the first decision, identify the container initially covering each requested cube, follow its identity through the entire demonstration, and list its final location in the order specified by the goal. Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them. Ignore extra containers unless they cover a requested cube. Initialization for these episodes is: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]].",
+      "modify_to": "At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "No substantive proposed change is refused. The example trajectory is omitted in favor of the general continuous-identity tracking rule. The subgoal rules and post-initialization memory updates remain unchanged."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "At the first decision, identify the container initially covering each requested cube, follow its identity through the entire demonstration, and list its final location in the order specified by the goal. Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them. Ignore extra containers unless they cover a requested cube. Initialization for these episodes is: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]].",
+      "modify_to": "At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "With empty incoming memory, use the demonstration to associate each requested cube with the container placed over it, then track that container through all subsequent movement. Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. In these observations the initial lists are: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]].",
+      "modify_to": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it, then independently follow each requested container's identity along its entire moving trajectory, including exchanges with unrequested or extra containers. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "No substantive proposed change is refused. The example trajectory is omitted in favor of the general continuous-identity tracking rule. The subgoal rules and post-initialization memory updates remain unchanged."
+ },
+ "not_applied": [],
+ "refused": "No substantive proposed change is refused. The example trajectory is omitted in favor of the general continuous-identity tracking rule. The subgoal rules and post-initialization memory updates remain unchanged.",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_targets\",\n      \"edits\": [\n        {\n          \"modify_from\": \"At the first decision, identify the container initially covering each requested cube, follow its identity through the entire demonstration, and list its final location in the order specified by the goal. Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them. Ignore extra containers unless they cover a requested cube. Initialization for these episodes is: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]].\",\n          \"modify_to\": \"At the first decision, when the demonstration is shown and incoming memory is absent, associate each requested cube with the container placed over it. Follow each such container's identity along its entire moving trajectory through the demonstration, including exchanges with unrequested or extra containers, and list its final [y, x] location in goal order. Assign endpoints using continuous motion and direction through intermediate frames, not original cube positions, nearest-position matching, or detection order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange, even though the unordered set of resting positions is unchanged. The intermediate crossing is not another exchange. Only a second complete exchange of the same pair restores that pair's original assignment; an exchange with a different container does not cancel the first. Independently track every requested identity through all movements; do not include unrequested containers in the output list. An existing empty list represents completed pickups and must not be reinitialized.\"\n        }\n      ]\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_targets\",\n      \"edits\": [\n        {\n          \"modify_from\": \"With empty incoming memory, use the demonstration to associate each requested cube with the container placed over it, then track that container through all subsequent movement. Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. In these observations the initial lists are: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]].\",\n          \"modify_to\": \"Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it, then independently follow each requested container's identity along its entire moving trajectory, including exchanges with unrequested or extra containers. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [],\n  \"refused\": \"No substantive proposed change is refused. The example trajectory is omitted in favor of the general continuous-identity tracking rule. The subgoal rules and post-initialization memory updates remain unchanged.\"\n}"
+}

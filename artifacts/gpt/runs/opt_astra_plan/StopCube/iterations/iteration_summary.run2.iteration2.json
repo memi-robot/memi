@@ -1,0 +1,112 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "passage_count",
+  "last_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  2,
+  38,
+  66,
+  93
+ ],
+ "scored": 17,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.8823529411764706,
+ "memory_verified": 1.0,
+ "reads": {
+  "passage_count": 12,
+  "last_side": 12
+ },
+ "field_errors": {
+  "passage_count": {
+   "in": 0,
+   "sole": 0
+  },
+  "last_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.11764705882352941,
+ "verified_of_all": 0.8823529411764706,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 0,
+ "decisions": 17,
+ "critique": "field motion_history, ANNOTATOR PROMPT\n  When stopping on the second or third target passage, a decision near an endpoint showed only two nearly stationary cube positions. The policy chose B rather than C although passage_count and last_side correctly identified the next passage as the requested one. Earlier motion timing had disappeared, breaking SUFFICIENCY: the remaining observations could not establish the time to return to the target. Add motion_history, an ordered list of timestamped cube-center observations from execution through the current decision's final observation. Initialize it with the initial execution observation and append newly observed samples at every decision, including motion during preparation and waiting. Each sample is [timestamp, [y, x]]; retain chronological order and include each timestamp only once. For example: [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]. This field records observed motion, never future positions or the effects expected from the selected command. Leave passage_count and last_side unchanged.\n\nfield motion_history, POLICY PROMPT\n  When the requested passage was next, a short interval at an endpoint contained too little motion to determine whether pressing should begin. The policy waited despite correct passage_count and last_side because earlier timing was not carried forward. This breaks SUFFICIENCY. Maintain motion_history as an ordered list of timestamped cube-center observations, each written [timestamp, [y, x]]. With empty memory, start with the execution observations currently shown. Otherwise copy the incoming list and append all newly shown execution observations in chronological order, including observations during A and B; do not duplicate a timestamp already stored. Write the resulting list through the current final observation, without predicting the selected command's effects. For example: [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]. Retain earlier samples so short or motionless current intervals can still be interpreted using the observed oscillation. Keep the existing passage_count and last_side updates.\n\nthe policy prompt for subgoal\n  For goals requiring the second or third passage, the policy selected B at a turnaround even though the updated count correctly made the upcoming crossing the requested passage. Only two almost stationary positions were newly visible. The instruction to estimate timing from the current interval, together with the uncertainty fallback to B, could not distinguish a fast turnaround requiring C from a slower one requiring B; this breaks SUFFICIENCY. Replace the current-interval-only timing instruction with an instruction to estimate oscillation from the updated motion_history, including both retained and newly shown samples, using their timestamps and the currently visible target position. Fit the smooth periodic motion over that history and find the next future target crossing, accounting for endpoint reversal rather than extrapolating near-zero velocity. Keep the existing ordinal gate and approximately 35-time-unit lead window: choose C when passage_count equals N-1 and the next crossing lies within that window, including when the cube is still near an endpoint. Choose B when the ordinal gate is not met or arrival is farther away. Apply the uncertainty fallback only after considering the retained history, not merely because the current interval is short or stationary. Remove episode-specific turnaround references; replace them with this observable timing rule. Preparation, crossing-count updates, and the lack of supplied points for menu options remain unchanged.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "For goals requiring the second or third passage, the policy selected B at a turnaround even though the updated count correctly made the upcoming crossing the requested passage. Only two almost stationary positions were newly visible. The instruction to estimate timing from the current interval, together with the uncertainty fallback to B, could not distinguish a fast turnaround requiring C from a slower one requiring B; this breaks SUFFICIENCY. Replace the current-interval-only timing instruction with an instruction to estimate oscillation from the updated motion_history, including both retained and newly shown samples, using their timestamps and the currently visible target position. Fit the smooth periodic motion over that history and find the next future target crossing, accounting for endpoint reversal rather than extrapolating near-zero velocity. Keep the existing ordinal gate and approximately 35-time-unit lead window: choose C when passage_count equals N-1 and the next crossing lies within that window, including when the cube is still near an endpoint. Choose B when the ordinal gate is not met or arrival is farther away. Apply the uncertainty fallback only after considering the retained history, not merely because the current interval is short or stationary. Remove episode-specific turnaround references; replace them with this observable timing rule. Preparation, crossing-count updates, and the lack of supplied points for menu options remain unchanged.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "motion_history",
+    "description": "When the requested passage was next, a short interval at an endpoint contained too little motion to determine whether pressing should begin. The policy waited despite correct passage_count and last_side because earlier timing was not carried forward. This breaks SUFFICIENCY. Maintain motion_history as an ordered list of timestamped cube-center observations, each written [timestamp, [y, x]]. With empty memory, start with the execution observations currently shown. Otherwise copy the incoming list and append all newly shown execution observations in chronological order, including observations during A and B; do not duplicate a timestamp already stored. Write the resulting list through the current final observation, without predicting the selected command's effects. For example: [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]. Retain earlier samples so short or motionless current intervals can still be interpreted using the observed oscillation. Keep the existing passage_count and last_side updates."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "motion_history",
+    "description": "When stopping on the second or third target passage, a decision near an endpoint showed only two nearly stationary cube positions. The policy chose B rather than C although passage_count and last_side correctly identified the next passage as the requested one. Earlier motion timing had disappeared, breaking SUFFICIENCY: the remaining observations could not establish the time to return to the target. Add motion_history, an ordered list of timestamped cube-center observations from execution through the current decision's final observation. Initialize it with the initial execution observation and append newly observed samples at every decision, including motion during preparation and waiting. Each sample is [timestamp, [y, x]]; retain chronological order and include each timestamp only once. For example: [[0, [137, 47]], [16, [131, 80]], [32, [119, 147]]]. This field records observed motion, never future positions or the effects expected from the selected command. Leave passage_count and last_side unchanged."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    1,
+    "exec",
+    123
+   ],
+   "memory_in": "passage_count=2; last_side=-1",
+   "answered": "B: remain static",
+   "recorded": "C: press button to stop the cube",
+   "missing_from_memory": "Earlier timestamped cube positions sufficient to estimate its oscillation and next target arrival. The two visible positions, x=57 at t=112 and x=49 at t=123, do not establish that the cube will reverse and reach target x=139 within the press lead window.",
+   "missing_from_policy_prompt_for_memory": "A rule to retain and update an ordered history of timestamped cube positions across decisions, sufficient to estimate the oscillation when the current interval contains only two observations. The count and side correctly remain unchanged here.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "Earlier timestamped cube positions sufficient to estimate its oscillation and next target arrival. The two visible positions, x=57 at t=112 and x=49 at t=123, do not establish that the cube will reverse and reach target x=139 within the press lead window."
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    65
+   ],
+   "memory_in": "passage_count=1; last_side=1",
+   "answered": "B: remain static",
+   "recorded": "C: press button to stop the cube",
+   "missing_from_memory": "The previously observed motion timing needed to know that the cube at x=210 at t=65 will return to target x=146 within the 25–35-unit press lead window. passage_count=1 and last_side=1 identify the next passage as the second, but two identical endpoint positions do not establish its arrival time.",
+   "missing_from_policy_prompt_for_memory": "It should specify retaining and updating a timestamped motion history or fitted motion timing across decision steps, so the next target arrival can be estimated even when the current interval shows only two identical endpoint positions.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "The previously observed motion timing needed to know that the cube at x=210 at t=65 will return to target x=146 within the 25–35-unit press lead window. passage_count=1 and last_side=1 identify the next passage as the second, but two identical endpoint positions do not establish its arrival time."
+  }
+ ]
+}

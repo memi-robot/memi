@@ -1,0 +1,96 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "selected_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  23,
+  40,
+  54,
+  59,
+  84
+ ],
+ "scored": 10,
+ "failed": 2,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9,
+ "memory_verified": 0.9,
+ "reads": {
+  "selected_target": 5
+ },
+ "field_errors": {
+  "selected_target": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 1,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "the policy prompt for subgoal\n  When the goal requested the red cube's second demonstrated target, the policy correctly selected pickup at the visible red cube and correctly wrote selected_target=[143, 132], but returned the menu label together with its descriptive text as the choice. The command was rejected despite selecting the correct action and object. This is an executable-output sufficiency failure, not missing historical information or a memory predictability failure. Add a command-format rule applying to every subgoal: the choice must be the menu label alone, copied verbatim, such as \"A\", \"B\", or \"C\"; never append the action description. Supply the target separately as a [y, x] point for options requiring one. Keep the existing pickup, drop, grasp-assessment, and target-selection rules unchanged; none requires removal.\n\nrefused\n  For a goal requesting the green cube's first demonstrated target, the policy correctly chose pickup but wrote the target at the original release location, [137, 103], instead of the annotated endpoint [101, 166]. After the placements, two targets exchanged positions along distinct curved branches. The selected target moved through [115, 110], [98, 135], and [100, 164] to [101, 166]; the other moving target ended at the original release location. This was a memory-prediction error in applying the existing policy prompt, not a missing fact or transition rule. The annotator prompt already requires following physical identity into the initial execution scene, and the policy prompt for memory explicitly requires joint tracking through intermediate branches, permits curved paths and position exchanges, and forbids restoring identities from the final layout or original release coordinate. The report itself acknowledges that coverage. Do not add a trajectory-specific clause or change the field's meaning, initialization event, or retention rule. The single selected_target field remains sufficient and necessary; no additional persistent tracks or release list are warranted.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "When the goal requested the red cube's second demonstrated target, the policy correctly selected pickup at the visible red cube and correctly wrote selected_target=[143, 132], but returned the menu label together with its descriptive text as the choice. The command was rejected despite selecting the correct action and object. This is an executable-output sufficiency failure, not missing historical information or a memory predictability failure. Add a command-format rule applying to every subgoal: the choice must be the menu label alone, copied verbatim, such as \"A\", \"B\", or \"C\"; never append the action description. Supply the target separately as a [y, x] point for options requiring one. Keep the existing pickup, drop, grasp-assessment, and target-selection rules unchanged; none requires removal.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "For a goal requesting the green cube's first demonstrated target, the policy correctly chose pickup but wrote the target at the original release location, [137, 103], instead of the annotated endpoint [101, 166]. After the placements, two targets exchanged positions along distinct curved branches. The selected target moved through [115, 110], [98, 135], and [100, 164] to [101, 166]; the other moving target ended at the original release location. This was a memory-prediction error in applying the existing policy prompt, not a missing fact or transition rule. The annotator prompt already requires following physical identity into the initial execution scene, and the policy prompt for memory explicitly requires joint tracking through intermediate branches, permits curved paths and position exchanges, and forbids restoring identities from the final layout or original release coordinate. The report itself acknowledges that coverage. Do not add a trajectory-specific clause or change the field's meaning, initialization event, or retention rule. The single selected_target field remains sufficient and necessary; no additional persistent tracks or release list are warranted."
+ },
+ "critiques": [
+  {
+   "step": [
+    23,
+    "exec",
+    729
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [80, 127]",
+   "recorded": "A: pick up the cube at [83, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The connection from the selected first-release target to its final endpoint needed to be explicit: the target near [137, 104] follows [115, 110] at t=672, [98, 135] at t=688, and [100, 164] at t=704, ending at [101, 166]. The other moving target follows the lower branch through [120, 166] and [145, 140], ending at [137, 103]. These targets exchange positions; write selected_target=[101, 166], not the target occupying the original release location. The policy prompt already describes this tracking principle, but my application failed to connect these intermediate branches to their endpoints.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    54,
+    "exec",
+    799
+   ],
+   "memory_in": "selected_target=",
+   "answered": "NOT EXECUTABLE (not_in_menu). The choice \"A  pick up the cube\" is not a label of the menu. The choice must be the label alone, copied verbatim. The answer was choice='A  pick up the cube', point=[82, 126].",
+   "recorded": "A: pick up the cube at [83, 127]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

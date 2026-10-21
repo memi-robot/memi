@@ -1,0 +1,285 @@
+{
+ "episodes": [
+  14,
+  25,
+  38,
+  87,
+  93
+ ],
+ "user_chars": 94463,
+ "usage": {
+  "prompt_tokens": 32513,
+  "completion_tokens": 5187,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 32509
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 1442
+  }
+ },
+ "reasoning": "I need to draft the JSON edits now. For the annotator prompt, I should clarify the displacement scale of 15-35 px gliding, specify the moved-step trigger as >6 px from every container in the previous frame, state the first-step cube position first, and clarify that precedence refers to the cube's last visible position rather than the container's pre-lift position. For the policy memory on buttons_pressed, I should add a rewritten version before the subgoal covering all four outcomes.\n\nSince any restructuring requires exact word-for-word quotes to match via modify_from, I'll stick to targeted insertions rather than a full rewrite. For the green_container annotator prompt, I'll insert the scale and moved-step trigger language after the existing gliding clause, and add a precedence clarification specifying it's not the container's pre-lift position. For red/blue, I'll insert similar clarifying text after the existing \"trust the chain\" phrasing. For the green_container policy memory, I'm working through the edits needed to the opening position description.\n\nI'm adding a sanity check after the circling-pass rule, keeping the existing worked example since it still fits, and confirming the cube-position precedence tail doesn't conflict with anything. I'm also inserting the scale and moved-step trigger into the red/blue policy, adding the four-outcome sentence to buttons_pressed, and strengthening rule 3's wording around when button A executes.\n\nFor rule 3, I'm clarifying that a gripper lowered onto a button with closed fingers counts as a press, and buttons_pressed reflects the step whose frames show that press — so 1 means one press shown, 2 means both are done. For rules 4 and 5, I'm appending clauses that the container value must be the one written at this step after the full chain, not the carried-in value, and if the carried-in value still looks like an unupdated first-step position, I finish the memory update before pointing. I'm declining to add a standalone always-swapped rule or scene-specific coordinates, keeping these as targeted insertions rather than a full restructure.\n\nI'll keep the existing worked examples as they are rather than replacing them, and now I'm carefully assembling the JSON with exact quoting.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "3. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; frames showing the gripper lowered onto a button with closed fingers count as a press, and buttons_pressed is written at the step whose frames show the press, so 1 means exactly one press shown so far and 2 means both are done.",
+    "modify_to": "3. Rewrite buttons_pressed from this step's frames FIRST, never test the carried-in count. If any frame of this step says a button 'is pressed down' or shows the gripper on a button (height below about 0.06, fingers closed) and the carried count was 1, the count is now 2 and this rule cannot fire; go to rule 4. B fires only when the UPDATED count is exactly 1, which happens only at the step whose frames show the first press (normally the step right after A). A is executed at the first step only."
+   },
+   {
+    "modify_from": "if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point.",
+    "modify_to": "if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point; if this step is a moved step (any frame lists a container more than about 6 px from every container of the previous frame) and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing."
+   },
+   {
+    "modify_from": "The point is that color's value written at this step after the full chain, not the carried-in value.",
+    "modify_to": "The point is that color's value written at this step after the full chain, not the carried-in value; if this step is a moved step and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "buttons_pressed",
+    "edits": [
+     {
+      "modify_from": "Write 0 at the first step (empty carried-in memory, no execution frames).",
+      "modify_to": "Rewrite this count from this step's frames BEFORE choosing the subgoal. The four outcomes, in order: empty carried-in memory and no execution frames -> 0; carried 0 and a press in this step's frames -> 1; carried 1 and a press in this step's frames -> 2; carried 2, or any container held or grasped in this step -> 2. A frame saying a button 'is pressed down' in this step is a press of this step even if that button is the one the robot was already heading for. In detail: write 0 at the first step (empty carried-in memory, no execution frames)."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "green_container",
+    "edits": [
+     {
+      "modify_from": "[y, x] of the container hiding the green cube. FIRST, before any chaining,",
+      "modify_to": "[y, x] of the container hiding the green cube. At the first step (empty carried-in memory, no execution frames) write the green cube's own [y, x] from the scene, and likewise red_container and blue_container with their cubes, buttons_pressed=0 and picked_colors=[]; no field is left blank at the first step. SECOND, before any chaining,"
+     },
+     {
+      "modify_from": "At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear",
+      "modify_to": "When containers first appear"
+     },
+     {
+      "modify_from": "Mandatory joint procedure: (a) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for ALL THREE colors",
+      "modify_to": "Scale: frames are sparse, about 16 ticks apart, so a gliding container is normally 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' means only a container that did not move. Mandatory joint procedure: (a) MOVED-STEP TRIGGER: if any frame of this step lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first), this is a moved step and you MUST run the chain for ALL THREE colors"
+     },
+     {
+      "modify_from": "(d) consistency check before writing:",
+      "modify_to": "This holds without exception, including when the first frame already shows containers 10-15 px off the carried values and when the last frame shows containers exactly on the carried values. Per frame transition choose the one-to-one assignment with the smallest total displacement (e.g. 23+29 beats 28+29). (d) consistency check before writing:"
+     },
+     {
+      "modify_from": "A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside).",
+      "modify_to": "SWAP TRAP rule: in a moved step a last-frame container standing within 5 px of the carried value is NOT a match; matching a carried value straight to a last-frame container is forbidden, and the only legal path is carried value -> nearest first-frame container -> frame by frame -> last frame. Unmoved step: every frame's containers stand within about 6 px of the previous frame's; then write the same container's last-frame position."
+     },
+     {
+      "modify_from": "(one circling pass swaps them, two passes return them). Write the followed container's position in the last frame.",
+      "modify_to": "(one circling pass swaps them, two passes return them). Sanity check after a moved step: two containers that circled around each other while the third stood still almost always end swapped; if the chain says nothing swapped, recompute the chain before writing. Write the followed container's position in the last frame."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_container",
+    "edits": [
+     {
+      "modify_from": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match), chained jointly",
+      "modify_to": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "blue_container",
+    "edits": [
+     {
+      "modify_from": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it), chained jointly",
+      "modify_to": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "green_container",
+    "edits": [
+     {
+      "modify_from": "(the gliding may already be under way in the first frame of a step).",
+      "modify_to": "(the gliding may already be under way in the first frame of a step). Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' or 'jitter' refers only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first); in a moved step the joint one-to-one chain is run through every frame for all three colors and its result is written, even when the last-frame layout coincides with the previous step's last-frame layout. In an unmoved step (every frame's containers within about 6 px of the previous frame's) each field keeps the same container's last-frame position."
+     },
+     {
+      "modify_from": "the field is the cube's position in the last frame where the cube is visible, and the container chain is not run for green at this step or any later step;",
+      "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the position the container had before it was lifted), and the container chain is not run for green at this step or any later step;"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_container",
+    "edits": [
+     {
+      "modify_from": "(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and blue",
+      "modify_to": "(one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and blue"
+     },
+     {
+      "modify_from": "the field is the cube's position in the last frame where the cube is visible, the chain is not run for red",
+      "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for red"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "blue_container",
+    "edits": [
+     {
+      "modify_from": "(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and red",
+      "modify_to": "(one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and red"
+     },
+     {
+      "modify_from": "the field is the cube's position in the last frame where the cube is visible, the chain is not run for blue",
+      "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for blue"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The standalone rule that two circling containers always finish swapped stays out, as it did in rounds 1 and 2 and as this report itself advised: the chain decides, and a double pass returns them; the swap expectation is committed only as a sanity check that forces a recompute. The full top-to-bottom rewrite of the three container fields is not done as a replacement: the round-1 chain, the round-2 identity and rewrite-all-three clauses, the round-3 joint assignment and the round-4 exposure precedence all stand, and the new scale, moved-step trigger, swap-trap rule and sanity check are inserted into them, with the first-step rule moved to the opening sentence. The existing joint worked example is kept rather than replaced by the report's new coordinates, since both show the same swap and one example suffices. The per-scene first-step coordinates are passed on only as the generic first-sentence rule."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "green_container",
+    "edits": [
+     {
+      "modify_from": "(the gliding may already be under way in the first frame of a step).",
+      "modify_to": "(the gliding may already be under way in the first frame of a step). Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' or 'jitter' refers only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first); in a moved step the joint one-to-one chain is run through every frame for all three colors and its result is written, even when the last-frame layout coincides with the previous step's last-frame layout. In an unmoved step (every frame's containers within about 6 px of the previous frame's) each field keeps the same container's last-frame position."
+     },
+     {
+      "modify_from": "the field is the cube's position in the last frame where the cube is visible, and the container chain is not run for green at this step or any later step;",
+      "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the position the container had before it was lifted), and the container chain is not run for green at this step or any later step;"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_container",
+    "edits": [
+     {
+      "modify_from": "(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and blue",
+      "modify_to": "(one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and blue"
+     },
+     {
+      "modify_from": "the field is the cube's position in the last frame where the cube is visible, the chain is not run for red",
+      "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for red"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "blue_container",
+    "edits": [
+     {
+      "modify_from": "(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and red",
+      "modify_to": "(one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and red"
+     },
+     {
+      "modify_from": "the field is the cube's position in the last frame where the cube is visible, the chain is not run for blue",
+      "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for blue"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "buttons_pressed",
+    "edits": [
+     {
+      "modify_from": "Write 0 at the first step (empty carried-in memory, no execution frames).",
+      "modify_to": "Rewrite this count from this step's frames BEFORE choosing the subgoal. The four outcomes, in order: empty carried-in memory and no execution frames -> 0; carried 0 and a press in this step's frames -> 1; carried 1 and a press in this step's frames -> 2; carried 2, or any container held or grasped in this step -> 2. A frame saying a button 'is pressed down' in this step is a press of this step even if that button is the one the robot was already heading for. In detail: write 0 at the first step (empty carried-in memory, no execution frames)."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "green_container",
+    "edits": [
+     {
+      "modify_from": "[y, x] of the container hiding the green cube. FIRST, before any chaining,",
+      "modify_to": "[y, x] of the container hiding the green cube. At the first step (empty carried-in memory, no execution frames) write the green cube's own [y, x] from the scene, and likewise red_container and blue_container with their cubes, buttons_pressed=0 and picked_colors=[]; no field is left blank at the first step. SECOND, before any chaining,"
+     },
+     {
+      "modify_from": "At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear",
+      "modify_to": "When containers first appear"
+     },
+     {
+      "modify_from": "Mandatory joint procedure: (a) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for ALL THREE colors",
+      "modify_to": "Scale: frames are sparse, about 16 ticks apart, so a gliding container is normally 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' means only a container that did not move. Mandatory joint procedure: (a) MOVED-STEP TRIGGER: if any frame of this step lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first), this is a moved step and you MUST run the chain for ALL THREE colors"
+     },
+     {
+      "modify_from": "(d) consistency check before writing:",
+      "modify_to": "This holds without exception, including when the first frame already shows containers 10-15 px off the carried values and when the last frame shows containers exactly on the carried values. Per frame transition choose the one-to-one assignment with the smallest total displacement (e.g. 23+29 beats 28+29). (d) consistency check before writing:"
+     },
+     {
+      "modify_from": "A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside).",
+      "modify_to": "SWAP TRAP rule: in a moved step a last-frame container standing within 5 px of the carried value is NOT a match; matching a carried value straight to a last-frame container is forbidden, and the only legal path is carried value -> nearest first-frame container -> frame by frame -> last frame. Unmoved step: every frame's containers stand within about 6 px of the previous frame's; then write the same container's last-frame position."
+     },
+     {
+      "modify_from": "(one circling pass swaps them, two passes return them). Write the followed container's position in the last frame.",
+      "modify_to": "(one circling pass swaps them, two passes return them). Sanity check after a moved step: two containers that circled around each other while the third stood still almost always end swapped; if the chain says nothing swapped, recompute the chain before writing. Write the followed container's position in the last frame."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_container",
+    "edits": [
+     {
+      "modify_from": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match), chained jointly",
+      "modify_to": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "blue_container",
+    "edits": [
+     {
+      "modify_from": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it), chained jointly",
+      "modify_to": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "3. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; frames showing the gripper lowered onto a button with closed fingers count as a press, and buttons_pressed is written at the step whose frames show the press, so 1 means exactly one press shown so far and 2 means both are done.",
+    "modify_to": "3. Rewrite buttons_pressed from this step's frames FIRST, never test the carried-in count. If any frame of this step says a button 'is pressed down' or shows the gripper on a button (height below about 0.06, fingers closed) and the carried count was 1, the count is now 2 and this rule cannot fire; go to rule 4. B fires only when the UPDATED count is exactly 1, which happens only at the step whose frames show the first press (normally the step right after A). A is executed at the first step only."
+   },
+   {
+    "modify_from": "if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point.",
+    "modify_to": "if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point; if this step is a moved step (any frame lists a container more than about 6 px from every container of the previous frame) and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing."
+   },
+   {
+    "modify_from": "The point is that color's value written at this step after the full chain, not the carried-in value.",
+    "modify_to": "The point is that color's value written at this step after the full chain, not the carried-in value; if this step is a moved step and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing."
+   }
+  ],
+  "refused": "The standalone rule that two circling containers always finish swapped stays out, as it did in rounds 1 and 2 and as this report itself advised: the chain decides, and a double pass returns them; the swap expectation is committed only as a sanity check that forces a recompute. The full top-to-bottom rewrite of the three container fields is not done as a replacement: the round-1 chain, the round-2 identity and rewrite-all-three clauses, the round-3 joint assignment and the round-4 exposure precedence all stand, and the new scale, moved-step trigger, swap-trap rule and sanity check are inserted into them, with the first-step rule moved to the opening sentence. The existing joint worked example is kept rather than replaced by the report's new coordinates, since both show the same swap and one example suffices. The per-scene first-step coordinates are passed on only as the generic first-sentence rule."
+ },
+ "not_applied": [],
+ "refused": "The standalone rule that two circling containers always finish swapped stays out, as it did in rounds 1 and 2 and as this report itself advised: the chain decides, and a double pass returns them; the swap expectation is committed only as a sanity check that forces a recompute. The full top-to-bottom rewrite of the three container fields is not done as a replacement: the round-1 chain, the round-2 identity and rewrite-all-three clauses, the round-3 joint assignment and the round-4 exposure precedence all stand, and the new scale, moved-step trigger, swap-trap rule and sanity check are inserted into them, with the first-step rule moved to the opening sentence. The existing joint worked example is kept rather than replaced by the report's new coordinates, since both show the same swap and one example suffices. The per-scene first-step coordinates are passed on only as the generic first-sentence rule.",
+ "text": "{\"annotator_prompt\": [\n{\"kind\": \"modify\", \"field\": \"green_container\", \"edits\": [\n{\"modify_from\": \"(the gliding may already be under way in the first frame of a step).\", \"modify_to\": \"(the gliding may already be under way in the first frame of a step). Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' or 'jitter' refers only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first); in a moved step the joint one-to-one chain is run through every frame for all three colors and its result is written, even when the last-frame layout coincides with the previous step's last-frame layout. In an unmoved step (every frame's containers within about 6 px of the previous frame's) each field keeps the same container's last-frame position.\"},\n{\"modify_from\": \"the field is the cube's position in the last frame where the cube is visible, and the container chain is not run for green at this step or any later step;\", \"modify_to\": \"the field is the cube's position in the last frame where the cube is visible (not the position the container had before it was lifted), and the container chain is not run for green at this step or any later step;\"}]},\n{\"kind\": \"modify\", \"field\": \"red_container\", \"edits\": [\n{\"modify_from\": \"(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and blue\", \"modify_to\": \"(one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and blue\"},\n{\"modify_from\": \"the field is the cube's position in the last frame where the cube is visible, the chain is not run for red\", \"modify_to\": \"the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for red\"}]},\n{\"kind\": \"modify\", \"field\": \"blue_container\", \"edits\": [\n{\"modify_from\": \"(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and red\", \"modify_to\": \"(one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and red\"},\n{\"modify_from\": \"the field is the cube's position in the last frame where the cube is visible, the chain is not run for blue\", \"modify_to\": \"the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for blue\"}]}],\n\"policy_prompt_for_memory\": [\n{\"kind\": \"modify\", \"field\": \"buttons_pressed\", \"edits\": [\n{\"modify_from\": \"Write 0 at the first step (empty carried-in memory, no execution frames).\", \"modify_to\": \"Rewrite this count from this step's frames BEFORE choosing the subgoal. The four outcomes, in order: empty carried-in memory and no execution frames -> 0; carried 0 and a press in this step's frames -> 1; carried 1 and a press in this step's frames -> 2; carried 2, or any container held or grasped in this step -> 2. A frame saying a button 'is pressed down' in this step is a press of this step even if that button is the one the robot was already heading for. In detail: write 0 at the first step (empty carried-in memory, no execution frames).\"}]},\n{\"kind\": \"modify\", \"field\": \"green_container\", \"edits\": [\n{\"modify_from\": \"[y, x] of the container hiding the green cube. FIRST, before any chaining,\", \"modify_to\": \"[y, x] of the container hiding the green cube. At the first step (empty carried-in memory, no execution frames) write the green cube's own [y, x] from the scene, and likewise red_container and blue_container with their cubes, buttons_pressed=0 and picked_colors=[]; no field is left blank at the first step. SECOND, before any chaining,\"},\n{\"modify_from\": \"At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear\", \"modify_to\": \"When containers first appear\"},\n{\"modify_from\": \"Mandatory joint procedure: (a) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for ALL THREE colors\", \"modify_to\": \"Scale: frames are sparse, about 16 ticks apart, so a gliding container is normally 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' means only a container that did not move. Mandatory joint procedure: (a) MOVED-STEP TRIGGER: if any frame of this step lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first), this is a moved step and you MUST run the chain for ALL THREE colors\"},\n{\"modify_from\": \"(d) consistency check before writing:\", \"modify_to\": \"This holds without exception, including when the first frame already shows containers 10-15 px off the carried values and when the last frame shows containers exactly on the carried values. Per frame transition choose the one-to-one assignment with the smallest total displacement (e.g. 23+29 beats 28+29). (d) consistency check before writing:\"},\n{\"modify_from\": \"A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside).\", \"modify_to\": \"SWAP TRAP rule: in a moved step a last-frame container standing within 5 px of the carried value is NOT a match; matching a carried value straight to a last-frame container is forbidden, and the only legal path is carried value -> nearest first-frame container -> frame by frame -> last frame. Unmoved step: every frame's containers stand within about 6 px of the previous frame's; then write the same container's last-frame position.\"},\n{\"modify_from\": \"(one circling pass swaps them, two passes return them). Write the followed container's position in the last frame.\", \"modify_to\": \"(one circling pass swaps them, two passes return them). Sanity check after a moved step: two containers that circled around each other while the third stood still almost always end swapped; if the chain says nothing swapped, recompute the chain before writing. Write the followed container's position in the last frame.\"}]},\n{\"kind\": \"modify\", \"field\": \"red_container\", \"edits\": [\n{\"modify_from\": \"(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match), chained jointly\", \"modify_to\": \"(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly\"}]},\n{\"kind\": \"modify\", \"field\": \"blue_container\", \"edits\": [\n{\"modify_from\": \"(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it), chained jointly\", \"modify_to\": \"(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly\"}]}],\n\"policy_prompt_for_subgoal\": [\n{\"modify_from\": \"3. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; frames showing the gripper lowered onto a button with closed fingers count as a press, and buttons_pressed is written at the step whose frames show the press, so 1 means exactly one press shown so far and 2 means both are done.\", \"modify_to\": \"3. Rewrite buttons_pressed from this step's frames FIRST, never test the carried-in count. If any frame of this step says a button 'is pressed down' or shows the gripper on a button (height below about 0.06, fingers closed) and the carried count was 1, the count is now 2 and this rule cannot fire; go to rule 4. B fires only when the UPDATED count is exactly 1, which happens only at the step whose frames show the first press (normally the step right after A). A is executed at the first step only.\"},\n{\"modify_from\": \"if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point.\", \"modify_to\": \"if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point; if this step is a moved step (any frame lists a container more than about 6 px from every container of the previous frame) and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing.\"},\n{\"modify_from\": \"The point is that color's value written at this step after the full chain, not the carried-in value.\", \"modify_to\": \"The point is that color's value written at this step after the full chain, not the carried-in value; if this step is a moved step and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing.\"}],\n\"refused\": \"The standalone rule that two circling containers always finish swapped stays out, as it did in rounds 1 and 2 and as this report itself advised: the chain decides, and a double pass returns them; the swap expectation is committed only as a sanity check that forces a recompute. The full top-to-bottom rewrite of the three container fields is not done as a replacement: the round-1 chain, the round-2 identity and rewrite-all-three clauses, the round-3 joint assignment and the round-4 exposure precedence all stand, and the new scale, moved-step trigger, swap-trap rule and sanity check are inserted into them, with the first-step rule moved to the opening sentence. The existing joint worked example is kept rather than replaced by the report's new coordinates, since both show the same swap and one example suffices. The per-scene first-step coordinates are passed on only as the generic first-sentence rule.\"}"
+}

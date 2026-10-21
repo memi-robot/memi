@@ -1,0 +1,77 @@
+{
+ "task": "VideoPlaceButton",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 1 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    19,
+    21,
+    72,
+    79,
+    83
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.9
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    7,
+    16,
+    22,
+    52,
+    97
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    6,
+    10,
+    19,
+    22,
+    24
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    6,
+    20,
+    26,
+    46
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    8,
+    46,
+    51,
+    72,
+    74
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Start in A: with the execution-start gripper empty, pick up the cube of the color named in the goal, pointing at its current visible center. Use only the execution scene for this pickup, not its earlier demonstration location. If the observed execution interval shows descent to that cube, closure to a grasp-sized opening (approximately 46%), and a lift with that opening maintained, choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position. Explicit held-object evidence also permits B. The recorded cube coordinates may remain at the tabletop position after pickup and a held label may be absent; these do not override the closure-and-lift evidence. Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded. If pickup clearly closed on nothing or left the hand empty, choose A again at the requested cube. C is not required: the demonstration press identifies the desired target, and must not be reenacted. A completed release of the requested cube onto the selected target finishes the task; do not press the button afterward. For an otherwise unmatched nonterminal situation, choose B if there is credible evidence the requested cube is held, otherwise A at that cube. If pre_press_target is unknown and dropping is necessary, use the visible target nearest the requested cube as a deterministic fallback rather than asking for clarification.",
+ "fields": [
+  {
+   "name": "pre_press_target",
+   "description": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]. Once populated, copy the incoming value unchanged at every decision step; do not replace it with the cube's current position or a newly shifted visible centroid. If no target can be identified, write \"unknown\". e.g. [126, 145]"
+  }
+ ],
+ "stage": "optimized"
+}

@@ -1,0 +1,77 @@
+{
+ "task": "PickXtimes",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    5,
+    7,
+    55,
+    68,
+    95
+   ],
+   "verified_of_all": 0.9777777777777777,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    24,
+    38,
+    52,
+    70,
+    76
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    10,
+    18,
+    21,
+    28,
+    77
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    10,
+    24,
+    43,
+    77,
+    91
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    12,
+    28,
+    52,
+    69,
+    88
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "First read the goal instruction to get the required number of placements N: if it says 'repeating this action two times' N=2, 'three times' N=3, and so on; if it mentions no repetition, N=1. The cube to use is the one whose color the goal names (ignore other cubes). Update placements_done first, then decide. An episode starts in subgoal A (pick up the cube). Rules, applied in whatever situation you are in: 1. If the goal-colored cube is shown 'is held in the gripper' at the scene of this decision step (fingers about 46% open, gripper raised), choose B: place the cube onto the target. 2. If the cube is NOT held at the scene of this decision step (fingers ~100% open) and placements_done (after this step's update) is less than N, choose A: pick up the cube, pointing at the current [y, x] of the goal-colored cube as shown in the final scene of this step (after a placement it will be sitting on or near the target; point at the cube, not the target). 3. If the cube is NOT held and placements_done (after this step's update) is equal to or greater than N, choose C: press the button to stop. 4. If the gripper closed but the cube is not reported as held (a missed grasp), treat it as not held: apply rule 2 or 3 by placements_done. If you meet a situation none of these rules cover, default to: if the cube is held choose B; otherwise if placements_done < N choose A pointing at the goal-colored cube's current position; otherwise choose C.",
+ "fields": [
+  {
+   "name": "placements_done",
+   "description": "Integer count of completed placements of the goal-colored cube onto the target. Start at 0 on the first step. At each decision step, take the value carried in; add 1 if BOTH hold: (a) at least one execution frame shown at this step has the goal-colored cube marked 'is held in the gripper', and (b) in the final scene of this step the goal-colored cube is NOT marked held, the fingers are about 100% open, and the cube lies within a few pixels of the target position. Do not require any particular finger percentage or gripper height at an intermediate frame; a release frame may show fingers only 80-90% open with the cube still marked held, and that still counts once the final scene meets (b). Do not add 1 if the cube was never marked held during this step (a missed grasp, even if the cube already rests on the target from before), or if the final scene shows the cube held. Otherwise keep the carried value unchanged. Never decrease it. e.g. 2"
+  }
+ ],
+ "stage": "optimized"
+}

@@ -1,0 +1,150 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "demo_placements",
+  "goal_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  23,
+  39,
+  51,
+  66,
+  87
+ ],
+ "scored": 10,
+ "failed": 4,
+ "subgoal_wrong": 4,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.6,
+ "memory_verified": 1.0,
+ "reads": {
+  "demo_placements": 0,
+  "goal_target": 4
+ },
+ "field_errors": {
+  "demo_placements": {
+   "in": 0,
+   "sole": 0
+  },
+  "goal_target": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "demo_placements": "read at no step of 10"
+ },
+ "loss": 0.4,
+ "verified_of_all": 0.6,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 3,
+ "decisions": 10,
+ "critique": "field demo_placements, ANNOTATOR PROMPT\n  DELETE this field. It was carried at every step and read at none: the only fact the execution needs is the single target the goal's ordinal picks, and that is already held by goal_target. Fold the release-counting into goal_target's own description (below) so the list exists only as a working step at the first decision step and is never carried.\n\nfield goal_target, ANNOTATOR PROMPT\n  Holds the single target position, in [y, x], on which the goal-named cube is to be dropped. Written at the first decision step, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. To fill it, list every release of the goal-named cube in the demonstration in ascending frame time: a release is a frame where the fingers go from ~46% (or any partly closed value) to ~100% open while the goal-named cube was marked 'held in the gripper' in the frames just before, and the entry is the target closest to the cube's resting spot in the frames right after that release, with the target's position taken from a frame where all four targets are listed. Exclude the last release of the demonstration, which sets the cube down at the image centre near [82, 127] where no target lies; exclude button presses (fingers 0% open, no cube held); do not treat a frame where the cube merely loses its 'held' label while the gripper is raised as a release. Then take the goal ordinal ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) from that chronological list. e.g. [107, 86]\n\nfield demo_placements, POLICY PROMPT\n  DELETE this field. Do not write it. Its content is used only once, at the first decision step, to compute goal_target, and is never read afterwards.\n\nfield goal_target, POLICY PROMPT\n  At the first decision step (demonstration frames are shown and the carried memory is empty), scan the demonstration frames in ascending t for the cube whose colour the goal instruction names. Each time the fingers open from a partly closed value (~46%) to ~100% in a frame after frames where that cube was 'held in the gripper', that is one release; its target is the one closest to where the cube rests in the frames right after the release, read from a frame listing all four targets (the demo's last frames do). Skip button presses (fingers 0% open, no cube held) and skip the demonstration's final release, which leaves the cube near the image centre around [82, 127] with no target under it. Number the remaining releases earliest first, take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4), and write that target's [y, x]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [107, 86]\n\nthe policy prompt for subgoal\n  Rule 1 and rule 2 decide 'held' from the cube's label and finger opening, and that sent the policy wrong at the decision step after the pick-up: the scene at that step shows the gripper raised to height ~0.15 with the fingers ~46% open, but the goal-named cube is listed at its old table position without the words 'is held in the gripper', so neither rule matched and the policy chose A again instead of B. Replace the held test in rules 1 and 2 with this: the cube IS held whenever the fingers at the decision step are ~46% open (not ~100%) and the gripper is raised (height above ~0.1), regardless of whether the cube line carries the 'held' label or still reports the old table coordinates; the execution steps leading to that scene will show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. In that held case choose B, drop onto. Rule 2 should also say where to point: at the target listed in the current scene that is closest to goal_target (targets wobble by a few pixels between frames), and if goal_target is unknown, fall back to rule 4. Rule 2's clause about deriving the point from demo_placements must go, since that field no longer exists. Rules 3 and 4 stand. Rule 1 stands for the first decision step, where the fingers are 100% open and the gripper is raised out of frame.\n\nrefused\n  Four steps at the drop decision reported that goal_target was wrong and asked that the policy prompt insist on chronological ordering of the demonstration releases (or, in one case, that the memory be checkable against the scene). I am not passing the ordering demand on as a fix, because across this minibatch no single ordering reproduces the recorded drops: in two episodes the recorded target is the ordinal-th release counted earliest first, in two others it is the ordinal-th release counted latest first, and in one the recorded drop is onto a target the demonstration never placed the cube on at all. The reports contradict each other, and a rule written to satisfy one would break another; the chronological definition is kept as the stated rule because it is the plain reading of the goal and fits the cases that fit anything. The request to add a way to 'override' a goal_target in the scene is refused as well: nothing in the execution scene reveals which target the demonstration used, so the memory is the only source and cannot be checked against the step. The only reliable fault across these steps was the held-cube test and the pointing rule, which are passed on above.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 1 and rule 2 decide 'held' from the cube's label and finger opening, and that sent the policy wrong at the decision step after the pick-up: the scene at that step shows the gripper raised to height ~0.15 with the fingers ~46% open, but the goal-named cube is listed at its old table position without the words 'is held in the gripper', so neither rule matched and the policy chose A again instead of B. Replace the held test in rules 1 and 2 with this: the cube IS held whenever the fingers at the decision step are ~46% open (not ~100%) and the gripper is raised (height above ~0.1), regardless of whether the cube line carries the 'held' label or still reports the old table coordinates; the execution steps leading to that scene will show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. In that held case choose B, drop onto. Rule 2 should also say where to point: at the target listed in the current scene that is closest to goal_target (targets wobble by a few pixels between frames), and if goal_target is unknown, fall back to rule 4. Rule 2's clause about deriving the point from demo_placements must go, since that field no longer exists. Rules 3 and 4 stand. Rule 1 stands for the first decision step, where the fingers are 100% open and the gripper is raised out of frame.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "demo_placements",
+    "description": "DELETE this field. Do not write it. Its content is used only once, at the first decision step, to compute goal_target, and is never read afterwards."
+   },
+   {
+    "field": "goal_target",
+    "description": "At the first decision step (demonstration frames are shown and the carried memory is empty), scan the demonstration frames in ascending t for the cube whose colour the goal instruction names. Each time the fingers open from a partly closed value (~46%) to ~100% in a frame after frames where that cube was 'held in the gripper', that is one release; its target is the one closest to where the cube rests in the frames right after the release, read from a frame listing all four targets (the demo's last frames do). Skip button presses (fingers 0% open, no cube held) and skip the demonstration's final release, which leaves the cube near the image centre around [82, 127] with no target under it. Number the remaining releases earliest first, take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4), and write that target's [y, x]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [107, 86]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "demo_placements",
+    "description": "DELETE this field. It was carried at every step and read at none: the only fact the execution needs is the single target the goal's ordinal picks, and that is already held by goal_target. Fold the release-counting into goal_target's own description (below) so the list exists only as a working step at the first decision step and is never carried."
+   },
+   {
+    "field": "goal_target",
+    "description": "Holds the single target position, in [y, x], on which the goal-named cube is to be dropped. Written at the first decision step, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. To fill it, list every release of the goal-named cube in the demonstration in ascending frame time: a release is a frame where the fingers go from ~46% (or any partly closed value) to ~100% open while the goal-named cube was marked 'held in the gripper' in the frames just before, and the entry is the target closest to the cube's resting spot in the frames right after that release, with the target's position taken from a frame where all four targets are listed. Exclude the last release of the demonstration, which sets the cube down at the image centre near [82, 127] where no target lies; exclude button presses (fingers 0% open, no cube held); do not treat a frame where the cube merely loses its 'held' label while the gripper is raised as a release. Then take the goal ordinal ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) from that chronological list. e.g. [107, 86]"
+   }
+  ],
+  "refused": "Four steps at the drop decision reported that goal_target was wrong and asked that the policy prompt insist on chronological ordering of the demonstration releases (or, in one case, that the memory be checkable against the scene). I am not passing the ordering demand on as a fix, because across this minibatch no single ordering reproduces the recorded drops: in two episodes the recorded target is the ordinal-th release counted earliest first, in two others it is the ordinal-th release counted latest first, and in one the recorded drop is onto a target the demonstration never placed the cube on at all. The reports contradict each other, and a rule written to satisfy one would break another; the chronological definition is kept as the stated rule because it is the plain reading of the goal and fits the cases that fit anything. The request to add a way to 'override' a goal_target in the scene is refused as well: nothing in the execution scene reveals which target the demonstration used, so the memory is the only source and cannot be checked against the step. The only reliable fault across these steps was the held-cube test and the pointing rule, which are passed on above."
+ },
+ "critiques": [
+  {
+   "step": [
+    23,
+    "exec",
+    844
+   ],
+   "memory_in": "demo_placements=[[137, 103], [115, 85]]; goal_target=[137, 103]",
+   "answered": "B: drop onto at [137, 103]",
+   "recorded": "B: drop onto at [101, 168]",
+   "missing_from_memory": "goal_target carried in was [137, 103], but the first target the green cube was placed on in the demonstration was the one at about [101, 166] (recorded drop at [101, 168]); demo_placements should have begun with [101, 166] and goal_target should have been [101, 166].",
+   "missing_from_policy_prompt_for_memory": "The release-detection rule evidently misidentified or skipped the demo's first green-cube placement: it should state that every finger-open event after the green cube was held counts as a placement in demo order (including the earliest one, even if the cube is set down briefly or near another cube/target), that the list must be in chronological order of release with the earliest first, and that the matching target is the one closest to the cube's rest position in that same frame, not a later frame; it should also warn that target positions shift slightly between frames (e.g. [77,90] vs [82,88]) and that [101,166]/[101,168] is one target.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target carried in was [137, 103], but the first target the green cube was placed on in the demonstration was the one at about [101, 166] (recorded drop at [101, 168]); demo_placements should have begun with [101, 166] and goal_target should have been [101, 166]."
+  },
+  {
+   "step": [
+    39,
+    "exec",
+    870
+   ],
+   "memory_in": "demo_placements=[[141, 118], [75, 91]]; goal_target=[75, 91]",
+   "answered": "B: drop onto at [75, 91]",
+   "recorded": "B: drop onto at [142, 119]",
+   "missing_from_memory": "The carried goal_target=[75, 91] did not match the recorded drop at [142, 119], which is the target at [141, 118] (entry 1 of demo_placements). The memory should have carried goal_target=[141, 118] as the second placement; either demo_placements was written in reversed order (the chronologically second release was onto [141, 118], not [75, 91]) or a release was miscounted/skipped, so the list order or the ordinal entry was wrong.",
+   "missing_from_policy_prompt_for_memory": "It does not say unambiguously that demo_placements must be in chronological order of the demo releases (earliest first), nor how to count releases when the same target is used twice or when a release onto the final centre spot should/should not be skipped; the resulting ordering made entry 2 come out as [75, 91] when the recorded answer treats [141, 118] as the second placement.",
+   "missing_from_policy_prompt_for_subgoal": "It should say to point at the current scene's listed target position that is closest to goal_target (e.g. [141, 118] in this step, recorded as [142, 119]) rather than copying the memory coordinates verbatim; and, given the carried goal_target disagreed with the recorded answer, it gave no way to check or override a goal_target that may be wrong.",
+   "missing": "The carried goal_target=[75, 91] did not match the recorded drop at [142, 119], which is the target at [141, 118] (entry 1 of demo_placements). The memory should have carried goal_target=[141, 118] as the second placement; either demo_placements was written in reversed order (the chronologically second release was onto [141, 118], not [75, 91]) or a release was miscounted/skipped, so the list order or the ordinal entry was wrong."
+  },
+  {
+   "step": [
+    51,
+    "exec",
+    889
+   ],
+   "memory_in": "demo_placements=[[75, 161], [107, 86]]; goal_target=[107, 86]",
+   "answered": "A: pick up the cube at [82, 128]",
+   "recorded": "B: drop onto at [107, 86]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "At the final frame (t=889) the gripper is at [51, 129], height 0.147, fingers 46% open, and the blue cube is listed at [82, 128] WITHOUT the words 'is held in the gripper', so rule 1 ('cube resting on the table', fingers ~100% open) and rule 2 ('cube listed as held or at the gripper position') both failed to match cleanly and I fell back to A. The instruction should say that the held test is decided by the fingers being ~46% open with the gripper raised (height > ~0.1) after the execution steps show a descent and a grasp (fingers going 100% -> 46% at the cube, followed by frames marking the cube 'held in the gripper'); a final frame that drops the 'held' label or still reports the cube's old table position [82, 128] while the gripper has lifted to [51, 129] must be treated as the cube still held, so choose B drop onto goal_target [107, 86]. Only fingers returning to ~100% open after the lift count as a release.",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    1226
+   ],
+   "memory_in": "demo_placements=[[129, 170], [136, 83], [75, 163], [111, 91]]; goal_target=[129, 170]",
+   "answered": "B: drop onto at [129, 170]",
+   "recorded": "B: drop onto at [110, 92]",
+   "missing_from_memory": "goal_target carried in as [129, 170] but the recorded drop is on the target at [111, 91] (the fourth entry of demo_placements); the memory should have held goal_target=[111, 91], i.e. the demo_placements list was in the wrong order (the first release of the blue cube in the demonstration was onto the target at [111, 91]), and I can no longer see the demonstration to recheck it.",
+   "missing_from_policy_prompt_for_memory": "it does not state clearly enough that demo_placements must be in chronological order of the demonstration (earliest release first, by frame time t ascending), nor how to tell a true placement onto a target from a transit frame; as written the list came out with the first placement [111, 91] last, so 'first' selected the wrong entry.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target carried in as [129, 170] but the recorded drop is on the target at [111, 91] (the fourth entry of demo_placements); the memory should have held goal_target=[111, 91], i.e. the demo_placements list was in the wrong order (the first release of the blue cube in the demonstration was onto the target at [111, 91]), and I can no longer see the demonstration to recheck it."
+  }
+ ]
+}

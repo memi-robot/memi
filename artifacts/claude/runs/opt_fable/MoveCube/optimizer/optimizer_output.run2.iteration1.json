@@ -1,0 +1,84 @@
+{
+ "episodes": [
+  0,
+  33,
+  75,
+  85,
+  90
+ ],
+ "user_chars": 16899,
+ "usage": {
+  "prompt_tokens": 8787,
+  "completion_tokens": 1529,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 8783
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 511
+  }
+ },
+ "reasoning": "Deleting `holding` seems justified since it's recoverable from the current step, but I'm noticing a subtlety: the value as written describes what's shown at that step, yet it's actually read at the next step. So at decision step 2, right after the pick, the `holding` value logged there would be `cube`, but that value is only consumed at step 3—meaning the carried-in memory at step 2 itself refers to the prior state, not this one.\n\nThis confirms the field is misaligned with how the subgoal rules actually read it—they treat `holding` as if it reflected the current step rather than the previous one. Deletion is the cleanest fix, paired with rewriting the subgoal instruction to key off the execution steps directly instead of the stale field, including restating the safeguard against choosing E or B without the cube or peg actually in hand.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it.",
+    "modify_to": "The memory holds only `method`. An episode starts at the first decision step with empty memory, fingers fully open and nothing executed yet; first fill `method` from the demonstration steps, then choose by it. At every later decision step, what is in the fingers is read from the step itself: the execution steps shown since the previous decision (descent, finger closure, rise) and the finger opening and gripper height in the scene at this step. Judge by finger opening and the rise, not by whether an object is marked as held, since the marking can be absent or unreliable."
+   },
+   {
+    "modify_from": "- If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube` (the execution steps just showed the fingers close to about 40-60% on the cube and the gripper rise): choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg` (the execution steps just showed the fingers close to about 20-25% on the stick and the gripper rise): choose B (hook the cube to the target with the peg).",
+    "modify_to": "- If the fingers are now closed to about 40-60% and the gripper has risen after descending onto the cube: choose E (place the cube onto the target). - If the fingers are now closed to about 20-25% and the gripper has risen after descending onto the stick: choose B (hook the cube to the target with the peg). - Otherwise (fingers fully open, or closed to about 0% with nothing raised) choose by `method`: `pick` -> D (pick up the cube), `hook` -> A (pick up the peg), `push` -> C."
+   },
+   {
+    "modify_from": "Never choose E without the cube in hand and never choose B without the peg in hand.",
+    "modify_to": "Never choose E unless the step shows the fingers at about 40-60% and risen after a descent onto the cube; never choose B unless the step shows the fingers at about 20-25% and risen after a descent onto the stick."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "delete",
+    "field": "holding",
+    "edits": [],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "holding",
+    "edits": [],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing from the report is held back. The deletion of `holding` is committed on both sides: it was never read, its content is recoverable from the execution steps and scene of the very step that needs it, and as written it was misaligned (a value written at the grasp step is only read at the next one, so the carried memory said `none` at the step where E or B was due). The subgoal instruction is rewritten to read the grasp from the step rather than from memory, keeping `method` as the only field, the push rule, the fallback for a missing `method`, and the two prohibitions restated without memory. No earlier edit exists to be undone."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "holding",
+    "edits": [],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it.",
+    "modify_to": "The memory holds only `method`. An episode starts at the first decision step with empty memory, fingers fully open and nothing executed yet; first fill `method` from the demonstration steps, then choose by it. At every later decision step, what is in the fingers is read from the step itself: the execution steps shown since the previous decision (descent, finger closure, rise) and the finger opening and gripper height in the scene at this step. Judge by finger opening and the rise, not by whether an object is marked as held, since the marking can be absent or unreliable."
+   },
+   {
+    "modify_from": "- If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube` (the execution steps just showed the fingers close to about 40-60% on the cube and the gripper rise): choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg` (the execution steps just showed the fingers close to about 20-25% on the stick and the gripper rise): choose B (hook the cube to the target with the peg).",
+    "modify_to": "- If the fingers are now closed to about 40-60% and the gripper has risen after descending onto the cube: choose E (place the cube onto the target). - If the fingers are now closed to about 20-25% and the gripper has risen after descending onto the stick: choose B (hook the cube to the target with the peg). - Otherwise (fingers fully open, or closed to about 0% with nothing raised) choose by `method`: `pick` -> D (pick up the cube), `hook` -> A (pick up the peg), `push` -> C."
+   },
+   {
+    "modify_from": "Never choose E without the cube in hand and never choose B without the peg in hand.",
+    "modify_to": "Never choose E unless the step shows the fingers at about 40-60% and risen after a descent onto the cube; never choose B unless the step shows the fingers at about 20-25% and risen after a descent onto the stick."
+   }
+  ],
+  "refused": "Nothing from the report is held back. The deletion of `holding` is committed on both sides: it was never read, its content is recoverable from the execution steps and scene of the very step that needs it, and as written it was misaligned (a value written at the grasp step is only read at the next one, so the carried memory said `none` at the step where E or B was due). The subgoal instruction is rewritten to read the grasp from the step rather than from memory, keeping `method` as the only field, the push rule, the fallback for a missing `method`, and the two prohibitions restated without memory. No earlier edit exists to be undone."
+ },
+ "not_applied": [],
+ "refused": "Nothing from the report is held back. The deletion of `holding` is committed on both sides: it was never read, its content is recoverable from the execution steps and scene of the very step that needs it, and as written it was misaligned (a value written at the grasp step is only read at the next one, so the carried memory said `none` at the step where E or B was due). The subgoal instruction is rewritten to read the grasp from the step rather than from memory, keeping `method` as the only field, the push rule, the fallback for a missing `method`, and the two prohibitions restated without memory. No earlier edit exists to be undone.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"delete\", \"field\": \"holding\"}],\n \"policy_prompt_for_memory\": [{\"kind\": \"delete\", \"field\": \"holding\"}],\n \"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it.\",\n   \"modify_to\": \"The memory holds only `method`. An episode starts at the first decision step with empty memory, fingers fully open and nothing executed yet; first fill `method` from the demonstration steps, then choose by it. At every later decision step, what is in the fingers is read from the step itself: the execution steps shown since the previous decision (descent, finger closure, rise) and the finger opening and gripper height in the scene at this step. Judge by finger opening and the rise, not by whether an object is marked as held, since the marking can be absent or unreliable.\"},\n  {\"modify_from\": \"- If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube` (the execution steps just showed the fingers close to about 40-60% on the cube and the gripper rise): choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg` (the execution steps just showed the fingers close to about 20-25% on the stick and the gripper rise): choose B (hook the cube to the target with the peg).\",\n   \"modify_to\": \"- If the fingers are now closed to about 40-60% and the gripper has risen after descending onto the cube: choose E (place the cube onto the target). - If the fingers are now closed to about 20-25% and the gripper has risen after descending onto the stick: choose B (hook the cube to the target with the peg). - Otherwise (fingers fully open, or closed to about 0% with nothing raised) choose by `method`: `pick` -> D (pick up the cube), `hook` -> A (pick up the peg), `push` -> C.\"},\n  {\"modify_from\": \"Never choose E without the cube in hand and never choose B without the peg in hand.\",\n   \"modify_to\": \"Never choose E unless the step shows the fingers at about 40-60% and risen after a descent onto the cube; never choose B unless the step shows the fingers at about 20-25% and risen after a descent onto the stick.\"}\n ],\n \"refused\": \"Nothing from the report is held back. The deletion of `holding` is committed on both sides: it was never read, its content is recoverable from the execution steps and scene of the very step that needs it, and as written it was misaligned (a value written at the grasp step is only read at the next one, so the carried memory said `none` at the step where E or B was due). The subgoal instruction is rewritten to read the grasp from the step rather than from memory, keeping `method` as the only field, the push rule, the fallback for a missing `method`, and the two prohibitions restated without memory. No earlier edit exists to be undone.\"}"
+}

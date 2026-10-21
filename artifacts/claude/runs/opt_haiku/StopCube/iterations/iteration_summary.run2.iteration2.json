@@ -1,0 +1,126 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "crossings",
+  "cube_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  2,
+  38,
+  66,
+  93
+ ],
+ "scored": 17,
+ "failed": 3,
+ "subgoal_wrong": 3,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.8235294117647058,
+ "memory_verified": 1.0,
+ "reads": {
+  "crossings": 12,
+  "cube_side": 9
+ },
+ "field_errors": {
+  "crossings": {
+   "in": 0,
+   "sole": 0
+  },
+  "cube_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.17647058823529413,
+ "verified_of_all": 0.8235294117647058,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 3,
+ "point_wrong": 0,
+ "decisions": 17,
+ "critique": "field peak_speed, ANNOTATOR PROMPT\n  A new field. It holds the fastest cube speed observed so far, in pixels of x per timestep: for every pair of consecutive observed frames from t=0 up to and including the scene at this decision step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between them, and write the largest such value seen so far, rounded to one decimal. At step #1 there is only one frame, so write 0. The value only ever grows, and it grows at the step whose frames contain a faster pair. It is needed because the three failed steps all showed a cube drifting slowly outward near the end of its swing, and the only thing that separates the step where the correct answer was to wait (a slow cube whose fastest pass through the target was under 2 px/timestep, so it takes long to come back) from the steps where the correct answer was to press (fast cubes that passed the target at 3 px/timestep or more) is how fast the cube moves at its peak, which is no longer visible at the decision step. e.g. 3.8\n\nfield peak_speed, POLICY PROMPT\n  A new field. Take the carried-in peak_speed (0 if memory is empty). For each pair of consecutive frames shown at this step (and also the pair formed by the last frame of the previous step if you can infer it from the carried-in memory you cannot, so use only the frames shown here), compute |change in cube_x| divided by the number of timesteps between the two frames. Write the largest of the carried-in value and all these per-pair speeds, rounded to one decimal. It never decreases. At the first step (one frame only) write 0. e.g. 3.8\n\nthe policy prompt for subgoal\n  The failures all happened at the same kind of moment: the required number of arrivals minus one had already been counted, the gripper was closed above the button, and the last two frames showed the cube still creeping outward slowly near the end of its swing. In two of these the recorded choice was to press, in one it was to wait, and the current classification rule (absolute pixel change under about 5 px between frames, or under about 1 px per timestep) could not separate them, because in all three the outward drift was between 0.7 and 1.0 px per timestep while the frame spacing varied from 5 to 12 timesteps. This breaks SUFFICIENCY. What actually separates them is the cube itself: a slow cube (fastest observed speed below about 2.5 px per timestep) takes much longer to turn around and come back, so a slow outward drift still leaves too much time and the press must wait until the cube is seen returning; a fast cube (fastest observed speed about 2.5 px per timestep or more) is at the turnaround when its outward drift has fallen to about 1 px per timestep or less, and the press must go now. Replace the MOVING AWAY / AT THE TURNAROUND test with this: compute the change in |cube_x - target_x| between the last two frames and divide by the number of timesteps between them, giving an outward rate (negative if the distance shrank). Then, with crossings == N-1 and the cube on the same side of the target in both frames: choose C if the distance is decreasing or unchanged (the cube is returning or stopped at the turnaround), regardless of peak_speed; choose C if the outward rate is positive but at most about 1 px per timestep AND the memory's peak_speed is at least about 2.5 px per timestep (fast cube at its turnaround); choose B if the outward rate is positive and peak_speed is below about 2.5 (slow cube, wait until the distance is seen decreasing); choose B if the outward rate is clearly above 1 px per timestep (still sweeping out), whatever the cube's speed. Keep the rule that different sides in the last two frames means the cube is just passing the target and B is chosen, and keep all the crossings < N-1 behaviour unchanged. Drop the clause that measures the threshold as an absolute number of pixels between frames; always divide by the timestep spacing. Memory must be updated first (crossings, cube_side, peak_speed) and the updated values used.\n\nrefused\n  Three steps reported the slow-outward-drift ambiguity and each proposed a fix that fits only its own step. One proposed that any increase in the cube-target distance, however small, means still moving away and B; that contradicts the two steps where the cube was drifting outward at under 1 px per timestep and the recorded answer was to press. Another proposed classifying purely by outward rate per timestep with a threshold around 1 px per timestep; that contradicts the slow-cube step where the rate was 0.8 and the recorded answer was to wait. The third proposed treating a clear drop in speed from the previous frame pair as decelerating toward the turnaround and pressing; the slow-cube step also showed a drop in speed and still required waiting. None of these per-step criteria is carried forward as stated; they are replaced by the single rule above that combines outward rate with the cube's peak speed kept in memory, which agrees with every recorded step in the minibatch. The memory values the policy wrote at the failed steps matched the annotation, so no change to crossings or cube_side is passed on.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The failures all happened at the same kind of moment: the required number of arrivals minus one had already been counted, the gripper was closed above the button, and the last two frames showed the cube still creeping outward slowly near the end of its swing. In two of these the recorded choice was to press, in one it was to wait, and the current classification rule (absolute pixel change under about 5 px between frames, or under about 1 px per timestep) could not separate them, because in all three the outward drift was between 0.7 and 1.0 px per timestep while the frame spacing varied from 5 to 12 timesteps. This breaks SUFFICIENCY. What actually separates them is the cube itself: a slow cube (fastest observed speed below about 2.5 px per timestep) takes much longer to turn around and come back, so a slow outward drift still leaves too much time and the press must wait until the cube is seen returning; a fast cube (fastest observed speed about 2.5 px per timestep or more) is at the turnaround when its outward drift has fallen to about 1 px per timestep or less, and the press must go now. Replace the MOVING AWAY / AT THE TURNAROUND test with this: compute the change in |cube_x - target_x| between the last two frames and divide by the number of timesteps between them, giving an outward rate (negative if the distance shrank). Then, with crossings == N-1 and the cube on the same side of the target in both frames: choose C if the distance is decreasing or unchanged (the cube is returning or stopped at the turnaround), regardless of peak_speed; choose C if the outward rate is positive but at most about 1 px per timestep AND the memory's peak_speed is at least about 2.5 px per timestep (fast cube at its turnaround); choose B if the outward rate is positive and peak_speed is below about 2.5 (slow cube, wait until the distance is seen decreasing); choose B if the outward rate is clearly above 1 px per timestep (still sweeping out), whatever the cube's speed. Keep the rule that different sides in the last two frames means the cube is just passing the target and B is chosen, and keep all the crossings < N-1 behaviour unchanged. Drop the clause that measures the threshold as an absolute number of pixels between frames; always divide by the timestep spacing. Memory must be updated first (crossings, cube_side, peak_speed) and the updated values used.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "peak_speed",
+    "description": "A new field. Take the carried-in peak_speed (0 if memory is empty). For each pair of consecutive frames shown at this step (and also the pair formed by the last frame of the previous step if you can infer it from the carried-in memory you cannot, so use only the frames shown here), compute |change in cube_x| divided by the number of timesteps between the two frames. Write the largest of the carried-in value and all these per-pair speeds, rounded to one decimal. It never decreases. At the first step (one frame only) write 0. e.g. 3.8"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "peak_speed",
+    "description": "A new field. It holds the fastest cube speed observed so far, in pixels of x per timestep: for every pair of consecutive observed frames from t=0 up to and including the scene at this decision step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between them, and write the largest such value seen so far, rounded to one decimal. At step #1 there is only one frame, so write 0. The value only ever grows, and it grows at the step whose frames contain a faster pair. It is needed because the three failed steps all showed a cube drifting slowly outward near the end of its swing, and the only thing that separates the step where the correct answer was to wait (a slow cube whose fastest pass through the target was under 2 px/timestep, so it takes long to come back) from the steps where the correct answer was to press (fast cubes that passed the target at 3 px/timestep or more) is how fast the cube moves at its peak, which is no longer visible at the decision step. e.g. 3.8"
+   }
+  ],
+  "refused": "Three steps reported the slow-outward-drift ambiguity and each proposed a fix that fits only its own step. One proposed that any increase in the cube-target distance, however small, means still moving away and B; that contradicts the two steps where the cube was drifting outward at under 1 px per timestep and the recorded answer was to press. Another proposed classifying purely by outward rate per timestep with a threshold around 1 px per timestep; that contradicts the slow-cube step where the rate was 0.8 and the recorded answer was to wait. The third proposed treating a clear drop in speed from the previous frame pair as decelerating toward the turnaround and pressing; the slow-cube step also showed a drop in speed and still required waiting. None of these per-step criteria is carried forward as stated; they are replaced by the single rule above that combines outward rate with the cube's peak speed kept in memory, which agrees with every recorded step in the minibatch. The memory values the policy wrote at the failed steps matched the annotation, so no change to crossings or cube_side is passed on."
+ },
+ "critiques": [
+  {
+   "step": [
+    1,
+    "exec",
+    123
+   ],
+   "memory_in": "crossings=2; cube_side=smaller_x",
+   "answered": "B: remain static",
+   "recorded": "C: press button to stop the cube",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The turnaround-vs-moving-away threshold is stated as an absolute pixel change between the two frames ('fewer than about 5 px'), but here the two frames are 11 timesteps apart (t=112 to t=123) and the distance grew 82->90, i.e. 8 px total but under 1 px per timestep. The instruction should say to divide the change in |cube_x - target_x| by the number of timesteps between the two frames and classify by rate (under ~1 px/timestep = turnaround, so press C; ~7 px/timestep or more = moving away), and should state that with crossings == N-1 and the cube far out near the swing's end (|cube_x - target_x| around 80-90 px) with a slow rate, it is at the turnaround and C is correct.",
+   "missing": ""
+  },
+  {
+   "step": [
+    66,
+    "exec",
+    101
+   ],
+   "memory_in": "crossings=0; cube_side=smaller_x",
+   "answered": "C: press button to stop the cube",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The turnaround test misfires here: the last two frames are t=96 (cube_x 196) and t=101 (cube_x 200), distance to target 46 -> 50, an increase of 4 px over 5 timesteps, which the rule's 'fewer than about 5 px between frames' clause labels AT THE TURNAROUND, so it told me to press. The recorded answer treats this as still MOVING AWAY. The instruction should say that any increase in |cube_x - target_x| between the last two frames (even a small one, and regardless of frame spacing) means the cube is still moving away and B is correct; only a decrease, or an exactly unchanged distance across two frames, counts as toward/turnaround. Alternatively it should say the press must wait until the cube has visibly reversed (distance decreasing), since in this episode the first frame after the (N-1)th crossing shows the cube at 156 vs target 148 and the outward sweep continues through 180, 196, 200 without a reversal, so the correct choice at this step is B.",
+   "missing": ""
+  },
+  {
+   "step": [
+    93,
+    "exec",
+    60
+   ],
+   "memory_in": "crossings=0; cube_side=smaller_x",
+   "answered": "B: remain static",
+   "recorded": "C: press button to stop the cube",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The MOVING AWAY / TURNAROUND threshold did not fit this step: the last two frames (t=48 cube at x=199, t=60 cube at x=211) are 12 timesteps apart, so the outward displacement is 12 px between frames (above the 'about 5 px' limit) but exactly 1 px per timestep (at the 'under about 1 px per timestep' limit), and the instruction gave no way to resolve the two readings. With crossings==1==N-1 the recorded answer is C here, so the rule should say: compare the outward speed per timestep (divide the change in |cube_x - target_x| by the number of timesteps between the two frames), and treat an outward speed at or below about 1 px/timestep, or a speed that has clearly dropped from the previous frame pair (here about 3 px/timestep from t=32 to t=48, down to 1 px/timestep), as the cube decelerating toward the turnaround, which counts as 'not moving away' and triggers C once crossings == N-1. Only a sustained outward speed well above that (several px per timestep, the fast sweep right after the crossing) is MOVING AWAY and keeps B.",
+   "missing": ""
+  }
+ ]
+}

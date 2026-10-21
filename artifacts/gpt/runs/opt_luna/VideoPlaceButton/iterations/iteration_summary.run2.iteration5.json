@@ -1,0 +1,92 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "pre_press_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  8,
+  46,
+  51,
+  72,
+  74
+ ],
+ "scored": 10,
+ "failed": 1,
+ "subgoal_wrong": 0,
+ "memory_wrong": 1,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9,
+ "reads": {
+  "pre_press_target": 5
+ },
+ "field_errors": {
+  "pre_press_target": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1,
+ "verified_of_all": 0.9,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field pre_press_target, ANNOTATOR PROMPT\n  For a goal asking for the green cube's target right before the button press, the selected target moved during a late demonstration shuffle after the cube had been removed. The policy correctly chose pickup but stored the target occupying the old location, [136, 170], instead of the annotated physical target's execution-start center, [119, 145]. The existing matching language does not explicitly cover target exchanges, breaking PREDICTABILITY and compromising the later drop's SUFFICIENCY. Clarify that this field holds the execution-start center of the physical target selected by the goal's temporal relation, not the target occupying its former position. After selecting the last completed placement before the press or first completed placement after it, track that target's identity through the entire remaining demonstration, including shuffles and crossings. Do not preserve a spatial rank or choose the final target nearest its original location. Write the matched execution-start center at the first decision step, for example [119, 145], and retain it unchanged thereafter. Preserve the existing placement-selection and unknown-value rules.\n\nfield pre_press_target, POLICY PROMPT\n  When the first decision observation contains a demonstration in which targets shuffle after the goal-selected placement, matching by the placement's old location can select another physical target. In the reported failure, the policy correctly chose pickup for the green cube but wrote [136, 170], whereas the annotated destination was [119, 145]. This breaks PREDICTABILITY: the matching procedure did not settle the annotated memory value, and the wrong stored identity would later misdirect the drop. Extend initialization as follows: while memory is empty and the demonstration is visible, select the placement using the existing before/after rule, then follow the selected physical target through all subsequent demonstration frames to execution start. Use the observed motion sequence and joint continuity of moving targets to resolve exchanges and crossings; do not independently match the final scene to the original position or assume target-list order is identity. For example, a selected target near [139, 169] can travel through [142, 162], [148, 137], and [125, 142] before ending at [119, 145]; store [119, 145], not the other target now near its former position. The field still holds only the selected target's reported execution-start center, written at this initialization event and copied unchanged thereafter. Retain the existing unknown fallback if physical identity cannot be resolved.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pre_press_target",
+    "description": "When the first decision observation contains a demonstration in which targets shuffle after the goal-selected placement, matching by the placement's old location can select another physical target. In the reported failure, the policy correctly chose pickup for the green cube but wrote [136, 170], whereas the annotated destination was [119, 145]. This breaks PREDICTABILITY: the matching procedure did not settle the annotated memory value, and the wrong stored identity would later misdirect the drop. Extend initialization as follows: while memory is empty and the demonstration is visible, select the placement using the existing before/after rule, then follow the selected physical target through all subsequent demonstration frames to execution start. Use the observed motion sequence and joint continuity of moving targets to resolve exchanges and crossings; do not independently match the final scene to the original position or assume target-list order is identity. For example, a selected target near [139, 169] can travel through [142, 162], [148, 137], and [125, 142] before ending at [119, 145]; store [119, 145], not the other target now near its former position. The field still holds only the selected target's reported execution-start center, written at this initialization event and copied unchanged thereafter. Retain the existing unknown fallback if physical identity cannot be resolved."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pre_press_target",
+    "description": "For a goal asking for the green cube's target right before the button press, the selected target moved during a late demonstration shuffle after the cube had been removed. The policy correctly chose pickup but stored the target occupying the old location, [136, 170], instead of the annotated physical target's execution-start center, [119, 145]. The existing matching language does not explicitly cover target exchanges, breaking PREDICTABILITY and compromising the later drop's SUFFICIENCY. Clarify that this field holds the execution-start center of the physical target selected by the goal's temporal relation, not the target occupying its former position. After selecting the last completed placement before the press or first completed placement after it, track that target's identity through the entire remaining demonstration, including shuffles and crossings. Do not preserve a spatial rank or choose the final target nearest its original location. Write the matched execution-start center at the first decision step, for example [119, 145], and retain it unchanged thereafter. Preserve the existing placement-selection and unknown-value rules."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    51,
+    "exec",
+    767
+   ],
+   "memory_in": "pre_press_target=",
+   "answered": "A: pick up the cube at [78, 121]",
+   "recorded": "A: pick up the cube at [80, 122]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The policy prompt did not specify tracking the selected target's physical identity through the late demonstration target shuffle, rather than matching by its old position. The target supporting the green cube before the press starts near [139, 169], moves through [142, 162] at t=704, [148, 137] at t=720, and [125, 142] at t=736, and ends at execution-start [119, 145]. That is the value to write, not [136, 170], which is occupied by the other shuffled target.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

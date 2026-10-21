@@ -1,0 +1,94 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "target_containers",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  16,
+  62,
+  66,
+  89
+ ],
+ "scored": 5,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "target_containers": 0,
+  "picks_done": 0
+ },
+ "field_errors": {
+  "target_containers": {
+   "in": 0,
+   "sole": 0
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "target_containers": "read at no step of 5",
+  "picks_done": "read at no step of 5"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 5,
+ "critique": "field picks_done, ANNOTATOR PROMPT\n  DELETE this field. In every episode the goal names exactly one cube, the episode has a single decision step, and the robot's pick ends the episode, so no later step ever reads a count of picks. Whether the gripper is holding a container is visible at any step from the finger opening (fully open versus partly closed with the gripper raised), so the fact is recoverable from the scene and the field breaks NECESSITY. Nothing folds into another field.\n\nfield target_containers, ANNOTATOR PROMPT\n  MODIFY to a single position rather than an ordered list, holding the demonstration position of the one container that came down over the cube named in the goal, i.e. the container whose coordinates lie within a few pixels of where that cube was in the demonstration steps before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed. It is kept, not dropped, because the demonstration is shown once and only at the first decision step; should any decision step follow the first (a grasp that failed and has to be retried), nothing in that later step recovers which container hid the named cube. e.g. [92, 87]\n\nfield picks_done, POLICY PROMPT\n  DELETE this field. Do not write it. Whether a container is currently held is read from the fingers at the step itself: fully open means not holding, partly closed (about 40-60% open) with the gripper raised means holding.\n\nfield target_containers, POLICY PROMPT\n  MODIFY to one position [y, x]. At the first decision step (memory empty, demonstration steps shown): read the position of the cube whose color the goal names from the demonstration steps before the containers appear, then take the container whose position after the containers appear is within a few pixels of it, and write that container's position. At any later step copy the carried-in value unchanged. e.g. [92, 87]\n\nthe policy prompt for subgoal\n  Remove the counting of named cubes into N and every condition on picks_done; the goal names one cube and there is one target. Rule A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or raised out of frame). At the first decision step, with the memory empty and the demonstration steps shown, do not read target_containers for the point: find the named cube's position in the demonstration steps before the containers appear, take the container within a few pixels of it after they appear, and point at that container with y reduced by about 3 pixels (container [92, 87] gives point [89, 86]). At any later step, point at the container in target_containers the same way, choosing the visible container nearest the stored position if it has drifted. Rule B (put down): choose B whenever the gripper is holding a container (fingers partly closed, about 40-60% open, gripper raised after a grasp). The former clause 'when picks_done equals N the task is complete' and the fallback on an index into target_containers are dropped; the fallback for a situation matching no rule (fingers fully closed on nothing) is to choose A and point at the target container as above.\n\nrefused\n  No step reported a failure; every step was answered correctly from the demonstration shown at that step. The only input acted on is the block of fields carried and never read, from which picks_done is dropped and target_containers is reduced to a single position.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Remove the counting of named cubes into N and every condition on picks_done; the goal names one cube and there is one target. Rule A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or raised out of frame). At the first decision step, with the memory empty and the demonstration steps shown, do not read target_containers for the point: find the named cube's position in the demonstration steps before the containers appear, take the container within a few pixels of it after they appear, and point at that container with y reduced by about 3 pixels (container [92, 87] gives point [89, 86]). At any later step, point at the container in target_containers the same way, choosing the visible container nearest the stored position if it has drifted. Rule B (put down): choose B whenever the gripper is holding a container (fingers partly closed, about 40-60% open, gripper raised after a grasp). The former clause 'when picks_done equals N the task is complete' and the fallback on an index into target_containers are dropped; the fallback for a situation matching no rule (fingers fully closed on nothing) is to choose A and point at the target container as above.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "picks_done",
+    "description": "DELETE this field. Do not write it. Whether a container is currently held is read from the fingers at the step itself: fully open means not holding, partly closed (about 40-60% open) with the gripper raised means holding."
+   },
+   {
+    "field": "target_containers",
+    "description": "MODIFY to one position [y, x]. At the first decision step (memory empty, demonstration steps shown): read the position of the cube whose color the goal names from the demonstration steps before the containers appear, then take the container whose position after the containers appear is within a few pixels of it, and write that container's position. At any later step copy the carried-in value unchanged. e.g. [92, 87]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "picks_done",
+    "description": "DELETE this field. In every episode the goal names exactly one cube, the episode has a single decision step, and the robot's pick ends the episode, so no later step ever reads a count of picks. Whether the gripper is holding a container is visible at any step from the finger opening (fully open versus partly closed with the gripper raised), so the fact is recoverable from the scene and the field breaks NECESSITY. Nothing folds into another field."
+   },
+   {
+    "field": "target_containers",
+    "description": "MODIFY to a single position rather than an ordered list, holding the demonstration position of the one container that came down over the cube named in the goal, i.e. the container whose coordinates lie within a few pixels of where that cube was in the demonstration steps before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed. It is kept, not dropped, because the demonstration is shown once and only at the first decision step; should any decision step follow the first (a grasp that failed and has to be retried), nothing in that later step recovers which container hid the named cube. e.g. [92, 87]"
+   }
+  ],
+  "refused": "No step reported a failure; every step was answered correctly from the demonstration shown at that step. The only input acted on is the block of fields carried and never read, from which picks_done is dropped and target_containers is reduced to a single position."
+ },
+ "critiques": []
+}

@@ -1,0 +1,92 @@
+{
+ "episodes": [
+  33,
+  41,
+  54,
+  70,
+  86
+ ],
+ "user_chars": 13752,
+ "usage": {
+  "prompt_tokens": 5228,
+  "completion_tokens": 547,
+  "total_tokens": 5775,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 5225,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point.",
+    "modify_to": "First update remaining_moves exactly once according to the policy prompt for memory. Then return its head verbatim as choice, with point=null. Valid executable choices are the menu letters A through H, not their action descriptions. For example, an updated list of [\"A\"] requires choice=\"A\", point=null."
+   },
+   {
+    "modify_from": "At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers.",
+    "modify_to": "At episode start, apply the same output rule to the head of the complete list extracted from the demonstration."
+   },
+   {
+    "modify_from": "For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+    "modify_to": "For an unexpected state with an empty list or an invalid head, return choice=\"A\", point=null as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_moves",
+    "edits": [
+     {
+      "modify_from": "Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals.",
+      "modify_to": "Before encoding each direction, identify the source and destination targets' rows and columns in the target lattice. Use sustained wrist motion to establish travel order, not raw wrist displacement signs to classify directions. Targets in the same perspective-slanted column remain in that column despite a small image x displacement: a row change alone is forward or backward. A diagonal requires a change into an adjacent column as well as an adjacent row."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "No substantive proposed correction is refused. The annotator prompt and existing initialization and one-entry removal rules remain unchanged because their values and timing are already correct. The episode-specific coordinate example and example list are omitted in favor of the general lattice-based classification rule."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_moves",
+    "edits": [
+     {
+      "modify_from": "Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals.",
+      "modify_to": "Before encoding each direction, identify the source and destination targets' rows and columns in the target lattice. Use sustained wrist motion to establish travel order, not raw wrist displacement signs to classify directions. Targets in the same perspective-slanted column remain in that column despite a small image x displacement: a row change alone is forward or backward. A diagonal requires a change into an adjacent column as well as an adjacent row."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point.",
+    "modify_to": "First update remaining_moves exactly once according to the policy prompt for memory. Then return its head verbatim as choice, with point=null. Valid executable choices are the menu letters A through H, not their action descriptions. For example, an updated list of [\"A\"] requires choice=\"A\", point=null."
+   },
+   {
+    "modify_from": "At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers.",
+    "modify_to": "At episode start, apply the same output rule to the head of the complete list extracted from the demonstration."
+   },
+   {
+    "modify_from": "For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+    "modify_to": "For an unexpected state with an empty list or an invalid head, return choice=\"A\", point=null as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern."
+   }
+  ],
+  "refused": "No substantive proposed correction is refused. The annotator prompt and existing initialization and one-entry removal rules remain unchanged because their values and timing are already correct. The episode-specific coordinate example and example list are omitted in favor of the general lattice-based classification rule."
+ },
+ "not_applied": [],
+ "refused": "No substantive proposed correction is refused. The annotator prompt and existing initialization and one-entry removal rules remain unchanged because their values and timing are already correct. The episode-specific coordinate example and example list are omitted in favor of the general lattice-based classification rule.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_moves\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals.\",\n          \"modify_to\": \"Before encoding each direction, identify the source and destination targets' rows and columns in the target lattice. Use sustained wrist motion to establish travel order, not raw wrist displacement signs to classify directions. Targets in the same perspective-slanted column remain in that column despite a small image x displacement: a row change alone is forward or backward. A diagonal requires a change into an adjacent column as well as an adjacent row.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"First update remaining_moves according to the memory execution plan. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point.\",\n      \"modify_to\": \"First update remaining_moves exactly once according to the memory execution plan. Then return its head verbatim as choice, with point=null. Valid executable choices are the menu letters A through H, not their action descriptions. For example, an updated list of [\\\"A\\\"] requires choice=\\\"A\\\", point=null.\"\n    },\n    {\n      \"modify_from\": \"At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers.\",\n      \"modify_to\": \"At episode start, apply the same output rule to the head of the complete list extracted from the demonstration.\"\n    },\n    {\n      \"modify_from\": \"For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.\",\n      \"modify_to\": \"For an unexpected state with an empty list or an invalid head, return choice=\\\"A\\\", point=null as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.\"\n    }\n  ],\n  \"refused\": \"No substantive proposed correction is refused. The annotator prompt and existing initialization and one-entry removal rules remain unchanged because their values and timing are already correct. The episode-specific coordinate example and example list are omitted in favor of the general lattice-based classification rule.\"\n}"
+}

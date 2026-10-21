@@ -1,0 +1,168 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "crossings",
+  "cube_side",
+  "peak_speed",
+  "last_cube_x",
+  "last_t"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  66,
+  68,
+  72,
+  77,
+  83
+ ],
+ "scored": 26,
+ "failed": 4,
+ "subgoal_wrong": 2,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.9230769230769231,
+ "memory_verified": 0.8846153846153846,
+ "reads": {
+  "crossings": 21,
+  "cube_side": 13,
+  "peak_speed": 13,
+  "last_cube_x": 2,
+  "last_t": 1
+ },
+ "field_errors": {
+  "crossings": {
+   "in": 0,
+   "sole": 0
+  },
+  "cube_side": {
+   "in": 0,
+   "sole": 0
+  },
+  "peak_speed": {
+   "in": 2,
+   "sole": 1
+  },
+  "last_cube_x": {
+   "in": 2,
+   "sole": 1
+  },
+  "last_t": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "last_t": "read at 1 step of 26: ep72 #5"
+ },
+ "loss": 0.15384615384615385,
+ "verified_of_all": 0.8461538461538461,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 0,
+ "decisions": 26,
+ "critique": "field peak_speed, ANNOTATOR PROMPT\n  SITUATION: the annotated peak_speed was inconsistent with its own rule. In one episode the value written could only come from pairing the last scene of one decision step with the first execution frame of the next (across steps), while the rule forbade that pairing and in another episode it was not done. In a third place the value jumped to a large number from a pair of frames only one timestep apart, where a 3-pixel detection wobble became '3 px per timestep' and later made the policy think the cube was much faster than it is. FAILURE: PREDICTABILITY (the written value and the value the policy prompt produces are two different answers), and the noisy value then broke SUFFICIENCY at the press decision. CHANGE: peak_speed holds the fastest cube x-speed observed in the episode so far, in pixels of x per timestep, computed over ALL consecutive observed frames of the episode in time order, including the pair formed by the scene at one decision step and the first frame shown at the next (this is what last_cube_x and last_t are kept for). Only pairs whose timestep gap is at least 8 count; pairs closer than 8 timesteps (such as the 1-, 3- or 5-timestep gap before a decision scene) are skipped because detection wobble dominates them. For each counted pair compute |x_later - x_earlier| / gap, round to one decimal with halves up. The value never decreases; it changes at the step whose counted pairs contain a faster quotient than any before. At step #1 it is 0. x is the SECOND number of a [y, x] position. Example: 2.0\n\nfield peak_speed, POLICY PROMPT\n  SITUATION: the policy, told not to pair the first frame shown with the carried-in scene, computed a peak lower than the annotated one; at another step it paired two frames one timestep apart and a 3-pixel wobble set the peak to 3.0, and at a third step it read the first number of [y, x] as x. FAILURE: PREDICTABILITY. CHANGE: Take the carried-in peak_speed (0 if memory is empty). Build the frame list: first the carried-in (last_cube_x at last_t) if memory is not empty, then every frame shown at this step in time order. cube_x is the SECOND number of the cube's [y, x] position. For every consecutive pair in that list whose timestep gap is at least 8, compute |cube_x(later) - cube_x(earlier)| / gap and round to one decimal, halves up. Ignore every pair with a gap below 8 timesteps (such gaps are common just before the decision scene and are dominated by wobble). Write the largest of the carried-in value and these quotients; it never decreases. When memory is empty and one frame is shown, write 0. Example: 2.0\n\nfield last_cube_x, POLICY PROMPT\n  SITUATION: the policy copied the first number of the cube's [y, x] position as its x. FAILURE: PREDICTABILITY. CHANGE: Write the cube's x-coordinate, which is the SECOND number of its [y, x] position (cube at [85, 52] gives 52), in the scene at this decision step. Overwrite it every step. It is read at the next step as the earlier member of the pair with the first frame shown there, both for peak_speed and for judging the cube's motion. Example: 52\n\nfield last_t, POLICY PROMPT\n  SITUATION: the field was carried and almost never read, because the policy prompt forbade pairing across steps. FAILURE: NECESSITY as written; with the pairing now required it is needed. CHANGE: Write the timestep index t of the scene at this decision step. Overwrite it every step; 0 at the first step. It is read at the next step to compute the timestep gap between the carried-in last_cube_x and the first frame shown there (that gap decides whether the pair counts for peak_speed, gap at least 8, and gives the rate for motion). Keep this field. Example: 503\n\nthe policy prompt for subgoal\n  SITUATION 1: goal asked for the fifth arrival; in the shown frames the cube made its fourth crossing and then kept sweeping outward at about 1.75 px per timestep (about half its peak of 3.4), 76 px from the target; the recorded answer was press, the policy chose remain because the rule 'outward rate clearly above about 1 means moving away, choose B' forbade it. SITUATION 2: same goal, four crossings done, the cube had turned around far from the target and was drifting back at under 1 px per timestep, 56 px away with a true peak near 2.0; the recorded answer was remain, the policy pressed because 'returning with crossings == N-1' always meant press. One decision step later, 43 px away and still returning, the recorded answer was press. SITUATION 3: a slow cube (peak 1.7) with one crossing done for a second-arrival goal was 50 px out and barely creeping outward; recorded remain. FAILURE: SUFFICIENCY; the MOVING AWAY / NOT MOVING AWAY classification by outward rate alone does not match the recorded presses, which are issued a fixed lead time before arrival, about 20 to 27 timesteps, whether the cube is still finishing its outward sweep or already returning. RULE TO DROP: the whole classification 'NOT MOVING AWAY = outward rate zero or negative, or at most about 1 with peak_speed at least 2.5; otherwise MOVING AWAY', and 'press whenever crossings == N-1 and NOT MOVING AWAY'. RULE TO PUT IN ITS PLACE: at every step after the first, update memory first, then: if crossings < N-1 choose B. If crossings == N-1: form the motion pair as before (last two frames shown, or carried-in last_cube_x/last_t with the single shown frame), using the SECOND number of [y, x] as x. (a) If the cube is on different sides of the target in the two members of the pair, or the (N-1)th crossing lies between the last two frames, the cube is just passing the target and starting its outward sweep: choose B. (b) Compute distance = |cube_x - target_x| at the scene, and the outward rate = (distance at later member - distance at earlier member) / timestep gap. (c) Compute the lead estimate = distance / peak_speed (timesteps). (d) If the cube is returning or stopped (outward rate <= 0): choose C when lead estimate <= 27, otherwise B (a cube that turned around far out and is still 28 or more peak-speed timesteps away is too early; it will be pressed at a later decision step). (e) If the cube is still moving outward (outward rate > 0): choose C only when it has clearly slowed, outward rate at most about 60% of peak_speed, AND lead estimate <= 24; otherwise B (a cube moving outward at or near its peak, or far out relative to its speed, has not reached the press window). Keep: the first step chooses A; never A afterwards; a single-frame step is judged by the pair with memory and is not by itself a reason to choose B; if crossings exceeds N-1 choose C if the cube is heading toward the target, else B.\n\nrefused\n  One report asked for a plain pixel distance threshold at which a returning cube is pressed. Across the episodes a fast cube is pressed from much farther (over 70 px while still sweeping out at peak 3.4) than a slow one is left alone (56 px, returning, peak about 2.0), so no distance alone separates press from remain; the lead estimate distance divided by peak_speed does, and that is what is passed on instead. The same report's observed peak of 3.0 was itself the noise artefact fixed in the peak_speed field, so the thresholds are set against the corrected peaks.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "SITUATION 1: goal asked for the fifth arrival; in the shown frames the cube made its fourth crossing and then kept sweeping outward at about 1.75 px per timestep (about half its peak of 3.4), 76 px from the target; the recorded answer was press, the policy chose remain because the rule 'outward rate clearly above about 1 means moving away, choose B' forbade it. SITUATION 2: same goal, four crossings done, the cube had turned around far from the target and was drifting back at under 1 px per timestep, 56 px away with a true peak near 2.0; the recorded answer was remain, the policy pressed because 'returning with crossings == N-1' always meant press. One decision step later, 43 px away and still returning, the recorded answer was press. SITUATION 3: a slow cube (peak 1.7) with one crossing done for a second-arrival goal was 50 px out and barely creeping outward; recorded remain. FAILURE: SUFFICIENCY; the MOVING AWAY / NOT MOVING AWAY classification by outward rate alone does not match the recorded presses, which are issued a fixed lead time before arrival, about 20 to 27 timesteps, whether the cube is still finishing its outward sweep or already returning. RULE TO DROP: the whole classification 'NOT MOVING AWAY = outward rate zero or negative, or at most about 1 with peak_speed at least 2.5; otherwise MOVING AWAY', and 'press whenever crossings == N-1 and NOT MOVING AWAY'. RULE TO PUT IN ITS PLACE: at every step after the first, update memory first, then: if crossings < N-1 choose B. If crossings == N-1: form the motion pair as before (last two frames shown, or carried-in last_cube_x/last_t with the single shown frame), using the SECOND number of [y, x] as x. (a) If the cube is on different sides of the target in the two members of the pair, or the (N-1)th crossing lies between the last two frames, the cube is just passing the target and starting its outward sweep: choose B. (b) Compute distance = |cube_x - target_x| at the scene, and the outward rate = (distance at later member - distance at earlier member) / timestep gap. (c) Compute the lead estimate = distance / peak_speed (timesteps). (d) If the cube is returning or stopped (outward rate <= 0): choose C when lead estimate <= 27, otherwise B (a cube that turned around far out and is still 28 or more peak-speed timesteps away is too early; it will be pressed at a later decision step). (e) If the cube is still moving outward (outward rate > 0): choose C only when it has clearly slowed, outward rate at most about 60% of peak_speed, AND lead estimate <= 24; otherwise B (a cube moving outward at or near its peak, or far out relative to its speed, has not reached the press window). Keep: the first step chooses A; never A afterwards; a single-frame step is judged by the pair with memory and is not by itself a reason to choose B; if crossings exceeds N-1 choose C if the cube is heading toward the target, else B.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "peak_speed",
+    "description": "SITUATION: the policy, told not to pair the first frame shown with the carried-in scene, computed a peak lower than the annotated one; at another step it paired two frames one timestep apart and a 3-pixel wobble set the peak to 3.0, and at a third step it read the first number of [y, x] as x. FAILURE: PREDICTABILITY. CHANGE: Take the carried-in peak_speed (0 if memory is empty). Build the frame list: first the carried-in (last_cube_x at last_t) if memory is not empty, then every frame shown at this step in time order. cube_x is the SECOND number of the cube's [y, x] position. For every consecutive pair in that list whose timestep gap is at least 8, compute |cube_x(later) - cube_x(earlier)| / gap and round to one decimal, halves up. Ignore every pair with a gap below 8 timesteps (such gaps are common just before the decision scene and are dominated by wobble). Write the largest of the carried-in value and these quotients; it never decreases. When memory is empty and one frame is shown, write 0. Example: 2.0"
+   },
+   {
+    "field": "last_cube_x",
+    "description": "SITUATION: the policy copied the first number of the cube's [y, x] position as its x. FAILURE: PREDICTABILITY. CHANGE: Write the cube's x-coordinate, which is the SECOND number of its [y, x] position (cube at [85, 52] gives 52), in the scene at this decision step. Overwrite it every step. It is read at the next step as the earlier member of the pair with the first frame shown there, both for peak_speed and for judging the cube's motion. Example: 52"
+   },
+   {
+    "field": "last_t",
+    "description": "SITUATION: the field was carried and almost never read, because the policy prompt forbade pairing across steps. FAILURE: NECESSITY as written; with the pairing now required it is needed. CHANGE: Write the timestep index t of the scene at this decision step. Overwrite it every step; 0 at the first step. It is read at the next step to compute the timestep gap between the carried-in last_cube_x and the first frame shown there (that gap decides whether the pair counts for peak_speed, gap at least 8, and gives the rate for motion). Keep this field. Example: 503"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "peak_speed",
+    "description": "SITUATION: the annotated peak_speed was inconsistent with its own rule. In one episode the value written could only come from pairing the last scene of one decision step with the first execution frame of the next (across steps), while the rule forbade that pairing and in another episode it was not done. In a third place the value jumped to a large number from a pair of frames only one timestep apart, where a 3-pixel detection wobble became '3 px per timestep' and later made the policy think the cube was much faster than it is. FAILURE: PREDICTABILITY (the written value and the value the policy prompt produces are two different answers), and the noisy value then broke SUFFICIENCY at the press decision. CHANGE: peak_speed holds the fastest cube x-speed observed in the episode so far, in pixels of x per timestep, computed over ALL consecutive observed frames of the episode in time order, including the pair formed by the scene at one decision step and the first frame shown at the next (this is what last_cube_x and last_t are kept for). Only pairs whose timestep gap is at least 8 count; pairs closer than 8 timesteps (such as the 1-, 3- or 5-timestep gap before a decision scene) are skipped because detection wobble dominates them. For each counted pair compute |x_later - x_earlier| / gap, round to one decimal with halves up. The value never decreases; it changes at the step whose counted pairs contain a faster quotient than any before. At step #1 it is 0. x is the SECOND number of a [y, x] position. Example: 2.0"
+   }
+  ],
+  "refused": "One report asked for a plain pixel distance threshold at which a returning cube is pressed. Across the episodes a fast cube is pressed from much farther (over 70 px while still sweeping out at peak 3.4) than a slow one is left alone (56 px, returning, peak about 2.0), so no distance alone separates press from remain; the lead estimate distance divided by peak_speed does, and that is what is passed on instead. The same report's observed peak of 3.0 was itself the noise artefact fixed in the peak_speed field, so the thresholds are set against the corrected peaks."
+ },
+ "critiques": [
+  {
+   "step": [
+    72,
+    "exec",
+    240
+   ],
+   "memory_in": "crossings=3; cube_side=larger_x; peak_speed=3.4; last_cube_x=160; last_t=204",
+   "answered": "B: remain static",
+   "recorded": "C: press button to stop the cube",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The threshold for NOT MOVING AWAY is too strict. Here crossings became 4 (= N-1) in this step, and the last pair (t=224 x=92, t=240 x=64, target 140) gives an outward rate of 28/16 = 1.75 px/timestep, which the instruction classifies as 'clearly above about 1, still sweeping out' and so forces B. The recorded answer presses now. The instruction should say that once crossings == N-1 and the cube has visibly decelerated from its peak (outward rate well below peak_speed, e.g. at most about half of peak_speed, or at most about 2 px per timestep when peak_speed is around 3+), choose C, because the press takes time to execute and must be issued while the cube is still finishing its outward sweep, not only after the distance is seen shrinking. It should also state that at the step where the (N-1)th crossing has just occurred within the shown frames and the cube is already slowing, pressing is correct rather than waiting.",
+   "missing": ""
+  },
+  {
+   "step": [
+    77,
+    "exec",
+    101
+   ],
+   "memory_in": "crossings=0; cube_side=smaller_x; peak_speed=1.4; last_cube_x=93; last_t=53",
+   "answered": "B: remain static",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction told me explicitly not to pair the first frame shown with the carried-in frame, so the pairs I used were 115->143 over 16 steps (1.75 -> 1.8), 143->171 over 16 (1.8), and 171->176 over 5 (1.0), giving peak_speed 1.8. The recorded 2.0 can only come from pairing the carried-in last_cube_x=93 at last_t=53 with the first shown frame cube_x=115 at t=64: 22/11 = 2.0. The instruction should say that the carried-in last_cube_x and last_t form a pair with the first frame shown at this step (that is why those fields are kept every step), instead of forbidding that pair.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    77,
+    "exec",
+    401
+   ],
+   "memory_in": "crossings=3; cube_side=larger_x; peak_speed=2.0; last_cube_x=115; last_t=305",
+   "answered": "B: remain static",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It should say explicitly that cube_x and target_x are the SECOND number of a [y, x] position (cube at [116, 143] has cube_x = 143, not 116). I read the first number as x, which gave last_cube_x=116 instead of 143 and peak_speed=2.0 instead of 3.0 (the correct pairs are 28/16=1.8, 15/16=0.9, 3/16=0.2, 18/16=1.1, 25/16=1.6, 3/1=3.0). It could also note that a pair with a 1-timestep gap (t=400 to t=401) is still paired and divided by 1, so a 3 px change there sets peak_speed to 3.0.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    77,
+    "exec",
+    503
+   ],
+   "memory_in": "crossings=3; cube_side=larger_x; peak_speed=3.0; last_cube_x=143; last_t=401",
+   "answered": "C: press button to stop the cube",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "For last_cube_x it should state explicitly that the x-coordinate is the SECOND number of the [y, x] pair (here cube at [85, 52] gives 52, not 85); I copied the first number.",
+   "missing_from_policy_prompt_for_subgoal": "The rule says to press as soon as crossings == N-1 and the outward rate is zero or negative. Here crossings became 4 (= N-1) at t=432, the cube turned around at t=480 (x=41) and in the last pair (t=496 x=47 -> t=503 x=52) the distance to the target shrank from 61 to 56 px, so the rule gave C, yet the recorded answer is B. The instruction does not say that when the cube is already clearly past its turnaround and returning but still far from the target (about 56 px away, moving back at under ~1 px per timestep), the press is too early and the policy should remain static until the cube is within some distance / expected time-to-arrival of the target; it needs the distance (or time-to-arrival) threshold at which C is chosen on a returning cube, and should reconcile this with the 'fast cube slowing at its turnaround' case so that a turnaround seen far from the target does not trigger the press.",
+   "missing": ""
+  }
+ ]
+}

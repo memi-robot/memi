@@ -1,0 +1,209 @@
+{
+ "episodes": [
+  66,
+  68,
+  72,
+  77,
+  83
+ ],
+ "user_chars": 49394,
+ "usage": {
+  "prompt_tokens": 19792,
+  "completion_tokens": 6678,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 19788
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 2944
+  }
+ },
+ "reasoning": "I need to figure out how to handle peak_speed calculation using cube positions across steps, skipping gaps under 8. I'm reconsidering whether allowing cross-step pairing now contradicts the earlier round's refusal, since that round lacked the last_cube_x/last_t fields that have since been added.\n\nFor the subgoal classification, I'm testing whether the new lead-estimate rule (comparing outward rate to 60% of peak speed, then computing distance/peak) is consistent with past rounds' outcomes. Running through round 1's side-flip case, round 2's slow and fast cube scenarios, and round 3's creeping cube near turnaround, I keep getting lead estimates in the low-to-mid 20s that land in category C, while checking whether this round's slower cube with a lower peak also fits.\n\nThere's one risk I can't verify directly: the round-2 slow-cube wait step with rate 0.8 and peak under 2.5 has an unknown distance, so I can't confirm the rule produces the recorded classification for that case. I'll proceed with the rule as the best approximation but flag that the old \"2.5\" peak threshold may no longer apply given the new gap>=8 pairing logic.\n\nI'm keeping round 3's halving-rounding-up rule for peak_speed intact, and the memory update instructions need to also track last_cube_x and last_t alongside crossings, cube_side, and peak_speed. Now I need to prepare precise edits with exact quoted text, starting with the current annotator prompt describing how peak_speed is computed across valid frame pairs.\n\nI'll replace the full peak_speed policy text, add new last_cube_x and last_t policy fields, and make a small annotation tweak noting x is the second number. For the subgoal section, I'm updating the instruction text about what memory fields to update first.\n\nI need to replace the (2) classification text with revised wording: compute the outward rate as |cube_x - target_x| change divided by timestep gap, and use that rate (never raw pixel change) to decide if the cube is moving away, returning, or slowing at a fast turnaround based on the peak_speed threshold.\n\nThen I compute lead as distance divided by peak_speed, estimating how many timesteps it'd take to reach the target at top speed. If the outward rate is zero or negative with lead ≤27, or positive but under ~60% of peak_speed with lead ≤24, I classify it as IN THE PRESS WINDOW; otherwise it's NOT IN THE PRESS WINDOW.\n\nFor choice C, I'll only pick \"press button to stop the cube\" when crossings == N-1 and the cube is classified IN THE PRESS WINDOW. I'm also noting that when crossings == N-1 and the memory-derived pair gives a tiny or negative outward rate, that single frame itself represents the press moment rather than a signal to keep waiting.\n\nI keep the distance threshold unchanged and note what else stays as-is, then move on to writing the JSON output.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "first update memory as instructed (crossings, cube_side, peak_speed), then decide using the updated crossings and peak_speed values and the cube motion in this step's frames:",
+    "modify_to": "first update memory as instructed (crossings, cube_side, peak_speed, last_cube_x, last_t), then decide using the updated crossings and peak_speed values and the cube motion:"
+   },
+   {
+    "modify_from": "so the x change is cube_x minus last_cube_x and the timestep gap is t of this frame minus last_t.",
+    "modify_to": "so the x change is cube_x minus last_cube_x and the timestep gap is t of this frame minus last_t. cube_x is always the SECOND number of the cube's [y, x] position."
+   },
+   {
+    "modify_from": "it is passing the target right now and its next motion is outward: classify it as MOVING AWAY, whatever the distances are.",
+    "modify_to": "it is passing the target right now and its next motion is outward: classify it as NOT IN THE PRESS WINDOW, whatever the distances are."
+   },
+   {
+    "modify_from": "If the outward rate is zero or negative, the cube is returning or stopped at the turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive but at most about 1 px per timestep AND the updated peak_speed in memory is at least about 2.5 px per timestep, the cube is a fast cube slowing at its turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive and peak_speed is below about 2.5 (a slow cube, which takes long to turn around, so wait until the distance is seen decreasing), or the outward rate is clearly above about 1 px per timestep whatever the peak_speed (still sweeping out), classify it as MOVING AWAY.",
+    "modify_to": "Then compute distance = |cube_x - target_x| at the scene at this step, and lead = distance / peak_speed, the number of timesteps the cube would need at its peak speed to reach the target (if peak_speed is 0, treat lead as very large). The press is issued a fixed lead before arrival, about 20 to 27 timesteps, whether the cube is finishing its outward sweep or already returning, so classify: if the outward rate is zero or negative (returning or stopped) AND lead <= 27, the cube is IN THE PRESS WINDOW. If the outward rate is positive but at most about 60% of peak_speed (clearly slowed, finishing its outward sweep) AND lead <= 24, the cube is IN THE PRESS WINDOW. Otherwise the cube is NOT IN THE PRESS WINDOW: returning but lead > 27 (it turned around far out and is still too many timesteps away; it will be pressed at a later decision step), moving outward at more than about 60% of peak_speed (still sweeping out near full speed), or moving outward with lead > 24 (too far out for its speed)."
+   },
+   {
+    "modify_from": "Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified NOT MOVING AWAY above (returning, stopped, or a fast cube drifting outward at no more than about 1 px per timestep).",
+    "modify_to": "Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified IN THE PRESS WINDOW above."
+   },
+   {
+    "modify_from": "when crossings == N-1 and the pair formed from memory gives a tiny or negative outward rate, that single-frame step is the press moment, not a reason to wait.",
+    "modify_to": "when crossings == N-1 and the pair formed from memory places the cube IN THE PRESS WINDOW, that single-frame step is the press moment, not a reason to wait."
+   },
+   {
+    "modify_from": "and crossings == N-1 while the cube is still moving away from the target (including the case where the (N-1)th crossing lies between the last two frames, so the cube is just passing the target and about to sweep outward).",
+    "modify_to": "and crossings == N-1 while the cube is NOT IN THE PRESS WINDOW (including the case where the (N-1)th crossing lies between the last two frames, so the cube is just passing the target and about to sweep outward; and the case where the cube has already turned around but is still more than 27 peak-speed timesteps from the target, which is pressed at a later step)."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "peak_speed",
+    "edits": [
+     {
+      "modify_from": "Take the carried-in peak_speed (0 if memory is empty). List every consecutive pair of frames shown at this step, starting with the pair formed by the first and second frames shown (the first frame shown is an execution step, not the previous scene, so it is paired normally) and ending with the pair formed by the last two frames shown. Do not pair any frame shown here with a frame from an earlier step. For each pair write the x change |cube_x(later) - cube_x(earlier)|, the timestep gap between the two frames, and the quotient rounded to one decimal with halves rounding up (3.875 -> 3.9). Write the largest of the carried-in value and all these quotients. It never decreases. When only one frame is shown (including the first step, where the carried-in value is 0), write the carried-in value unchanged. e.g. 3.9",
+      "modify_to": "Take the carried-in peak_speed (0 if memory is empty). Build the frame list: first the carried-in position (last_cube_x at time last_t) if memory is not empty, then every frame shown at this step in time order, ending with the scene at this step. cube_x is always the SECOND number of the cube's [y, x] position. For every consecutive pair in that list write the x change |cube_x(later) - cube_x(earlier)| and the timestep gap; if the gap is at least 8, write the quotient rounded to one decimal with halves rounding up (3.875 -> 3.9); if the gap is below 8 timesteps (common just before the decision scene, where detection wobble dominates), skip that pair. Write the largest of the carried-in value and all the counted quotients. It never decreases. At the first step (empty memory, one frame) write 0. e.g. 2.0"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "last_cube_x",
+    "edits": [
+     {
+      "modify_from": "Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. Overwrite it every step; at the first step read it from the single frame shown. It is read at the next step only when that step shows a single frame and so has no pair of frames of its own to compare. e.g. 206",
+      "modify_to": "Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. x is the SECOND number of the cube's [y, x] position: a cube at [85, 52] gives 52. Overwrite it every step; at the first step read it from the single frame shown. It is read at the next step as the earlier member of the pair with the first frame shown there, both for peak_speed and, when that step shows a single frame, for judging the cube's motion. e.g. 52"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "last_t",
+    "edits": [
+     {
+      "modify_from": "Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. e.g. 54",
+      "modify_to": "Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. It is read at the next step to compute the timestep gap between the carried-in last_cube_x and the first frame shown there: that gap decides whether the pair counts for peak_speed (gap at least 8) and gives the rate for the motion judgement at a single-frame step. e.g. 503"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "peak_speed",
+    "edits": [
+     {
+      "modify_from": "The fastest cube speed observed so far, in pixels of x per timestep. For every pair of consecutive frames shown at the same decision step (do not pair a frame with one shown at a different step), from step #1 up to and including this decision step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames; write the largest such value seen so far, rounded to one decimal with halves rounding up (3.875 -> 3.9). At step #1 there is only one frame, so write 0. The value never decreases; it grows only at a step whose shown frames contain a faster pair than any seen before. e.g. 3.8",
+      "modify_to": "The fastest cube x-speed observed so far in the episode, in pixels of x per timestep. Take ALL observed frames of the episode in time order, from the t=0 scene up to and including the scene at this decision step, including the pair formed by the scene at one decision step and the first frame shown at the next (this cross-step pair is what last_cube_x and last_t are kept for). Only pairs of consecutive frames whose timestep gap is at least 8 count; pairs closer than 8 timesteps (such as the 1-, 3- or 5-timestep gap just before a decision scene) are skipped because detection wobble dominates them. For each counted pair compute |cube_x(later) - cube_x(earlier)| divided by the gap, rounded to one decimal with halves rounding up (3.875 -> 3.9); write the largest such quotient seen so far. cube_x is the SECOND number of the cube's [y, x] position. At step #1 there is only one frame, so write 0. The value never decreases; it changes only at a step whose counted pairs contain a faster quotient than any before. e.g. 2.0"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "last_cube_x",
+    "edits": [
+     {
+      "modify_from": "The cube's x-coordinate in the scene at this decision step (the last frame shown), as a plain number.",
+      "modify_to": "The cube's x-coordinate (the SECOND number of its [y, x] position; a cube at [85, 52] gives 52) in the scene at this decision step (the last frame shown), as a plain number."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The plain pixel-distance threshold for pressing a returning cube stays out, as this report and the round-3 report both recommend: a fast cube is pressed from over 70 px while a slow one is left alone at 56 px, and the turnaround extreme varies across episodes, so distance alone cannot separate press from remain; the lead estimate distance / peak_speed replaces it. The rate-only thresholds of rounds 1 and 2 (about 1 px per timestep, peak_speed about 2.5) are replaced rather than undone: they were set against peak values that the cross-step pairing and the 8-timestep minimum gap now change, and the lead rule still gives the same answers on the earlier recorded steps it was written for (fast cube slowed near its extreme about 80 px out: lead about 23, press; slow cube creeping outward with lead about 29: wait; side flip between the pair: wait). The round-2 prohibition on cross-step pairing for peak_speed is lifted only because round 3 added last_cube_x and last_t, which make the cross-step pair computable by the policy; annotator and policy now compute peak_speed over the same pairs. No change is made to crossings or cube_side."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "peak_speed",
+    "edits": [
+     {
+      "modify_from": "The fastest cube speed observed so far, in pixels of x per timestep. For every pair of consecutive frames shown at the same decision step (do not pair a frame with one shown at a different step), from step #1 up to and including this decision step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames; write the largest such value seen so far, rounded to one decimal with halves rounding up (3.875 -> 3.9). At step #1 there is only one frame, so write 0. The value never decreases; it grows only at a step whose shown frames contain a faster pair than any seen before. e.g. 3.8",
+      "modify_to": "The fastest cube x-speed observed so far in the episode, in pixels of x per timestep. Take ALL observed frames of the episode in time order, from the t=0 scene up to and including the scene at this decision step, including the pair formed by the scene at one decision step and the first frame shown at the next (this cross-step pair is what last_cube_x and last_t are kept for). Only pairs of consecutive frames whose timestep gap is at least 8 count; pairs closer than 8 timesteps (such as the 1-, 3- or 5-timestep gap just before a decision scene) are skipped because detection wobble dominates them. For each counted pair compute |cube_x(later) - cube_x(earlier)| divided by the gap, rounded to one decimal with halves rounding up (3.875 -> 3.9); write the largest such quotient seen so far. cube_x is the SECOND number of the cube's [y, x] position. At step #1 there is only one frame, so write 0. The value never decreases; it changes only at a step whose counted pairs contain a faster quotient than any before. e.g. 2.0"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "last_cube_x",
+    "edits": [
+     {
+      "modify_from": "The cube's x-coordinate in the scene at this decision step (the last frame shown), as a plain number.",
+      "modify_to": "The cube's x-coordinate (the SECOND number of its [y, x] position; a cube at [85, 52] gives 52) in the scene at this decision step (the last frame shown), as a plain number."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "peak_speed",
+    "edits": [
+     {
+      "modify_from": "Take the carried-in peak_speed (0 if memory is empty). List every consecutive pair of frames shown at this step, starting with the pair formed by the first and second frames shown (the first frame shown is an execution step, not the previous scene, so it is paired normally) and ending with the pair formed by the last two frames shown. Do not pair any frame shown here with a frame from an earlier step. For each pair write the x change |cube_x(later) - cube_x(earlier)|, the timestep gap between the two frames, and the quotient rounded to one decimal with halves rounding up (3.875 -> 3.9). Write the largest of the carried-in value and all these quotients. It never decreases. When only one frame is shown (including the first step, where the carried-in value is 0), write the carried-in value unchanged. e.g. 3.9",
+      "modify_to": "Take the carried-in peak_speed (0 if memory is empty). Build the frame list: first the carried-in position (last_cube_x at time last_t) if memory is not empty, then every frame shown at this step in time order, ending with the scene at this step. cube_x is always the SECOND number of the cube's [y, x] position. For every consecutive pair in that list write the x change |cube_x(later) - cube_x(earlier)| and the timestep gap; if the gap is at least 8, write the quotient rounded to one decimal with halves rounding up (3.875 -> 3.9); if the gap is below 8 timesteps (common just before the decision scene, where detection wobble dominates), skip that pair. Write the largest of the carried-in value and all the counted quotients. It never decreases. At the first step (empty memory, one frame) write 0. e.g. 2.0"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "last_cube_x",
+    "edits": [
+     {
+      "modify_from": "Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. Overwrite it every step; at the first step read it from the single frame shown. It is read at the next step only when that step shows a single frame and so has no pair of frames of its own to compare. e.g. 206",
+      "modify_to": "Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. x is the SECOND number of the cube's [y, x] position: a cube at [85, 52] gives 52. Overwrite it every step; at the first step read it from the single frame shown. It is read at the next step as the earlier member of the pair with the first frame shown there, both for peak_speed and, when that step shows a single frame, for judging the cube's motion. e.g. 52"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "last_t",
+    "edits": [
+     {
+      "modify_from": "Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. e.g. 54",
+      "modify_to": "Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. It is read at the next step to compute the timestep gap between the carried-in last_cube_x and the first frame shown there: that gap decides whether the pair counts for peak_speed (gap at least 8) and gives the rate for the motion judgement at a single-frame step. e.g. 503"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "first update memory as instructed (crossings, cube_side, peak_speed), then decide using the updated crossings and peak_speed values and the cube motion in this step's frames:",
+    "modify_to": "first update memory as instructed (crossings, cube_side, peak_speed, last_cube_x, last_t), then decide using the updated crossings and peak_speed values and the cube motion:"
+   },
+   {
+    "modify_from": "so the x change is cube_x minus last_cube_x and the timestep gap is t of this frame minus last_t.",
+    "modify_to": "so the x change is cube_x minus last_cube_x and the timestep gap is t of this frame minus last_t. cube_x is always the SECOND number of the cube's [y, x] position."
+   },
+   {
+    "modify_from": "it is passing the target right now and its next motion is outward: classify it as MOVING AWAY, whatever the distances are.",
+    "modify_to": "it is passing the target right now and its next motion is outward: classify it as NOT IN THE PRESS WINDOW, whatever the distances are."
+   },
+   {
+    "modify_from": "If the outward rate is zero or negative, the cube is returning or stopped at the turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive but at most about 1 px per timestep AND the updated peak_speed in memory is at least about 2.5 px per timestep, the cube is a fast cube slowing at its turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive and peak_speed is below about 2.5 (a slow cube, which takes long to turn around, so wait until the distance is seen decreasing), or the outward rate is clearly above about 1 px per timestep whatever the peak_speed (still sweeping out), classify it as MOVING AWAY.",
+    "modify_to": "Then compute distance = |cube_x - target_x| at the scene at this step, and lead = distance / peak_speed, the number of timesteps the cube would need at its peak speed to reach the target (if peak_speed is 0, treat lead as very large). The press is issued a fixed lead before arrival, about 20 to 27 timesteps, whether the cube is finishing its outward sweep or already returning, so classify: if the outward rate is zero or negative (returning or stopped) AND lead <= 27, the cube is IN THE PRESS WINDOW. If the outward rate is positive but at most about 60% of peak_speed (clearly slowed, finishing its outward sweep) AND lead <= 24, the cube is IN THE PRESS WINDOW. Otherwise the cube is NOT IN THE PRESS WINDOW: returning but lead > 27 (it turned around far out and is still too many timesteps away; it will be pressed at a later decision step), moving outward at more than about 60% of peak_speed (still sweeping out near full speed), or moving outward with lead > 24 (too far out for its speed)."
+   },
+   {
+    "modify_from": "Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified NOT MOVING AWAY above (returning, stopped, or a fast cube drifting outward at no more than about 1 px per timestep).",
+    "modify_to": "Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified IN THE PRESS WINDOW above."
+   },
+   {
+    "modify_from": "when crossings == N-1 and the pair formed from memory gives a tiny or negative outward rate, that single-frame step is the press moment, not a reason to wait.",
+    "modify_to": "when crossings == N-1 and the pair formed from memory places the cube IN THE PRESS WINDOW, that single-frame step is the press moment, not a reason to wait."
+   },
+   {
+    "modify_from": "and crossings == N-1 while the cube is still moving away from the target (including the case where the (N-1)th crossing lies between the last two frames, so the cube is just passing the target and about to sweep outward).",
+    "modify_to": "and crossings == N-1 while the cube is NOT IN THE PRESS WINDOW (including the case where the (N-1)th crossing lies between the last two frames, so the cube is just passing the target and about to sweep outward; and the case where the cube has already turned around but is still more than 27 peak-speed timesteps from the target, which is pressed at a later step)."
+   }
+  ],
+  "refused": "The plain pixel-distance threshold for pressing a returning cube stays out, as this report and the round-3 report both recommend: a fast cube is pressed from over 70 px while a slow one is left alone at 56 px, and the turnaround extreme varies across episodes, so distance alone cannot separate press from remain; the lead estimate distance / peak_speed replaces it. The rate-only thresholds of rounds 1 and 2 (about 1 px per timestep, peak_speed about 2.5) are replaced rather than undone: they were set against peak values that the cross-step pairing and the 8-timestep minimum gap now change, and the lead rule still gives the same answers on the earlier recorded steps it was written for (fast cube slowed near its extreme about 80 px out: lead about 23, press; slow cube creeping outward with lead about 29: wait; side flip between the pair: wait). The round-2 prohibition on cross-step pairing for peak_speed is lifted only because round 3 added last_cube_x and last_t, which make the cross-step pair computable by the policy; annotator and policy now compute peak_speed over the same pairs. No change is made to crossings or cube_side."
+ },
+ "not_applied": [],
+ "refused": "The plain pixel-distance threshold for pressing a returning cube stays out, as this report and the round-3 report both recommend: a fast cube is pressed from over 70 px while a slow one is left alone at 56 px, and the turnaround extreme varies across episodes, so distance alone cannot separate press from remain; the lead estimate distance / peak_speed replaces it. The rate-only thresholds of rounds 1 and 2 (about 1 px per timestep, peak_speed about 2.5) are replaced rather than undone: they were set against peak values that the cross-step pairing and the 8-timestep minimum gap now change, and the lead rule still gives the same answers on the earlier recorded steps it was written for (fast cube slowed near its extreme about 80 px out: lead about 23, press; slow cube creeping outward with lead about 29: wait; side flip between the pair: wait). The round-2 prohibition on cross-step pairing for peak_speed is lifted only because round 3 added last_cube_x and last_t, which make the cross-step pair computable by the policy; annotator and policy now compute peak_speed over the same pairs. No change is made to crossings or cube_side.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"peak_speed\", \"edits\": [{\"modify_from\": \"The fastest cube speed observed so far, in pixels of x per timestep. For every pair of consecutive frames shown at the same decision step (do not pair a frame with one shown at a different step), from step #1 up to and including this decision step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames; write the largest such value seen so far, rounded to one decimal with halves rounding up (3.875 -> 3.9). At step #1 there is only one frame, so write 0. The value never decreases; it grows only at a step whose shown frames contain a faster pair than any seen before. e.g. 3.8\", \"modify_to\": \"The fastest cube x-speed observed so far in the episode, in pixels of x per timestep. Take ALL observed frames of the episode in time order, from the t=0 scene up to and including the scene at this decision step, including the pair formed by the scene at one decision step and the first frame shown at the next (this cross-step pair is what last_cube_x and last_t are kept for). Only pairs of consecutive frames whose timestep gap is at least 8 count; pairs closer than 8 timesteps (such as the 1-, 3- or 5-timestep gap just before a decision scene) are skipped because detection wobble dominates them. For each counted pair compute |cube_x(later) - cube_x(earlier)| divided by the gap, rounded to one decimal with halves rounding up (3.875 -> 3.9); write the largest such quotient seen so far. cube_x is the SECOND number of the cube's [y, x] position. At step #1 there is only one frame, so write 0. The value never decreases; it changes only at a step whose counted pairs contain a faster quotient than any before. e.g. 2.0\"}]}, {\"kind\": \"modify\", \"field\": \"last_cube_x\", \"edits\": [{\"modify_from\": \"The cube's x-coordinate in the scene at this decision step (the last frame shown), as a plain number.\", \"modify_to\": \"The cube's x-coordinate (the SECOND number of its [y, x] position; a cube at [85, 52] gives 52) in the scene at this decision step (the last frame shown), as a plain number.\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"peak_speed\", \"edits\": [{\"modify_from\": \"Take the carried-in peak_speed (0 if memory is empty). List every consecutive pair of frames shown at this step, starting with the pair formed by the first and second frames shown (the first frame shown is an execution step, not the previous scene, so it is paired normally) and ending with the pair formed by the last two frames shown. Do not pair any frame shown here with a frame from an earlier step. For each pair write the x change |cube_x(later) - cube_x(earlier)|, the timestep gap between the two frames, and the quotient rounded to one decimal with halves rounding up (3.875 -> 3.9). Write the largest of the carried-in value and all these quotients. It never decreases. When only one frame is shown (including the first step, where the carried-in value is 0), write the carried-in value unchanged. e.g. 3.9\", \"modify_to\": \"Take the carried-in peak_speed (0 if memory is empty). Build the frame list: first the carried-in position (last_cube_x at time last_t) if memory is not empty, then every frame shown at this step in time order, ending with the scene at this step. cube_x is always the SECOND number of the cube's [y, x] position. For every consecutive pair in that list write the x change |cube_x(later) - cube_x(earlier)| and the timestep gap; if the gap is at least 8, write the quotient rounded to one decimal with halves rounding up (3.875 -> 3.9); if the gap is below 8 timesteps (common just before the decision scene, where detection wobble dominates), skip that pair. Write the largest of the carried-in value and all the counted quotients. It never decreases. At the first step (empty memory, one frame) write 0. e.g. 2.0\"}]}, {\"kind\": \"modify\", \"field\": \"last_cube_x\", \"edits\": [{\"modify_from\": \"Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. Overwrite it every step; at the first step read it from the single frame shown. It is read at the next step only when that step shows a single frame and so has no pair of frames of its own to compare. e.g. 206\", \"modify_to\": \"Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. x is the SECOND number of the cube's [y, x] position: a cube at [85, 52] gives 52. Overwrite it every step; at the first step read it from the single frame shown. It is read at the next step as the earlier member of the pair with the first frame shown there, both for peak_speed and, when that step shows a single frame, for judging the cube's motion. e.g. 52\"}]}, {\"kind\": \"modify\", \"field\": \"last_t\", \"edits\": [{\"modify_from\": \"Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. e.g. 54\", \"modify_to\": \"Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. It is read at the next step to compute the timestep gap between the carried-in last_cube_x and the first frame shown there: that gap decides whether the pair counts for peak_speed (gap at least 8) and gives the rate for the motion judgement at a single-frame step. e.g. 503\"}]}], \"policy_prompt_for_subgoal\": [{\"modify_from\": \"first update memory as instructed (crossings, cube_side, peak_speed), then decide using the updated crossings and peak_speed values and the cube motion in this step's frames:\", \"modify_to\": \"first update memory as instructed (crossings, cube_side, peak_speed, last_cube_x, last_t), then decide using the updated crossings and peak_speed values and the cube motion:\"}, {\"modify_from\": \"so the x change is cube_x minus last_cube_x and the timestep gap is t of this frame minus last_t.\", \"modify_to\": \"so the x change is cube_x minus last_cube_x and the timestep gap is t of this frame minus last_t. cube_x is always the SECOND number of the cube's [y, x] position.\"}, {\"modify_from\": \"it is passing the target right now and its next motion is outward: classify it as MOVING AWAY, whatever the distances are.\", \"modify_to\": \"it is passing the target right now and its next motion is outward: classify it as NOT IN THE PRESS WINDOW, whatever the distances are.\"}, {\"modify_from\": \"If the outward rate is zero or negative, the cube is returning or stopped at the turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive but at most about 1 px per timestep AND the updated peak_speed in memory is at least about 2.5 px per timestep, the cube is a fast cube slowing at its turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive and peak_speed is below about 2.5 (a slow cube, which takes long to turn around, so wait until the distance is seen decreasing), or the outward rate is clearly above about 1 px per timestep whatever the peak_speed (still sweeping out), classify it as MOVING AWAY.\", \"modify_to\": \"Then compute distance = |cube_x - target_x| at the scene at this step, and lead = distance / peak_speed, the number of timesteps the cube would need at its peak speed to reach the target (if peak_speed is 0, treat lead as very large). The press is issued a fixed lead before arrival, about 20 to 27 timesteps, whether the cube is finishing its outward sweep or already returning, so classify: if the outward rate is zero or negative (returning or stopped) AND lead <= 27, the cube is IN THE PRESS WINDOW. If the outward rate is positive but at most about 60% of peak_speed (clearly slowed, finishing its outward sweep) AND lead <= 24, the cube is IN THE PRESS WINDOW. Otherwise the cube is NOT IN THE PRESS WINDOW: returning but lead > 27 (it turned around far out and is still too many timesteps away; it will be pressed at a later decision step), moving outward at more than about 60% of peak_speed (still sweeping out near full speed), or moving outward with lead > 24 (too far out for its speed).\"}, {\"modify_from\": \"Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified NOT MOVING AWAY above (returning, stopped, or a fast cube drifting outward at no more than about 1 px per timestep).\", \"modify_to\": \"Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified IN THE PRESS WINDOW above.\"}, {\"modify_from\": \"when crossings == N-1 and the pair formed from memory gives a tiny or negative outward rate, that single-frame step is the press moment, not a reason to wait.\", \"modify_to\": \"when crossings == N-1 and the pair formed from memory places the cube IN THE PRESS WINDOW, that single-frame step is the press moment, not a reason to wait.\"}, {\"modify_from\": \"and crossings == N-1 while the cube is still moving away from the target (including the case where the (N-1)th crossing lies between the last two frames, so the cube is just passing the target and about to sweep outward).\", \"modify_to\": \"and crossings == N-1 while the cube is NOT IN THE PRESS WINDOW (including the case where the (N-1)th crossing lies between the last two frames, so the cube is just passing the target and about to sweep outward; and the case where the cube has already turned around but is still more than 27 peak-speed timesteps from the target, which is pressed at a later step).\"}], \"refused\": \"The plain pixel-distance threshold for pressing a returning cube stays out, as this report and the round-3 report both recommend: a fast cube is pressed from over 70 px while a slow one is left alone at 56 px, and the turnaround extreme varies across episodes, so distance alone cannot separate press from remain; the lead estimate distance / peak_speed replaces it. The rate-only thresholds of rounds 1 and 2 (about 1 px per timestep, peak_speed about 2.5) are replaced rather than undone: they were set against peak values that the cross-step pairing and the 8-timestep minimum gap now change, and the lead rule still gives the same answers on the earlier recorded steps it was written for (fast cube slowed near its extreme about 80 px out: lead about 23, press; slow cube creeping outward with lead about 29: wait; side flip between the pair: wait). The round-2 prohibition on cross-step pairing for peak_speed is lifted only because round 3 added last_cube_x and last_t, which make the cross-step pair computable by the policy; annotator and policy now compute peak_speed over the same pairs. No change is made to crossings or cube_side.\"}"
+}

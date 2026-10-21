@@ -1,0 +1,80 @@
+{
+ "task": "ButtonUnmask",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    9,
+    43,
+    48,
+    60,
+    80
+   ],
+   "verified_of_all": 0.75,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    15,
+    20,
+    47,
+    86,
+    89
+   ],
+   "verified_of_all": 0.9285714285714286,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    5,
+    21,
+    34,
+    38,
+    69
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    26,
+    46,
+    78,
+    85
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 0.9
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    7,
+    8,
+    38,
+    87,
+    90
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "stage": "optimized",
+ "fields": [
+  {
+   "name": "picks_done",
+   "description": "Count of container pick-ups completed so far. 0 at step #1. Increases by one exactly at a decision step whose own scene (the last frame shown at that step) shows a container held in the gripper, which is the step right after a 'pick up the container' subgoal was executed. Earlier execution frames at a step do not count: at the step right after the container has been set down, the execution frames may open with the container still held from before, but the scene at the decision step shows the gripper empty and every container on the table, so the value is copied unchanged. e.g. 0 before any lift, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been put down"
+  },
+  {
+   "name": "target_cube_positions",
+   "description": "An ordered list of the [y, x] positions, read at step #1 (t=0) while the three cubes are still loose and no container is on the table, of exactly the cubes the goal instruction names, in the order the goal names them. Cubes the goal does not name are not recorded. Written at step #1 and held unchanged for the rest of the episode, even after a container comes down over a cube or a lifted container briefly re-exposes one; a re-exposed cube never overwrites an entry. The entry at index picks_done is the cube whose container is picked next. e.g. for a goal naming the blue cube then the red cube: [[78, 157], [106, 105]]; for a goal naming only the red cube: [[73, 93]]"
+  }
+ ]
+}

@@ -1,0 +1,82 @@
+{
+ "episodes": [
+  3,
+  39,
+  57,
+  73,
+  92
+ ],
+ "user_chars": 26204,
+ "usage": {
+  "prompt_tokens": 7388,
+  "completion_tokens": 700,
+  "total_tokens": 8088,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 5093,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "selected_target",
+    "edits": [
+     {
+      "modify_from": "Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical target at the requested release, then scan every remaining demonstration observation to follow that target into the first execution scene.",
+      "modify_to": "Initialize in two stages. First build a temporary chronological list of the goal-colored cube's completed releases onto targets: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Record each release once with the physical target receiving it. Do not count initial positions, flyovers, button presses, or releases onto unmarked workspace; button presses do not reset the count. Select the requested ordinal entry using one-based counting, checking the releases through that entry to ensure that it is the requested placement rather than the preceding one. Second, follow the physical target identified at that entry through every remaining demonstration observation into the first execution scene. Keep the release list temporary, not in persistent memory."
+     },
+     {
+      "modify_from": "For each interval of coordinated movement, associate all targets jointly across the entire interval using successive displacement directions and smooth path continuation. Use intermediate observations to resolve correspondences rather than independently assigning each identity to the nearest detection at each frame.",
+      "modify_to": "For each interval of coordinated movement, associate all targets jointly across the entire interval using successive displacement directions and smooth path continuation. First identify targets supported as stationary throughout the interval, allowing small visible-center wobble, and reserve their detections for those identities. Determine stationarity from intermediate observations throughout the interval, not merely matching start and end positions. Then associate the remaining moving branches jointly, allowing curved paths; do not jump from a moving branch onto a nearby stationary target merely because that assignment is shorter. Use intermediate observations to resolve correspondences rather than independently assigning each identity to the nearest detection at each frame."
+     },
+     {
+      "modify_from": "Resolve the selected target's endpoint against the first execution scene, then discard the temporary tracks after writing its canonical center.",
+      "modify_to": "Before writing, verify separately that the release-list entry has the requested ordinal and that its physical target's tracked endpoint matches the chosen target in the first execution scene. If no coherent target movement occurs after the selected release, preserve that target's identity through occlusion-related center shifts rather than substituting an earlier placement's target. Resolve the selected target's endpoint against the first execution scene, then discard the temporary release list and tracks after writing its canonical center."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "The coordinate-specific worked illustrations are omitted in favor of the general stationary-detection reservation and curved-branch continuation procedure. No annotation-rule change, subgoal-policy prompt change, or additional persistent field is needed: the existing annotation defines the correct value and write timing, and the reported failures concern initialization of that value. The earlier joint tracking, unordered-detection, position-exchange, unchanged-copy, and unknown-handling rules remain intact."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "selected_target",
+    "edits": [
+     {
+      "modify_from": "Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical target at the requested release, then scan every remaining demonstration observation to follow that target into the first execution scene.",
+      "modify_to": "Initialize in two stages. First build a temporary chronological list of the goal-colored cube's completed releases onto targets: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Record each release once with the physical target receiving it. Do not count initial positions, flyovers, button presses, or releases onto unmarked workspace; button presses do not reset the count. Select the requested ordinal entry using one-based counting, checking the releases through that entry to ensure that it is the requested placement rather than the preceding one. Second, follow the physical target identified at that entry through every remaining demonstration observation into the first execution scene. Keep the release list temporary, not in persistent memory."
+     },
+     {
+      "modify_from": "For each interval of coordinated movement, associate all targets jointly across the entire interval using successive displacement directions and smooth path continuation. Use intermediate observations to resolve correspondences rather than independently assigning each identity to the nearest detection at each frame.",
+      "modify_to": "For each interval of coordinated movement, associate all targets jointly across the entire interval using successive displacement directions and smooth path continuation. First identify targets supported as stationary throughout the interval, allowing small visible-center wobble, and reserve their detections for those identities. Determine stationarity from intermediate observations throughout the interval, not merely matching start and end positions. Then associate the remaining moving branches jointly, allowing curved paths; do not jump from a moving branch onto a nearby stationary target merely because that assignment is shorter. Use intermediate observations to resolve correspondences rather than independently assigning each identity to the nearest detection at each frame."
+     },
+     {
+      "modify_from": "Resolve the selected target's endpoint against the first execution scene, then discard the temporary tracks after writing its canonical center.",
+      "modify_to": "Before writing, verify separately that the release-list entry has the requested ordinal and that its physical target's tracked endpoint matches the chosen target in the first execution scene. If no coherent target movement occurs after the selected release, preserve that target's identity through occlusion-related center shifts rather than substituting an earlier placement's target. Resolve the selected target's endpoint against the first execution scene, then discard the temporary release list and tracks after writing its canonical center."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "The coordinate-specific worked illustrations are omitted in favor of the general stationary-detection reservation and curved-branch continuation procedure. No annotation-rule change, subgoal-policy prompt change, or additional persistent field is needed: the existing annotation defines the correct value and write timing, and the reported failures concern initialization of that value. The earlier joint tracking, unordered-detection, position-exchange, unchanged-copy, and unknown-handling rules remain intact."
+ },
+ "not_applied": [],
+ "refused": "The coordinate-specific worked illustrations are omitted in favor of the general stationary-detection reservation and curved-branch continuation procedure. No annotation-rule change, subgoal-policy prompt change, or additional persistent field is needed: the existing annotation defines the correct value and write timing, and the reported failures concern initialization of that value. The earlier joint tracking, unordered-detection, position-exchange, unchanged-copy, and unknown-handling rules remain intact.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"selected_target\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical target at the requested release, then scan every remaining demonstration observation to follow that target into the first execution scene.\",\n          \"modify_to\": \"Initialize in two stages. First build a temporary chronological list of the goal-colored cube's completed releases onto targets: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Record each release once with the physical target receiving it. Do not count initial positions, flyovers, button presses, or releases onto unmarked workspace; button presses do not reset the count. Select the requested ordinal entry using one-based counting, checking the releases through that entry to ensure that it is the requested placement rather than the preceding one. Second, follow the physical target identified at that entry through every remaining demonstration observation into the first execution scene. Keep the release list temporary, not in persistent memory.\"\n        },\n        {\n          \"modify_from\": \"For each interval of coordinated movement, associate all targets jointly across the entire interval using successive displacement directions and smooth path continuation. Use intermediate observations to resolve correspondences rather than independently assigning each identity to the nearest detection at each frame.\",\n          \"modify_to\": \"For each interval of coordinated movement, associate all targets jointly across the entire interval using successive displacement directions and smooth path continuation. First identify targets supported as stationary throughout the interval, allowing small visible-center wobble, and reserve their detections for those identities. Determine stationarity from intermediate observations throughout the interval, not merely matching start and end positions. Then associate the remaining moving branches jointly, allowing curved paths; do not jump from a moving branch onto a nearby stationary target merely because that assignment is shorter. Use intermediate observations to resolve correspondences rather than independently assigning each identity to the nearest detection at each frame.\"\n        },\n        {\n          \"modify_from\": \"Resolve the selected target's endpoint against the first execution scene, then discard the temporary tracks after writing its canonical center.\",\n          \"modify_to\": \"Before writing, verify separately that the release-list entry has the requested ordinal and that its physical target's tracked endpoint matches the chosen target in the first execution scene. If no coherent target movement occurs after the selected release, preserve that target's identity through occlusion-related center shifts rather than substituting an earlier placement's target. Resolve the selected target's endpoint against the first execution scene, then discard the temporary release list and tracks after writing its canonical center.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [],\n  \"refused\": \"The coordinate-specific worked illustrations are omitted in favor of the general stationary-detection reservation and curved-branch continuation procedure. No annotation-rule change, subgoal-plan change, or additional persistent field is needed: the existing annotation defines the correct value and write timing, and the reported failures concern initialization of that value. The earlier joint tracking, unordered-detection, position-exchange, unchanged-copy, and unknown-handling rules remain intact.\"\n}"
+}

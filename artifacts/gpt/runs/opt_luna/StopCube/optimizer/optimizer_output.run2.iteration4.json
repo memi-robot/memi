@@ -1,0 +1,124 @@
+{
+ "episodes": [
+  66,
+  68,
+  72,
+  77,
+  83
+ ],
+ "user_chars": 35967,
+ "usage": {
+  "prompt_tokens": 9521,
+  "completion_tokens": 976,
+  "total_tokens": 10497,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 7226,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable motion-based estimate places the next target passage approximately 35 or fewer recording time units away.",
+    "modify_to": "For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable crossing-time calculation gives 0 < estimated remaining arrival time <= 35 recording time units. An estimate above 35 is outside the launch window; do not round it into the window."
+   },
+   {
+    "modify_from": "A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp.",
+    "modify_to": "Calculate the next crossing timestamp before choosing C. First check the combined timestamped evidence for repeated motion: matching positions and directions across cycles can establish a period. When recurrence is established, interpolate earlier crossings of the currently visible target x between their bracketing samples and advance those crossing times by whole periods. Use the earliest predicted crossing strictly after the current timestamp, considering both crossing directions. Prefer this observed recurrence over a conflicting rough velocity estimate. If recurrence is not yet established, fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the combined timestamped evidence, allowing for pixel noise, and solve for its earliest crossing of the currently visible target x strictly after the current timestamp. If neither method reliably establishes whether arrival is within the launch window, select B."
+   },
+   {
+    "modify_from": "If the hand is prepared, updated passage_count=N-1, and the evidence reliably places the remaining arrival time within approximately 35 recording time units, select C.",
+    "modify_to": "If the hand is prepared, updated passage_count=N-1, and the evidence reliably establishes 0 < estimated remaining arrival time <= 35 recording time units, select C."
+   },
+   {
+    "modify_from": "When the cube is moving away from the target after the preceding crossing, estimate the next crossing by including both the remaining travel to the endpoint and the return travel to the target.",
+    "modify_to": "When the cube is moving away from the target after the preceding crossing, calculate the next crossing by including both the remaining travel to the endpoint and the return travel to the target; distance to the target divided by current speed is not a valid arrival estimate in this situation."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "motion_history",
+    "edits": [
+     {
+      "modify_from": "e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]",
+      "modify_to": "Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "motion_history",
+    "edits": [
+     {
+      "modify_from": "e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]",
+      "modify_to": "Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The episode-specific timestamps, periods, and positions are not added as worked triggers. The recurrence calculation and explicit arrival-time inequality cover those cases without introducing episode-specific exceptions. No memory fields or observation-retention transitions are changed."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "motion_history",
+    "edits": [
+     {
+      "modify_from": "e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]",
+      "modify_to": "Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "motion_history",
+    "edits": [
+     {
+      "modify_from": "e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]",
+      "modify_to": "Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable motion-based estimate places the next target passage approximately 35 or fewer recording time units away.",
+    "modify_to": "For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable crossing-time calculation gives 0 < estimated remaining arrival time <= 35 recording time units. An estimate above 35 is outside the launch window; do not round it into the window."
+   },
+   {
+    "modify_from": "A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp.",
+    "modify_to": "Calculate the next crossing timestamp before choosing C. First check the combined timestamped evidence for repeated motion: matching positions and directions across cycles can establish a period. When recurrence is established, interpolate earlier crossings of the currently visible target x between their bracketing samples and advance those crossing times by whole periods. Use the earliest predicted crossing strictly after the current timestamp, considering both crossing directions. Prefer this observed recurrence over a conflicting rough velocity estimate. If recurrence is not yet established, fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the combined timestamped evidence, allowing for pixel noise, and solve for its earliest crossing of the currently visible target x strictly after the current timestamp. If neither method reliably establishes whether arrival is within the launch window, select B."
+   },
+   {
+    "modify_from": "If the hand is prepared, updated passage_count=N-1, and the evidence reliably places the remaining arrival time within approximately 35 recording time units, select C.",
+    "modify_to": "If the hand is prepared, updated passage_count=N-1, and the evidence reliably establishes 0 < estimated remaining arrival time <= 35 recording time units, select C."
+   },
+   {
+    "modify_from": "When the cube is moving away from the target after the preceding crossing, estimate the next crossing by including both the remaining travel to the endpoint and the return travel to the target.",
+    "modify_to": "When the cube is moving away from the target after the preceding crossing, calculate the next crossing by including both the remaining travel to the endpoint and the return travel to the target; distance to the target divided by current speed is not a valid arrival estimate in this situation."
+   }
+  ],
+  "refused": "The episode-specific timestamps, periods, and positions are not added as worked triggers. The recurrence calculation and explicit arrival-time inequality cover those cases without introducing episode-specific exceptions. No memory fields or observation-retention transitions are changed."
+ },
+ "not_applied": [],
+ "refused": "The episode-specific timestamps, periods, and positions are not added as worked triggers. The recurrence calculation and explicit arrival-time inequality cover those cases without introducing episode-specific exceptions. No memory fields or observation-retention transitions are changed.",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"motion_history\",\n      \"edits\": [\n        {\n          \"modify_from\": \"e.g. [{\\\"time\\\":0,\\\"cube_x\\\":47},{\\\"time\\\":16,\\\"cube_x\\\":80},{\\\"time\\\":32,\\\"cube_x\\\":147}]\",\n          \"modify_to\": \"Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]\"\n        }\n      ]\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"motion_history\",\n      \"edits\": [\n        {\n          \"modify_from\": \"e.g. [{\\\"time\\\":0,\\\"cube_x\\\":47},{\\\"time\\\":16,\\\"cube_x\\\":80},{\\\"time\\\":32,\\\"cube_x\\\":147}]\",\n          \"modify_to\": \"Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable motion-based estimate places the next target passage approximately 35 or fewer recording time units away.\",\n      \"modify_to\": \"For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable crossing-time calculation gives 0 < estimated remaining arrival time <= 35 recording time units. An estimate above 35 is outside the launch window; do not round it into the window.\"\n    },\n    {\n      \"modify_from\": \"A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp.\",\n      \"modify_to\": \"Calculate the next crossing timestamp before choosing C. First check the combined timestamped evidence for repeated motion: matching positions and directions across cycles can establish a period. When recurrence is established, interpolate earlier crossings of the currently visible target x between their bracketing samples and advance those crossing times by whole periods. Use the earliest predicted crossing strictly after the current timestamp, considering both crossing directions. Prefer this observed recurrence over a conflicting rough velocity estimate. If recurrence is not yet established, fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the combined timestamped evidence, allowing for pixel noise, and solve for its earliest crossing of the currently visible target x strictly after the current timestamp. If neither method reliably establishes whether arrival is within the launch window, select B.\"\n    },\n    {\n      \"modify_from\": \"If the hand is prepared, updated passage_count=N-1, and the evidence reliably places the remaining arrival time within approximately 35 recording time units, select C.\",\n      \"modify_to\": \"If the hand is prepared, updated passage_count=N-1, and the evidence reliably establishes 0 < estimated remaining arrival time <= 35 recording time units, select C.\"\n    },\n    {\n      \"modify_from\": \"When the cube is moving away from the target after the preceding crossing, estimate the next crossing by including both the remaining travel to the endpoint and the return travel to the target.\",\n      \"modify_to\": \"When the cube is moving away from the target after the preceding crossing, calculate the next crossing by including both the remaining travel to the endpoint and the return travel to the target; distance to the target divided by current speed is not a valid arrival estimate in this situation.\"\n    }\n  ],\n  \"refused\": \"The episode-specific timestamps, periods, and positions are not added as worked triggers. The recurrence calculation and explicit arrival-time inequality cover those cases without introducing episode-specific exceptions. No memory fields or observation-retention transitions are changed.\"\n}"
+}

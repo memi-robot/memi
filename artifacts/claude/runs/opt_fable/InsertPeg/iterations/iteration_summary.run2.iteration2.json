@@ -1,0 +1,75 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "grasp_point",
+  "insert_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  13,
+  17,
+  66,
+  96
+ ],
+ "scored": 10,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "grasp_point": 0,
+  "insert_side": 5
+ },
+ "field_errors": {
+  "grasp_point": {
+   "in": 0,
+   "sole": 0
+  },
+  "insert_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "grasp_point": "read at no step of 10"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "refused\n  No step was reported as failed: at every first decision step the policy chose A pointing at the demonstrated peg end, and at every second decision step, with a peg end shown as held in the gripper, it chose B or C according to insert_side. The only item to act on is that grasp_point was carried and never read. I keep it. It is never read in these episodes because every pick succeeded on the first attempt, so the policy went straight from the first decision step (where it reads the demonstration directly to pick the point) to a step with a peg already held (where only insert_side matters). The field exists for the case the subgoal instruction's rule 3 covers: a pick that fails or a peg dropped, leaving nothing held and the demonstration no longer shown. At that moment the goal instruction demands the same end of the same peg, and nothing in the scene recovers which end that was, so the fact satisfies NECESSITY even though no step in this minibatch exercised it. Dropping it would leave a retry with no way to choose the correct end. No change to the annotator prompt, the memory instruction, or the subgoal instruction is needed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "No step was reported as failed: at every first decision step the policy chose A pointing at the demonstrated peg end, and at every second decision step, with a peg end shown as held in the gripper, it chose B or C according to insert_side. The only item to act on is that grasp_point was carried and never read. I keep it. It is never read in these episodes because every pick succeeded on the first attempt, so the policy went straight from the first decision step (where it reads the demonstration directly to pick the point) to a step with a peg already held (where only insert_side matters). The field exists for the case the subgoal instruction's rule 3 covers: a pick that fails or a peg dropped, leaving nothing held and the demonstration no longer shown. At that moment the goal instruction demands the same end of the same peg, and nothing in the scene recovers which end that was, so the fact satisfies NECESSITY even though no step in this minibatch exercised it. Dropping it would leave a retry with no way to choose the correct end. No change to the annotator prompt, the memory instruction, or the subgoal instruction is needed."
+ },
+ "critiques": []
+}

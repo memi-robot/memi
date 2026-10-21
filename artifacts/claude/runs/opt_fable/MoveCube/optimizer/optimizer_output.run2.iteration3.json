@@ -1,0 +1,135 @@
+{
+ "episodes": [
+  15,
+  38,
+  43,
+  72,
+  73
+ ],
+ "user_chars": 29058,
+ "usage": {
+  "prompt_tokens": 12703,
+  "completion_tokens": 2677,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 12699
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 864
+  }
+ },
+ "reasoning": "I need to fix the method classification to rely on transport frames and max raised height rather than a closing transient, updating that field on both sides and adding transport-frame guidance at the first step. I'm also weighing whether to reverse the scene-first ordering from earlier edits toward reading method first, since using scene to locate position within the chain still seems compatible with that approach.\n\nI'll decline the restructuring since it isn't needed to fix the actual failure, which was isolated to the first step — I just need to keep the existing reasoning compatible. I'm also refining the sentence about marking being unreliable so it clearly applies to execution steps rather than the demonstration step, then preparing to quote and replace the full method description text exactly on both annotation and schema sides.\n\nI'm writing out the precise criteria for pick, hook, and push based on gripper height, finger-closing percentage, and whether the cube or stick is held while raised, making sure the method value stays constant across all episode steps. Rather than a full text replace, I'll do targeted edits — adding a clause about judging from transport frames and peak height rather than a single finger reading, then adjusting the hook and push clauses separately.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "first fill `method` from the demonstration steps, then choose by it.",
+    "modify_to": "first fill `method` from the demonstration steps, judging it from the transport frames (the cube moving toward the target) and the greatest height the gripper reaches while something is marked as held, never from one finger reading during the closing motion (a brief 19-30% that drops to 0% is closing on nothing, so a demonstration that brushed the stick while pushing is still `push`), then choose by it: `push` -> C, `pick` -> D, `hook` -> A."
+   },
+   {
+    "modify_from": "Judge by finger opening and the rise, not by whether an object is marked as held, since the marking can be absent or unreliable.",
+    "modify_to": "In these execution steps judge by finger opening and the rise rather than by whether an object is marked as held, since the marking at a decision step can be absent; this applies to the robot's own execution steps only, not to the demonstration, where the held marking is one of the cues that separates `hook` and `pick` from `push`."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "method",
+    "edits": [
+     {
+      "modify_from": "At the first decision step, read it from the demonstration steps:",
+      "modify_to": "At the first decision step, read it from the demonstration steps. Do not decide from the first frame in which the fingers close; look at the transport frames (those in which the cube is sliding or carried toward the target) and at the greatest height the gripper reaches while anything is marked as held. A one-frame finger reading of roughly 19-30% that drops to about 0% at the next frame is just the fingers closing on nothing, not a grasp."
+     },
+     {
+      "modify_from": "`hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target;",
+      "modify_to": "`hook` if the fingers settle at about 20-25% and stay there through the transport frames, the stick (peg) is explicitly marked as held in the gripper, and the gripper rises above about 0.08 carrying the stick before dragging it against the cube toward the target;"
+     },
+     {
+      "modify_from": "`push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held.",
+      "modify_to": "`push` if in the transport frames the fingers read about 0% and the gripper height stays below about 0.04 the whole time, and nothing is ever marked as held while the gripper is raised; this holds even if the gripper came down beside the stick, the stick's head is listed next to the gripper, or the stick sits somewhere else at the end because the gripper pushed it aside."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "method",
+    "edits": [
+     {
+      "modify_from": "fixed at the first decision step from the demonstration steps and never changed afterwards.",
+      "modify_to": "fixed at the first decision step from the demonstration steps and never changed afterwards. Decide it from the TRANSPORT frames of the demonstration (the frames in which the cube is sliding or carried toward the target) and from the greatest height the gripper reaches while anything is marked as held, never from a single finger reading during the closing motion: a reading of roughly 19-30% that drops to about 0% at the next frame is a closing transient, not a grasp."
+     },
+     {
+      "modify_from": "Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target.",
+      "modify_to": "Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers settled at about 20-25% and staying there through the transport frames, the gripper rising well above the table (height above about 0.08) with the stick before coming down to drag the stick against the cube toward the target."
+     },
+     {
+      "modify_from": "Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised.",
+      "modify_to": "Write `push` when, in the transport frames, the fingers read about 0% (closed on nothing) and the gripper height stays at table level (below about 0.04) throughout, and neither cube nor stick is ever marked as held while the gripper is raised. This is `push` even if the gripper descended beside the stick, the fingers passed through roughly 19-30% for a frame while closing before reaching 0%, the stick's head was listed near the gripper, or the stick ended up shoved to a new spot as the gripper swept past it."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The restructuring of the later-step rules into method-first chains (hook: B else A; pick: E else D; push: C) is not committed. The only failure was at the first decision step, and the current rules already yield exactly those outcomes: E and B are chosen from the step when the matching grasp and rise are shown, and otherwise `method` decides between D, A and C, which is the retry case kept in round 2. Rewriting them would undo the round 1 and 2 edits without settling anything new. Dropping the sentence about unreliable held markings is also not committed outright: it was added in round 1 for the robot's own execution steps, so it is kept but scoped to those steps and explicitly excluded from the reading of the demonstration, where the marking does help separate hook and pick from push."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "method",
+    "edits": [
+     {
+      "modify_from": "fixed at the first decision step from the demonstration steps and never changed afterwards.",
+      "modify_to": "fixed at the first decision step from the demonstration steps and never changed afterwards. Decide it from the TRANSPORT frames of the demonstration (the frames in which the cube is sliding or carried toward the target) and from the greatest height the gripper reaches while anything is marked as held, never from a single finger reading during the closing motion: a reading of roughly 19-30% that drops to about 0% at the next frame is a closing transient, not a grasp."
+     },
+     {
+      "modify_from": "Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target.",
+      "modify_to": "Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers settled at about 20-25% and staying there through the transport frames, the gripper rising well above the table (height above about 0.08) with the stick before coming down to drag the stick against the cube toward the target."
+     },
+     {
+      "modify_from": "Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised.",
+      "modify_to": "Write `push` when, in the transport frames, the fingers read about 0% (closed on nothing) and the gripper height stays at table level (below about 0.04) throughout, and neither cube nor stick is ever marked as held while the gripper is raised. This is `push` even if the gripper descended beside the stick, the fingers passed through roughly 19-30% for a frame while closing before reaching 0%, the stick's head was listed near the gripper, or the stick ended up shoved to a new spot as the gripper swept past it."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "method",
+    "edits": [
+     {
+      "modify_from": "At the first decision step, read it from the demonstration steps:",
+      "modify_to": "At the first decision step, read it from the demonstration steps. Do not decide from the first frame in which the fingers close; look at the transport frames (those in which the cube is sliding or carried toward the target) and at the greatest height the gripper reaches while anything is marked as held. A one-frame finger reading of roughly 19-30% that drops to about 0% at the next frame is just the fingers closing on nothing, not a grasp."
+     },
+     {
+      "modify_from": "`hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target;",
+      "modify_to": "`hook` if the fingers settle at about 20-25% and stay there through the transport frames, the stick (peg) is explicitly marked as held in the gripper, and the gripper rises above about 0.08 carrying the stick before dragging it against the cube toward the target;"
+     },
+     {
+      "modify_from": "`push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held.",
+      "modify_to": "`push` if in the transport frames the fingers read about 0% and the gripper height stays below about 0.04 the whole time, and nothing is ever marked as held while the gripper is raised; this holds even if the gripper came down beside the stick, the stick's head is listed next to the gripper, or the stick sits somewhere else at the end because the gripper pushed it aside."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "first fill `method` from the demonstration steps, then choose by it.",
+    "modify_to": "first fill `method` from the demonstration steps, judging it from the transport frames (the cube moving toward the target) and the greatest height the gripper reaches while something is marked as held, never from one finger reading during the closing motion (a brief 19-30% that drops to 0% is closing on nothing, so a demonstration that brushed the stick while pushing is still `push`), then choose by it: `push` -> C, `pick` -> D, `hook` -> A."
+   },
+   {
+    "modify_from": "Judge by finger opening and the rise, not by whether an object is marked as held, since the marking can be absent or unreliable.",
+    "modify_to": "In these execution steps judge by finger opening and the rise rather than by whether an object is marked as held, since the marking at a decision step can be absent; this applies to the robot's own execution steps only, not to the demonstration, where the held marking is one of the cues that separates `hook` and `pick` from `push`."
+   }
+  ],
+  "refused": "The restructuring of the later-step rules into method-first chains (hook: B else A; pick: E else D; push: C) is not committed. The only failure was at the first decision step, and the current rules already yield exactly those outcomes: E and B are chosen from the step when the matching grasp and rise are shown, and otherwise `method` decides between D, A and C, which is the retry case kept in round 2. Rewriting them would undo the round 1 and 2 edits without settling anything new. Dropping the sentence about unreliable held markings is also not committed outright: it was added in round 1 for the robot's own execution steps, so it is kept but scoped to those steps and explicitly excluded from the reading of the demonstration, where the marking does help separate hook and pick from push."
+ },
+ "not_applied": [],
+ "refused": "The restructuring of the later-step rules into method-first chains (hook: B else A; pick: E else D; push: C) is not committed. The only failure was at the first decision step, and the current rules already yield exactly those outcomes: E and B are chosen from the step when the matching grasp and rise are shown, and otherwise `method` decides between D, A and C, which is the retry case kept in round 2. Rewriting them would undo the round 1 and 2 edits without settling anything new. Dropping the sentence about unreliable held markings is also not committed outright: it was added in round 1 for the robot's own execution steps, so it is kept but scoped to those steps and explicitly excluded from the reading of the demonstration, where the marking does help separate hook and pick from push.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"method\", \"edits\": [{\"modify_from\": \"fixed at the first decision step from the demonstration steps and never changed afterwards.\", \"modify_to\": \"fixed at the first decision step from the demonstration steps and never changed afterwards. Decide it from the TRANSPORT frames of the demonstration (the frames in which the cube is sliding or carried toward the target) and from the greatest height the gripper reaches while anything is marked as held, never from a single finger reading during the closing motion: a reading of roughly 19-30% that drops to about 0% at the next frame is a closing transient, not a grasp.\"}, {\"modify_from\": \"Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target.\", \"modify_to\": \"Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers settled at about 20-25% and staying there through the transport frames, the gripper rising well above the table (height above about 0.08) with the stick before coming down to drag the stick against the cube toward the target.\"}, {\"modify_from\": \"Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised.\", \"modify_to\": \"Write `push` when, in the transport frames, the fingers read about 0% (closed on nothing) and the gripper height stays at table level (below about 0.04) throughout, and neither cube nor stick is ever marked as held while the gripper is raised. This is `push` even if the gripper descended beside the stick, the fingers passed through roughly 19-30% for a frame while closing before reaching 0%, the stick's head was listed near the gripper, or the stick ended up shoved to a new spot as the gripper swept past it.\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"method\", \"edits\": [{\"modify_from\": \"At the first decision step, read it from the demonstration steps:\", \"modify_to\": \"At the first decision step, read it from the demonstration steps. Do not decide from the first frame in which the fingers close; look at the transport frames (those in which the cube is sliding or carried toward the target) and at the greatest height the gripper reaches while anything is marked as held. A one-frame finger reading of roughly 19-30% that drops to about 0% at the next frame is just the fingers closing on nothing, not a grasp.\"}, {\"modify_from\": \"`hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target;\", \"modify_to\": \"`hook` if the fingers settle at about 20-25% and stay there through the transport frames, the stick (peg) is explicitly marked as held in the gripper, and the gripper rises above about 0.08 carrying the stick before dragging it against the cube toward the target;\"}, {\"modify_from\": \"`push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held.\", \"modify_to\": \"`push` if in the transport frames the fingers read about 0% and the gripper height stays below about 0.04 the whole time, and nothing is ever marked as held while the gripper is raised; this holds even if the gripper came down beside the stick, the stick's head is listed next to the gripper, or the stick sits somewhere else at the end because the gripper pushed it aside.\"}]}], \"policy_prompt_for_subgoal\": [{\"modify_from\": \"first fill `method` from the demonstration steps, then choose by it.\", \"modify_to\": \"first fill `method` from the demonstration steps, judging it from the transport frames (the cube moving toward the target) and the greatest height the gripper reaches while something is marked as held, never from one finger reading during the closing motion (a brief 19-30% that drops to 0% is closing on nothing, so a demonstration that brushed the stick while pushing is still `push`), then choose by it: `push` -> C, `pick` -> D, `hook` -> A.\"}, {\"modify_from\": \"Judge by finger opening and the rise, not by whether an object is marked as held, since the marking can be absent or unreliable.\", \"modify_to\": \"In these execution steps judge by finger opening and the rise rather than by whether an object is marked as held, since the marking at a decision step can be absent; this applies to the robot's own execution steps only, not to the demonstration, where the held marking is one of the cues that separates `hook` and `pick` from `push`.\"}], \"refused\": \"The restructuring of the later-step rules into method-first chains (hook: B else A; pick: E else D; push: C) is not committed. The only failure was at the first decision step, and the current rules already yield exactly those outcomes: E and B are chosen from the step when the matching grasp and rise are shown, and otherwise `method` decides between D, A and C, which is the retry case kept in round 2. Rewriting them would undo the round 1 and 2 edits without settling anything new. Dropping the sentence about unreliable held markings is also not committed outright: it was added in round 1 for the robot's own execution steps, so it is kept but scoped to those steps and explicitly excluded from the reading of the demonstration, where the marking does help separate hook and pick from push.\"}"
+}

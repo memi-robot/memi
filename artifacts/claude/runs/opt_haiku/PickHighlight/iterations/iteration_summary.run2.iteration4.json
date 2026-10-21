@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "button_pressed",
+  "pending_cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  4,
+  11,
+  16,
+  37,
+  97
+ ],
+ "scored": 14,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9285714285714286,
+ "memory_verified": 1.0,
+ "reads": {
+  "button_pressed": 10,
+  "pending_cubes": 9
+ },
+ "field_errors": {
+  "button_pressed": {
+   "in": 0,
+   "sole": 0
+  },
+  "pending_cubes": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.07142857142857142,
+ "verified_of_all": 0.9285714285714286,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 14,
+ "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Keep the field as the ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up, with the first entry being the next cube to pick; but the ORDER written at the button-press step was wrong. The situation: after the press, three areas were highlighted, under two blue cubes and one green cube; the listing named the blue cubes first, so the list was written blue, blue, green, yet the robot's recorded first pick was the green cube, which was the highlighted cube with the LARGEST x (the robot's leftmost one), and the second pick was the blue cube with the next-largest x, the last pick the one with the smallest x. The ordering by place in the object listing therefore contradicts the recorded pick order (SUFFICIENCY breaks at the first pick step because the first entry is not the cube picked). Replace the ordering clause: at the step whose execution steps show the highlighted areas, write one entry per highlighted area, the [y, x] of the cube nearest that area, and sort the entries by x DESCENDING (largest x first, i.e. the robot's leftmost cube first, the robot's rightmost cube last). Do not order by the object listing, by colour, by the order the highlighted areas are listed, by distance to the gripper or button, or by y. Everything else stays: `[]` at the first step, drop the one entry nearest the cube shown picked up at each pick-up step, unchanged on a place step, entries kept while hidden. e.g. highlighted cubes at [57, 141], [70, 166], [92, 85] -> [[70, 166], [57, 141], [92, 85]].\n\nfield pending_cubes, POLICY PROMPT\n  Same field, same events, but the order of the entries written at the step whose execution steps list `highlighted area` positions changes. In the situation where three cubes were highlighted (two blue, one green, blue listed before green), the instruction told the policy to order by the object listing, so it wrote the green cube last, yet the recorded next pick was that green cube, the highlighted cube with the largest x; so the first entry did not predict the pick (SUFFICIENCY), and the written value disagrees with the annotation (PREDICTABILITY). New ordering: write one entry per highlighted area (the [y, x] of the cube nearest that area) and sort them by x descending: the largest x (robot's leftmost cube) first, the smallest x (robot's rightmost) last; ties in x broken by the smaller y first. Do NOT order by colour, by the object listing, by the order the highlighted areas are listed, by distance to the gripper, or by y. Keep the rest unchanged: `[]` at the first decision step; on a pick-up step remove the one entry nearest the position where the gripper closed on the cube now marked held; copy unchanged on a placing step; never drop an entry because its cube is hidden. Example: highlighted areas at [61, 141], [73, 165], [97, 86] with cubes at [57, 141] (blue), [70, 166] (green), [92, 85] (blue) -> write [[70, 166], [57, 141], [92, 85]]. Example: carried [[70, 166], [57, 141], [92, 85]], execution steps show the gripper closing at [70, 167] and the green cube held -> write [[57, 141], [92, 85]].\n\nthe policy prompt for subgoal\n  Rule 3 sent the policy wrong because of its parenthetical description of the list order and its ban on choosing by x. In the situation after the button press with three highlighted cubes (two blue, one green), the policy followed the listing-order list and pointed at the first-listed blue cube, while the recorded pick was the green cube, which is the highlighted cube with the largest x (the robot's leftmost); the next picks followed in descending x. Rewrite rule 3 as: when the gripper is empty and button_pressed is yes and pending_cubes (as written at this step) is non-empty, choose B pointing at the FIRST entry of pending_cubes, where that list is ordered by x descending, so the next cube to pick is always the remaining highlighted cube with the largest x (robot's leftmost); point at the stored [y, x] or the cube visible within a few pixels of it; if no cube is visible there it is hidden by the arm, still choose B at the stored point. Delete the clause 'never choose by distance from the gripper, by x or by y' and the clause describing the order as the cubes' position in the observation listing; replace with: never choose by colour, by the object listing order, by the order highlighted areas were listed, by distance from the gripper, or by y. Rules 1, 2, 4 and 5 stay as they are, and the first step remains A.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 3 sent the policy wrong because of its parenthetical description of the list order and its ban on choosing by x. In the situation after the button press with three highlighted cubes (two blue, one green), the policy followed the listing-order list and pointed at the first-listed blue cube, while the recorded pick was the green cube, which is the highlighted cube with the largest x (the robot's leftmost); the next picks followed in descending x. Rewrite rule 3 as: when the gripper is empty and button_pressed is yes and pending_cubes (as written at this step) is non-empty, choose B pointing at the FIRST entry of pending_cubes, where that list is ordered by x descending, so the next cube to pick is always the remaining highlighted cube with the largest x (robot's leftmost); point at the stored [y, x] or the cube visible within a few pixels of it; if no cube is visible there it is hidden by the arm, still choose B at the stored point. Delete the clause 'never choose by distance from the gripper, by x or by y' and the clause describing the order as the cubes' position in the observation listing; replace with: never choose by colour, by the object listing order, by the order highlighted areas were listed, by distance from the gripper, or by y. Rules 1, 2, 4 and 5 stay as they are, and the first step remains A.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pending_cubes",
+    "description": "Same field, same events, but the order of the entries written at the step whose execution steps list `highlighted area` positions changes. In the situation where three cubes were highlighted (two blue, one green, blue listed before green), the instruction told the policy to order by the object listing, so it wrote the green cube last, yet the recorded next pick was that green cube, the highlighted cube with the largest x; so the first entry did not predict the pick (SUFFICIENCY), and the written value disagrees with the annotation (PREDICTABILITY). New ordering: write one entry per highlighted area (the [y, x] of the cube nearest that area) and sort them by x descending: the largest x (robot's leftmost cube) first, the smallest x (robot's rightmost) last; ties in x broken by the smaller y first. Do NOT order by colour, by the object listing, by the order the highlighted areas are listed, by distance to the gripper, or by y. Keep the rest unchanged: `[]` at the first decision step; on a pick-up step remove the one entry nearest the position where the gripper closed on the cube now marked held; copy unchanged on a placing step; never drop an entry because its cube is hidden. Example: highlighted areas at [61, 141], [73, 165], [97, 86] with cubes at [57, 141] (blue), [70, 166] (green), [92, 85] (blue) -> write [[70, 166], [57, 141], [92, 85]]. Example: carried [[70, 166], [57, 141], [92, 85]], execution steps show the gripper closing at [70, 167] and the green cube held -> write [[57, 141], [92, 85]]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pending_cubes",
+    "description": "Keep the field as the ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up, with the first entry being the next cube to pick; but the ORDER written at the button-press step was wrong. The situation: after the press, three areas were highlighted, under two blue cubes and one green cube; the listing named the blue cubes first, so the list was written blue, blue, green, yet the robot's recorded first pick was the green cube, which was the highlighted cube with the LARGEST x (the robot's leftmost one), and the second pick was the blue cube with the next-largest x, the last pick the one with the smallest x. The ordering by place in the object listing therefore contradicts the recorded pick order (SUFFICIENCY breaks at the first pick step because the first entry is not the cube picked). Replace the ordering clause: at the step whose execution steps show the highlighted areas, write one entry per highlighted area, the [y, x] of the cube nearest that area, and sort the entries by x DESCENDING (largest x first, i.e. the robot's leftmost cube first, the robot's rightmost cube last). Do not order by the object listing, by colour, by the order the highlighted areas are listed, by distance to the gripper or button, or by y. Everything else stays: `[]` at the first step, drop the one entry nearest the cube shown picked up at each pick-up step, unchanged on a place step, entries kept while hidden. e.g. highlighted cubes at [57, 141], [70, 166], [92, 85] -> [[70, 166], [57, 141], [92, 85]]."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    11,
+    "exec",
+    125
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [57, 141]",
+   "recorded": "B: pick up the highlighted cube at [71, 167]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The ordering rule (by place in the object listing: blue before green) yields [[57, 141], [92, 85], [70, 166]], yet the recorded first pick is the green cube at [70, 166], the LAST entry. Either the list must be ordered so that the cube actually picked first ([70, 166], the highlighted cube with the largest x / robot's leftmost, the green one) is the FIRST entry, or the instruction must say the list order is not the pick order. As written the memory order and the pick order contradict each other.",
+   "missing_from_policy_prompt_for_subgoal": "It says to point at the FIRST entry of pending_cubes, but the recorded answer points at [71, 167], the green cube which is the third entry of the very list it says to write. It did not tell me what actually selects the next cube here: with highlighted cubes at [57, 141] (blue), [92, 85] (blue) and [70, 166] (green), the recorded choice is the green cube / the one with the largest x (robot's leftmost), not the first listed blue one. The selection criterion for the next pick (e.g. largest x first, or green before blue) must be stated and must agree with the order written into pending_cubes.",
+   "missing": ""
+  }
+ ]
+}

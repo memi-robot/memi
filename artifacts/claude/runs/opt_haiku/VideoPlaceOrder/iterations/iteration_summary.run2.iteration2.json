@@ -1,0 +1,120 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "goal_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  27,
+  63,
+  84,
+  85,
+  93
+ ],
+ "scored": 10,
+ "failed": 3,
+ "subgoal_wrong": 2,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.8,
+ "memory_verified": 0.9,
+ "reads": {
+  "goal_target": 5
+ },
+ "field_errors": {
+  "goal_target": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3,
+ "verified_of_all": 0.7,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 10,
+ "critique": "field goal_target, ANNOTATOR PROMPT\n  The field keeps its meaning (the [y, x] of the target on which the goal-named cube is to be dropped, written at the first decision step from the demonstration and copied unchanged afterwards), but the filling went wrong once and must be stated so it cannot: in a demonstration with four placements on four targets followed by a button press and the final centre set-down, the annotator wrote the target of the second-most-recent placement where the rule said the second-earliest, so the policy, which followed the rule as written, carried a different value for the same step (PREDICTABILITY broken by the annotation, not by the policy). Rewrite the counting as an explicit procedure: (1) walk the demonstration frames in ascending t; (2) a placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (anything between ~45% and ~95%, since the low frame may already read 67%, 80% or 93%) to ~100% open, in the frames right after the goal-named cube was carried (the cube line read 'held in the gripper' while the gripper was raised); (3) its target is the listed target closest to where the cube then rests, with the coordinates copied from the last demonstration frame, where all four targets are listed; (4) discard the final placement of the demonstration, the one that leaves the cube near [82, 127] with no target within ~15 pixels; discard button presses (fingers 0%, no cube carried); ignore a carried cube momentarily losing its 'held' label while the gripper stays raised; (5) number the remaining placements 1, 2, 3, 4 in the order they occur, earliest = 1, and write the target of the placement whose number the goal's ordinal names. The ordinal never counts backwards from the most recent placement. Example: placements in order onto targets near [99, 90], [100, 163], [141, 133], [79, 90], then the centre set-down; goal 'second' gives [98, 166] (the last-frame listing of the second one), goal 'first' gives [99, 90]. e.g. [139, 124]\n\nfield goal_target, POLICY PROMPT\n  Same procedure, written for the first decision step where the demonstration frames are shown and the carried memory is empty: list, in ascending t, every frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open right after frames in which the goal-named cube was carried ('held in the gripper' with the gripper raised). Each such frame is one placement; its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame (all four targets listed). Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. Number what is left 1, 2, 3, 4 earliest first, and write the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, ...). Count forward from the earliest placement only, never backward from the most recent one. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]. At every later step copy the carried value unchanged. e.g. [139, 124]\n\nthe policy prompt for subgoal\n  No rule sent the policy wrong: at every failed step with the cube held the policy applied rule 2 correctly to the goal_target it carried, and at the first decision step it chose A on the cube as rule 1 says. One small clarification to rule 2: when choosing B, point at the exact coordinates of the listed target nearest goal_target as they appear in the scene at this decision step; a point one or two pixels off that listing is still correct, since targets wobble, and the recorded points are sometimes one pixel from the listing. No rule is added or removed.\n\nrefused\n  Two reports asked for the counting to be changed so that, in one demonstration with two placements and a button press between them, 'first' resolves to the later placement, and in another with four placements 'second' resolves to the earliest one. These two demands contradict each other (one wants the most recent placement, the other the earliest) and both contradict the three other episodes in the minibatch, where 'first' is confirmed as the earliest placement in demonstrations with two or three placements and a button press at various positions. No single counting rule fits all five recorded drops, so the earliest-first rule, which fits three of five, is kept and only made unambiguous. The report that 'first' should be read backwards from the most recent placement is likewise dropped: it was offered because the annotation at that step had itself been filled backwards, against the rule, and that annotation error is what the rule rewrite corrects. The suggestion that a hidden or covered target identifies the placement is not needed: the target coordinates are to be read from the last demonstration frame, where all four are listed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No rule sent the policy wrong: at every failed step with the cube held the policy applied rule 2 correctly to the goal_target it carried, and at the first decision step it chose A on the cube as rule 1 says. One small clarification to rule 2: when choosing B, point at the exact coordinates of the listed target nearest goal_target as they appear in the scene at this decision step; a point one or two pixels off that listing is still correct, since targets wobble, and the recorded points are sometimes one pixel from the listing. No rule is added or removed.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "goal_target",
+    "description": "Same procedure, written for the first decision step where the demonstration frames are shown and the carried memory is empty: list, in ascending t, every frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open right after frames in which the goal-named cube was carried ('held in the gripper' with the gripper raised). Each such frame is one placement; its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame (all four targets listed). Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. Number what is left 1, 2, 3, 4 earliest first, and write the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, ...). Count forward from the earliest placement only, never backward from the most recent one. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]. At every later step copy the carried value unchanged. e.g. [139, 124]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "goal_target",
+    "description": "The field keeps its meaning (the [y, x] of the target on which the goal-named cube is to be dropped, written at the first decision step from the demonstration and copied unchanged afterwards), but the filling went wrong once and must be stated so it cannot: in a demonstration with four placements on four targets followed by a button press and the final centre set-down, the annotator wrote the target of the second-most-recent placement where the rule said the second-earliest, so the policy, which followed the rule as written, carried a different value for the same step (PREDICTABILITY broken by the annotation, not by the policy). Rewrite the counting as an explicit procedure: (1) walk the demonstration frames in ascending t; (2) a placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (anything between ~45% and ~95%, since the low frame may already read 67%, 80% or 93%) to ~100% open, in the frames right after the goal-named cube was carried (the cube line read 'held in the gripper' while the gripper was raised); (3) its target is the listed target closest to where the cube then rests, with the coordinates copied from the last demonstration frame, where all four targets are listed; (4) discard the final placement of the demonstration, the one that leaves the cube near [82, 127] with no target within ~15 pixels; discard button presses (fingers 0%, no cube carried); ignore a carried cube momentarily losing its 'held' label while the gripper stays raised; (5) number the remaining placements 1, 2, 3, 4 in the order they occur, earliest = 1, and write the target of the placement whose number the goal's ordinal names. The ordinal never counts backwards from the most recent placement. Example: placements in order onto targets near [99, 90], [100, 163], [141, 133], [79, 90], then the centre set-down; goal 'second' gives [98, 166] (the last-frame listing of the second one), goal 'first' gives [99, 90]. e.g. [139, 124]"
+   }
+  ],
+  "refused": "Two reports asked for the counting to be changed so that, in one demonstration with two placements and a button press between them, 'first' resolves to the later placement, and in another with four placements 'second' resolves to the earliest one. These two demands contradict each other (one wants the most recent placement, the other the earliest) and both contradict the three other episodes in the minibatch, where 'first' is confirmed as the earliest placement in demonstrations with two or three placements and a button press at various positions. No single counting rule fits all five recorded drops, so the earliest-first rule, which fits three of five, is kept and only made unambiguous. The report that 'first' should be read backwards from the most recent placement is likewise dropped: it was offered because the annotation at that step had itself been filled backwards, against the rule, and that annotation error is what the rule rewrite corrects. The suggestion that a hidden or covered target identifies the placement is not needed: the target coordinates are to be read from the last demonstration frame, where all four are listed."
+ },
+ "critiques": [
+  {
+   "step": [
+    27,
+    "exec",
+    845
+   ],
+   "memory_in": "goal_target=[104, 164]",
+   "answered": "B: drop onto at [112, 166]",
+   "recorded": "B: drop onto at [95, 90]",
+   "missing_from_memory": "goal_target carried in was [104, 164], but the recorded drop goes to [95, 90], i.e. the target listed at [95, 89]; the memory should have carried goal_target=[95, 89] (the first target the blue cube was placed on in the demonstration) rather than [104, 164].",
+   "missing_from_policy_prompt_for_memory": "The release-counting method produced [104, 164] for the first placement when the recorded first placement target is the one near [95, 89]. The instruction does not tell me how to pick the right target when the resting cube is roughly between targets, when a target is hidden from the target list while the gripper or cube covers it (the covered/missing target is the one the cube was placed on), or which demonstration release counts as 'first' (e.g. whether an early short release before a longer carry should be counted). It needs a concrete disambiguation so the first-release target resolves to [95, 89] in this demonstration.",
+   "missing_from_policy_prompt_for_subgoal": "nothing (given goal_target=[104, 164], rule 2 can only yield [112, 166]; with a correct goal_target of [95, 89] it would yield the recorded [95, 89]/[95, 90]). Note the recorded point [95, 90] differs by one pixel from the listed target [95, 89]; the instruction could say to point at the listed target coordinates.",
+   "missing": "goal_target carried in was [104, 164], but the recorded drop goes to [95, 90], i.e. the target listed at [95, 89]; the memory should have carried goal_target=[95, 89] (the first target the blue cube was placed on in the demonstration) rather than [104, 164]."
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    1135
+   ],
+   "memory_in": "goal_target=",
+   "answered": "A: pick up the cube at [81, 128]",
+   "recorded": "A: pick up the cube at [82, 129]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The ordinal counting direction. I followed the instruction literally: releases of the blue cube in demonstration order were at t=176-192 onto ~[99, 90], t=336-352 onto ~[98, 166], t=512-528 onto [141, 133], t=688-704 onto ~[79, 90], then the skipped final release at [82, 126]. Numbering earliest first, 'second' = [98, 166]/[100, 163], which is what I wrote. The recorded value [141, 133] is the release that is second counting BACK from the most recent one (most recent = [79, 90] at t=704, second most recent = [141, 133] at t=528). The instruction should state that the goal's ordinal ('first', 'second', ...) counts from the most recent release backwards, i.e. 'first' = the last release before the final centre release, 'second' = the one before that, not earliest-first.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    1248
+   ],
+   "memory_in": "goal_target=[141, 133]",
+   "answered": "B: drop onto at [141, 133]",
+   "recorded": "B: drop onto at [99, 90]",
+   "missing_from_memory": "goal_target carried in was [141, 133], but the second target the blue cube was placed on in the demonstration was [99, 90]; the memory should have carried goal_target=[99, 90] from the first decision step onward.",
+   "missing_from_policy_prompt_for_memory": "The release-counting procedure at the first decision step yielded [141, 133] instead of [99, 90], so its definition of which demonstration events count as a 'placement' of the blue cube (finger-open transitions, skipped final release, frames where the cube loses its 'held' label) does not identify the second placement as the one at [99, 90]; it needs to state the counting so that the placement at [99, 90] is the second one and [141, 133] is not.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target carried in was [141, 133], but the second target the blue cube was placed on in the demonstration was [99, 90]; the memory should have carried goal_target=[99, 90] from the first decision step onward."
+  }
+ ]
+}

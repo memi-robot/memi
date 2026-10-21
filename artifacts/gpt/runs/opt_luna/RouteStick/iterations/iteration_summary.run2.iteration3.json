@@ -1,0 +1,143 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "remaining_path"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  48,
+  75,
+  79,
+  80
+ ],
+ "scored": 21,
+ "failed": 5,
+ "subgoal_wrong": 0,
+ "memory_wrong": 5,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.7619047619047619,
+ "reads": {
+  "remaining_path": 21
+ },
+ "field_errors": {
+  "remaining_path": {
+   "in": 5,
+   "sole": 5
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.23809523809523808,
+ "verified_of_all": 0.7619047619047619,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 21,
+ "critique": "field remaining_path, POLICY PROMPT\n  At the first execution decision, the goal required replaying the entire demonstrated stick-navigation route. The policy selected the correct first traversal but sometimes wrote an incomplete route, collapsed repeated crossings, or misclassified later arcs. A route with several returns between the same two sites was reduced to its opening crossing and final two moves; a two-traversal demonstration lost its final traversal; other outputs changed the arc of a return or copied an incorrect classification across neighboring traversals. The annotated memory retained all traversals and classified each independently. These are PREDICTABILITY failures during initialization, not evidence that another memory field is needed. Make the existing segmentation and verification instructions operational with a temporary traversal ledger constructed entirely from the demonstration visible at this decision. First list the starting site and every chronological arrival, identifying sites by their stable horizontal order rather than exact fluctuating coordinates. Each consecutive pair of distinct adjacent sites creates a separate ledger row, even if that pair or destination has appeared before. Resolve a double highlight using wrist arrival and the subsequent demonstration motion; do not merge crossings through that boundary. Include the final demonstration arrival, and exclude the reset to the execution starting scene. Do not classify or compress the route until this arrival ledger is complete. For each row independently, record the departure and destination site, representative endpoint wrist positions, and intermediate wrist samples belonging to that crossing. Determine horizontal direction from the two target sites, not from a local reversal in wrist x. Determine arc from intermediate wrist displacement relative to the line between endpoint wrist positions. Where applicable, calculate baseline_y = departure_y + (destination_y - departure_y) * (sample_x - departure_x) / (destination_x - departure_x), using wrist coordinates throughout. Negative sample_y minus baseline_y indicates the upper arc; positive indicates the lower arc. Use the substantial interior excursion, not a near-arrival sample that may already belong to the next crossing. Larger target x with upper arc is A, larger x with lower arc is C, smaller x with upper arc is D, and smaller x with lower arc is B. Reversing horizontal direction does not by itself change which side of the baseline the arc occupies. Before writing memory, check that each ledger row contributes exactly one letter, including all repeated visits and the final crossing. Check every letter against that row's direction and arc, rather than checking only the first command. The ledger is temporary reasoning, not an additional memory field. remaining_path still holds only the ordered list of demonstrated traversals not yet completed, including the command selected now; for example, [\"D\",\"A\",\"D\",\"C\",\"D\",\"A\",\"A\"]. Initialize it with the complete list when demonstration frames are present and no memory is carried. On each later decision following one completed oracle command, remove exactly one leading letter from carried memory before selecting the next command. Retain the list if no command completed, and write [] after the final completion. Do not delete the command being selected at the current decision.\n\nrefused\n  The flagged first-decision outputs all selected the correct initial menu option, and none supplied a missing-information diagnosis. One flagged output also wrote exactly the demonstrated three-move route, [\"A\",\"A\",\"A\"], matching the annotated memory carried into the following decision. That case provides no semantic failure to correct; differences between quoted textual representations of the same ordered list do not justify changing its meaning. The other initialization discrepancies support strengthening the demonstration-decoding procedure, but not changing the annotation values: the full demonstrations and subsequent recorded commands confirm the existing complete routes. No annotation-rule or subgoal-policy prompt change is warranted. The existing single ordered-list field is sufficient, its contents are unavailable after the demonstration disappears, and the later rule of removing one completed move and selecting the new head remains correct.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_path",
+    "description": "At the first execution decision, the goal required replaying the entire demonstrated stick-navigation route. The policy selected the correct first traversal but sometimes wrote an incomplete route, collapsed repeated crossings, or misclassified later arcs. A route with several returns between the same two sites was reduced to its opening crossing and final two moves; a two-traversal demonstration lost its final traversal; other outputs changed the arc of a return or copied an incorrect classification across neighboring traversals. The annotated memory retained all traversals and classified each independently. These are PREDICTABILITY failures during initialization, not evidence that another memory field is needed. Make the existing segmentation and verification instructions operational with a temporary traversal ledger constructed entirely from the demonstration visible at this decision. First list the starting site and every chronological arrival, identifying sites by their stable horizontal order rather than exact fluctuating coordinates. Each consecutive pair of distinct adjacent sites creates a separate ledger row, even if that pair or destination has appeared before. Resolve a double highlight using wrist arrival and the subsequent demonstration motion; do not merge crossings through that boundary. Include the final demonstration arrival, and exclude the reset to the execution starting scene. Do not classify or compress the route until this arrival ledger is complete. For each row independently, record the departure and destination site, representative endpoint wrist positions, and intermediate wrist samples belonging to that crossing. Determine horizontal direction from the two target sites, not from a local reversal in wrist x. Determine arc from intermediate wrist displacement relative to the line between endpoint wrist positions. Where applicable, calculate baseline_y = departure_y + (destination_y - departure_y) * (sample_x - departure_x) / (destination_x - departure_x), using wrist coordinates throughout. Negative sample_y minus baseline_y indicates the upper arc; positive indicates the lower arc. Use the substantial interior excursion, not a near-arrival sample that may already belong to the next crossing. Larger target x with upper arc is A, larger x with lower arc is C, smaller x with upper arc is D, and smaller x with lower arc is B. Reversing horizontal direction does not by itself change which side of the baseline the arc occupies. Before writing memory, check that each ledger row contributes exactly one letter, including all repeated visits and the final crossing. Check every letter against that row's direction and arc, rather than checking only the first command. The ledger is temporary reasoning, not an additional memory field. remaining_path still holds only the ordered list of demonstrated traversals not yet completed, including the command selected now; for example, [\"D\",\"A\",\"D\",\"C\",\"D\",\"A\",\"A\"]. Initialize it with the complete list when demonstration frames are present and no memory is carried. On each later decision following one completed oracle command, remove exactly one leading letter from carried memory before selecting the next command. Retain the list if no command completed, and write [] after the final completion. Do not delete the command being selected at the current decision."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "The flagged first-decision outputs all selected the correct initial menu option, and none supplied a missing-information diagnosis. One flagged output also wrote exactly the demonstrated three-move route, [\"A\",\"A\",\"A\"], matching the annotated memory carried into the following decision. That case provides no semantic failure to correct; differences between quoted textual representations of the same ordered list do not justify changing its meaning. The other initialization discrepancies support strengthening the demonstration-decoding procedure, but not changing the annotation values: the full demonstrations and subsequent recorded commands confirm the existing complete routes. No annotation-rule or subgoal-policy prompt change is warranted. The existing single ordered-list field is sufficient, its contents are unavailable after the demonstration disappears, and the later rule of removing one completed move and selecting the new head remains correct."
+ },
+ "critiques": [
+  {
+   "step": [
+    2,
+    "exec",
+    250
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "B: move to the nearest right target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    48,
+    "exec",
+    150
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "A: move to the nearest left target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    75,
+    "exec",
+    200
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    350
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    80,
+    "exec",
+    100
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "A: move to the nearest left target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

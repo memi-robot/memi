@@ -1,0 +1,84 @@
+{
+ "episodes": [
+  7,
+  12,
+  23,
+  49,
+  95
+ ],
+ "user_chars": 41536,
+ "usage": {
+  "prompt_tokens": 10542,
+  "completion_tokens": 590,
+  "total_tokens": 11132,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 8247,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "For every A, point at the current visible center of the table cube identified by target_anchor, allowing small placement and visible-center shifts.",
+    "modify_to": "For every A, select the table cube identified by target_anchor and normally point at its current visible center, allowing small placement and visible-center shifts. Nearby points selecting that same cube are equivalent; exact reproduction of a recorded grasp point is not required. Do not replace current table localization with the original demonstration grasp point."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_anchor",
+    "edits": [
+     {
+      "modify_from": "Follow the grasped cube through release. Partition the remaining demonstration into exchanges using the moving pairs and intervening settled configurations, and process every exchange through the end of the demonstration.",
+      "modify_to": "Establish target identity from the table-height closure and lift, then follow that same cube through descent to its table-height release and associate the release with the settled table cube. An elevated held centroid is not a table location and must not reassign identity to a neighboring table cube. Disappearances or centroid shifts caused by the traveling hand's occlusion do not establish exchanges. After the release, partition the remaining demonstration into exchanges only where coherent paired table motion connects settled configurations, and process every such exchange through the end of the demonstration. Maintain a temporary target-location token initialized to the settled release location; update it through the exchanges below, rather than repeatedly associating airborne centroids with table cubes."
+     },
+     {
+      "modify_from": "Apply that swap to the target's current location only if it participates; if the exchange involves two other cubes, retain the target at its stationary location. Carry the resulting target identity and location into the next exchange without restarting from the original grasp location.",
+      "modify_to": "For each completed pair swap, if the temporary target-location token names one participating location, move the token to the other; otherwise leave it unchanged. Carry this updated token and target identity into the next exchange without restarting from the original grasp location. Resolve participation using the updated token, not the original location."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "No episode-specific coordinates or directional swap example is added: the temporary-token procedure applies to any sequence of participating pairs and preserves the earlier whole-exchange tracking rules. No annotation changes, persistent exchange history, previous-command field, or additional release criterion is committed. The existing sequence-based release recognition already requires incrementing completed_cycles after a fully open retreat despite lingering airborne reports, and the policy prompt for subgoal then requires C when the updated count reaches the goal. Those rules and the priority of a clear near-anchor table match remain unchanged."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_anchor",
+    "edits": [
+     {
+      "modify_from": "Follow the grasped cube through release. Partition the remaining demonstration into exchanges using the moving pairs and intervening settled configurations, and process every exchange through the end of the demonstration.",
+      "modify_to": "Establish target identity from the table-height closure and lift, then follow that same cube through descent to its table-height release and associate the release with the settled table cube. An elevated held centroid is not a table location and must not reassign identity to a neighboring table cube. Disappearances or centroid shifts caused by the traveling hand's occlusion do not establish exchanges. After the release, partition the remaining demonstration into exchanges only where coherent paired table motion connects settled configurations, and process every such exchange through the end of the demonstration. Maintain a temporary target-location token initialized to the settled release location; update it through the exchanges below, rather than repeatedly associating airborne centroids with table cubes."
+     },
+     {
+      "modify_from": "Apply that swap to the target's current location only if it participates; if the exchange involves two other cubes, retain the target at its stationary location. Carry the resulting target identity and location into the next exchange without restarting from the original grasp location.",
+      "modify_to": "For each completed pair swap, if the temporary target-location token names one participating location, move the token to the other; otherwise leave it unchanged. Carry this updated token and target identity into the next exchange without restarting from the original grasp location. Resolve participation using the updated token, not the original location."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "For every A, point at the current visible center of the table cube identified by target_anchor, allowing small placement and visible-center shifts.",
+    "modify_to": "For every A, select the table cube identified by target_anchor and normally point at its current visible center, allowing small placement and visible-center shifts. Nearby points selecting that same cube are equivalent; exact reproduction of a recorded grasp point is not required. Do not replace current table localization with the original demonstration grasp point."
+   }
+  ],
+  "refused": "No episode-specific coordinates or directional swap example is added: the temporary-token procedure applies to any sequence of participating pairs and preserves the earlier whole-exchange tracking rules. No annotation changes, persistent exchange history, previous-command field, or additional release criterion is committed. The existing sequence-based release recognition already requires incrementing completed_cycles after a fully open retreat despite lingering airborne reports, and the policy prompt for subgoal then requires C when the updated count reaches the goal. Those rules and the priority of a clear near-anchor table match remain unchanged."
+ },
+ "not_applied": [],
+ "refused": "No episode-specific coordinates or directional swap example is added: the temporary-token procedure applies to any sequence of participating pairs and preserves the earlier whole-exchange tracking rules. No annotation changes, persistent exchange history, previous-command field, or additional release criterion is committed. The existing sequence-based release recognition already requires incrementing completed_cycles after a fully open retreat despite lingering airborne reports, and the policy prompt for subgoal then requires C when the updated count reaches the goal. Those rules and the priority of a clear near-anchor table match remain unchanged.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"target_anchor\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Follow the grasped cube through release. Partition the remaining demonstration into exchanges using the moving pairs and intervening settled configurations, and process every exchange through the end of the demonstration.\",\n          \"modify_to\": \"Establish target identity from the table-height closure and lift, then follow that same cube through descent to its table-height release and associate the release with the settled table cube. An elevated held centroid is not a table location and must not reassign identity to a neighboring table cube. Disappearances or centroid shifts caused by the traveling hand's occlusion do not establish exchanges. After the release, partition the remaining demonstration into exchanges only where coherent paired table motion connects settled configurations, and process every such exchange through the end of the demonstration. Maintain a temporary target-location token initialized to the settled release location; update it through the exchanges below, rather than repeatedly associating airborne centroids with table cubes.\"\n        },\n        {\n          \"modify_from\": \"Apply that swap to the target's current location only if it participates; if the exchange involves two other cubes, retain the target at its stationary location. Carry the resulting target identity and location into the next exchange without restarting from the original grasp location.\",\n          \"modify_to\": \"For each completed pair swap, if the temporary target-location token names one participating location, move the token to the other; otherwise leave it unchanged. Carry this updated token and target identity into the next exchange without restarting from the original grasp location. Resolve participation using the updated token, not the original location.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"For every A, point at the current visible center of the table cube identified by target_anchor, allowing small placement and visible-center shifts.\",\n      \"modify_to\": \"For every A, select the table cube identified by target_anchor and normally point at its current visible center, allowing small placement and visible-center shifts. Nearby points selecting that same cube are equivalent; exact reproduction of a recorded grasp point is not required. Do not replace current table localization with the original demonstration grasp point.\"\n    }\n  ],\n  \"refused\": \"No episode-specific coordinates or directional swap example is added: the temporary-token procedure applies to any sequence of participating pairs and preserves the earlier whole-exchange tracking rules. No annotation changes, persistent exchange history, previous-command field, or additional release criterion is committed. The existing sequence-based release recognition already requires incrementing completed_cycles after a fully open retreat despite lingering airborne reports, and the subgoal plan then requires C when the updated count reaches the goal. Those rules and the priority of a clear near-anchor table match remain unchanged.\"\n}"
+}

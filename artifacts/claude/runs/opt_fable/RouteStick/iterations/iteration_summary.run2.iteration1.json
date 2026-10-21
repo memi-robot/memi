@@ -1,0 +1,182 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "demo_moves",
+  "legs_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  44,
+  76,
+  79,
+  85,
+  86
+ ],
+ "scored": 20,
+ "failed": 7,
+ "subgoal_wrong": 2,
+ "memory_wrong": 5,
+ "subgoal_verified": 0.9,
+ "memory_verified": 0.75,
+ "reads": {
+  "demo_moves": 15,
+  "legs_done": 15
+ },
+ "field_errors": {
+  "demo_moves": {
+   "in": 5,
+   "sole": 5
+  },
+  "legs_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.35,
+ "verified_of_all": 0.65,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 0,
+ "decisions": 20,
+ "critique": "field demo_moves, ANNOTATOR PROMPT\n  At the first decision step of every episode the policy rebuilt the list of legs from the demonstration correctly, letter for letter, yet its value was scored as different from the annotated one because the annotated value is serialized as a Python-style list with single-quoted letters (['D', 'B', 'C']) while the rule's example shows double-quoted letters ([\"A\", \"B\", \"A\", \"D\"]). This breaks PREDICTABILITY: the same content at the same step yields two unequal strings. The field keeps holding the ordered list of menu letters, one per demonstration leg, written at the first decision step and copied unchanged afterwards; what changes is the stated serialization. Write it exactly as a Python-style list with single-quoted uppercase letters separated by comma and space, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A'], and replace the example in the rule with that form.\n\nfield demo_moves, POLICY PROMPT\n  At every first decision step the policy derived the right letters from the demonstration but wrote them inside double quotes, following the instruction's example, while the recorded value uses single quotes; the only mismatch was serialization (PREDICTABILITY). The field is unchanged in meaning: one letter per demonstration leg, in order, written when the carried-in memory is empty, copied unchanged at every later step. Add one explicit line: write the list exactly as a Python-style list with single-quoted uppercase letters, comma and space between them, no other characters, e.g. ['D', 'B', 'C'], and replace the current double-quoted example with that form.\n\nthe policy prompt for subgoal\n  At decision steps after the first, with the demonstration no longer visible, the policy had the correct demo_moves list and correctly wrote legs_done as carried-in plus one, but then indexed demo_moves with the carried-in value rather than the value it had just written, issuing the previous leg's letter again (for example, carrying in 3, writing 4, yet issuing demo_moves[3] instead of demo_moves[4]). The memory and the step together did settle the subgoal, so this is a SUFFICIENCY failure caused by an ambiguous rule: 'first update the memory, then issue demo_moves[legs_done]' leaves it unclear which legs_done is meant. Replace that rule with one explicit arithmetic rule: at the first decision step (carried-in memory empty) issue demo_moves[0]; at every later decision step issue demo_moves[carried-in legs_done + 1], which is the same number as the legs_done you write at this step, never the carried-in number. Give one worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4]. Keep the letter meanings, the no-point note and the fallback rule unchanged.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "At decision steps after the first, with the demonstration no longer visible, the policy had the correct demo_moves list and correctly wrote legs_done as carried-in plus one, but then indexed demo_moves with the carried-in value rather than the value it had just written, issuing the previous leg's letter again (for example, carrying in 3, writing 4, yet issuing demo_moves[3] instead of demo_moves[4]). The memory and the step together did settle the subgoal, so this is a SUFFICIENCY failure caused by an ambiguous rule: 'first update the memory, then issue demo_moves[legs_done]' leaves it unclear which legs_done is meant. Replace that rule with one explicit arithmetic rule: at the first decision step (carried-in memory empty) issue demo_moves[0]; at every later decision step issue demo_moves[carried-in legs_done + 1], which is the same number as the legs_done you write at this step, never the carried-in number. Give one worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4]. Keep the letter meanings, the no-point note and the fallback rule unchanged.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "demo_moves",
+    "description": "At every first decision step the policy derived the right letters from the demonstration but wrote them inside double quotes, following the instruction's example, while the recorded value uses single quotes; the only mismatch was serialization (PREDICTABILITY). The field is unchanged in meaning: one letter per demonstration leg, in order, written when the carried-in memory is empty, copied unchanged at every later step. Add one explicit line: write the list exactly as a Python-style list with single-quoted uppercase letters, comma and space between them, no other characters, e.g. ['D', 'B', 'C'], and replace the current double-quoted example with that form."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "demo_moves",
+    "description": "At the first decision step of every episode the policy rebuilt the list of legs from the demonstration correctly, letter for letter, yet its value was scored as different from the annotated one because the annotated value is serialized as a Python-style list with single-quoted letters (['D', 'B', 'C']) while the rule's example shows double-quoted letters ([\"A\", \"B\", \"A\", \"D\"]). This breaks PREDICTABILITY: the same content at the same step yields two unequal strings. The field keeps holding the ordered list of menu letters, one per demonstration leg, written at the first decision step and copied unchanged afterwards; what changes is the stated serialization. Write it exactly as a Python-style list with single-quoted uppercase letters separated by comma and space, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A'], and replace the example in the rule with that form."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    44,
+    "exec",
+    100
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "recorded": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The only difference is quote style: I wrote [\"C\", \"C\"] following the instruction's example with double quotes, while the recorded value is ['C', 'C'] with single quotes. The instruction should state the exact serialization of the list (single-quoted letters, Python-style, e.g. ['C', 'C']) so the written value matches the recorded one character for character.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    76,
+    "exec",
+    150
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "My demo_moves value [\"D\", \"B\", \"C\"] matches the recorded ['D', 'B', 'C'] in content; the only difference is quote style. The instruction's example uses double quotes while the recorded value uses single quotes. The instruction should state one exact serialization for the list (e.g. Python-style single-quoted letters: ['D', 'B', 'C']) so the written value is byte-identical to the recorded one, or the comparison should treat the two as equal.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    350
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The list content and legs_done match the recorded answer exactly; the only difference is quoting style (double quotes vs single quotes around the letters). The instruction's example uses double quotes while the recorded value uses single quotes; it should state the exact serialization of the list (quote style) so the comparison is literal-safe.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    550
+   ],
+   "memory_in": "demo_moves=['D', 'A', 'D', 'C', 'D', 'A', 'A']; legs_done=3",
+   "answered": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The instruction did settle this step (legs_done becomes 4, issue demo_moves[4] = 'D'); I wrongly indexed with the carried-in legs_done=3 and got demo_moves[3] = 'C'. It would help to state explicitly, in one line, that the index is the NEW legs_done written at this step (carried-in + 1), never the carried-in value, e.g. 'carried-in legs_done=3 -> write 4 -> issue demo_moves[4]'.",
+   "missing": ""
+  },
+  {
+   "step": [
+    85,
+    "exec",
+    150
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The values agree in content (D, D, B; legs_done 0); the only difference is quote style, double quotes [\"D\", \"D\", \"B\"] versus the recorded single quotes ['D', 'D', 'B']. The instruction's example uses double quotes, so it should state the exact serialization expected for the list (single-quoted Python-style list), or the comparison should treat the two as equal.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    250
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "A: move to the nearest left target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The content matched exactly; the only difference was quote style. The instruction's example uses double quotes [\"A\", \"B\", \"A\", \"D\"] while the recorded value uses single quotes ['A', 'C', 'A', 'B', 'D']. The instruction should state the exact string form to write for demo_moves (e.g. a Python-style list with single-quoted letters, ['A', 'C', ...]) so the written value matches the recorded one character for character.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    450
+   ],
+   "memory_in": "demo_moves=['A', 'C', 'A', 'B', 'D']; legs_done=3",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It should state in one explicit arithmetic line that the index into demo_moves is the UPDATED legs_done (carried-in legs_done + 1), not the carried-in value: here carried-in legs_done=3, so updated legs_done=4 and the subgoal is demo_moves[4]='D', not demo_moves[3]='B'. The phrase 'first update the memory, then issue demo_moves[legs_done]' left it easy to index with the carried-in 3 and pick B.",
+   "missing": ""
+  }
+ ]
+}

@@ -1,0 +1,130 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "placed",
+  "cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  62,
+  69,
+  72,
+  84,
+  86
+ ],
+ "scored": 29,
+ "failed": 4,
+ "subgoal_wrong": 4,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.8620689655172413,
+ "memory_verified": 1.0,
+ "reads": {
+  "placed": 12,
+  "cubes": 20
+ },
+ "field_errors": {
+  "placed": {
+   "in": 0,
+   "sole": 0
+  },
+  "cubes": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.13793103448275862,
+ "verified_of_all": 0.8620689655172413,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 4,
+ "decisions": 29,
+ "critique": "the policy prompt for subgoal\n  Two rules sent the policy wrong, both only in the episode whose goal named two colors (one red and three blue) with five cubes of each color on the table from the start. First, the step-one start rule. With `placed` empty the instruction said to start the needed color with the larger required count (blue), so the policy pointed at the blue cube nearest the bin; the recorded pick was the red cube nearest the bin, which is simply the first entry of `cubes` at step one. This breaks SUFFICIENCY: the information was in the step and the memory, the rule picked the wrong criterion. Replace the start-color default with: when `placed` is empty, point at the first entry of `cubes` whatever its color, provided that color is still needed (at step one that is the needed-color cube nearest the bin center, of any needed color). The 'finish the started color before switching' rule then governs every later pick exactly as written. Second, the same-color selection rule. The instruction says the first entry of `cubes` of the needed color is always the target. In that episode a blue cube sat about 36 px from the bin center for the whole episode and was never picked, even though it was the oldest blue entry; the recorded picks went to blue cubes well clear of the bin (about 58 to 94 px from the bin center) and the episode ended with the near-bin blue cube still on the table. This breaks SUFFICIENCY: the age rule alone selects a cube the oracle never takes. Add to Rule 3: a cube of the needed color whose remembered or detected position lies within about 40 px of the bin center is skipped as long as any other cube of that color lies farther from the bin; it is only chosen when it is the last cube of its color. Among the remaining cubes of the needed color, keep the existing order of `cubes` (oldest entry first) as the default, and keep the clause that distractor colors, the bin and the button are never pointed at. Rule 1 (holding), Rule 2 (done) and the fallback clause are unchanged.\n\nrefused\n  Three steps of the two-color episode reported that the oldest-entry criterion did not reproduce the recorded blue pick and each proposed a different replacement (nearest the current gripper, farthest from the bin, smallest y, last entry of the list). Checked across all four blue picks of that episode and the picks in the single-color episodes, none of those criteria holds: the nearest-gripper rule fails on the first blue pick, the farthest-from-bin rule fails on the second, the smallest-y rule fails on the first and on every single-color episode, and the age order is what every single-color episode followed. The one regularity shared by all failing steps is that the blue cube hugging the bin (about 36 px from its center) was never chosen, which is what the new skip clause carries. The residual order among the three blue cubes that were all 58 to 61 px from the bin is not settled by any position-based rule I can derive from these episodes and may be arbitrary on the oracle's side, so I pass on the age order as the default rather than invent a criterion that contradicts the other episodes. No memory field was reported lacking, and the memories the policy wrote matched the annotation at every failing step, so neither memory document changes.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Two rules sent the policy wrong, both only in the episode whose goal named two colors (one red and three blue) with five cubes of each color on the table from the start. First, the step-one start rule. With `placed` empty the instruction said to start the needed color with the larger required count (blue), so the policy pointed at the blue cube nearest the bin; the recorded pick was the red cube nearest the bin, which is simply the first entry of `cubes` at step one. This breaks SUFFICIENCY: the information was in the step and the memory, the rule picked the wrong criterion. Replace the start-color default with: when `placed` is empty, point at the first entry of `cubes` whatever its color, provided that color is still needed (at step one that is the needed-color cube nearest the bin center, of any needed color). The 'finish the started color before switching' rule then governs every later pick exactly as written. Second, the same-color selection rule. The instruction says the first entry of `cubes` of the needed color is always the target. In that episode a blue cube sat about 36 px from the bin center for the whole episode and was never picked, even though it was the oldest blue entry; the recorded picks went to blue cubes well clear of the bin (about 58 to 94 px from the bin center) and the episode ended with the near-bin blue cube still on the table. This breaks SUFFICIENCY: the age rule alone selects a cube the oracle never takes. Add to Rule 3: a cube of the needed color whose remembered or detected position lies within about 40 px of the bin center is skipped as long as any other cube of that color lies farther from the bin; it is only chosen when it is the last cube of its color. Among the remaining cubes of the needed color, keep the existing order of `cubes` (oldest entry first) as the default, and keep the clause that distractor colors, the bin and the button are never pointed at. Rule 1 (holding), Rule 2 (done) and the fallback clause are unchanged.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "Three steps of the two-color episode reported that the oldest-entry criterion did not reproduce the recorded blue pick and each proposed a different replacement (nearest the current gripper, farthest from the bin, smallest y, last entry of the list). Checked across all four blue picks of that episode and the picks in the single-color episodes, none of those criteria holds: the nearest-gripper rule fails on the first blue pick, the farthest-from-bin rule fails on the second, the smallest-y rule fails on the first and on every single-color episode, and the age order is what every single-color episode followed. The one regularity shared by all failing steps is that the blue cube hugging the bin (about 36 px from its center) was never chosen, which is what the new skip clause carries. The residual order among the three blue cubes that were all 58 to 61 px from the bin is not settled by any position-based rule I can derive from these episodes and may be arbitrary on the oracle's side, so I pass on the age order as the default rather than invent a criterion that contradicts the other episodes. No memory field was reported lacking, and the memories the policy wrote matched the annotation at every failing step, so neither memory document changes."
+ },
+ "critiques": [
+  {
+   "step": [
+    86,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=; cubes=",
+   "answered": "A: pick up the cube at [81, 150]",
+   "recorded": "A: pick up the cube at [90, 170]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The start-color default is wrong for this step. The instruction told me that when `placed` is empty I should start the needed color with the larger required count (blue, 3) and so point at the blue cube nearest the bin, [81, 150]. The recorded answer starts with red at [89, 169], which is simply the first entry of `cubes` at step #1 (the needed-color cube nearest the bin's center, whatever its color). The instruction should say: when `placed` is empty, point at the first entry of `cubes` regardless of which needed color it is (the cube nearest the bin), not at the color with the larger required count; the 'finish a started color before switching' rule then applies from the second pick on.",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    181
+   ],
+   "memory_in": "placed=[]; cubes=[[\"blue\", [81, 150]], [\"red\", [82, 124]], [\"blue\", [63, 129]], [\"blue\", [106, 94]], [\"blue\", [85, 100]], [\"red\", [70, 113]], [\"red\", [53, 121]], [\"red\", [75, 87]], [\"blue\", [62, 76]]]",
+   "answered": "A: pick up the cube at [80, 149]",
+   "recorded": "A: pick up the cube at [86, 101]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The 'oldest entry in cubes' criterion selects the blue at [80, 149] (first blue entry, nearest the bin), but the recorded pick is the blue at [85, 100] (the fourth blue entry). The instruction gives no criterion that would choose [85, 100] over [80, 149], [63, 129] or [106, 94]; it needs to state the actual selection rule among same-colored cubes at this step (for example excluding cubes lying within some distance of the bin such as [80, 149] at ~37 px from the bin center, or some other ordering), since age order in `cubes` does not reproduce the recorded target.",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    366
+   ],
+   "memory_in": "placed=[\"red\"]; cubes=[[\"blue\", [80, 149]], [\"red\", [82, 124]], [\"blue\", [63, 129]], [\"blue\", [106, 94]], [\"red\", [72, 113]], [\"red\", [54, 121]], [\"red\", [75, 87]], [\"blue\", [62, 76]]]",
+   "answered": "A: pick up the cube at [81, 149]",
+   "recorded": "A: pick up the cube at [65, 130]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The rule 'point at the first entry in cubes of the needed color' gave [81, 149], but the recorded target is the blue cube at [63, 129] (the third entry). The instruction does not state the criterion that prefers [63, 129] over [81, 149] here: the blue at [81, 149] sits only ~36 px from the bin center [117, 152] (hugging the bin) and was skipped, while [63, 129] is the needed-color cube nearest the gripper's current position [49, 159] that is well clear of the bin. The instruction needs to say either that a cube within roughly 40 px of the bin center is passed over in favor of the next same-color cube, or that among same-color cubes the one closest to the current gripper position (clear of the bin) is chosen, instead of the pure age order it currently mandates.",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    556
+   ],
+   "memory_in": "placed=[\"red\", \"blue\"]; cubes=[[\"blue\", [81, 149]], [\"red\", [82, 124]], [\"blue\", [106, 94]], [\"red\", [72, 113]], [\"red\", [53, 121]], [\"red\", [75, 87]], [\"blue\", [62, 76]]]",
+   "answered": "A: pick up the cube at [80, 149]",
+   "recorded": "A: pick up the cube at [63, 77]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The instruction told me to pick the oldest blue entry in `cubes` (first entry, [80, 149]), but the recorded target is the blue cube at [62, 76]/[63, 77], which is the LAST blue entry in `cubes`, the blue cube farthest from the bin center [117, 152], and also the blue cube with the smallest y (nearest the robot) and smallest x. The instruction's same-color selection criterion ('first entry of `cubes` of that color') does not produce the recorded choice; it needs to state the actual criterion among same-colored cubes here (e.g. farthest from the bin / last entry of `cubes` of that color / smallest y), and in particular that the blue cube sitting close to the bin at [80, 149] is not the one to pick at this point.",
+   "missing": ""
+  }
+ ]
+}

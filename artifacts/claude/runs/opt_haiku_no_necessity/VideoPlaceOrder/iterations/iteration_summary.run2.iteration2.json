@@ -1,0 +1,135 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "demo_placements",
+  "goal_target"
+ ],
+ "ablate": "necessity",
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  27,
+  63,
+  84,
+  85,
+  93
+ ],
+ "scored": 10,
+ "failed": 3,
+ "subgoal_wrong": 1,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.9,
+ "memory_verified": 0.7,
+ "reads": {
+  "demo_placements": 1,
+  "goal_target": 5
+ },
+ "field_errors": {
+  "demo_placements": {
+   "in": 0,
+   "sole": 0
+  },
+  "goal_target": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3,
+ "verified_of_all": 0.7,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 10,
+ "critique": "field demo_placements, ANNOTATOR PROMPT\n  Situation: the goal asked for the target the goal-named cube was placed on first or second in the demonstration; at the first decision step the annotation and the policy disagreed by a few pixels on three entries because the policy copied target positions from the opening demo frames while the rule reads them from the frames just before the final centre release (PREDICTABILITY). Change: keep the field as the ordered list of [y, x] target positions the goal-named cube was released on in the demonstration, but state that every entry is copied, to the pixel, from the target list in the last frames before the final centre release (the gripper carrying the cube to about [82, 127] and opening there), after matching each release's resting spot to that list within a few pixels; the opening frames and any intermediate frames are never the source of the written values, only the means of identifying which of the four stable targets received the cube. Written once at the first decision step, copied unchanged afterwards. e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]\n\nfield goal_target, ANNOTATOR PROMPT\n  Situation: at the end of the demonstration, while the gripper was parked raised at about [54, 128], two of the four targets slid across the table over a few frames and exchanged places; their paths crossed, so following each target to the nearest newly listed position swapped the two tracks and the goal target was written as the position where the goal entry originally stood instead of the other mover's original position (PREDICTABILITY, and then a wrong drop point, SUFFICIENCY). Change: goal_target holds the execution-start position, in [y, x], of the target picked by the goal ordinal from demo_placements, determined by a swap rule instead of frame-by-frame nearest tracking. Procedure: take the ordinal entry. Look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open). If every parked frame lists the same four positions as demo-stable set (within a few pixels), no target moved: goal_target is the first execution frame's target nearest the ordinal entry. If some parked frame lists positions that match no stable target, exactly two stable targets are missing from that frame: those two are the movers, and they exchange places, so the moved target ends where the other mover began. If the ordinal entry is one of the two movers, goal_target is the first execution frame's target nearest the OTHER mover's stable position; if the ordinal entry is not a mover, goal_target is the first execution frame's target nearest the ordinal entry. Written once at the first decision step from the demonstration, copied unchanged afterwards; unknown if no demonstration was shown. e.g. entry 1 is [105, 164]; in a parked frame the stable positions [105, 164] and [95, 89] are both absent and replaced by [87, 104] and [115, 148], so the movers are [105, 164] and [95, 89]; the execution frame lists [95, 89]; goal_target = [95, 89]\n\nfield demo_placements, POLICY PROMPT\n  Situation: the policy read target positions off the opening demonstration frames and so wrote entries a few pixels off the annotated ones (PREDICTABILITY). Change: at the first decision step (demonstration frames shown, memory empty), find each release of the goal-named cube as before (fingers open from ~46% to ~100% right after frames where that cube was held, not the final centre release, not the starting spot, not a button press), decide which stable target it rests on by nearest match within a few pixels, but WRITE the position of that target exactly as it is listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens). Never write values from the opening frames, from release frames where the gripper hides the target, or from the final parked frames where targets may have slid. At every later step copy the carried-in list unchanged. e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]\n\nfield goal_target, POLICY PROMPT\n  Situation: in the parked frames at the end of the demonstration two targets slid across the table and crossed paths, and the frame-by-frame nearest-position tracking jumped from one track to the other, writing the wrong target (PREDICTABILITY); at a later step the policy also overwrote goal_target with a target that jittered under the passing gripper (PREDICTABILITY). Change: at the first decision step, take the entry the goal ordinal selects from demo_placements (first=1, second=2, third=3, fourth=4). Then scan the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, many frames). If every parked frame lists the same four positions as demo_placements' stable set within a few pixels, nothing moved: write the target in the scene at the start of execution nearest the ordinal entry. If some parked frame lists positions matching no stable target, exactly two stable targets are missing from it: those two are the movers, and they swap places, so each ends at the other's original spot. If the ordinal entry is one of the movers, write the target in the scene at the start of execution nearest the OTHER mover's stable position; otherwise write the target nearest the ordinal entry. Do not track targets frame by frame through the parked frames. At every later step copy the carried-in value unchanged, to the pixel: a target drifting, disappearing or reappearing a few pixels away in execution frames because the gripper passes over it is never a reason to rewrite goal_target. unknown if demo_placements is empty. e.g. entry 2 is [99, 167]; a parked frame lacks both [99, 167] and [99, 88] and shows two new positions, so the other mover is [99, 88]; the execution scene lists [99, 90]; goal_target = [99, 90]\n\nthe policy prompt for subgoal\n  Rule 2 (cube held, fingers ~46% open, gripper raised) sent the policy wrong at the drop step: its clause 'confirm by taking the target in the current scene nearest to goal_target' let the policy substitute a different target that had shifted a few pixels and vanished and reappeared while the gripper passed over it, so it dropped onto the wrong target (SUFFICIENCY). Replace that clause with: the drop point is goal_target from memory; look only for a target listed within a few pixels of goal_target in the scene at this decision step and point at that listed position (or at goal_target itself if the list is momentarily jittering there); every other target in the scene, however it moves between execution frames, is irrelevant and must never be chosen. Only if no target lies within a few pixels of goal_target and goal_target is unknown does the fallback of rule 4 apply. Rules 1, 3 and 4 stand unchanged; nothing is removed.\n\nrefused\n  Nothing is withheld; every reported lack is passed on. One remark from the drop step, that the memory instruction already said to copy goal_target unchanged, is passed on only as an added sentence forbidding rewrites on execution-frame jitter, since the policy did rewrite it despite the existing wording.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 2 (cube held, fingers ~46% open, gripper raised) sent the policy wrong at the drop step: its clause 'confirm by taking the target in the current scene nearest to goal_target' let the policy substitute a different target that had shifted a few pixels and vanished and reappeared while the gripper passed over it, so it dropped onto the wrong target (SUFFICIENCY). Replace that clause with: the drop point is goal_target from memory; look only for a target listed within a few pixels of goal_target in the scene at this decision step and point at that listed position (or at goal_target itself if the list is momentarily jittering there); every other target in the scene, however it moves between execution frames, is irrelevant and must never be chosen. Only if no target lies within a few pixels of goal_target and goal_target is unknown does the fallback of rule 4 apply. Rules 1, 3 and 4 stand unchanged; nothing is removed.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "demo_placements",
+    "description": "Situation: the policy read target positions off the opening demonstration frames and so wrote entries a few pixels off the annotated ones (PREDICTABILITY). Change: at the first decision step (demonstration frames shown, memory empty), find each release of the goal-named cube as before (fingers open from ~46% to ~100% right after frames where that cube was held, not the final centre release, not the starting spot, not a button press), decide which stable target it rests on by nearest match within a few pixels, but WRITE the position of that target exactly as it is listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens). Never write values from the opening frames, from release frames where the gripper hides the target, or from the final parked frames where targets may have slid. At every later step copy the carried-in list unchanged. e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]"
+   },
+   {
+    "field": "goal_target",
+    "description": "Situation: in the parked frames at the end of the demonstration two targets slid across the table and crossed paths, and the frame-by-frame nearest-position tracking jumped from one track to the other, writing the wrong target (PREDICTABILITY); at a later step the policy also overwrote goal_target with a target that jittered under the passing gripper (PREDICTABILITY). Change: at the first decision step, take the entry the goal ordinal selects from demo_placements (first=1, second=2, third=3, fourth=4). Then scan the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, many frames). If every parked frame lists the same four positions as demo_placements' stable set within a few pixels, nothing moved: write the target in the scene at the start of execution nearest the ordinal entry. If some parked frame lists positions matching no stable target, exactly two stable targets are missing from it: those two are the movers, and they swap places, so each ends at the other's original spot. If the ordinal entry is one of the movers, write the target in the scene at the start of execution nearest the OTHER mover's stable position; otherwise write the target nearest the ordinal entry. Do not track targets frame by frame through the parked frames. At every later step copy the carried-in value unchanged, to the pixel: a target drifting, disappearing or reappearing a few pixels away in execution frames because the gripper passes over it is never a reason to rewrite goal_target. unknown if demo_placements is empty. e.g. entry 2 is [99, 167]; a parked frame lacks both [99, 167] and [99, 88] and shows two new positions, so the other mover is [99, 88]; the execution scene lists [99, 90]; goal_target = [99, 90]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "demo_placements",
+    "description": "Situation: the goal asked for the target the goal-named cube was placed on first or second in the demonstration; at the first decision step the annotation and the policy disagreed by a few pixels on three entries because the policy copied target positions from the opening demo frames while the rule reads them from the frames just before the final centre release (PREDICTABILITY). Change: keep the field as the ordered list of [y, x] target positions the goal-named cube was released on in the demonstration, but state that every entry is copied, to the pixel, from the target list in the last frames before the final centre release (the gripper carrying the cube to about [82, 127] and opening there), after matching each release's resting spot to that list within a few pixels; the opening frames and any intermediate frames are never the source of the written values, only the means of identifying which of the four stable targets received the cube. Written once at the first decision step, copied unchanged afterwards. e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]"
+   },
+   {
+    "field": "goal_target",
+    "description": "Situation: at the end of the demonstration, while the gripper was parked raised at about [54, 128], two of the four targets slid across the table over a few frames and exchanged places; their paths crossed, so following each target to the nearest newly listed position swapped the two tracks and the goal target was written as the position where the goal entry originally stood instead of the other mover's original position (PREDICTABILITY, and then a wrong drop point, SUFFICIENCY). Change: goal_target holds the execution-start position, in [y, x], of the target picked by the goal ordinal from demo_placements, determined by a swap rule instead of frame-by-frame nearest tracking. Procedure: take the ordinal entry. Look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open). If every parked frame lists the same four positions as demo-stable set (within a few pixels), no target moved: goal_target is the first execution frame's target nearest the ordinal entry. If some parked frame lists positions that match no stable target, exactly two stable targets are missing from that frame: those two are the movers, and they exchange places, so the moved target ends where the other mover began. If the ordinal entry is one of the two movers, goal_target is the first execution frame's target nearest the OTHER mover's stable position; if the ordinal entry is not a mover, goal_target is the first execution frame's target nearest the ordinal entry. Written once at the first decision step from the demonstration, copied unchanged afterwards; unknown if no demonstration was shown. e.g. entry 1 is [105, 164]; in a parked frame the stable positions [105, 164] and [95, 89] are both absent and replaced by [87, 104] and [115, 148], so the movers are [105, 164] and [95, 89]; the execution frame lists [95, 89]; goal_target = [95, 89]"
+   }
+  ],
+  "refused": "Nothing is withheld; every reported lack is passed on. One remark from the drop step, that the memory instruction already said to copy goal_target unchanged, is passed on only as an added sentence forbidding rewrites on execution-frame jitter, since the policy did rewrite it despite the existing wording."
+ },
+ "critiques": [
+  {
+   "step": [
+    27,
+    "exec",
+    730
+   ],
+   "memory_in": "demo_placements=; goal_target=",
+   "answered": "A: pick up the cube at [82, 127]",
+   "recorded": "A: pick up the cube at [82, 129]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The frame-by-frame 'nearest newly listed position' tracking breaks in this demo: in the parked frames the two moving targets cross paths ([105,164] -> [115,148] -> [115,111] -> [97,91] -> [95,89] while [95,89] -> [87,104] -> [84,140] -> [103,162] -> [104,164]); at t=688 the nearest new position to [115,148] is [84,140] (dist ~32) not [115,111] (dist 37), so the nearest rule swaps tracks and lands on [104,164]. The instruction should say that the two moving targets exchange places (continue each track along its direction of motion, e.g. the target whose y increased keeps increasing/ x keeps decreasing), or more simply: when exactly two targets move during the parked frames, goal_target is the ORIGINAL position of the other moving target (here entry 1 [105,164] moved, the other mover was [95,89], so goal_target=[95,89]).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    1135
+   ],
+   "memory_in": "demo_placements=; goal_target=",
+   "answered": "A: pick up the cube at [81, 128]",
+   "recorded": "A: pick up the cube at [82, 129]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Two things. (1) For demo_placements it did not say plainly to copy the pixel values from the frames just before the final centre release (t=976: [79, 90], [99, 88], [99, 167], [141, 133]) rather than from the opening frames ([79, 89], [98, 89], [98, 166]); I took the early-frame values and got a few-pixel disagreement on three entries. (2) For goal_target the nearest-position tracking is ambiguous at this step: entry 2 is [99, 167]; the parked frames list [104, 162] (t=1072), then [78, 127] and [121, 127] (t=1088), then [92, 157] and [104, 95] (t=1104), then [98, 166] and [99, 90] (t=1120). The two moving targets cross in the middle, and nearest-to-previous ([104, 162] -> [121, 127] -> [104, 95] vs [92, 157]) gives no clear chain; the recorded answer is [99, 90], i.e. the target from [99, 167] ended at the other mover's original spot [99, 88]. The instruction should state the rule that settles this: in the parked frames the two moving targets SWAP places, so if the goal target was one of the two that moved, its settled position is the ORIGINAL position of the other moved target (the stable entry that is not the goal's and not among the two that stayed fixed); when nearest-tracking is ambiguous because the paths cross, apply the swap rule, do not pick the target that ends where the goal's entry started.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    1248
+   ],
+   "memory_in": "demo_placements=[[99, 88], [99, 167], [141, 133], [79, 90]]; goal_target=[99, 90]",
+   "answered": "B: drop onto at [101, 162]",
+   "recorded": "B: drop onto at [99, 90]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing beyond what it says: it already says copy goal_target unchanged at every later step; it could add explicitly that execution-step jitter of a listed target (here [98, 166] -> [100, 165] -> [101, 162] while the gripper occludes it) is never a reason to rewrite goal_target.",
+   "missing_from_policy_prompt_for_subgoal": "It should state plainly that at the drop step the point is goal_target itself ([99, 90]) whenever a target is listed within a few pixels of it in the current scene, and that a target elsewhere in the scene that appears to shift between execution frames (e.g. the one near [98, 166]/[101, 162], disappearing and reappearing as the gripper passes over it) is irrelevant and must not be substituted for goal_target.",
+   "missing": ""
+  }
+ ]
+}

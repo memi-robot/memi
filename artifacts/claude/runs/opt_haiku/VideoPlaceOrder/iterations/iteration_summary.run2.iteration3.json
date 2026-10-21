@@ -1,0 +1,96 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "goal_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  3,
+  39,
+  57,
+  73,
+  92
+ ],
+ "scored": 10,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.8,
+ "memory_verified": 1.0,
+ "reads": {
+  "goal_target": 6
+ },
+ "field_errors": {
+  "goal_target": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 10,
+ "critique": "refused\n  Two steps reported the same thing: at the second decision step, with the goal-named cube just grasped and raised, the policy dropped onto the target that the carried-in goal_target named, and the recorded drop was onto a different target. Both steps concluded that the ordinal procedure in the first-step rule had numbered the placements wrongly and asked for it to be sharpened (re-grasps near the same target, cubes resting between two targets, non-goal-cube placements). I checked those demonstrations end to end and none of those ambiguities exists in them: every placement is a clean set-down of the goal-named cube within a few pixels of one listed target, no other cube is ever moved, and the final centre set-down and the button press are already excluded. The forward count the rule prescribes was applied exactly as written and produced the annotated values. What the recorded drops in those two episodes actually match is the opposite convention: the ordinal counted backward from the most recent placement before the centre set-down (a four-placement demonstration where 'third' resolved to the second placement from the start, and a two-placement demonstration where 'second' resolved to the first). But the three other episodes of this minibatch, which the policy answered correctly, follow the forward count and contradict the backward one (a three-placement demonstration where 'first' is the earliest placement, not the latest; a two-placement demonstration with a button press between them where 'second' is the later placement). Two episodes with identical structure, one placement, a button press, a second placement, then the centre set-down, carry opposite recorded answers for 'second'. No rule stated in terms of what the demonstration frames show fits all five; the only feature separating the backward-counting episodes from the forward-counting ones is the presence of distractor cubes of other colours on the table, which I do not believe is a real cause and will not write into the rule. Changing the procedure to a backward count would fix these two steps and break the three that currently pass, and the current rule's explicit 'never backward' clause shows this reversal has already been weighed once. So the annotator prompt, the policy prompt for memory and the policy prompt for subgoal all stay as they are; the two reports are dropped as contradicting the majority of the minibatch rather than revealing a missing or unclear condition.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "Two steps reported the same thing: at the second decision step, with the goal-named cube just grasped and raised, the policy dropped onto the target that the carried-in goal_target named, and the recorded drop was onto a different target. Both steps concluded that the ordinal procedure in the first-step rule had numbered the placements wrongly and asked for it to be sharpened (re-grasps near the same target, cubes resting between two targets, non-goal-cube placements). I checked those demonstrations end to end and none of those ambiguities exists in them: every placement is a clean set-down of the goal-named cube within a few pixels of one listed target, no other cube is ever moved, and the final centre set-down and the button press are already excluded. The forward count the rule prescribes was applied exactly as written and produced the annotated values. What the recorded drops in those two episodes actually match is the opposite convention: the ordinal counted backward from the most recent placement before the centre set-down (a four-placement demonstration where 'third' resolved to the second placement from the start, and a two-placement demonstration where 'second' resolved to the first). But the three other episodes of this minibatch, which the policy answered correctly, follow the forward count and contradict the backward one (a three-placement demonstration where 'first' is the earliest placement, not the latest; a two-placement demonstration with a button press between them where 'second' is the later placement). Two episodes with identical structure, one placement, a button press, a second placement, then the centre set-down, carry opposite recorded answers for 'second'. No rule stated in terms of what the demonstration frames show fits all five; the only feature separating the backward-counting episodes from the forward-counting ones is the presence of distractor cubes of other colours on the table, which I do not believe is a real cause and will not write into the rule. Changing the procedure to a backward count would fix these two steps and break the three that currently pass, and the current rule's explicit 'never backward' clause shows this reversal has already been weighed once. So the annotator prompt, the policy prompt for memory and the policy prompt for subgoal all stay as they are; the two reports are dropped as contradicting the majority of the minibatch rather than revealing a missing or unclear condition."
+ },
+ "critiques": [
+  {
+   "step": [
+    3,
+    "exec",
+    1319
+   ],
+   "memory_in": "goal_target=[141, 117]",
+   "answered": "B: drop onto at [143, 118]",
+   "recorded": "B: drop onto at [116, 102]",
+   "missing_from_memory": "goal_target carried in as [141, 117], but the recorded drop is onto the target near [116, 100]/[115, 101] (the second-row-left target). The memory should have been carrying the third placement's target as roughly [116, 100], i.e. the fact that the third target the green cube was placed on in the demonstration is the one near [116, 100], not the one near [141, 117].",
+   "missing_from_policy_prompt_for_memory": "The placement-counting procedure written at the first decision step evidently produced the wrong ordinal target for this episode: it yielded [141, 117] where the recorded trajectory wants the target near [116, 100]. It does not say how to resolve cases where a set-down and re-grasp of the same cube near the same target, or a placement onto the demonstration's starting spot, should or should not count as a placement, nor which target to pick when the resting position of the cube is between two listed targets; one of these ambiguities must have shifted the count by one so that 'third' resolved to the wrong placement.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target carried in as [141, 117], but the recorded drop is onto the target near [116, 100]/[115, 101] (the second-row-left target). The memory should have been carrying the third placement's target as roughly [116, 100], i.e. the fact that the third target the green cube was placed on in the demonstration is the one near [116, 100], not the one near [141, 117]."
+  },
+  {
+   "step": [
+    39,
+    "exec",
+    870
+   ],
+   "memory_in": "goal_target=[75, 91]",
+   "answered": "B: drop onto at [75, 91]",
+   "recorded": "B: drop onto at [142, 119]",
+   "missing_from_memory": "goal_target was carried in as [75, 91], but the second target the red cube was placed on in the demonstration is the one near [141, 118] (recorded point [142, 119]). The memory written at the first decision step held the wrong placement; it should have read goal_target=[141, 118] (coordinates of the target near the bottom-centre, as listed in the last demonstration frame).",
+   "missing_from_policy_prompt_for_memory": "The first-step procedure let the [75, 91] target be numbered as placement 2 when the second red-cube placement in this demonstration was onto the target near [141, 118]. It should say more sharply which frames count as a placement (e.g. require that the red cube's line in the frames after the finger-opening sits within ~15 px of the chosen target, and that the ordinal counts only red-cube placements, excluding any placement of another colour or any set-down where the cube ends up away from every target) so the second placement is identified correctly and written as the [y, x] of that target.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target was carried in as [75, 91], but the second target the red cube was placed on in the demonstration is the one near [141, 118] (recorded point [142, 119]). The memory written at the first decision step held the wrong placement; it should have read goal_target=[141, 118] (coordinates of the target near the bottom-centre, as listed in the last demonstration frame)."
+  }
+ ]
+}

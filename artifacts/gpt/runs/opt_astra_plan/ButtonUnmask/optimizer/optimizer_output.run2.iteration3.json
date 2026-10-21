@@ -1,0 +1,124 @@
+{
+ "episodes": [
+  5,
+  21,
+  34,
+  38,
+  69
+ ],
+ "user_chars": 13232,
+ "usage": {
+  "prompt_tokens": 4990,
+  "completion_tokens": 966,
+  "total_tokens": 5956,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 2695,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 88,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty.",
+    "modify_to": "After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and either the goal requests a single pickup or remaining_target_positions is nonempty."
+   },
+   {
+    "modify_from": "For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise.",
+    "modify_to": "For B in a single-pickup goal, read the requested color from the goal, locate its cube in the pre-covering frames of the current observation, and follow the covering event to its resting container. If descent is sampled only before and after, select the resting container nearest that observed cube position. For B in a multiple-pickup goal, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise."
+   },
+   {
+    "modify_from": "For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+    "modify_to": "A successful lift in a single-pickup goal completes the task; do not prescribe an additional put-down. For a multiple-pickup goal in an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_target_positions",
+    "edits": [
+     {
+      "modify_from": "With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless",
+      "modify_to": "For a single-pickup goal, write [] at every decision step; no target position needs to be carried. For a multiple-pickup goal, initialize only at the first decision step, when no incoming memory exists: read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. On subsequent decisions, an empty list means no pickups remain and must not be reinitialized. Otherwise carry the incoming list unchanged unless"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_target_positions",
+    "edits": [
+     {
+      "modify_from": "An ordered list of the original cube positions for requested container pickups not yet completed, in the order specified by the goal. Initialize from the visible cubes at the first decision step, including only requested colors.",
+      "modify_to": "For goals requesting multiple container pickups, an ordered list of the original cube positions for requested container pickups not yet completed, in goal order. Initialize from the visible cubes at the first decision step, including only requested colors. For a single-pickup goal, write [] at every decision step: recover the target from the pre-covering frames and covering event in the pickup decision's observation instead."
+     },
+     {
+      "modify_from": "The other episodes retain their single initial target throughout their two recorded steps.",
+      "modify_to": "Single-pickup episodes instead have [] throughout."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Do not delete remaining_target_positions globally or remove multiple-pickup continuation rules. The initialized documents explicitly cover episode 71, in which a second target must remain available after the first lift and subsequent release, when the original covering observation is no longer available. The current report establishes observation-local recoverability for single-pickup episodes only. Those episodes now carry no target information and select their target locally; multiple-pickup episodes retain the memory and intermediate put-down rules needed for continuation."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_target_positions",
+    "edits": [
+     {
+      "modify_from": "An ordered list of the original cube positions for requested container pickups not yet completed, in the order specified by the goal. Initialize from the visible cubes at the first decision step, including only requested colors.",
+      "modify_to": "For goals requesting multiple container pickups, an ordered list of the original cube positions for requested container pickups not yet completed, in goal order. Initialize from the visible cubes at the first decision step, including only requested colors. For a single-pickup goal, write [] at every decision step: recover the target from the pre-covering frames and covering event in the pickup decision's observation instead."
+     },
+     {
+      "modify_from": "The other episodes retain their single initial target throughout their two recorded steps.",
+      "modify_to": "Single-pickup episodes instead have [] throughout."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_target_positions",
+    "edits": [
+     {
+      "modify_from": "With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless",
+      "modify_to": "For a single-pickup goal, write [] at every decision step; no target position needs to be carried. For a multiple-pickup goal, initialize only at the first decision step, when no incoming memory exists: read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. On subsequent decisions, an empty list means no pickups remain and must not be reinitialized. Otherwise carry the incoming list unchanged unless"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty.",
+    "modify_to": "After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and either the goal requests a single pickup or remaining_target_positions is nonempty."
+   },
+   {
+    "modify_from": "For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise.",
+    "modify_to": "For B in a single-pickup goal, read the requested color from the goal, locate its cube in the pre-covering frames of the current observation, and follow the covering event to its resting container. If descent is sampled only before and after, select the resting container nearest that observed cube position. For B in a multiple-pickup goal, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise."
+   },
+   {
+    "modify_from": "For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+    "modify_to": "A successful lift in a single-pickup goal completes the task; do not prescribe an additional put-down. For a multiple-pickup goal in an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies."
+   }
+  ],
+  "refused": "Do not delete remaining_target_positions globally or remove multiple-pickup continuation rules. The initialized documents explicitly cover episode 71, in which a second target must remain available after the first lift and subsequent release, when the original covering observation is no longer available. The current report establishes observation-local recoverability for single-pickup episodes only. Those episodes now carry no target information and select their target locally; multiple-pickup episodes retain the memory and intermediate put-down rules needed for continuation."
+ },
+ "not_applied": [],
+ "refused": "Do not delete remaining_target_positions globally or remove multiple-pickup continuation rules. The initialized documents explicitly cover episode 71, in which a second target must remain available after the first lift and subsequent release, when the original covering observation is no longer available. The current report establishes observation-local recoverability for single-pickup episodes only. Those episodes now carry no target information and select their target locally; multiple-pickup episodes retain the memory and intermediate put-down rules needed for continuation.",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_target_positions\",\n      \"edits\": [\n        {\n          \"modify_from\": \"An ordered list of the original cube positions for requested container pickups not yet completed, in the order specified by the goal. Initialize from the visible cubes at the first decision step, including only requested colors.\",\n          \"modify_to\": \"For goals requesting multiple container pickups, an ordered list of the original cube positions for requested container pickups not yet completed, in goal order. Initialize from the visible cubes at the first decision step, including only requested colors. For a single-pickup goal, write [] at every decision step: recover the target from the pre-covering frames and covering event in the pickup decision's observation instead.\"\n        },\n        {\n          \"modify_from\": \"The other episodes retain their single initial target throughout their two recorded steps.\",\n          \"modify_to\": \"Single-pickup episodes instead have [] throughout.\"\n        }\n      ]\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_target_positions\",\n      \"edits\": [\n        {\n          \"modify_from\": \"With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless\",\n          \"modify_to\": \"For a single-pickup goal, write [] at every decision step; no target position needs to be carried. For a multiple-pickup goal, initialize only at the first decision step, when no incoming memory exists: read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. On subsequent decisions, an empty list means no pickups remain and must not be reinitialized. Otherwise carry the incoming list unchanged unless\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty.\",\n      \"modify_to\": \"After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and either the goal requests a single pickup or remaining_target_positions is nonempty.\"\n    },\n    {\n      \"modify_from\": \"For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise.\",\n      \"modify_to\": \"For B in a single-pickup goal, read the requested color from the goal, locate its cube in the pre-covering frames of the current observation, and follow the covering event to its resting container. If descent is sampled only before and after, select the resting container nearest that observed cube position. For B in a multiple-pickup goal, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise.\"\n    },\n    {\n      \"modify_from\": \"For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.\",\n      \"modify_to\": \"A successful lift in a single-pickup goal completes the task; do not prescribe an additional put-down. For a multiple-pickup goal in an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.\"\n    }\n  ],\n  \"refused\": \"Do not delete remaining_target_positions globally or remove multiple-pickup continuation rules. The initialized documents explicitly cover episode 71, in which a second target must remain available after the first lift and subsequent release, when the original covering observation is no longer available. The current report establishes observation-local recoverability for single-pickup episodes only. Those episodes now carry no target information and select their target locally; multiple-pickup episodes retain the memory and intermediate put-down rules needed for continuation.\"\n}"
+}

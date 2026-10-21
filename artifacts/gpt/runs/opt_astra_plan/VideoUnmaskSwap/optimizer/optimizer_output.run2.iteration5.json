@@ -1,0 +1,90 @@
+{
+ "episodes": [
+  0,
+  2,
+  17,
+  60,
+  75
+ ],
+ "user_chars": 14754,
+ "usage": {
+  "prompt_tokens": 5383,
+  "completion_tokens": 469,
+  "total_tokens": 5852,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 5380,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment.",
+      "modify_to": "Track each moving container over the entire interval from departure to settling. Use continuity and direction of travel across the intermediate demonstration frames to assign its settled endpoint, resolving a moving pair jointly with the other container's complementary path. Do not reset an identity to the nearest original position or preserve detection-list order. Returning to the same unordered set of occupied positions is not evidence that identities have returned and is not a second exchange. One observed exchange switches the tracked containers' position assignments; only a further observed exchange of those identities restores the original assignment. Compute these intermediate tracks from the demonstration currently shown; persist only the resulting ordered list of final target locations."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them.",
+      "modify_to": "Follow each container's full directed path through intermediate demonstration frames, from departure to its settled endpoint, rather than using original cube locations or the sorted order of detections. When a pair moves, assign endpoints using those individual paths. A return to the same unordered set of occupied positions does not establish that identities have returned and must not be counted as an additional exchange. One observed exchange of the tracked containers switches their position assignments; only a further observed exchange restores them."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The episode-specific path and endpoint example are not added: the directed-path and exchange rules apply without hard-coding another demonstration. No subgoal-policy prompt change or new memory field is needed; the existing target-selection rule reads the corrected list. Pickup-completion and release updates remain unchanged."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them.",
+      "modify_to": "Follow each container's full directed path through intermediate demonstration frames, from departure to its settled endpoint, rather than using original cube locations or the sorted order of detections. When a pair moves, assign endpoints using those individual paths. A return to the same unordered set of occupied positions does not establish that identities have returned and must not be counted as an additional exchange. One observed exchange of the tracked containers switches their position assignments; only a further observed exchange restores them."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment.",
+      "modify_to": "Track each moving container over the entire interval from departure to settling. Use continuity and direction of travel across the intermediate demonstration frames to assign its settled endpoint, resolving a moving pair jointly with the other container's complementary path. Do not reset an identity to the nearest original position or preserve detection-list order. Returning to the same unordered set of occupied positions is not evidence that identities have returned and is not a second exchange. One observed exchange switches the tracked containers' position assignments; only a further observed exchange of those identities restores the original assignment. Compute these intermediate tracks from the demonstration currently shown; persist only the resulting ordered list of final target locations."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "The episode-specific path and endpoint example are not added: the directed-path and exchange rules apply without hard-coding another demonstration. No subgoal-policy prompt change or new memory field is needed; the existing target-selection rule reads the corrected list. Pickup-completion and release updates remain unchanged."
+ },
+ "not_applied": [],
+ "refused": "The episode-specific path and endpoint example are not added: the directed-path and exchange rules apply without hard-coding another demonstration. No subgoal-policy prompt change or new memory field is needed; the existing target-selection rule reads the corrected list. Pickup-completion and release updates remain unchanged.",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_targets\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Follow continuous motion through swaps, not the original cube locations or the sorted order of detections; one exchange switches identities and two exchanges restore them.\",\n          \"modify_to\": \"Follow each container's full directed path through intermediate demonstration frames, from departure to its settled endpoint, rather than using original cube locations or the sorted order of detections. When a pair moves, assign endpoints using those individual paths. A return to the same unordered set of occupied positions does not establish that identities have returned and must not be counted as an additional exchange. One observed exchange of the tracked containers switches their position assignments; only a further observed exchange restores them.\"\n        }\n      ]\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_targets\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Use trajectory continuity and direction across successive frames, rather than independently choosing the nearest original position or preserving detection-list order. Moving pairs exchange identities when they exchange positions; two exchanges restore the original assignment.\",\n          \"modify_to\": \"Track each moving container over the entire interval from departure to settling. Use continuity and direction of travel across the intermediate demonstration frames to assign its settled endpoint, resolving a moving pair jointly with the other container's complementary path. Do not reset an identity to the nearest original position or preserve detection-list order. Returning to the same unordered set of occupied positions is not evidence that identities have returned and is not a second exchange. One observed exchange switches the tracked containers' position assignments; only a further observed exchange of those identities restores the original assignment. Compute these intermediate tracks from the demonstration currently shown; persist only the resulting ordered list of final target locations.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [],\n  \"refused\": \"The episode-specific path and endpoint example are not added: the directed-path and exchange rules apply without hard-coding another demonstration. No subgoal-plan change or new memory field is needed; the existing target-selection rule reads the corrected list. Pickup-completion and release updates remain unchanged.\"\n}"
+}

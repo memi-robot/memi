@@ -1,0 +1,121 @@
+{
+ "episodes": [
+  23,
+  39,
+  51,
+  66,
+  87
+ ],
+ "user_chars": 18496,
+ "usage": {
+  "prompt_tokens": 9364,
+  "completion_tokens": 2667,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 9360
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 759
+  }
+ },
+ "reasoning": "I need to delete demo_placements since nothing downstream reads it after goal_target is derived, rewrite goal_target to track the shuffle, and update subgoal rules 2 and 4 to drop demo_placements references and point to the live target nearest goal_target instead.\n\nI'll quote the full existing text for the annotation and policy entries on goal_target verbatim so I can use a clean modify_from/modify_to swap, since the whole description needs to change.\n\nNow for the subgoal edits, I'm updating rule 2 so it points at the entry of demo_placements selected by the ordinal when goal_target is unknown but the list is non-empty, and adjusting rule 4's parenthetical to reference goal_target being unknown instead of an empty memory. I'm leaving out the release-ordering fixes and later-step consistency check as flagged, then assembling the final JSON output.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4).",
+    "modify_to": "choose B, drop onto, pointing at the target in the current scene that lies nearest to goal_target from memory, using that target's live position rather than the memory value verbatim."
+   },
+   {
+    "modify_from": "(e.g. the cube is held but memory is empty and no list can be derived, or the cube is not visible)",
+    "modify_to": "(e.g. the cube is held but goal_target is unknown, or the cube is not visible)"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "delete",
+    "field": "demo_placements",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "At the first decision step, after writing demo_placements, take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point. At every later step copy the carried-in value unchanged. unknown if demo_placements is empty. e.g. [116, 163]",
+      "modify_to": "At the first decision step (DEMONSTRATION STEPS shown, memory empty): first list, in time order, every frame where the goal-named cube is released onto a target: fingers open from ~46% to ~100% in a frame right after frames where that cube was 'held in the gripper', and the cube then rests within a few pixels of one of the listed targets. Skip the cube's starting spot, skip button presses (fingers 0% open, nothing held) and skip the final release near the image centre (cube left at about [82, 127], no target under it). Pick the release the ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4) and note the position of the target the cube rested on at that moment. Then check the last demonstration frames for the SHUFFLE: after the centre release, while the gripper is parked at about [54, 128] at height 0.2, compare the four target positions from one frame to the next. If two targets move (odd intermediate positions appear for a few frames, then the same four positions as before reappear), those two have traded places: if your noted target is one of them, write the ORIGINAL position of the OTHER moving target; otherwise write the noted position unchanged. Read the value from the last demo frame or the execution-start scene so it matches the live target list. At every later step copy the carried-in value unchanged. unknown only when no demonstration frames are shown and nothing is carried in. e.g. [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "demo_placements",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4. Written at step #1 from the demonstration and copied unchanged afterwards. unknown before the demonstration has been seen. e.g. [116, 163]",
+      "modify_to": "The [y, x] position, as it stands at the start of execution, of the target that the goal instruction's ordinal picks out. Written at step #1 (the only step that shows the demonstration) and copied unchanged at every later step; unknown only if no demonstration is shown. How to fill it: (1) walk the demonstration in time order and list every release of the goal-named cube onto a target: a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper', and the cube then rests within a few pixels of one of the listed targets. Ignore the cube's starting spot, button presses (fingers 0% open, nothing held) and the final release near the image centre at about [82, 127] where no target lies. The ordinal ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4) selects one of these releases; note the target the cube rested on, by its position at the moment of that release. (2) Track that target through the END-OF-DEMO SHUFFLE: after the final centre release, while the gripper is parked at about [54, 128] at height 0.2, two of the four targets may slide across the table and trade places over the last few demo frames (intermediate positions appear for two or three frames, then the same set of four positions as before reappears). If the noted target is one of the two that moved, its final position is the ORIGINAL position of the other moving target; if it did not move, or no target moved, its position is unchanged. Record that final position, read from the last demo frame or the scene at the start of execution. e.g. [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The per-step proposals that the demonstration releases had been listed in the wrong order or that the wrong release had been counted as the ordinal-th one stay out: the ordering and ordinal selection were correct in every failed episode, and the drop point differed only because the selected target traded places with another target in the end-of-demo shuffle; the shuffle tracking now written into goal_target covers all three failures with one rule. The request for a later-step check that goal_target agrees with the ordinal entry is also dropped: no step after the first shows the demonstration, so no such check can be evaluated there; the correction belongs at the first step where goal_target is written. No new field is added, since goal_target already carries the one fact the drop needs and demo_placements was read at no step after the first."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "demo_placements",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4. Written at step #1 from the demonstration and copied unchanged afterwards. unknown before the demonstration has been seen. e.g. [116, 163]",
+      "modify_to": "The [y, x] position, as it stands at the start of execution, of the target that the goal instruction's ordinal picks out. Written at step #1 (the only step that shows the demonstration) and copied unchanged at every later step; unknown only if no demonstration is shown. How to fill it: (1) walk the demonstration in time order and list every release of the goal-named cube onto a target: a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper', and the cube then rests within a few pixels of one of the listed targets. Ignore the cube's starting spot, button presses (fingers 0% open, nothing held) and the final release near the image centre at about [82, 127] where no target lies. The ordinal ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4) selects one of these releases; note the target the cube rested on, by its position at the moment of that release. (2) Track that target through the END-OF-DEMO SHUFFLE: after the final centre release, while the gripper is parked at about [54, 128] at height 0.2, two of the four targets may slide across the table and trade places over the last few demo frames (intermediate positions appear for two or three frames, then the same set of four positions as before reappears). If the noted target is one of the two that moved, its final position is the ORIGINAL position of the other moving target; if it did not move, or no target moved, its position is unchanged. Record that final position, read from the last demo frame or the scene at the start of execution. e.g. [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "At the first decision step, after writing demo_placements, take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point. At every later step copy the carried-in value unchanged. unknown if demo_placements is empty. e.g. [116, 163]",
+      "modify_to": "At the first decision step (DEMONSTRATION STEPS shown, memory empty): first list, in time order, every frame where the goal-named cube is released onto a target: fingers open from ~46% to ~100% in a frame right after frames where that cube was 'held in the gripper', and the cube then rests within a few pixels of one of the listed targets. Skip the cube's starting spot, skip button presses (fingers 0% open, nothing held) and skip the final release near the image centre (cube left at about [82, 127], no target under it). Pick the release the ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4) and note the position of the target the cube rested on at that moment. Then check the last demonstration frames for the SHUFFLE: after the centre release, while the gripper is parked at about [54, 128] at height 0.2, compare the four target positions from one frame to the next. If two targets move (odd intermediate positions appear for a few frames, then the same four positions as before reappear), those two have traded places: if your noted target is one of them, write the ORIGINAL position of the OTHER moving target; otherwise write the noted position unchanged. Read the value from the last demo frame or the execution-start scene so it matches the live target list. At every later step copy the carried-in value unchanged. unknown only when no demonstration frames are shown and nothing is carried in. e.g. [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4).",
+    "modify_to": "choose B, drop onto, pointing at the target in the current scene that lies nearest to goal_target from memory, using that target's live position rather than the memory value verbatim."
+   },
+   {
+    "modify_from": "(e.g. the cube is held but memory is empty and no list can be derived, or the cube is not visible)",
+    "modify_to": "(e.g. the cube is held but goal_target is unknown, or the cube is not visible)"
+   }
+  ],
+  "refused": "The per-step proposals that the demonstration releases had been listed in the wrong order or that the wrong release had been counted as the ordinal-th one stay out: the ordering and ordinal selection were correct in every failed episode, and the drop point differed only because the selected target traded places with another target in the end-of-demo shuffle; the shuffle tracking now written into goal_target covers all three failures with one rule. The request for a later-step check that goal_target agrees with the ordinal entry is also dropped: no step after the first shows the demonstration, so no such check can be evaluated there; the correction belongs at the first step where goal_target is written. No new field is added, since goal_target already carries the one fact the drop needs and demo_placements was read at no step after the first."
+ },
+ "not_applied": [],
+ "refused": "The per-step proposals that the demonstration releases had been listed in the wrong order or that the wrong release had been counted as the ordinal-th one stay out: the ordering and ordinal selection were correct in every failed episode, and the drop point differed only because the selected target traded places with another target in the end-of-demo shuffle; the shuffle tracking now written into goal_target covers all three failures with one rule. The request for a later-step check that goal_target agrees with the ordinal entry is also dropped: no step after the first shows the demonstration, so no such check can be evaluated there; the correction belongs at the first step where goal_target is written. No new field is added, since goal_target already carries the one fact the drop needs and demo_placements was read at no step after the first.",
+ "text": "{\"annotator_prompt\": [\n  {\"kind\": \"delete\", \"field\": \"demo_placements\"},\n  {\"kind\": \"modify\", \"field\": \"goal_target\", \"edits\": [\n    {\"modify_from\": \"The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4. Written at step #1 from the demonstration and copied unchanged afterwards. unknown before the demonstration has been seen. e.g. [116, 163]\",\n     \"modify_to\": \"The [y, x] position, as it stands at the start of execution, of the target that the goal instruction's ordinal picks out. Written at step #1 (the only step that shows the demonstration) and copied unchanged at every later step; unknown only if no demonstration is shown. How to fill it: (1) walk the demonstration in time order and list every release of the goal-named cube onto a target: a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper', and the cube then rests within a few pixels of one of the listed targets. Ignore the cube's starting spot, button presses (fingers 0% open, nothing held) and the final release near the image centre at about [82, 127] where no target lies. The ordinal ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4) selects one of these releases; note the target the cube rested on, by its position at the moment of that release. (2) Track that target through the END-OF-DEMO SHUFFLE: after the final centre release, while the gripper is parked at about [54, 128] at height 0.2, two of the four targets may slide across the table and trade places over the last few demo frames (intermediate positions appear for two or three frames, then the same set of four positions as before reappears). If the noted target is one of the two that moved, its final position is the ORIGINAL position of the other moving target; if it did not move, or no target moved, its position is unchanged. Record that final position, read from the last demo frame or the scene at the start of execution. e.g. [101, 166]\"}\n  ]}\n],\n\"policy_prompt_for_memory\": [\n  {\"kind\": \"delete\", \"field\": \"demo_placements\"},\n  {\"kind\": \"modify\", \"field\": \"goal_target\", \"edits\": [\n    {\"modify_from\": \"At the first decision step, after writing demo_placements, take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point. At every later step copy the carried-in value unchanged. unknown if demo_placements is empty. e.g. [116, 163]\",\n     \"modify_to\": \"At the first decision step (DEMONSTRATION STEPS shown, memory empty): first list, in time order, every frame where the goal-named cube is released onto a target: fingers open from ~46% to ~100% in a frame right after frames where that cube was 'held in the gripper', and the cube then rests within a few pixels of one of the listed targets. Skip the cube's starting spot, skip button presses (fingers 0% open, nothing held) and skip the final release near the image centre (cube left at about [82, 127], no target under it). Pick the release the ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4) and note the position of the target the cube rested on at that moment. Then check the last demonstration frames for the SHUFFLE: after the centre release, while the gripper is parked at about [54, 128] at height 0.2, compare the four target positions from one frame to the next. If two targets move (odd intermediate positions appear for a few frames, then the same four positions as before reappear), those two have traded places: if your noted target is one of them, write the ORIGINAL position of the OTHER moving target; otherwise write the noted position unchanged. Read the value from the last demo frame or the execution-start scene so it matches the live target list. At every later step copy the carried-in value unchanged. unknown only when no demonstration frames are shown and nothing is carried in. e.g. [101, 166]\"}\n  ]}\n],\n\"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4).\",\n   \"modify_to\": \"choose B, drop onto, pointing at the target in the current scene that lies nearest to goal_target from memory, using that target's live position rather than the memory value verbatim.\"},\n  {\"modify_from\": \"(e.g. the cube is held but memory is empty and no list can be derived, or the cube is not visible)\",\n   \"modify_to\": \"(e.g. the cube is held but goal_target is unknown, or the cube is not visible)\"}\n],\n\"refused\": \"The per-step proposals that the demonstration releases had been listed in the wrong order or that the wrong release had been counted as the ordinal-th one stay out: the ordering and ordinal selection were correct in every failed episode, and the drop point differed only because the selected target traded places with another target in the end-of-demo shuffle; the shuffle tracking now written into goal_target covers all three failures with one rule. The request for a later-step check that goal_target agrees with the ordinal entry is also dropped: no step after the first shows the demonstration, so no such check can be evaluated there; the correction belongs at the first step where goal_target is written. No new field is added, since goal_target already carries the one fact the drop needs and demo_placements was read at no step after the first.\"}"
+}

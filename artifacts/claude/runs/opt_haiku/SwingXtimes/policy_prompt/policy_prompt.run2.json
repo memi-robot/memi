@@ -1,0 +1,77 @@
+{
+ "task": "SwingXtimes",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 2,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    27,
+    45,
+    53,
+    72,
+    78
+   ],
+   "verified_of_all": 0.918918918918919,
+   "subgoal_verified": 0.918918918918919
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    6,
+    31,
+    48,
+    58,
+    64
+   ],
+   "verified_of_all": 0.8857142857142857,
+   "subgoal_verified": 0.9428571428571428
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    23,
+    38,
+    59,
+    71,
+    74
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    23,
+    27,
+    49,
+    60,
+    82
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    15,
+    25,
+    26,
+    39,
+    75
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Coordinates are [y, x]. The right-side target is the one with the SMALLER x; the left-side target is the one with the LARGER x. First read the goal to get the required number of target visits REQ: if it says 'repeating this back and forth motion N times' then REQ = 2*N (two=4, three=6); if it instead says 'then put it down on the left-side target' then REQ = 2. Every episode starts with subgoal A. At each decision step FIRST update visits_done from what the step shows (per the memory instruction), THEN apply every rule below to the UPDATED value, never the carried-in one. Rules (apply whichever matches the current step and memory): 0. Every test below of cube state ('held' or 'not held'), finger opening, gripper height and target highlighting is applied to the LAST frame shown, the scene at the decision step. The earlier frames are the previous command being executed and are already finished; they never decide the subgoal. 'Held' means the last frame literally says the cube 'is held in the gripper'; if it omits that phrase and the fingers are 100% open, the cube is on the table. 1. If the cube is NOT held in the gripper and visits_done is 0 (cube resting on the table, fingers open, nothing done yet): choose A, pick up the cube, pointing at the cube's center coordinates. 2. If the cube IS held in the gripper and visits_done < REQ: choose B, move to the top of the target. Pointing rule: if a highlighted target is visible in the scene, point at the target that is NOT highlighted (its listed coordinates); the highlighted one is the target just reached and is never the point. If no target is highlighted (just after pick-up), point at the right-side target (smaller x). As a check only, the updated visits_done parity should agree: even (0, 2, 4...) means the point is the right-side target, odd (1, 3, 5...) the left-side target. 3. If the cube IS held in the gripper and the updated visits_done >= REQ (the cube is now above the left-side target after the last required visit): choose C, put the cube on the table. 4. If the cube is NOT held in the gripper and the updated visits_done >= REQ (cube resting on the table after the put-down, fingers fully open, gripper raised): choose D, press the button. If no rule matches: when the cube is held, choose B pointing at the target that is not highlighted; when the cube is on the table and visits_done is 0, choose A at the cube; when the cube is on the table and visits_done > 0, choose D.",
+ "fields": [
+  {
+   "name": "visits_done",
+   "description": "If the carried-in memory is empty (first decision step), write visits_done=0 explicitly as this step's memory. Otherwise carry in the previous value. Compute this field BEFORE choosing the subgoal; the subgoal rules read the updated value. Look ONLY at the last frame shown (the scene at this decision step). Add 1 if and only if that last frame says the cube 'is held in the gripper' AND lists a 'highlighted target' under the gripper (its x within about 15 of the gripper's x). Do not look at earlier frames of the step for this test; whether the highlight was already present earlier in the step is irrelevant, one such final scene is one arrival. Do not add when the last frame shows the cube held with no highlighted target (the pick-up step), or when the last frame does not say 'is held' (put-down done, or button step). Otherwise keep the carried-in value unchanged (the pick-up step, the put-down step where the cube ends on the table with fingers fully open, and the press-button step do not change it). e.g. 3"
+  }
+ ],
+ "stage": "optimized"
+}

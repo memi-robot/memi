@@ -1,0 +1,241 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "placed"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  9,
+  38,
+  49,
+  71,
+  94
+ ],
+ "scored": 33,
+ "failed": 12,
+ "subgoal_wrong": 7,
+ "memory_wrong": 9,
+ "subgoal_verified": 0.7878787878787878,
+ "memory_verified": 0.7272727272727273,
+ "reads": {
+  "placed": 18
+ },
+ "field_errors": {
+  "placed": {
+   "in": 9,
+   "sole": 9
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.36363636363636365,
+ "verified_of_all": 0.6363636363636364,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 6,
+ "decisions": 33,
+ "critique": "field placed, POLICY PROMPT\n  Three separate faults, all PREDICTABILITY failures where the policy wrote a value different from the annotated one at the same step. (1) At the first decision step after a cube had been carried over the bin and released (execution frames show 'is held in the gripper', the scene at the decision step shows fingers 100% open with nothing held), several policies with a carried-in value of [] left the list empty, because the clause 'when the carried-in memory is empty, write the literal []' read as overriding the append rule. It must say: the literal [] is written only when the carried-in memory is blank and there are no execution steps at all (the very first decision step); a carried-in [] with execution steps is appended to like any other list, so the step after the first placement writes a one-entry list such as [\"blue\"]. (2) The sentence meant to say that release position and table-cube changes are irrelevant is garbled ('append whatever the gripper position at release ... and whatever cubes appear, move or vanish') and was read as a condition, so policies refused to append when the gripper opened 40-50 px from the bin's reported center or when a same-color detection reappeared on the table near the release point. Rewrite it as a plain two-part check applied in order: first, does any execution frame of this step contain a line ending 'is held in the gripper'; second, does the scene at this decision step show fingers about 100% open with no held line. If both hold, the oracle completed the put-into-bin subgoal: append that held cube's color exactly once, no matter where the gripper was when the fingers opened, no matter whether the fingers opened only to 67-99% in an intermediate frame, and no matter what same-color detections appear, shift a few px, or vanish on the table in those frames (detections near the opaque bin are echoes of the held cube or bin contents, not table cubes). Do not append when the last frame still shows a held cube (a pick-up), when there are no execution steps, or when the robot only pressed the button. (3) Six policies wrote the right contents in a Python-style single-quoted list (['red', 'green']). State at the point of the example that the value string must be emitted character-for-character as a JSON array with double-quoted strings, e.g. [\"red\", \"green\"], identical in form to the carried-in value, and that a single-quoted list counts as a wrong value. Example: carried-in [\"blue\", \"blue\"] after a held-then-released blue cube becomes [\"blue\", \"blue\", \"blue\"].\n\nthe policy prompt for subgoal\n  All reported subgoal failures are SUFFICIENCY failures in Rule 3 (pick): the memory and the scene did settle the step, but the stated rule either picked the wrong color or excluded or mis-ranked the recorded cube. Four changes. First, the starting-color rule is undetermined when `placed` is empty and the goal names two colors: one policy began with the color nearer the bin while the recorded episodes always begin with the color named first in the goal instruction. Replace 'pick any color that still has fewer entries than required' with: when `placed` is empty, or when the last entry's color is already complete, take the first color in the goal instruction's order whose count in `placed` (as updated at this step) is still below its requirement; when the last entry's color is still short, continue with that color. State before this, as the first check of Rule 3, that a color whose count in the updated `placed` meets its requirement is finished and is never picked again even if cubes of that color remain visible on the table; also that Rule 2 is evaluated against `placed` after this step's append, so a step whose execution frames show a cube held and whose last frame shows fingers 100% open with nothing held counts that cube as placed, and the answer is C when every goal count is then met, even though cubes of the goal color remain on the table including one that reappeared near the bin after release. Second, the stability test 'same coordinates within about 2 px in every execution frame' is too strict: detections wobble up to about 5 px and a real cube can be missing from one frame while the arm passes over it, which made policies discard the recorded cube and fall back to a farther one. Replace with: a candidate is a table cube of the needed color reported in the scene at this decision step and at nearly the same place (within about 6 px) in all but at most one of the execution frames of this step; the point is its center as reported in the last frame, and a point within about 3 px of that center is correct. Third, the exclusion radius around the bin is too small: a detection about 30 px from the bin's reported center is a bin echo, not a cube; raise the exclusion to about 35 px and keep excluding a detection that sits where the held cube was last reported before release. Fourth, keep the tie-break 'nearest the bin's reported center among candidates not excluded' as the primary rule (it matches most multi-candidate steps in these episodes), but add a secondary tie-break when two candidates are within about 5 px of the same bin distance: prefer the one with the larger y (farther forward). No rule should be removed; Rule 1 (holding) and Rule 2 (done) stood correct at every step.\n\nrefused\n  Two reports asked to replace the nearest-bin tie-break with a different criterion: one proposed 'nearest the button' because, at a first decision step with five same-color cubes, the recorded pick was the one closest to the button and far from the bin; another proposed 'nearest the gripper's last-frame position' because, with four same-color candidates, the recorded pick was the farthest from the bin and nearest the raised gripper. Each criterion fits its own step but contradicts the other episodes: nearest-the-button picks the wrong cube when the second cube of a color is chosen next to the bin and a same-color cube sits closer to the button, and nearest-the-gripper picks the wrong cube when the recorded choice is the forward cube near the bin while another cube of that color lies directly under the raised gripper. Nearest-bin fits the clear majority of multi-candidate steps, so it stays, and those two steps remain unresolved by any single visible criterion we could find; they are not passed on as rule changes. Six reports said only that the policy wrote the list with single quotes while the instruction already demands double-quoted JSON; that is a formatting fault the instruction already covers, and it is passed on only as a one-sentence emphasis, not as a new rule. One report asked to make 'a cube appearing after release near the held cube's last position' the preferred target; that contradicts every other placement step, where such detections are bin echoes and are never picked, so it is dropped in favor of the relaxed stability test and the secondary tie-break described above.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "All reported subgoal failures are SUFFICIENCY failures in Rule 3 (pick): the memory and the scene did settle the step, but the stated rule either picked the wrong color or excluded or mis-ranked the recorded cube. Four changes. First, the starting-color rule is undetermined when `placed` is empty and the goal names two colors: one policy began with the color nearer the bin while the recorded episodes always begin with the color named first in the goal instruction. Replace 'pick any color that still has fewer entries than required' with: when `placed` is empty, or when the last entry's color is already complete, take the first color in the goal instruction's order whose count in `placed` (as updated at this step) is still below its requirement; when the last entry's color is still short, continue with that color. State before this, as the first check of Rule 3, that a color whose count in the updated `placed` meets its requirement is finished and is never picked again even if cubes of that color remain visible on the table; also that Rule 2 is evaluated against `placed` after this step's append, so a step whose execution frames show a cube held and whose last frame shows fingers 100% open with nothing held counts that cube as placed, and the answer is C when every goal count is then met, even though cubes of the goal color remain on the table including one that reappeared near the bin after release. Second, the stability test 'same coordinates within about 2 px in every execution frame' is too strict: detections wobble up to about 5 px and a real cube can be missing from one frame while the arm passes over it, which made policies discard the recorded cube and fall back to a farther one. Replace with: a candidate is a table cube of the needed color reported in the scene at this decision step and at nearly the same place (within about 6 px) in all but at most one of the execution frames of this step; the point is its center as reported in the last frame, and a point within about 3 px of that center is correct. Third, the exclusion radius around the bin is too small: a detection about 30 px from the bin's reported center is a bin echo, not a cube; raise the exclusion to about 35 px and keep excluding a detection that sits where the held cube was last reported before release. Fourth, keep the tie-break 'nearest the bin's reported center among candidates not excluded' as the primary rule (it matches most multi-candidate steps in these episodes), but add a secondary tie-break when two candidates are within about 5 px of the same bin distance: prefer the one with the larger y (farther forward). No rule should be removed; Rule 1 (holding) and Rule 2 (done) stood correct at every step.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "placed",
+    "description": "Three separate faults, all PREDICTABILITY failures where the policy wrote a value different from the annotated one at the same step. (1) At the first decision step after a cube had been carried over the bin and released (execution frames show 'is held in the gripper', the scene at the decision step shows fingers 100% open with nothing held), several policies with a carried-in value of [] left the list empty, because the clause 'when the carried-in memory is empty, write the literal []' read as overriding the append rule. It must say: the literal [] is written only when the carried-in memory is blank and there are no execution steps at all (the very first decision step); a carried-in [] with execution steps is appended to like any other list, so the step after the first placement writes a one-entry list such as [\"blue\"]. (2) The sentence meant to say that release position and table-cube changes are irrelevant is garbled ('append whatever the gripper position at release ... and whatever cubes appear, move or vanish') and was read as a condition, so policies refused to append when the gripper opened 40-50 px from the bin's reported center or when a same-color detection reappeared on the table near the release point. Rewrite it as a plain two-part check applied in order: first, does any execution frame of this step contain a line ending 'is held in the gripper'; second, does the scene at this decision step show fingers about 100% open with no held line. If both hold, the oracle completed the put-into-bin subgoal: append that held cube's color exactly once, no matter where the gripper was when the fingers opened, no matter whether the fingers opened only to 67-99% in an intermediate frame, and no matter what same-color detections appear, shift a few px, or vanish on the table in those frames (detections near the opaque bin are echoes of the held cube or bin contents, not table cubes). Do not append when the last frame still shows a held cube (a pick-up), when there are no execution steps, or when the robot only pressed the button. (3) Six policies wrote the right contents in a Python-style single-quoted list (['red', 'green']). State at the point of the example that the value string must be emitted character-for-character as a JSON array with double-quoted strings, e.g. [\"red\", \"green\"], identical in form to the carried-in value, and that a single-quoted list counts as a wrong value. Example: carried-in [\"blue\", \"blue\"] after a held-then-released blue cube becomes [\"blue\", \"blue\", \"blue\"]."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "Two reports asked to replace the nearest-bin tie-break with a different criterion: one proposed 'nearest the button' because, at a first decision step with five same-color cubes, the recorded pick was the one closest to the button and far from the bin; another proposed 'nearest the gripper's last-frame position' because, with four same-color candidates, the recorded pick was the farthest from the bin and nearest the raised gripper. Each criterion fits its own step but contradicts the other episodes: nearest-the-button picks the wrong cube when the second cube of a color is chosen next to the bin and a same-color cube sits closer to the button, and nearest-the-gripper picks the wrong cube when the recorded choice is the forward cube near the bin while another cube of that color lies directly under the raised gripper. Nearest-bin fits the clear majority of multi-candidate steps, so it stays, and those two steps remain unresolved by any single visible criterion we could find; they are not passed on as rule changes. Six reports said only that the policy wrote the list with single quotes while the instruction already demands double-quoted JSON; that is a formatting fault the instruction already covers, and it is passed on only as a one-sentence emphasis, not as a new rule. One report asked to make 'a cube appearing after release near the held cube's last position' the preferred target; that contradicts every other placement step, where such detections are bin echoes and are never picked, so it is dropped in favor of the relaxed stability test and the secondary tie-break described above."
+ },
+ "critiques": [
+  {
+   "step": [
+    9,
+    "exec",
+    331
+   ],
+   "memory_in": "placed=[\"blue\"]",
+   "answered": "A: pick up the cube at [75, 102]",
+   "recorded": "A: pick up the cube at [55, 119]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The candidate rule excluded the recorded target. The recorded point [55, 119] is the cube at [54, 118], which is absent from the first execution frame (t=288) and first appears at t=304, about 10 px from where the held cube was last reported ([64, 123]). The instruction says a detection that first appears during the step, or sits where the held cube was last reported, is not a candidate while a stable one exists, and [75, 102] (present within 2 px in every frame, nearest the bin) is stable, so the instruction forces [75, 102]. It needs to state the actual selection criterion that yields [54, 118] here: e.g. that a cube appearing after the release near the held cube's last position IS the preferred target (or that candidacy is judged only on the last frame, with a stated tie-break such as largest x / robot's left-most, or nearest the gripper excluding the bin region), instead of the stability-across-frames rule that contradicts this recorded step.",
+   "missing": ""
+  },
+  {
+   "step": [
+    9,
+    "exec",
+    529
+   ],
+   "memory_in": "placed=[\"blue\", \"blue\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction already says the value must be a JSON array of double-quoted strings, e.g. [\"blue\", \"blue\", \"blue\"], never single quotes. My written value used single quotes (['blue', 'blue', 'blue']), which is a formatting slip on my side, not a missing rule; the instruction could at most add an explicit note that a memory_updates value for `placed` must be written character-for-character as a JSON array with double quotes, matching the carried-in form exactly.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [96, 104]",
+   "recorded": "A: pick up the cube at [87, 70]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "When `placed` is empty and the goal names more than one color (here 'one red cube and one green cube'), the instruction says 'pick any color that still has fewer entries than required', which left the first color undetermined; I picked green at [96, 104] (nearer the bin) while the recorded answer picked red at [86, 69]. It needs a fixed tie-break for the starting color, e.g. start with the color named first in the goal instruction (red before green), and only then apply the nearest-to-bin preference among cubes of that one color.",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    190
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [115, 145]",
+   "recorded": "A: pick up the cube at [97, 105]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It should state explicitly, as a first check in Rule 3, that a goal color whose count in the updated `placed` already meets its required number (here red: placed=[\"red\"], one red required) is finished and must never be picked again, even if a stable red cube like [115, 145] is visible; the pick color is only among the colors still short, so here green, pointing at the stable green cube nearest the bin, [96, 104].",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    334
+   ],
+   "memory_in": "placed=[\"red\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The only disagreement is formatting: I wrote ['red', 'green'] with single quotes while the recorded value is [\"red\", \"green\"] with double quotes. The instruction does say to use double-quoted strings, but the sentence about appending is garbled ('append whatever the gripper position at release ... and whatever cubes appear, move or vanish') which obscures the rule; it should state plainly: output the list as a JSON array with double-quoted strings exactly, e.g. [\"red\", \"green\"], and treat a single-quoted form as wrong.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    49,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=",
+   "answered": "A: pick up the cube at [110, 112]",
+   "recorded": "A: pick up the cube at [99, 85]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The tie-break among several stable candidates is wrong for this step. It says to prefer the cube nearest the bin's reported center without overlapping it; with the bin at [117, 169] that selects the red cube at [110, 112] (about 57 px away), yet the recorded answer is the red cube at [98, 84] (about 87 px from the bin). At step #1 with five red cubes at [56, 177], [98, 84], [110, 112], [111, 65], [117, 82], the recorded choice is the one closest to the button at [60, 87] (about 38 px), not the one closest to the bin. The instruction needs to state the actual tie-break for several same-color candidates (e.g. prefer the candidate nearest the button / toward the robot's rear-right, or whatever criterion picks [98, 84] here) and when, if ever, bin-proximity is used instead.",
+   "missing": ""
+  },
+  {
+   "step": [
+    49,
+    "exec",
+    182
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [110, 112]",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction's key sentence is garbled ('append whatever the gripper position at release ... and whatever cubes appear, move or vanish on the table in the same frames'), which left room to read the held-then-released pattern as a drop onto the table: here the cube was held at t=112/128/144, released at [73,193] about 50 px from the bin's reported center [117,169], and a red cube reappeared on the table at [64,179]/[56,177] right where the release happened. The instruction should state plainly: the held-then-released pattern (a 'held in the gripper' line in any execution frame of this step, and the last frame with fingers ~100% open and no held line) ALWAYS means the cube went into the bin, so append its color regardless of where the gripper was at release and regardless of any cube reappearing on the table near the release point; the reappearing detection is the bin contents/held cube echo, not a cube on the table.",
+   "missing_from_policy_prompt_for_subgoal": "It should say explicitly that Rule 2 is evaluated against `placed` AFTER applying this step's append, and give the worked case: when this step's execution frames show a cube held and the last frame shows fingers 100% open with no cube held, that cube counts as placed now, so with goal 'one red cube' the answer is C even though red cubes remain visible on the table (including one that reappeared near the bin after release).",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    209
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [71, 130]",
+   "recorded": "A: pick up the cube at [72, 131]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The clause 'When the carried-in memory is empty, write the literal [] as this step's value' reads as overriding the append rule whenever the carried-in list is [], which is exactly this step: carried-in placed=[] and the execution frames t=144..176 show a blue cube held in the gripper while the scene at t=209 shows fingers 100% open with nothing held. The instruction should say that the [] rule applies only at step #1 when there are no execution steps at all, and that otherwise a carried-in [] is appended to like any other list, so this step must write [\"blue\"]. It should also state the check order explicitly: first look for any 'is held in the gripper' line in the execution frames, then check the last frame for 100% open with no held line, and if both hold append that color regardless of the carried-in list being empty.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    715
+   ],
+   "memory_in": "placed=[\"blue\", \"blue\", \"blue\"]",
+   "answered": "A: pick up the cube at [78, 113]",
+   "recorded": "A: pick up the cube at [54, 124]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing (the instruction already said double-quoted strings; I wrote single quotes, so the format fault was mine, not the instruction's)",
+   "missing_from_policy_prompt_for_subgoal": "The tie-break among several stable candidates of the needed color is wrong for this step. Four green cubes were stable at [52,122], [64,123], [70,101], [78,113]; the instruction says prefer the one nearest the bin's reported center ([101,141]), which is [78,113] (about 36 px away). The recorded point [54,124] is the cube at [52,122], which is the FARTHEST from the bin but the NEAREST to the gripper's position in the last frame ([34,144], about 28 px away) and also the one with the smallest y (closest to the robot). The instruction should say: among stable candidates of the needed color, choose the one nearest the gripper's position in the scene at this decision step (equivalently the backward-most / smallest-y one when the gripper is raised at the near edge), not the one nearest the bin. It should also allow the recorded point to sit within about 2-3 px of the reported center ([54,124] vs [52,122]).",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    928
+   ],
+   "memory_in": "placed=[\"blue\", \"blue\", \"blue\", \"green\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction already demands double-quoted JSON strings; the content of my value matched the recorded one and only the quoting form differed (single quotes). It could state that the value must be emitted character-for-character as a JSON array with double quotes, e.g. [\"blue\", \"blue\", \"blue\", \"green\", \"green\"], and that a Python-style list with single quotes counts as a wrong value.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    186
+   ],
+   "memory_in": "placed=[]",
+   "answered": "A: pick up the cube at [108, 138]",
+   "recorded": "A: pick up the cube at [66, 84]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The frames at t=128 and t=144 show 'red cube ... is held in the gripper' and the scene at t=186 shows fingers 100% open with no cube held, so the append rule applied and placed should become [\"red\"]. The sentence meant to say this ('append whatever the gripper position at release ... and whatever cubes appear, move or vanish') is garbled and reads as if release position and table changes are conditions rather than things to ignore; it should state plainly: append the held color regardless of where the gripper was at release (here [63, 68], 47 px from the bin at [107, 86]) and regardless of a table cube of that color shifting a few px (here the red cube near [65, 82] drifting to [64, 83]).",
+   "missing_from_policy_prompt_for_subgoal": "The red cube near the bin is reported at [65, 82], [67, 86], [65, 81], [64, 83], [64, 83] across the frames, a jitter of up to about 5 px, so under the stated 'within about 2 px in every frame' test it was not a stable candidate and I fell back to [108, 138]. The instruction should allow detection jitter of roughly 5 px (or say that a table cube reported in every frame of the step at nearly the same place is stable even if it wobbles a few px), so that this cube, which is the one nearest the bin (43 px vs 52 px for [108, 138]) and not overlapping it, is the pick. It should also say to point at the cube's stable position (recorded as [66, 84], close to its last-frame center [64, 83]).",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    526
+   ],
+   "memory_in": "placed=[\"red\", \"red\"]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction already says to write the list as a JSON array of double-quoted strings (e.g. [\"red\", \"red\", \"green\"], never ['red', 'red', 'green']); my value had the same content but was serialized with single quotes. The instruction could state once more, at the point of the append example, that the memory_updates value string itself must be the exact JSON text with double quotes, since the disagreement is only in quoting, not in content.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

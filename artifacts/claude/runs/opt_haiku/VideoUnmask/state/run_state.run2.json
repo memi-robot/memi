@@ -1,0 +1,297 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoUnmask",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   4,
+   7,
+   17,
+   30,
+   93
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in subgoal A: pick up the container. Count the cubes named in the goal; that is the number of targets N, equal to the length of target_containers. Rule for A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or gripper raised out of frame) and picks_done is less than N. Point at the container listed at index picks_done in target_containers (the first entry when picks_done is 0, the second when picks_done is 1). Write the point as that container's position with y reduced by about 3 pixels (e.g. container [84, 156] gives point [81, 158]). If the container visible at this step has drifted slightly from the stored position, point at the visible container nearest the stored position. Rule for B (put down): choose B whenever the gripper is holding a container (fingers partly closed, around 40-60% open, gripper raised after a grasp) and picks_done is less than N, meaning another target still has to be picked up. After the put-down the next decision step will show fingers fully open; then apply rule A for the next target. When picks_done equals N and the robot is holding a container, the task is complete and no further decision is expected; if asked anyway, choose B. If a situation matches no rule (e.g. fingers closed on nothing, 0% open, or the memory is inconsistent with the scene), choose A and point at the entry of target_containers at index picks_done, or at the first entry if that index does not exist, and do not change picks_done.",
+  "fields": [
+   {
+    "name": "target_containers",
+    "description": "Ordered list of container positions, one per cube named in the goal, in the order the goal names them. At the first decision step (memory empty, demonstration steps shown): for each cube color named in the goal, read that cube's position from the demonstration steps before the containers appear, then take the container whose position is within a few pixels of it after the containers appear, and write that container's position; the cubes are no longer listed once containers are shown. Copy the list unchanged at every later step. e.g. [[81, 95], [66, 143]]",
+    "annotation": "Ordered list of the positions of the containers that the goal asks for, in goal order (first the container hiding the first named cube, then the one hiding the next named cube, if any). Each position is the demonstration position of the container that came down over that cube, i.e. the container whose coordinates lie within a few pixels of where that cube was before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed afterwards. e.g. [[81, 95], [66, 143]]"
+   },
+   {
+    "name": "picks_done",
+    "description": "Count of target containers picked up so far. Write 0 at the first decision step. At any later step, take the carried-in value and add one if the execution steps since the previous decision step show the fingers going from fully open to partly closed (about 40-60% open) with the gripper then raised, i.e. a container was grasped and lifted; otherwise copy the carried-in value. e.g. 1",
+    "annotation": "Number of target containers the robot has picked up so far in this episode. 0 at the first decision step. Increases by one at the first decision step whose execution steps show the robot having closed its fingers on a container and lifted it (fingers partly closed, around 40-60% open, gripper raised); stays the same at steps that show a put-down or no grasp. e.g. 1"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoUnmask",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   4,
+   7,
+   17,
+   30,
+   93
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in subgoal A: pick up the container. Count the cubes named in the goal; that is the number of targets N, equal to the length of target_containers. Rule for A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or gripper raised out of frame) and picks_done is less than N. Point at the container listed at index picks_done in target_containers (the first entry when picks_done is 0, the second when picks_done is 1). Write the point as that container's position with y reduced by about 3 pixels (e.g. container [84, 156] gives point [81, 158]). If the container visible at this step has drifted slightly from the stored position, point at the visible container nearest the stored position. Rule for B (put down): choose B whenever the gripper is holding a container (fingers partly closed, around 40-60% open, gripper raised after a grasp) and picks_done is less than N, meaning another target still has to be picked up. After the put-down the next decision step will show fingers fully open; then apply rule A for the next target. When picks_done equals N and the robot is holding a container, the task is complete and no further decision is expected; if asked anyway, choose B. If a situation matches no rule (e.g. fingers closed on nothing, 0% open, or the memory is inconsistent with the scene), choose A and point at the entry of target_containers at index picks_done, or at the first entry if that index does not exist, and do not change picks_done.",
+  "fields": [
+   {
+    "name": "target_containers",
+    "description": "Ordered list of container positions, one per cube named in the goal, in the order the goal names them. At the first decision step (memory empty, demonstration steps shown): for each cube color named in the goal, read that cube's position from the demonstration steps before the containers appear, then take the container whose position is within a few pixels of it after the containers appear, and write that container's position; the cubes are no longer listed once containers are shown. Copy the list unchanged at every later step. e.g. [[81, 95], [66, 143]]",
+    "annotation": "Ordered list of the positions of the containers that the goal asks for, in goal order (first the container hiding the first named cube, then the one hiding the next named cube, if any). Each position is the demonstration position of the container that came down over that cube, i.e. the container whose coordinates lie within a few pixels of where that cube was before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed afterwards. e.g. [[81, 95], [66, 143]]"
+   },
+   {
+    "name": "picks_done",
+    "description": "Count of target containers picked up so far. Write 0 at the first decision step. At any later step, take the carried-in value and add one if the execution steps since the previous decision step show the fingers going from fully open to partly closed (about 40-60% open) with the gripper then raised, i.e. a container was grasped and lifted; otherwise copy the carried-in value. e.g. 1",
+    "annotation": "Number of target containers the robot has picked up so far in this episode. 0 at the first decision step. Increases by one at the first decision step whose execution steps show the robot having closed its fingers on a container and lifted it (fingers partly closed, around 40-60% open, gripper raised); stays the same at steps that show a put-down or no grasp. e.g. 1"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 5,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "target_containers": 0,
+     "picks_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field picks_done, ANNOTATOR PROMPT\n  DELETE this field. In every episode the goal names exactly one cube, the episode has a single decision step, and the robot's pick ends the episode, so no later step ever reads a count of picks. Whether the gripper is holding a container is visible at any step from the finger opening (fully open versus partly closed with the gripper raised), so the fact is recoverable from the scene and the field breaks NECESSITY. Nothing folds into another field.\n\nfield target_containers, ANNOTATOR PROMPT\n  MODIFY to a single position rather than an ordered list, holding the demonstration position of the one container that came down over the cube named in the goal, i.e. the container whose coordinates lie within a few pixels of where that cube was in the demonstration steps before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed. It is kept, not dropped, because the demonstration is shown once and only at the first decision step; should any decision step follow the first (a grasp that failed and has to be retried), nothing in that later step recovers which container hid the named cube. e.g. [92, 87]\n\nfield picks_done, POLICY PROMPT\n  DELETE this field. Do not write it. Whether a container is currently held is read from the fingers at the step itself: fully open means not holding, partly closed (about 40-60% open) with the gripper raised means holding.\n\nfield target_containers, POLICY PROMPT\n  MODIFY to one position [y, x]. At the first decision step (memory empty, demonstration steps shown): read the position of the cube whose color the goal names from the demonstration steps before the containers appear, then take the container whose position after the containers appear is within a few pixels of it, and write that container's position. At any later step copy the carried-in value unchanged. e.g. [92, 87]\n\nthe policy prompt for subgoal\n  Remove the counting of named cubes into N and every condition on picks_done; the goal names one cube and there is one target. Rule A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or raised out of frame). At the first decision step, with the memory empty and the demonstration steps shown, do not read target_containers for the point: find the named cube's position in the demonstration steps before the containers appear, take the container within a few pixels of it after they appear, and point at that container with y reduced by about 3 pixels (container [92, 87] gives point [89, 86]). At any later step, point at the container in target_containers the same way, choosing the visible container nearest the stored position if it has drifted. Rule B (put down): choose B whenever the gripper is holding a container (fingers partly closed, about 40-60% open, gripper raised after a grasp). The former clause 'when picks_done equals N the task is complete' and the fallback on an index into target_containers are dropped; the fallback for a situation matching no rule (fingers fully closed on nothing) is to choose A and point at the target container as above.\n\nrefused\n  No step reported a failure; every step was answered correctly from the demonstration shown at that step. The only input acted on is the block of fields carried and never read, from which picks_done is dropped and target_containers is reduced to a single position.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing is committed. The report asks to delete picks_done and to reduce target_containers from an ordered list to a single position, arguing from this round's minibatch that every goal names exactly one cube and every episode has a single decision step. That is a description of one round's episodes, not of the task: the initializer wrote the list form with a two-entry example ([[81, 95], [66, 143]]) after seeing its own minibatch, so goals naming two cubes exist, and in those episodes the policy, after putting the first container down with fingers open, has nothing in the scene that tells it whether the first target has already been handled; picks_done is the only thing that selects the second entry, so it meets NECESSITY there and the list form is required for SUFFICIENCY. A one-target episode is already handled by the current documents (N = 1, picks_done 0, first entry), and the policy scored 0 errors on both subgoal and memory this round. Rewriting the first-step pointing rule to bypass target_containers is likewise unneeded, since the value written at that step and the point are taken from the same demonstration reading. Collapsing the documents to the one-cube case would undo the initialized generality and make the next two-cube episode a failure, so the three stand as they are."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 1,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    7,
+    23,
+    27,
+    38,
+    63
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A: pick up the container. Count the cubes named in the goal; that is the number of targets N, equal to the length of target_containers. Rule for A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or gripper raised out of frame) and picks_done is less than N. Point at the container listed at index picks_done in target_containers (the first entry when picks_done is 0, the second when picks_done is 1). Write the point as that container's position with y reduced by about 3 pixels (e.g. container [84, 156] gives point [81, 158]). If the container visible at this step has drifted slightly from the stored position, point at the visible container nearest the stored position. Rule for B (put down): choose B whenever the gripper is holding a container (fingers partly closed, around 40-60% open, gripper raised after a grasp) and picks_done is less than N, meaning another target still has to be picked up. After the put-down the next decision step will show fingers fully open; then apply rule A for the next target. When picks_done equals N and the robot is holding a container, the task is complete and no further decision is expected; if asked anyway, choose B. If a situation matches no rule (e.g. fingers closed on nothing, 0% open, or the memory is inconsistent with the scene), choose A and point at the entry of target_containers at index picks_done, or at the first entry if that index does not exist, and do not change picks_done.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions, one per cube named in the goal, in the order the goal names them. At the first decision step (memory empty, demonstration steps shown): for each cube color named in the goal, read that cube's position from the demonstration steps before the containers appear, then take the container whose position is within a few pixels of it after the containers appear, and write that container's position; the cubes are no longer listed once containers are shown. Copy the list unchanged at every later step. e.g. [[81, 95], [66, 143]]",
+      "annotation": "Ordered list of the positions of the containers that the goal asks for, in goal order (first the container hiding the first named cube, then the one hiding the next named cube, if any). Each position is the demonstration position of the container that came down over that cube, i.e. the container whose coordinates lie within a few pixels of where that cube was before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed afterwards. e.g. [[81, 95], [66, 143]]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Count of target containers picked up so far. Write 0 at the first decision step. At any later step, take the carried-in value and add one if the execution steps since the previous decision step show the fingers going from fully open to partly closed (about 40-60% open) with the gripper then raised, i.e. a container was grasped and lifted; otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of target containers the robot has picked up so far in this episode. 0 at the first decision step. Increases by one at the first decision step whose execution steps show the robot having closed its fingers on a container and lifted it (fingers partly closed, around 40-60% open, gripper raised); stays the same at steps that show a put-down or no grasp. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    28,
+    29,
+    44,
+    51
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A: pick up the container. Count the cubes named in the goal; that is the number of targets N, equal to the length of target_containers. Rule for A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or gripper raised out of frame) and picks_done is less than N. Point at the container listed at index picks_done in target_containers (the first entry when picks_done is 0, the second when picks_done is 1). Write the point as that container's position with y reduced by about 3 pixels (e.g. container [84, 156] gives point [81, 158]). If the container visible at this step has drifted slightly from the stored position, point at the visible container nearest the stored position. Rule for B (put down): choose B whenever the gripper is holding a container (fingers partly closed, around 40-60% open, gripper raised after a grasp) and picks_done is less than N, meaning another target still has to be picked up. After the put-down the next decision step will show fingers fully open; then apply rule A for the next target. When picks_done equals N and the robot is holding a container, the task is complete and no further decision is expected; if asked anyway, choose B. If a situation matches no rule (e.g. fingers closed on nothing, 0% open, or the memory is inconsistent with the scene), choose A and point at the entry of target_containers at index picks_done, or at the first entry if that index does not exist, and do not change picks_done.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions, one per cube named in the goal, in the order the goal names them. At the first decision step (memory empty, demonstration steps shown): for each cube color named in the goal, read that cube's position from the demonstration steps before the containers appear, then take the container whose position is within a few pixels of it after the containers appear, and write that container's position; the cubes are no longer listed once containers are shown. Copy the list unchanged at every later step. e.g. [[81, 95], [66, 143]]",
+      "annotation": "Ordered list of the positions of the containers that the goal asks for, in goal order (first the container hiding the first named cube, then the one hiding the next named cube, if any). Each position is the demonstration position of the container that came down over that cube, i.e. the container whose coordinates lie within a few pixels of where that cube was before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed afterwards. e.g. [[81, 95], [66, 143]]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Count of target containers picked up so far. Write 0 at the first decision step. At any later step, take the carried-in value and add one if the execution steps since the previous decision step show the fingers going from fully open to partly closed (about 40-60% open) with the gripper then raised, i.e. a container was grasped and lifted; otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of target containers the robot has picked up so far in this episode. 0 at the first decision step. Increases by one at the first decision step whose execution steps show the robot having closed its fingers on a container and lifted it (fingers partly closed, around 40-60% open, gripper raised); stays the same at steps that show a put-down or no grasp. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    22,
+    39,
+    44,
+    63
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A: pick up the container. Count the cubes named in the goal; that is the number of targets N, equal to the length of target_containers. Rule for A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or gripper raised out of frame) and picks_done is less than N. Point at the container listed at index picks_done in target_containers (the first entry when picks_done is 0, the second when picks_done is 1). Write the point as that container's position with y reduced by about 3 pixels (e.g. container [84, 156] gives point [81, 158]). If the container visible at this step has drifted slightly from the stored position, point at the visible container nearest the stored position. Rule for B (put down): choose B whenever the gripper is holding a container (fingers partly closed, around 40-60% open, gripper raised after a grasp) and picks_done is less than N, meaning another target still has to be picked up. After the put-down the next decision step will show fingers fully open; then apply rule A for the next target. When picks_done equals N and the robot is holding a container, the task is complete and no further decision is expected; if asked anyway, choose B. If a situation matches no rule (e.g. fingers closed on nothing, 0% open, or the memory is inconsistent with the scene), choose A and point at the entry of target_containers at index picks_done, or at the first entry if that index does not exist, and do not change picks_done.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions, one per cube named in the goal, in the order the goal names them. At the first decision step (memory empty, demonstration steps shown): for each cube color named in the goal, read that cube's position from the demonstration steps before the containers appear, then take the container whose position is within a few pixels of it after the containers appear, and write that container's position; the cubes are no longer listed once containers are shown. Copy the list unchanged at every later step. e.g. [[81, 95], [66, 143]]",
+      "annotation": "Ordered list of the positions of the containers that the goal asks for, in goal order (first the container hiding the first named cube, then the one hiding the next named cube, if any). Each position is the demonstration position of the container that came down over that cube, i.e. the container whose coordinates lie within a few pixels of where that cube was before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed afterwards. e.g. [[81, 95], [66, 143]]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Count of target containers picked up so far. Write 0 at the first decision step. At any later step, take the carried-in value and add one if the execution steps since the previous decision step show the fingers going from fully open to partly closed (about 40-60% open) with the gripper then raised, i.e. a container was grasped and lifted; otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of target containers the robot has picked up so far in this episode. 0 at the first decision step. Increases by one at the first decision step whose execution steps show the robot having closed its fingers on a container and lifted it (fingers partly closed, around 40-60% open, gripper raised); stays the same at steps that show a put-down or no grasp. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    2,
+    14,
+    26,
+    27
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A: pick up the container. Count the cubes named in the goal; that is the number of targets N, equal to the length of target_containers. Rule for A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or gripper raised out of frame) and picks_done is less than N. Point at the container listed at index picks_done in target_containers (the first entry when picks_done is 0, the second when picks_done is 1). Write the point as that container's position with y reduced by about 3 pixels (e.g. container [84, 156] gives point [81, 158]). If the container visible at this step has drifted slightly from the stored position, point at the visible container nearest the stored position. Rule for B (put down): choose B whenever the gripper is holding a container (fingers partly closed, around 40-60% open, gripper raised after a grasp) and picks_done is less than N, meaning another target still has to be picked up. After the put-down the next decision step will show fingers fully open; then apply rule A for the next target. When picks_done equals N and the robot is holding a container, the task is complete and no further decision is expected; if asked anyway, choose B. If a situation matches no rule (e.g. fingers closed on nothing, 0% open, or the memory is inconsistent with the scene), choose A and point at the entry of target_containers at index picks_done, or at the first entry if that index does not exist, and do not change picks_done.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions, one per cube named in the goal, in the order the goal names them. At the first decision step (memory empty, demonstration steps shown): for each cube color named in the goal, read that cube's position from the demonstration steps before the containers appear, then take the container whose position is within a few pixels of it after the containers appear, and write that container's position; the cubes are no longer listed once containers are shown. Copy the list unchanged at every later step. e.g. [[81, 95], [66, 143]]",
+      "annotation": "Ordered list of the positions of the containers that the goal asks for, in goal order (first the container hiding the first named cube, then the one hiding the next named cube, if any). Each position is the demonstration position of the container that came down over that cube, i.e. the container whose coordinates lie within a few pixels of where that cube was before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed afterwards. e.g. [[81, 95], [66, 143]]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Count of target containers picked up so far. Write 0 at the first decision step. At any later step, take the carried-in value and add one if the execution steps since the previous decision step show the fingers going from fully open to partly closed (about 40-60% open) with the gripper then raised, i.e. a container was grasped and lifted; otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of target containers the robot has picked up so far in this episode. 0 at the first decision step. Increases by one at the first decision step whose execution steps show the robot having closed its fingers on a container and lifted it (fingers partly closed, around 40-60% open, gripper raised); stays the same at steps that show a put-down or no grasp. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    1,
+    16,
+    62,
+    66,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A: pick up the container. Count the cubes named in the goal; that is the number of targets N, equal to the length of target_containers. Rule for A (pick up): choose A whenever the gripper is not holding a container (fingers fully open, or gripper raised out of frame) and picks_done is less than N. Point at the container listed at index picks_done in target_containers (the first entry when picks_done is 0, the second when picks_done is 1). Write the point as that container's position with y reduced by about 3 pixels (e.g. container [84, 156] gives point [81, 158]). If the container visible at this step has drifted slightly from the stored position, point at the visible container nearest the stored position. Rule for B (put down): choose B whenever the gripper is holding a container (fingers partly closed, around 40-60% open, gripper raised after a grasp) and picks_done is less than N, meaning another target still has to be picked up. After the put-down the next decision step will show fingers fully open; then apply rule A for the next target. When picks_done equals N and the robot is holding a container, the task is complete and no further decision is expected; if asked anyway, choose B. If a situation matches no rule (e.g. fingers closed on nothing, 0% open, or the memory is inconsistent with the scene), choose A and point at the entry of target_containers at index picks_done, or at the first entry if that index does not exist, and do not change picks_done.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions, one per cube named in the goal, in the order the goal names them. At the first decision step (memory empty, demonstration steps shown): for each cube color named in the goal, read that cube's position from the demonstration steps before the containers appear, then take the container whose position is within a few pixels of it after the containers appear, and write that container's position; the cubes are no longer listed once containers are shown. Copy the list unchanged at every later step. e.g. [[81, 95], [66, 143]]",
+      "annotation": "Ordered list of the positions of the containers that the goal asks for, in goal order (first the container hiding the first named cube, then the one hiding the next named cube, if any). Each position is the demonstration position of the container that came down over that cube, i.e. the container whose coordinates lie within a few pixels of where that cube was before the containers appeared. Filled in at the first decision step from the demonstration steps and never changed afterwards. e.g. [[81, 95], [66, 143]]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Count of target containers picked up so far. Write 0 at the first decision step. At any later step, take the carried-in value and add one if the execution steps since the previous decision step show the fingers going from fully open to partly closed (about 40-60% open) with the gripper then raised, i.e. a container was grasped and lifted; otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of target containers the robot has picked up so far in this episode. 0 at the first decision step. Increases by one at the first decision step whose execution steps show the robot having closed its fingers on a container and lifted it (fingers partly closed, around 40-60% open, gripper raised); stays the same at steps that show a put-down or no grasp. e.g. 1"
+     }
+    ]
+   }
+  }
+ ]
+}

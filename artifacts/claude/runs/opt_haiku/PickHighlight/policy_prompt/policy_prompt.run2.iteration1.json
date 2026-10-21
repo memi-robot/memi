@@ -1,0 +1,14 @@
+{
+ "task": "PickHighlight",
+ "policy_prompt_for_subgoal": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes, using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point). 4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose B pointing at the cube nearest the gripper is not needed—instead repeat C (place) as a harmless no-op. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in pending_cubes choose B at its first entry; else choose A.",
+ "fields": [
+  {
+   "name": "button_pressed",
+   "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. Write `yes` as soon as any execution step shown at this step says the button is pressed down, or the memory carried in already says `yes`. Never go back to `no`. e.g. yes"
+  },
+  {
+   "name": "pending_cubes",
+   "description": "Ordered list of [y, x] of cubes on highlighted white areas not yet picked up. Start with `[]`. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed. Otherwise copy the list carried in, but remove the first entry of the list if the execution steps shown at this step show a cube held in the gripper (a pick-up happened). Keep the list unchanged on a step that only shows a placing (gripper opens, cube left on table). e.g. [[89, 146], [63, 150]]"
+  }
+ ]
+}

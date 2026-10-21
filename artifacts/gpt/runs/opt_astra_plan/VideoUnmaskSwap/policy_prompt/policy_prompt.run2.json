@@ -1,0 +1,77 @@
+{
+ "task": "VideoUnmaskSwap",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    2,
+    28,
+    31,
+    67,
+    79
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    33,
+    57,
+    61,
+    70,
+    92
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    0,
+    14,
+    17,
+    48,
+    50
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    47,
+    50,
+    55,
+    62
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    0,
+    2,
+    17,
+    60,
+    75
+   ],
+   "verified_of_all": 0.8888888888888888,
+   "subgoal_verified": 0.8888888888888888
+  }
+ ],
+ "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+ "fields": [
+  {
+   "name": "remaining_targets",
+   "description": "With empty incoming memory, use the demonstration to associate each requested cube with the container placed over it, then track that container through all subsequent movement. Track each moving container over the entire interval from departure to settling. Use continuity and direction of travel across the intermediate demonstration frames to assign its settled endpoint, resolving a moving pair jointly with the other container's complementary path. Do not reset an identity to the nearest original position or preserve detection-list order. Returning to the same unordered set of occupied positions is not evidence that identities have returned and is not a second exchange. One observed exchange switches the tracked containers' position assignments; only a further observed exchange of those identities restores the original assignment. Compute these intermediate tracks from the demonstration currently shown; persist only the resulting ordered list of final target locations. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. In these observations the initial lists are: episode 14 [[106, 150]]; episode 28 [[84, 90], [92, 133]]; episode 53 [[80, 117], [121, 102]]; episode 80 [[105, 122], [73, 128]]; episode 90 [[124, 101]]. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]"
+  }
+ ],
+ "stage": "optimized"
+}

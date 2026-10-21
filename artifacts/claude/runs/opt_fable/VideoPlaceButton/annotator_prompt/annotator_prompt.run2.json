@@ -1,0 +1,80 @@
+{
+ "task": "VideoPlaceButton",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 2,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    19,
+    21,
+    72,
+    79,
+    83
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.8
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    7,
+    16,
+    22,
+    52,
+    97
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    6,
+    10,
+    19,
+    22,
+    24
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    6,
+    20,
+    26,
+    46
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    8,
+    46,
+    51,
+    72,
+    74
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 0.9
+  }
+ ],
+ "stage": "optimized",
+ "fields": [
+  {
+   "name": "cube_placed",
+   "description": "Whether the robot itself has already dropped the goal cube onto goal_target during execution. 'no' at every step until the decision step whose execution steps show the robot release the cube (fingers widen back to ~100% while low) with the cube lying within about 6 pixels of goal_target; 'yes' from that step on. e.g. no"
+  },
+  {
+   "name": "goal_target",
+   "description": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. That placement lands on one physical target: the listed target entry nearest the cube's resting position in the placement frame. Follow that same physical target forward through every remaining demonstration frame, matching each frame's target entries to the previous frame's by nearest position (targets may drift a few pixels, may vanish while occluded and reappear, and may move tens of pixels per frame in the final frames while the gripper sits parked at height 0.200; a target that moves is followed, never replaced by whichever entry ends up nearest the old spot). The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that followed target's position in the last demonstration frame. When no target moved after the placement this is simply the execution-scene target nearest the placement spot. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+  }
+ ]
+}

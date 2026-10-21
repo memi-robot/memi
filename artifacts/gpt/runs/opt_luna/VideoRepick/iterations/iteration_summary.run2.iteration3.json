@@ -1,0 +1,135 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "target_anchor",
+  "completed_cycles"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  8,
+  16,
+  57,
+  93
+ ],
+ "scored": 29,
+ "failed": 4,
+ "subgoal_wrong": 4,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.8620689655172413,
+ "memory_verified": 0.896551724137931,
+ "reads": {
+  "target_anchor": 7,
+  "completed_cycles": 13
+ },
+ "field_errors": {
+  "target_anchor": {
+   "in": 3,
+   "sole": 3
+  },
+  "completed_cycles": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.13793103448275862,
+ "verified_of_all": 0.8620689655172413,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 4,
+ "decisions": 29,
+ "critique": "field target_anchor, POLICY PROMPT\n  When asked to repeat the demonstrated grasp, the policy sometimes selected the cube at the original grasp location or stopped tracking after only one of two exchanges. The annotated anchor instead identified the demonstrated cube after all exchanges. This breaks PREDICTABILITY of target_anchor and SUFFICIENCY of the initial target selection. Strengthen the existing continuity instruction with an explicit exchange procedure: after the demonstrated release, partition the remaining demonstration into exchanges using the moving pair and the intervening settled configurations. For each exchange, identify which two occupied locations participate. Follow both trajectories jointly through the intermediate samples; a completed exchange swaps the identities at those locations even when the set of occupied locations looks unchanged. Apply that swap to the target only if its current location participates; otherwise leave its identity at the stationary location. Carry the resulting identity into the next exchange, rather than restarting from the original grasp location or assuming every exchange moves the target. Two exchanges of the same pair restore the target to its starting location; an exchange of two other cubes leaves the target stationary. For example, a released target near [127, 127] moves through [110, 112] and [96, 123] to [91, 132], rather than returning to the lower occupied location. A target released near [104, 106] moves through [95, 96] and [88, 98] to [86, 112], then remains near [85, 114] while the other pair exchanges. These illustrate trajectory matching, not coordinate lookup rules. With empty incoming memory, use the demonstration and initial execution scene currently shown to finish all such tracking and write the target's visible initial-execution center, for example [91, 132]. At every later decision copy target_anchor unchanged. Do not add exchange history to persistent memory.\n\nthe policy prompt for subgoal\n  After a completed execution release, when more repetitions remained, the policy correctly retained target_anchor=[91, 132] and incremented completed_cycles, but selected the distant cube near [128, 127] by trusting misleading lifted-cube reports. The final scene contained a table cube near [91, 134] matching the anchor. The current instruction to use the release trajectory to disambiguate nearby cubes lacked an evidence priority, breaking SUFFICIENCY of the target-selection rule. Replace it with: for A after a completed release, first select the visible table cube matching target_anchor, allowing small placement and visible-center shifts. A clear near-anchor table match takes precedence over inconsistent held-object or airborne-centroid reports during the interval. Use the actual table-height release location and coherent local motion only when the final table view is occluded or genuinely ambiguous; do not use a displaced lifted-cube report alone to transfer target identity to a different table cube. Point at the selected cube's current visible center, not at a wrist or airborne centroid. Remove any implication that release-trajectory reports unconditionally override a clear anchor match. Keep the existing release recognition, cycle-count update, and A/B/C transition rules unchanged.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "After a completed execution release, when more repetitions remained, the policy correctly retained target_anchor=[91, 132] and incremented completed_cycles, but selected the distant cube near [128, 127] by trusting misleading lifted-cube reports. The final scene contained a table cube near [91, 134] matching the anchor. The current instruction to use the release trajectory to disambiguate nearby cubes lacked an evidence priority, breaking SUFFICIENCY of the target-selection rule. Replace it with: for A after a completed release, first select the visible table cube matching target_anchor, allowing small placement and visible-center shifts. A clear near-anchor table match takes precedence over inconsistent held-object or airborne-centroid reports during the interval. Use the actual table-height release location and coherent local motion only when the final table view is occluded or genuinely ambiguous; do not use a displaced lifted-cube report alone to transfer target identity to a different table cube. Point at the selected cube's current visible center, not at a wrist or airborne centroid. Remove any implication that release-trajectory reports unconditionally override a clear anchor match. Keep the existing release recognition, cycle-count update, and A/B/C transition rules unchanged.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_anchor",
+    "description": "When asked to repeat the demonstrated grasp, the policy sometimes selected the cube at the original grasp location or stopped tracking after only one of two exchanges. The annotated anchor instead identified the demonstrated cube after all exchanges. This breaks PREDICTABILITY of target_anchor and SUFFICIENCY of the initial target selection. Strengthen the existing continuity instruction with an explicit exchange procedure: after the demonstrated release, partition the remaining demonstration into exchanges using the moving pair and the intervening settled configurations. For each exchange, identify which two occupied locations participate. Follow both trajectories jointly through the intermediate samples; a completed exchange swaps the identities at those locations even when the set of occupied locations looks unchanged. Apply that swap to the target only if its current location participates; otherwise leave its identity at the stationary location. Carry the resulting identity into the next exchange, rather than restarting from the original grasp location or assuming every exchange moves the target. Two exchanges of the same pair restore the target to its starting location; an exchange of two other cubes leaves the target stationary. For example, a released target near [127, 127] moves through [110, 112] and [96, 123] to [91, 132], rather than returning to the lower occupied location. A target released near [104, 106] moves through [95, 96] and [88, 98] to [86, 112], then remains near [85, 114] while the other pair exchanges. These illustrate trajectory matching, not coordinate lookup rules. With empty incoming memory, use the demonstration and initial execution scene currently shown to finish all such tracking and write the target's visible initial-execution center, for example [91, 132]. At every later decision copy target_anchor unchanged. Do not add exchange history to persistent memory."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    5,
+    "exec",
+    312
+   ],
+   "memory_in": "target_anchor=; completed_cycles=",
+   "answered": "A: pick up the cube at [90, 115]",
+   "recorded": "A: pick up the cube at [113, 111]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    8,
+    "exec",
+    270
+   ],
+   "memory_in": "target_anchor=; completed_cycles=",
+   "answered": "A: pick up the cube at [127, 129]",
+   "recorded": "A: pick up the cube at [92, 135]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The general tracking instruction did not settle this exchange explicitly: the demonstrated target moves from [127, 127] at t=208 through [110, 112] at t=224 and [96, 123] at t=240 to [91, 132] at t=256. This is one exchange, not a return to its original position. That connection should establish target_anchor=[91, 132], rather than [127, 129].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    8,
+    "exec",
+    441
+   ],
+   "memory_in": "target_anchor=[91, 132]; completed_cycles=0",
+   "answered": "A: pick up the cube at [128, 127]",
+   "recorded": "A: pick up the cube at [91, 137]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Clarify that after release, a visible table cube near target_anchor takes precedence over a misleading apparent trajectory from lifted-cube reports. Here the final cube at [91, 134] matches target_anchor=[91, 132] and is the target to pick again, not the cube at [128, 127]. The recorded point [91, 137] selects that same near-anchor cube, although that exact coordinate is not shown.",
+   "missing": ""
+  },
+  {
+   "step": [
+    93,
+    "exec",
+    313
+   ],
+   "memory_in": "target_anchor=; completed_cycles=",
+   "answered": "A: pick up the cube at [105, 107]",
+   "recorded": "A: pick up the cube at [87, 115]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The tracking rule needed to resolve this exchange explicitly: the released target at [104, 106] follows [95, 96] at t=208, [88, 98] at t=224, and [86, 112] at t=240. It then stays at [85, 114] while the other two cubes exchange positions. Therefore write target_anchor=[85, 114], not [105, 107].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

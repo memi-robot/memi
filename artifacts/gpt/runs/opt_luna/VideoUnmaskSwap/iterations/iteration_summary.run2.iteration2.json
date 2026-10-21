@@ -1,0 +1,87 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "remaining_targets"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  33,
+  57,
+  61,
+  70,
+  92
+ ],
+ "scored": 9,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.8888888888888888,
+ "memory_verified": 0.8888888888888888,
+ "reads": {
+  "remaining_targets": 7
+ },
+ "field_errors": {
+  "remaining_targets": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1111111111111111,
+ "verified_of_all": 0.8888888888888888,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 9,
+ "critique": "field remaining_targets, POLICY PROMPT\n  When the goal requested green and then blue, their two containers moved around one another and settled into the same unordered pair of resting positions. The policy treated that final layout as restoration of the original identities, selected green's original position, and wrote the targets in reverse order. The required memory instead placed green at blue's original position and blue at green's original position. This is a PREDICTABILITY failure in initializing the identity-to-location list, leading to the wrong pickup despite the subgoal rule correctly selecting its first entry. Strengthen the existing continuous-motion instruction with an explicit sparse-trajectory example: green's path [97, 157] to [101, 144] to [95, 129] ends at [82, 131]; blue's path [81, 132] to [77, 145] to [82, 158] ends at [96, 157]. The final segment finishes the exchange; it does not reset identities. More generally, carry each identity along its intermediate branch through the settling segment, even when a curved path changes direction. Do not rematch the final resting positions to the initial positions or infer a second exchange merely from that direction change. Initialize remaining_targets when incoming memory is absent and the current observation includes the demonstration, storing final target locations in goal order; this example yields [[82, 131], [96, 157]]. Keep the existing subsequent update rules: remove the first entry only after an observed successful pickup, preserve it through release, and never reinitialize an existing empty list. No additional persistent field is needed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_targets",
+    "description": "When the goal requested green and then blue, their two containers moved around one another and settled into the same unordered pair of resting positions. The policy treated that final layout as restoration of the original identities, selected green's original position, and wrote the targets in reverse order. The required memory instead placed green at blue's original position and blue at green's original position. This is a PREDICTABILITY failure in initializing the identity-to-location list, leading to the wrong pickup despite the subgoal rule correctly selecting its first entry. Strengthen the existing continuous-motion instruction with an explicit sparse-trajectory example: green's path [97, 157] to [101, 144] to [95, 129] ends at [82, 131]; blue's path [81, 132] to [77, 145] to [82, 158] ends at [96, 157]. The final segment finishes the exchange; it does not reset identities. More generally, carry each identity along its intermediate branch through the settling segment, even when a curved path changes direction. Do not rematch the final resting positions to the initial positions or infer a second exchange merely from that direction change. Initialize remaining_targets when incoming memory is absent and the current observation includes the demonstration, storing final target locations in goal order; this example yields [[82, 131], [96, 157]]. Keep the existing subsequent update rules: remove the first entry only after an observed successful pickup, preserve it through release, and never reinitialize an existing empty list. No additional persistent field is needed."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    57,
+    "exec",
+    114
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [96, 157]",
+   "recorded": "A: pick up the container at [77, 133]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The trajectory rule did not resolve this sparse crossing: green moves from [97, 157] through [101, 144] and [95, 129] to [82, 131], while blue moves from [81, 132] through [77, 145] and [82, 158] to [96, 157]. The final segment completes one exchange rather than returning each identity to its initial position. Explicitly connecting these samples would yield remaining_targets=[[82, 131], [96, 157]].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

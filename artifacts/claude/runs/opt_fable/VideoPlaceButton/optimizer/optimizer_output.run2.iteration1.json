@@ -1,0 +1,185 @@
+{
+ "episodes": [
+  19,
+  21,
+  72,
+  79,
+  83
+ ],
+ "user_chars": 16830,
+ "usage": {
+  "prompt_tokens": 8733,
+  "completion_tokens": 2180,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 8729
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 455
+  }
+ },
+ "reasoning": "I need to rename target_before_button to goal_target, making it goal-dependent for before/after states, by deleting the old field and adding the new one on both sides, then updating all the subgoal instruction passages that reference the old name. I'll keep the existing refusal on that one step intact while making these edits.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "the button press in the video is only a marker telling you which target to use.",
+    "modify_to": "the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory."
+   },
+   {
+    "modify_from": "1. Start of episode (memory empty, target_before_button unknown, gripper raised out of frame, fingers 100% open): first compute target_before_button from the demonstration as the memory instruction says,",
+    "modify_to": "1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says,"
+   },
+   {
+    "modify_from": "pointing at the target entry in the current scene nearest to target_before_button (targets wobble",
+    "modify_to": "pointing at the target entry in the current scene nearest to goal_target (targets wobble"
+   },
+   {
+    "modify_from": "If no listed target is within 10 pixels of target_before_button (it may be hidden), point at target_before_button itself.",
+    "modify_to": "If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself."
+   },
+   {
+    "modify_from": "and cube_placed is 'no' and target_before_button is known:",
+    "modify_to": "and cube_placed is 'no' and goal_target is known:"
+   },
+   {
+    "modify_from": "4. cube_placed is 'yes' and the goal cube rests on target_before_button:",
+    "modify_to": "4. cube_placed is 'yes' and the goal cube rests on goal_target:"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "delete",
+    "field": "target_before_button",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "add",
+    "field": "goal_target",
+    "edits": [],
+    "description": "If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]"
+   },
+   {
+    "kind": "modify",
+    "field": "cube_placed",
+    "edits": [
+     {
+      "modify_from": "within about 6 pixels of target_before_button; from that step on write 'yes'",
+      "modify_to": "within about 6 pixels of goal_target; from that step on write 'yes'"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "target_before_button",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "add",
+    "field": "goal_target",
+    "edits": [],
+    "description": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+   },
+   {
+    "kind": "modify",
+    "field": "cube_placed",
+    "edits": [
+     {
+      "modify_from": "already dropped the goal cube onto target_before_button during execution",
+      "modify_to": "already dropped the goal cube onto goal_target during execution"
+     },
+     {
+      "modify_from": "within about 6 pixels of target_before_button; 'yes' from that step on",
+      "modify_to": "within about 6 pixels of goal_target; 'yes' from that step on"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The report's own refusal is kept: the one 'right before' step whose recorded drop was the post-press target is not acted on, since its proposed reading already produces the target the memory held and contradicts both the goal wording and the two other 'before' episodes solved correctly. No clause is added for it; the goal-dependent goal_target rule covers the consistent cases."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "target_before_button",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "add",
+    "field": "goal_target",
+    "edits": [],
+    "description": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+   },
+   {
+    "kind": "modify",
+    "field": "cube_placed",
+    "edits": [
+     {
+      "modify_from": "already dropped the goal cube onto target_before_button during execution",
+      "modify_to": "already dropped the goal cube onto goal_target during execution"
+     },
+     {
+      "modify_from": "within about 6 pixels of target_before_button; 'yes' from that step on",
+      "modify_to": "within about 6 pixels of goal_target; 'yes' from that step on"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "goal_target",
+    "edits": [],
+    "description": "If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]"
+   },
+   {
+    "kind": "modify",
+    "field": "cube_placed",
+    "edits": [
+     {
+      "modify_from": "within about 6 pixels of target_before_button; from that step on write 'yes'",
+      "modify_to": "within about 6 pixels of goal_target; from that step on write 'yes'"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "the button press in the video is only a marker telling you which target to use.",
+    "modify_to": "the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory."
+   },
+   {
+    "modify_from": "1. Start of episode (memory empty, target_before_button unknown, gripper raised out of frame, fingers 100% open): first compute target_before_button from the demonstration as the memory instruction says,",
+    "modify_to": "1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says,"
+   },
+   {
+    "modify_from": "pointing at the target entry in the current scene nearest to target_before_button (targets wobble",
+    "modify_to": "pointing at the target entry in the current scene nearest to goal_target (targets wobble"
+   },
+   {
+    "modify_from": "If no listed target is within 10 pixels of target_before_button (it may be hidden), point at target_before_button itself.",
+    "modify_to": "If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself."
+   },
+   {
+    "modify_from": "and cube_placed is 'no' and target_before_button is known:",
+    "modify_to": "and cube_placed is 'no' and goal_target is known:"
+   },
+   {
+    "modify_from": "4. cube_placed is 'yes' and the goal cube rests on target_before_button:",
+    "modify_to": "4. cube_placed is 'yes' and the goal cube rests on goal_target:"
+   }
+  ],
+  "refused": "The report's own refusal is kept: the one 'right before' step whose recorded drop was the post-press target is not acted on, since its proposed reading already produces the target the memory held and contradicts both the goal wording and the two other 'before' episodes solved correctly. No clause is added for it; the goal-dependent goal_target rule covers the consistent cases."
+ },
+ "not_applied": [],
+ "refused": "The report's own refusal is kept: the one 'right before' step whose recorded drop was the post-press target is not acted on, since its proposed reading already produces the target the memory held and contradicts both the goal wording and the two other 'before' episodes solved correctly. No clause is added for it; the goal-dependent goal_target rule covers the consistent cases.",
+ "text": "{\"annotator_prompt\": [\n  {\"kind\": \"delete\", \"field\": \"target_before_button\"},\n  {\"kind\": \"add\", \"field\": \"goal_target\", \"description\": \"The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards. e.g. [86, 100]\"},\n  {\"kind\": \"modify\", \"field\": \"cube_placed\", \"edits\": [\n    {\"modify_from\": \"already dropped the goal cube onto target_before_button during execution\", \"modify_to\": \"already dropped the goal cube onto goal_target during execution\"},\n    {\"modify_from\": \"within about 6 pixels of target_before_button; 'yes' from that step on\", \"modify_to\": \"within about 6 pixels of goal_target; 'yes' from that step on\"}\n  ]}\n],\n\"policy_prompt_for_memory\": [\n  {\"kind\": \"delete\", \"field\": \"target_before_button\"},\n  {\"kind\": \"add\", \"field\": \"goal_target\", \"description\": \"If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]\"},\n  {\"kind\": \"modify\", \"field\": \"cube_placed\", \"edits\": [\n    {\"modify_from\": \"within about 6 pixels of target_before_button; from that step on write 'yes'\", \"modify_to\": \"within about 6 pixels of goal_target; from that step on write 'yes'\"}\n  ]}\n],\n\"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"the button press in the video is only a marker telling you which target to use.\", \"modify_to\": \"the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory.\"},\n  {\"modify_from\": \"1. Start of episode (memory empty, target_before_button unknown, gripper raised out of frame, fingers 100% open): first compute target_before_button from the demonstration as the memory instruction says,\", \"modify_to\": \"1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says,\"},\n  {\"modify_from\": \"pointing at the target entry in the current scene nearest to target_before_button (targets wobble\", \"modify_to\": \"pointing at the target entry in the current scene nearest to goal_target (targets wobble\"},\n  {\"modify_from\": \"If no listed target is within 10 pixels of target_before_button (it may be hidden), point at target_before_button itself.\", \"modify_to\": \"If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself.\"},\n  {\"modify_from\": \"and cube_placed is 'no' and target_before_button is known:\", \"modify_to\": \"and cube_placed is 'no' and goal_target is known:\"},\n  {\"modify_from\": \"4. cube_placed is 'yes' and the goal cube rests on target_before_button:\", \"modify_to\": \"4. cube_placed is 'yes' and the goal cube rests on goal_target:\"}\n],\n\"refused\": \"The report's own refusal is kept: the one 'right before' step whose recorded drop was the post-press target is not acted on, since its proposed reading already produces the target the memory held and contradicts both the goal wording and the two other 'before' episodes solved correctly. No clause is added for it; the goal-dependent goal_target rule covers the consistent cases.\"}"
+}

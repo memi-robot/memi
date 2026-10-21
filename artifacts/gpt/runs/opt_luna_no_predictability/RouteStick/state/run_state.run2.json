@@ -1,0 +1,367 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "RouteStick",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   0,
+   19,
+   58,
+   86,
+   99
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "When demonstration frames are present and carried memory is empty, decode the complete demonstrated route according to the policy prompt for memory. Select its first letter as the initial command and write the complete route as remaining_path without removing that letter. The visible demonstration determines this command, not the initial location alone. When carried memory is present, update remaining_path according to the policy prompt for memory, removing the one traversal completed in the intervening execution before selecting the new leading letter. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point.  Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. Use a location-based fallback only if the demonstrated route is exhausted but a menu answer is nevertheless required, or if the demonstration supplies insufficient evidence to decode the next traversal. Do not use it instead of a traversal supported by the visible demonstration. If fallback is necessary, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is not an additional demonstrated move.",
+  "fields": [
+   {
+    "name": "remaining_path",
+    "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]",
+    "annotation": "An ordered list of menu letters encoding the demonstrated traversals not yet completed in execution, including the traversal to command at this decision step. Decode the demonstration into individual moves between adjacent target sites, preserving repeated visits and reversals. Larger destination x means robot-left; smaller destination x means robot-right. A leftward move along the image-upper arc is A, a rightward move along the image-lower arc is B, a leftward move along the image-lower arc is C, and a rightward move along the image-upper arc is D. Judge the arc from the intermediate wrist trajectory relative to the line joining its resting positions at the two target sites, not by comparing wrist height directly with target coordinates. Target highlight changes identify arrivals; small coordinate fluctuations and briefly simultaneous highlights do not constitute extra moves. At the first execution decision, record the entire decoded demonstration. At each subsequent decision, remove the single leading move completed during the intervening oracle execution. Do not remove the move being chosen at the current decision. Thus episode 0 has [\"B\",\"B\"] then [\"B\"]; episode 19 has [\"A\",\"B\",\"A\",\"D\"], [\"B\",\"A\",\"D\"], [\"A\",\"D\"], [\"D\"]; episode 58 has [\"D\",\"D\",\"A\",\"A\"], [\"D\",\"A\",\"A\"], [\"A\",\"A\"], [\"A\"]; episode 86 has [\"A\",\"C\",\"A\",\"B\",\"D\"], [\"C\",\"A\",\"B\",\"D\"], [\"A\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]; episode 99 has [\"A\",\"B\",\"C\",\"D\"], [\"B\",\"C\",\"D\"], [\"C\",\"D\"], [\"D\"]. After the final traversal completes, the value is []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "RouteStick",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   0,
+   19,
+   58,
+   86,
+   99
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "First update remaining_path according to the policy prompt for memory. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point. Initial subgoals decoded from the demonstrations are B for episode 0, A for episode 19, D for episode 58, A for episode 86, and A for episode 99. Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. If an unexpected situation nevertheless requires a menu answer, or the demonstration cannot be decoded, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is only a deterministic fallback, not an additional demonstrated move.",
+  "fields": [
+   {
+    "name": "remaining_path",
+    "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]",
+    "annotation": "An ordered list of menu letters encoding the demonstrated traversals not yet completed in execution, including the traversal to command at this decision step. Decode the demonstration into individual moves between adjacent target sites, preserving repeated visits and reversals. Larger destination x means robot-left; smaller destination x means robot-right. A leftward move along the image-upper arc is A, a rightward move along the image-lower arc is B, a leftward move along the image-lower arc is C, and a rightward move along the image-upper arc is D. Judge the arc from the intermediate wrist trajectory relative to the line joining its resting positions at the two target sites, not by comparing wrist height directly with target coordinates. Target highlight changes identify arrivals; small coordinate fluctuations and briefly simultaneous highlights do not constitute extra moves. At the first execution decision, record the entire decoded demonstration. At each subsequent decision, remove the single leading move completed during the intervening oracle execution. Do not remove the move being chosen at the current decision. Thus episode 0 has [\"B\",\"B\"] then [\"B\"]; episode 19 has [\"A\",\"B\",\"A\",\"D\"], [\"B\",\"A\",\"D\"], [\"A\",\"D\"], [\"D\"]; episode 58 has [\"D\",\"D\",\"A\",\"A\"], [\"D\",\"A\",\"A\"], [\"A\",\"A\"], [\"A\"]; episode 86 has [\"A\",\"C\",\"A\",\"B\",\"D\"], [\"C\",\"A\",\"B\",\"D\"], [\"A\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]; episode 99 has [\"A\",\"B\",\"C\",\"D\"], [\"B\",\"C\",\"D\"], [\"C\",\"D\"], [\"D\"]. After the final traversal completes, the value is []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 20,
+    "subgoal_wrong": 3,
+    "memory_wrong": 5,
+    "memory_only": 2,
+    "memory_only_unexplained": 2,
+    "fields": {
+     "remaining_path": 5
+    },
+    "format_wrong": 0,
+    "choice_wrong": 3,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  The three reported failures all occurred at the first execution decision, where the goal required reproducing the visible demonstration and the carried memory was empty. The policy selected a rightward clockwise move for a demonstration beginning with a larger-x, image-lower traversal; selected a rightward clockwise move for one beginning with a smaller-x, image-upper traversal; and selected a rightward counterclockwise move for one beginning with a larger-x, image-upper traversal. The correct initial commands were respectively C, D, and A. The annotated full routes were respectively [\"C\",\"C\"], [\"D\",\"D\",\"B\"], and [\"A\",\"C\",\"A\",\"B\",\"D\"]. None of the failure reports identified missing information or an unclear rule. The existing instructions already explicitly map destination x to robot handedness, classify the arc relative to the wrist-endpoint baseline, initialize the full route from the demonstration, and select its first letter without removing it at initialization. These observations therefore do not establish a SUFFICIENCY or NECESSITY defect in the memory field or a missing subgoal transition rule. No additional memory, changed annotation, or episode-specific exception is warranted; the reported choices contradict rules already present.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No edits committed. The report proposes no changes and establishes no missing memory fact or transition condition. The existing instructions already map larger-x/image-lower to C, smaller-x/image-upper to D, and larger-x/image-upper to A, and require selecting the first decoded move without deleting it at initialization. Additional fields, episode-specific exceptions, or altered route-update rules would not address the reported failures, which contradict those existing instructions."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 16,
+    "subgoal_wrong": 1,
+    "memory_wrong": 4,
+    "memory_only": 3,
+    "memory_only_unexplained": 3,
+    "fields": {
+     "remaining_path": 4
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  The only reported failure occurred at the first execution decision, when the goal required reproducing the demonstrated path and the full demonstration was visible. The policy chose B, a robot-right clockwise traversal, although the first demonstrated traversal moved toward smaller x along the image-upper arc, requiring D. The wrist moved from [67, 161] through [54, 144] and [56, 132] to [71, 124], clearly above the line joining its departure and arrival positions. The complete demonstrated route was [\"D\",\"D\",\"B\"], with no memory carried into this initial decision. The report named no missing information or unclear rule. Neither SUFFICIENCY nor NECESSITY is violated: the existing memory instruction explicitly maps smaller-x image-upper traversals to D, requires decoding the full demonstration at the initial decision without removing its first move, and the subgoal instruction selects that first letter. The annotator prompt already gives the corresponding route and update semantics. This is an application error rather than evidence that any document needs changing; no additional field, episode-specific exception, or replacement rule is warranted.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No edits committed. This round's report requests no changes and identifies no missing memory fact or unclear transition. The existing instructions already classify a smaller-x, image-upper traversal as D, retain the full demonstrated route at initialization, and select its first letter. The reported choice of B contradicts these rules rather than exposing a gap. As in round 1, additional fields, episode-specific exceptions, or replacement update rules are unwarranted."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 21,
+    "subgoal_wrong": 2,
+    "memory_wrong": 5,
+    "memory_only": 3,
+    "memory_only_unexplained": 3,
+    "fields": {
+     "remaining_path": 5
+    },
+    "format_wrong": 0,
+    "choice_wrong": 2,
+    "point_wrong": 0
+   },
+   "critique": "the policy prompt for subgoal\n  At initial decisions for the path-imitation task, memory was empty and the demonstration showed a first traversal toward smaller x on an image-upper arc. The policy chose B although the demonstrated route, and hence the first letter of the full remaining_path to be written, began with D. This is a SUFFICIENCY failure in applying the initial-choice instructions, not missing historical information. Remove all episode-specific initial-subgoal examples: the deployed policy has no episode identifier with which to match them. State explicitly that the visible demonstration determines the initial command. When demonstration frames are present and memory is initially empty, decode the complete route using the memory instruction, select its first letter, and write the complete route without removing that letter. In particular, smaller destination x with intermediate wrist positions above the line joining the departure and arrival wrist positions means D, not B; B requires the lower arc. Do not use the location-based fallback when the demonstration supplies this evidence. Retain the existing rule for later decisions: remove the one completed leading traversal from carried remaining_path and select the new leading letter, irrespective of the preceding command.\n\nrefused\n  The other initial-decision failure likewise selected B for a demonstrated smaller-x, upper-arc traversal, but reported no missing information or rule. It does not justify adding a memory field or changing annotation values or memory-update timing. The existing single ordered remaining_path already preserves the full route, including repeated visits and reversals, and the existing decoding instruction already maps this arc to D. The general initial-choice clarification addresses both failures; no separate case-specific rule is warranted.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "First update remaining_path according to the policy prompt for memory.",
+      "modify_to": "When demonstration frames are present and carried memory is empty, decode the complete demonstrated route according to the policy prompt for memory. Select its first letter as the initial command and write the complete route as remaining_path without removing that letter. The visible demonstration determines this command, not the initial location alone. When carried memory is present, update remaining_path according to the policy prompt for memory, removing the one traversal completed in the intervening execution before selecting the new leading letter."
+     },
+     {
+      "modify_from": "Initial subgoals decoded from the demonstrations are B for episode 0, A for episode 19, D for episode 58, A for episode 86, and A for episode 99.",
+      "modify_to": ""
+     },
+     {
+      "modify_from": "If an unexpected situation nevertheless requires a menu answer, or the demonstration cannot be decoded, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is only a deterministic fallback, not an additional demonstrated move.",
+      "modify_to": "Use a location-based fallback only if the demonstrated route is exhausted but a menu answer is nevertheless required, or if the demonstration supplies insufficient evidence to decode the next traversal. Do not use it instead of a traversal supported by the visible demonstration. If fallback is necessary, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is not an additional demonstrated move."
+     }
+    ],
+    "refused": "No memory fields, annotation values, or memory-update timing are changed. The existing decoding rule already distinguishes smaller-x upper-arc D from smaller-x lower-arc B; a separate D-versus-B clause is unnecessary. The committed clarification applies to every initial traversal and removes episode-specific lookup examples without changing the mappings or later-step semantics retained in earlier rounds."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 16,
+    "subgoal_wrong": 1,
+    "memory_wrong": 5,
+    "memory_only": 4,
+    "memory_only_unexplained": 4,
+    "fields": {
+     "remaining_path": 5
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  The sole failed decision occurred at the start of execution of a demonstrated stick-navigation route. Carried memory was empty, and the visible demonstration first moved to the adjacent larger-x target along an image-lower arc, then reversed and made three smaller-x image-lower traversals. The policy chose B rather than C and reported no missing information or unclear rule. The annotated route was [\"C\",\"B\",\"B\",\"B\"]. This does not establish a SUFFICIENCY or NECESSITY defect: the existing instructions explicitly map a larger-x image-lower traversal to C, require decoding the full demonstration, and require selecting its first letter without removing it at initialization. They also prohibit substituting a location-based fallback for a supported demonstration move. The observed error is therefore already addressed by the documents, and no memory field, update event, or subgoal rule change is justified.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No edits committed. The report requests no changes and identifies no missing historical fact or unclear transition. The existing instructions map larger-x, image-lower traversals to C, require recording the full demonstrated route and selecting its first letter without removing it at initialization, and prohibit replacing supported demonstration evidence with a location-based fallback. The reported choice of B contradicts those rules. Additional fields, episode-specific exceptions, or changes to decoding and update timing are unwarranted. The general initialization clarification and fallback restriction committed in round 3 remain unchanged."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 19,
+    "subgoal_wrong": 4,
+    "memory_wrong": 5,
+    "memory_only": 1,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "remaining_path": 5
+    },
+    "format_wrong": 0,
+    "choice_wrong": 4,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  The reported failures all occurred at the initial execution decision, when the goal required reproducing a visible demonstration and no memory had yet been carried in. The policy chose a larger-x clockwise move where the first demonstrated traversal actually went toward smaller x along the upper arc, or chose a clockwise move where the first traversal went toward larger x along the lower arc. None of the reports identified missing information or a missing rule. The complete demonstrations supported routes such as [\"D\",\"A\",\"A\"], [\"C\",\"A\",\"C\",\"C\"], [\"C\",\"B\",\"D\",\"B\"], and [\"D\",\"A\",\"C\",\"C\",\"A\"], and the annotated memories carried those routes into the subsequent decisions correctly. These failures do not establish a SUFFICIENCY or NECESSITY defect: the current observation supplied the initial traversal, and the existing instructions explicitly map smaller-x upper arcs to D and larger-x lower arcs to C, require selecting the first decoded letter, and forbid substituting a location-based fallback for a supported demonstration move. The later decisions also support the existing one-completed-command, one-leading-letter removal convention. No annotation changes, extra memory fields, or new transition rules are warranted by these reports; the incorrect initial choices are failures to apply rules already present.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No edits committed. The report requests no changes and identifies no missing historical information or unclear transition. The existing instructions already map smaller-x upper-arc traversals to D and larger-x lower-arc traversals to C, require selecting the first demonstrated letter while writing the complete initial route, and prohibit replacing supported demonstration evidence with a location-based fallback. The reported initial choices contradict these rules rather than establish a memory or instruction gap. Additional fields, episode-specific exceptions, and changes to annotation or update timing are unwarranted. The general initialization clarification and fallback restriction committed in round 3 remain intact, as does the one-completed-command, one-leading-letter removal rule supported by later decisions."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    44,
+    76,
+    79,
+    85,
+    86
+   ],
+   "verified_of_all": 0.75,
+   "subgoal_verified": 0.85,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "First update remaining_path according to the policy prompt for memory. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point. Initial subgoals decoded from the demonstrations are B for episode 0, A for episode 19, D for episode 58, A for episode 86, and A for episode 99. Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. If an unexpected situation nevertheless requires a menu answer, or the demonstration cannot be decoded, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is only a deterministic fallback, not an additional demonstrated move.",
+    "fields": [
+     {
+      "name": "remaining_path",
+      "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]",
+      "annotation": "An ordered list of menu letters encoding the demonstrated traversals not yet completed in execution, including the traversal to command at this decision step. Decode the demonstration into individual moves between adjacent target sites, preserving repeated visits and reversals. Larger destination x means robot-left; smaller destination x means robot-right. A leftward move along the image-upper arc is A, a rightward move along the image-lower arc is B, a leftward move along the image-lower arc is C, and a rightward move along the image-upper arc is D. Judge the arc from the intermediate wrist trajectory relative to the line joining its resting positions at the two target sites, not by comparing wrist height directly with target coordinates. Target highlight changes identify arrivals; small coordinate fluctuations and briefly simultaneous highlights do not constitute extra moves. At the first execution decision, record the entire decoded demonstration. At each subsequent decision, remove the single leading move completed during the intervening oracle execution. Do not remove the move being chosen at the current decision. Thus episode 0 has [\"B\",\"B\"] then [\"B\"]; episode 19 has [\"A\",\"B\",\"A\",\"D\"], [\"B\",\"A\",\"D\"], [\"A\",\"D\"], [\"D\"]; episode 58 has [\"D\",\"D\",\"A\",\"A\"], [\"D\",\"A\",\"A\"], [\"A\",\"A\"], [\"A\"]; episode 86 has [\"A\",\"C\",\"A\",\"B\",\"D\"], [\"C\",\"A\",\"B\",\"D\"], [\"A\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]; episode 99 has [\"A\",\"B\",\"C\",\"D\"], [\"B\",\"C\",\"D\"], [\"C\",\"D\"], [\"D\"]. After the final traversal completes, the value is []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    2,
+    32,
+    40,
+    65,
+    85
+   ],
+   "verified_of_all": 0.75,
+   "subgoal_verified": 0.9375,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "First update remaining_path according to the policy prompt for memory. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point. Initial subgoals decoded from the demonstrations are B for episode 0, A for episode 19, D for episode 58, A for episode 86, and A for episode 99. Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. If an unexpected situation nevertheless requires a menu answer, or the demonstration cannot be decoded, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is only a deterministic fallback, not an additional demonstrated move.",
+    "fields": [
+     {
+      "name": "remaining_path",
+      "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]",
+      "annotation": "An ordered list of menu letters encoding the demonstrated traversals not yet completed in execution, including the traversal to command at this decision step. Decode the demonstration into individual moves between adjacent target sites, preserving repeated visits and reversals. Larger destination x means robot-left; smaller destination x means robot-right. A leftward move along the image-upper arc is A, a rightward move along the image-lower arc is B, a leftward move along the image-lower arc is C, and a rightward move along the image-upper arc is D. Judge the arc from the intermediate wrist trajectory relative to the line joining its resting positions at the two target sites, not by comparing wrist height directly with target coordinates. Target highlight changes identify arrivals; small coordinate fluctuations and briefly simultaneous highlights do not constitute extra moves. At the first execution decision, record the entire decoded demonstration. At each subsequent decision, remove the single leading move completed during the intervening oracle execution. Do not remove the move being chosen at the current decision. Thus episode 0 has [\"B\",\"B\"] then [\"B\"]; episode 19 has [\"A\",\"B\",\"A\",\"D\"], [\"B\",\"A\",\"D\"], [\"A\",\"D\"], [\"D\"]; episode 58 has [\"D\",\"D\",\"A\",\"A\"], [\"D\",\"A\",\"A\"], [\"A\",\"A\"], [\"A\"]; episode 86 has [\"A\",\"C\",\"A\",\"B\",\"D\"], [\"C\",\"A\",\"B\",\"D\"], [\"A\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]; episode 99 has [\"A\",\"B\",\"C\",\"D\"], [\"B\",\"C\",\"D\"], [\"C\",\"D\"], [\"D\"]. After the final traversal completes, the value is []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    2,
+    48,
+    75,
+    79,
+    80
+   ],
+   "verified_of_all": 0.7619047619047619,
+   "subgoal_verified": 0.9047619047619048,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "First update remaining_path according to the policy prompt for memory. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point. Initial subgoals decoded from the demonstrations are B for episode 0, A for episode 19, D for episode 58, A for episode 86, and A for episode 99. Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. If an unexpected situation nevertheless requires a menu answer, or the demonstration cannot be decoded, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is only a deterministic fallback, not an additional demonstrated move.",
+    "fields": [
+     {
+      "name": "remaining_path",
+      "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]",
+      "annotation": "An ordered list of menu letters encoding the demonstrated traversals not yet completed in execution, including the traversal to command at this decision step. Decode the demonstration into individual moves between adjacent target sites, preserving repeated visits and reversals. Larger destination x means robot-left; smaller destination x means robot-right. A leftward move along the image-upper arc is A, a rightward move along the image-lower arc is B, a leftward move along the image-lower arc is C, and a rightward move along the image-upper arc is D. Judge the arc from the intermediate wrist trajectory relative to the line joining its resting positions at the two target sites, not by comparing wrist height directly with target coordinates. Target highlight changes identify arrivals; small coordinate fluctuations and briefly simultaneous highlights do not constitute extra moves. At the first execution decision, record the entire decoded demonstration. At each subsequent decision, remove the single leading move completed during the intervening oracle execution. Do not remove the move being chosen at the current decision. Thus episode 0 has [\"B\",\"B\"] then [\"B\"]; episode 19 has [\"A\",\"B\",\"A\",\"D\"], [\"B\",\"A\",\"D\"], [\"A\",\"D\"], [\"D\"]; episode 58 has [\"D\",\"D\",\"A\",\"A\"], [\"D\",\"A\",\"A\"], [\"A\",\"A\"], [\"A\"]; episode 86 has [\"A\",\"C\",\"A\",\"B\",\"D\"], [\"C\",\"A\",\"B\",\"D\"], [\"A\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]; episode 99 has [\"A\",\"B\",\"C\",\"D\"], [\"B\",\"C\",\"D\"], [\"C\",\"D\"], [\"D\"]. After the final traversal completes, the value is []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    8,
+    17,
+    18,
+    40,
+    70
+   ],
+   "verified_of_all": 0.6875,
+   "subgoal_verified": 0.9375,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "When demonstration frames are present and carried memory is empty, decode the complete demonstrated route according to the policy prompt for memory. Select its first letter as the initial command and write the complete route as remaining_path without removing that letter. The visible demonstration determines this command, not the initial location alone. When carried memory is present, update remaining_path according to the policy prompt for memory, removing the one traversal completed in the intervening execution before selecting the new leading letter. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point.  Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. Use a location-based fallback only if the demonstrated route is exhausted but a menu answer is nevertheless required, or if the demonstration supplies insufficient evidence to decode the next traversal. Do not use it instead of a traversal supported by the visible demonstration. If fallback is necessary, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is not an additional demonstrated move.",
+    "fields": [
+     {
+      "name": "remaining_path",
+      "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]",
+      "annotation": "An ordered list of menu letters encoding the demonstrated traversals not yet completed in execution, including the traversal to command at this decision step. Decode the demonstration into individual moves between adjacent target sites, preserving repeated visits and reversals. Larger destination x means robot-left; smaller destination x means robot-right. A leftward move along the image-upper arc is A, a rightward move along the image-lower arc is B, a leftward move along the image-lower arc is C, and a rightward move along the image-upper arc is D. Judge the arc from the intermediate wrist trajectory relative to the line joining its resting positions at the two target sites, not by comparing wrist height directly with target coordinates. Target highlight changes identify arrivals; small coordinate fluctuations and briefly simultaneous highlights do not constitute extra moves. At the first execution decision, record the entire decoded demonstration. At each subsequent decision, remove the single leading move completed during the intervening oracle execution. Do not remove the move being chosen at the current decision. Thus episode 0 has [\"B\",\"B\"] then [\"B\"]; episode 19 has [\"A\",\"B\",\"A\",\"D\"], [\"B\",\"A\",\"D\"], [\"A\",\"D\"], [\"D\"]; episode 58 has [\"D\",\"D\",\"A\",\"A\"], [\"D\",\"A\",\"A\"], [\"A\",\"A\"], [\"A\"]; episode 86 has [\"A\",\"C\",\"A\",\"B\",\"D\"], [\"C\",\"A\",\"B\",\"D\"], [\"A\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]; episode 99 has [\"A\",\"B\",\"C\",\"D\"], [\"B\",\"C\",\"D\"], [\"C\",\"D\"], [\"D\"]. After the final traversal completes, the value is []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    10,
+    22,
+    38,
+    73
+   ],
+   "verified_of_all": 0.7368421052631579,
+   "subgoal_verified": 0.7894736842105263,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "When demonstration frames are present and carried memory is empty, decode the complete demonstrated route according to the policy prompt for memory. Select its first letter as the initial command and write the complete route as remaining_path without removing that letter. The visible demonstration determines this command, not the initial location alone. When carried memory is present, update remaining_path according to the policy prompt for memory, removing the one traversal completed in the intervening execution before selecting the new leading letter. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point.  Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. Use a location-based fallback only if the demonstrated route is exhausted but a menu answer is nevertheless required, or if the demonstration supplies insufficient evidence to decode the next traversal. Do not use it instead of a traversal supported by the visible demonstration. If fallback is necessary, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is not an additional demonstrated move.",
+    "fields": [
+     {
+      "name": "remaining_path",
+      "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]",
+      "annotation": "An ordered list of menu letters encoding the demonstrated traversals not yet completed in execution, including the traversal to command at this decision step. Decode the demonstration into individual moves between adjacent target sites, preserving repeated visits and reversals. Larger destination x means robot-left; smaller destination x means robot-right. A leftward move along the image-upper arc is A, a rightward move along the image-lower arc is B, a leftward move along the image-lower arc is C, and a rightward move along the image-upper arc is D. Judge the arc from the intermediate wrist trajectory relative to the line joining its resting positions at the two target sites, not by comparing wrist height directly with target coordinates. Target highlight changes identify arrivals; small coordinate fluctuations and briefly simultaneous highlights do not constitute extra moves. At the first execution decision, record the entire decoded demonstration. At each subsequent decision, remove the single leading move completed during the intervening oracle execution. Do not remove the move being chosen at the current decision. Thus episode 0 has [\"B\",\"B\"] then [\"B\"]; episode 19 has [\"A\",\"B\",\"A\",\"D\"], [\"B\",\"A\",\"D\"], [\"A\",\"D\"], [\"D\"]; episode 58 has [\"D\",\"D\",\"A\",\"A\"], [\"D\",\"A\",\"A\"], [\"A\",\"A\"], [\"A\"]; episode 86 has [\"A\",\"C\",\"A\",\"B\",\"D\"], [\"C\",\"A\",\"B\",\"D\"], [\"A\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]; episode 99 has [\"A\",\"B\",\"C\",\"D\"], [\"B\",\"C\",\"D\"], [\"C\",\"D\"], [\"D\"]. After the final traversal completes, the value is []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+     }
+    ]
+   }
+  }
+ ],
+ "ablate": "predictability"
+}

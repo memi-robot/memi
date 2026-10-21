@@ -1,0 +1,85 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "method",
+  "holding"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  0,
+  33,
+  75,
+  85,
+  90
+ ],
+ "scored": 9,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "method": 4,
+  "holding": 0
+ },
+ "field_errors": {
+  "method": {
+   "in": 0,
+   "sole": 0
+  },
+  "holding": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "holding": "read at no step of 9"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 9,
+ "critique": "field holding, ANNOTATOR PROMPT\n  DELETE this field. It was carried at every step and read at none. In every episode the thing the robot has in its fingers is recoverable from what the decision step itself shows: the execution steps since the previous decision include the descent, the finger closure (about 22% on the stick, about 46% on the cube, 0% on nothing) and the rise, and the scene at the decision step shows the current finger opening and gripper height. At the first decision step nothing has been executed and the fingers are fully open. So the field repeats what the step already gives and breaks NECESSITY. It was also misleading as written: the value `none` written at the first step was carried into the step where the grasp had just completed, so the memory said `none` while the correct subgoal was the one that needs the object in hand. Nothing replaces it; `method` remains the only field.\n\nfield holding, POLICY PROMPT\n  DELETE this field. The policy never used it, and does not need it: whether the stick or the cube is in the fingers at a decision step is read directly from the execution steps shown at that step (descent, closure to about 22% for the stick or about 46% for the cube, rise) and from the finger opening and height in the scene at the decision step. The memory keeps only `method`, fixed at the first decision step from the demonstration and copied unchanged afterwards.\n\nthe policy prompt for subgoal\n  Remove every reference to the `holding` field; the memory has only `method`. The rules that read `holding` (`pick` and `holding` is `none` -> D, `pick` and `holding` is `cube` -> E, `hook` and `holding` is `none` -> A, `hook` and `holding` is `peg` -> B) are replaced by rules that read the step: At the first decision step (memory empty, fingers fully open, gripper raised out of the frame, nothing executed yet) fill `method` from the demonstration steps and choose by it: `push` -> C, `pick` -> D, `hook` -> A. At any later decision step decide from what the execution steps shown and the scene at this step contain, with `method` as the guide: if the fingers are now closed to about 20-25% and the gripper has risen after descending onto the stick (the stick may be marked held or lifted, but go by the finger opening and the rise even if the marking is absent) choose B; if the fingers are now closed to about 40-60% and the gripper has risen after descending onto the cube (again judge by the finger opening and the rise, not by whether the cube is marked as held, since the object tracking at the decision step can be unreliable) choose E; if the fingers are fully open or closed to about 0% with nothing raised, choose by `method` as at the first step (`push` -> C, `pick` -> D, `hook` -> A). Keep the fallback for a missing `method` (judge from the scene: 20-25% with the stick raised means B, 40-60% raised after a descent onto the cube means E, otherwise by what the demonstration showed), and keep the two prohibitions, restated without memory: never choose E unless the step shows the fingers partly closed at 40-60% and risen from the cube, never choose B unless the step shows the fingers at about 20-25% and risen from the stick. The rule for `push` stays: C is the only subgoal in a push episode.\n\nrefused\n  No step was reported as failed, so there is nothing from the policy to pass on or hold back. The only action taken is on the unread-field block: `holding` is dropped rather than kept, because the steps it would exist for (the second decision step, where B or E must be chosen) show the grasp in their own execution steps and scene, and the policy chose correctly there without reading it.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Remove every reference to the `holding` field; the memory has only `method`. The rules that read `holding` (`pick` and `holding` is `none` -> D, `pick` and `holding` is `cube` -> E, `hook` and `holding` is `none` -> A, `hook` and `holding` is `peg` -> B) are replaced by rules that read the step: At the first decision step (memory empty, fingers fully open, gripper raised out of the frame, nothing executed yet) fill `method` from the demonstration steps and choose by it: `push` -> C, `pick` -> D, `hook` -> A. At any later decision step decide from what the execution steps shown and the scene at this step contain, with `method` as the guide: if the fingers are now closed to about 20-25% and the gripper has risen after descending onto the stick (the stick may be marked held or lifted, but go by the finger opening and the rise even if the marking is absent) choose B; if the fingers are now closed to about 40-60% and the gripper has risen after descending onto the cube (again judge by the finger opening and the rise, not by whether the cube is marked as held, since the object tracking at the decision step can be unreliable) choose E; if the fingers are fully open or closed to about 0% with nothing raised, choose by `method` as at the first step (`push` -> C, `pick` -> D, `hook` -> A). Keep the fallback for a missing `method` (judge from the scene: 20-25% with the stick raised means B, 40-60% raised after a descent onto the cube means E, otherwise by what the demonstration showed), and keep the two prohibitions, restated without memory: never choose E unless the step shows the fingers partly closed at 40-60% and risen from the cube, never choose B unless the step shows the fingers at about 20-25% and risen from the stick. The rule for `push` stays: C is the only subgoal in a push episode.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "holding",
+    "description": "DELETE this field. The policy never used it, and does not need it: whether the stick or the cube is in the fingers at a decision step is read directly from the execution steps shown at that step (descent, closure to about 22% for the stick or about 46% for the cube, rise) and from the finger opening and height in the scene at the decision step. The memory keeps only `method`, fixed at the first decision step from the demonstration and copied unchanged afterwards."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "holding",
+    "description": "DELETE this field. It was carried at every step and read at none. In every episode the thing the robot has in its fingers is recoverable from what the decision step itself shows: the execution steps since the previous decision include the descent, the finger closure (about 22% on the stick, about 46% on the cube, 0% on nothing) and the rise, and the scene at the decision step shows the current finger opening and gripper height. At the first decision step nothing has been executed and the fingers are fully open. So the field repeats what the step already gives and breaks NECESSITY. It was also misleading as written: the value `none` written at the first step was carried into the step where the grasp had just completed, so the memory said `none` while the correct subgoal was the one that needs the object in hand. Nothing replaces it; `method` remains the only field."
+   }
+  ],
+  "refused": "No step was reported as failed, so there is nothing from the policy to pass on or hold back. The only action taken is on the unread-field block: `holding` is dropped rather than kept, because the steps it would exist for (the second decision step, where B or E must be chosen) show the grasp in their own execution steps and scene, and the policy chose correctly there without reading it."
+ },
+ "critiques": []
+}

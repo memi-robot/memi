@@ -1,0 +1,13 @@
+{
+ "task": "VideoRepick",
+ "fields": [
+  {
+   "name": "target_cube",
+   "description": "Position [y, x] of the cube the demonstration picked up, at its current table position. At the first decision step the picked cube is identified in the DEMONSTRATION STEPS by the gripper's own [y, x] at the frame where it is lowest (height about 0.02) and the fingers first read about 46%: the cube listed nearest that spot (the 'held in the gripper' line in the following frames and the cube that reappears beside the gripper at put-down confirm it; a cube merely vanishing from the list while the gripper hovers over it is occlusion, not a pick). That cube's identity is then followed frame by frame through the rest of the demonstration, including every shuffle frame, by nearest-position matching between consecutive frames: when two cubes move at once they are exchanging places and each keeps its own identity along its own arc, so the picked cube ends where its arc ends, not where it started (two consecutive swaps of the same pair return it to its original spot). The value is its position in the scene at the start of execution. At every later decision step: if the execution steps since the previous decision step show a cube 'held in the gripper' and then released (fingers reopen to 100% near height 0.02), the value is that cube's table position in the scene at this decision step; otherwise it is the position of the listed cube nearest the previous value (within about 10 px), or the previous value unchanged if none is listed. 'Lifted off the table' lines are ignored. e.g. [85, 109]"
+  },
+  {
+   "name": "picks_done",
+   "description": "Count of completed grasps in the execution so far. It is 0 at the first decision step. It goes up by one at a decision step whose execution steps show the gripper descend to about height 0.02 over the target cube with fingers closing from 100% to about 46% (or any frame saying a cube 'is held in the gripper'), and whose scene at the decision step shows the gripper raised (height about 0.14 or more) with fingers still about 46% open. The table list at that scene is irrelevant: the held cube may still be listed at its old table position. It never changes at a decision step whose scene shows fingers 100% open, even if a cube is listed as 'lifted off the table' there. e.g. 2"
+  }
+ ]
+}

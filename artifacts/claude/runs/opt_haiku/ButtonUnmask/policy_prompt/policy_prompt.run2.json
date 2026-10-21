@@ -1,0 +1,81 @@
+{
+ "task": "ButtonUnmask",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    9,
+    43,
+    48,
+    60,
+    80
+   ],
+   "verified_of_all": 0.75,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    15,
+    20,
+    47,
+    86,
+    89
+   ],
+   "verified_of_all": 0.9285714285714286,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    5,
+    21,
+    34,
+    38,
+    69
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    26,
+    46,
+    78,
+    85
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 0.9
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    7,
+    8,
+    38,
+    87,
+    90
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Every condition in Rules 1-3 is evaluated on the scene at the decision step only, meaning the last frame shown. Earlier execution frames are ignored entirely for choosing the subgoal: they only show the previous command being carried out, and the first of them may still show the scene as it was before that command (for example loose cubes before the containers came down). An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the last frame shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time write target_cube_positions: the [y, x] of each cube the goal names, in the order the goal names them, leaving out cubes the goal does not name. Never choose A once containers are visible in the last frame, even if an earlier execution frame still showed loose cubes: containers only appear after the button has been pressed. Rule 2: if the last frame shows containers on the table and the gripper is NOT holding a container, the button has already been pressed, so choose B (pick up the container). The target is the entry of target_cube_positions at index picks_done (the first entry when picks_done is 0, the second when picks_done is 1). Point at the center of the container nearest to that listed position, writing the point as [y, x]. Ignore containers that cover no listed position. Rule 3: if the last frame shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If every listed cube has already been picked (picks_done is not smaller than the length of target_cube_positions), choose C if holding, otherwise B at the container nearest the last entry of target_cube_positions. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the entry of target_cube_positions at index picks_done (the last entry if picks_done is not smaller than the list length); if no containers are visible, choose A.",
+ "fields": [
+  {
+   "name": "picks_done",
+   "description": "Number of container pick-ups completed so far, always written as a number, never left blank. If no value was carried in (as at the first decision step), treat the carried-in value as 0. Then look only at the scene at this decision step, meaning the last frame shown, and ignore every earlier execution frame (in particular a frame at the start of the execution that still shows a container held from before). If that last frame shows a container held in the gripper, write that number + 1; otherwise, including when the gripper is empty and open with every container resting on the table, write that number unchanged. It does not change when the container is put down. At the first decision step this is 0. e.g. 0 at the first decision step, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been set down"
+  },
+  {
+   "name": "target_cube_positions",
+   "description": "If the scene at this decision step (the last frame shown) shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal instruction, list the cubes it names in the order it names them, and write the [y, x] of each of those cubes as an ordered list in that same order; leave out any cube the goal does not name. Otherwise copy the carried-in list unchanged, never editing it from a cube briefly exposed under a lifted container. e.g. goal naming blue then red: [[78, 157], [106, 105]]; goal naming only red: [[73, 93]]"
+  }
+ ],
+ "stage": "optimized"
+}

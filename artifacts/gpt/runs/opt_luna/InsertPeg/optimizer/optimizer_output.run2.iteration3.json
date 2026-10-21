@@ -1,0 +1,66 @@
+{
+ "episodes": [
+  12,
+  36,
+  45,
+  64,
+  65
+ ],
+ "user_chars": 12904,
+ "usage": {
+  "prompt_tokens": 5066,
+  "completion_tokens": 386,
+  "total_tokens": 5452,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 5063,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "insertion_side",
+    "edits": [
+     {
+      "modify_from": "When the current observation includes the demonstration and incoming memory is empty, inspect the final low-height insertion approach relative to the box. Write \"right\" if the held peg approaches the box from smaller x, or \"left\" if it approaches from larger x. Use this final approach rather than the pickup position or initial lift direction. If the demonstration does not establish a side, write \"unknown\".",
+      "modify_to": "When the current observation includes the demonstration and incoming memory is empty, isolate the demonstration's final low-height approach into the box. Track the carried peg and its gripper, not stationary pegs, and compare the carried peg's approach position with the box's x coordinate. Approaching from larger x toward smaller x establishes \"left\"; approaching from smaller x toward larger x establishes \"right\". These labels are robot-relative, not camera-relative. If the peg disappears into the box, use the last clearly visible approach before occlusion, not the final occluded frame. Ignore the original pickup location, the high transport path (including any crossing over the box), and the reset execution scene when assigning the side. Write this value at the first decision. Write \"unknown\" only if the demonstration genuinely does not establish an approach side."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "No additional memory field, annotation change, coordinate offset, or episode-specific pickup rule is committed. The reported failures concern extracting the demonstrated insertion side, not retaining another fact or selecting a different endpoint. Small point differences that still select the same demonstrated grasp end do not require a subgoal-policy prompt change."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "insertion_side",
+    "edits": [
+     {
+      "modify_from": "When the current observation includes the demonstration and incoming memory is empty, inspect the final low-height insertion approach relative to the box. Write \"right\" if the held peg approaches the box from smaller x, or \"left\" if it approaches from larger x. Use this final approach rather than the pickup position or initial lift direction. If the demonstration does not establish a side, write \"unknown\".",
+      "modify_to": "When the current observation includes the demonstration and incoming memory is empty, isolate the demonstration's final low-height approach into the box. Track the carried peg and its gripper, not stationary pegs, and compare the carried peg's approach position with the box's x coordinate. Approaching from larger x toward smaller x establishes \"left\"; approaching from smaller x toward larger x establishes \"right\". These labels are robot-relative, not camera-relative. If the peg disappears into the box, use the last clearly visible approach before occlusion, not the final occluded frame. Ignore the original pickup location, the high transport path (including any crossing over the box), and the reset execution scene when assigning the side. Write this value at the first decision. Write \"unknown\" only if the demonstration genuinely does not establish an approach side."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "No additional memory field, annotation change, coordinate offset, or episode-specific pickup rule is committed. The reported failures concern extracting the demonstrated insertion side, not retaining another fact or selecting a different endpoint. Small point differences that still select the same demonstrated grasp end do not require a subgoal-policy prompt change."
+ },
+ "not_applied": [],
+ "refused": "No additional memory field, annotation change, coordinate offset, or episode-specific pickup rule is committed. The reported failures concern extracting the demonstrated insertion side, not retaining another fact or selecting a different endpoint. Small point differences that still select the same demonstrated grasp end do not require a subgoal-policy prompt change.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"insertion_side\",\n      \"edits\": [\n        {\n          \"modify_from\": \"When the current observation includes the demonstration and incoming memory is empty, inspect the final low-height insertion approach relative to the box. Write \\\"right\\\" if the held peg approaches the box from smaller x, or \\\"left\\\" if it approaches from larger x. Use this final approach rather than the pickup position or initial lift direction. If the demonstration does not establish a side, write \\\"unknown\\\".\",\n          \"modify_to\": \"When the current observation includes the demonstration and incoming memory is empty, isolate the demonstration's final low-height approach into the box. Track the carried peg and its gripper, not stationary pegs, and compare the carried peg's approach position with the box's x coordinate. Approaching from larger x toward smaller x establishes \\\"left\\\"; approaching from smaller x toward larger x establishes \\\"right\\\". These labels are robot-relative, not camera-relative. If the peg disappears into the box, use the last clearly visible approach before occlusion, not the final occluded frame. Ignore the original pickup location, the high transport path (including any crossing over the box), and the reset execution scene when assigning the side. Write this value at the first decision. Write \\\"unknown\\\" only if the demonstration genuinely does not establish an approach side.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [],\n  \"refused\": \"No additional memory field, annotation change, coordinate offset, or episode-specific pickup rule is committed. The reported failures concern extracting the demonstrated insertion side, not retaining another fact or selecting a different endpoint. Small point differences that still select the same demonstrated grasp end do not require a subgoal-plan change.\"\n}"
+}

@@ -1,0 +1,22 @@
+{
+ "task": "ButtonUnmask",
+ "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record each cube's position in the memory fields. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the recorded position of the next goal cube; if no containers are visible, choose A.",
+ "fields": [
+  {
+   "name": "blue_cube_pos",
+   "description": "If this step shows a loose blue cube and no containers (the scene before the button is pressed), write the blue cube's [y, x] as shown. Otherwise copy the carried-in value unchanged; never overwrite it from a cube briefly exposed under a lifted container. e.g. [128, 141]"
+  },
+  {
+   "name": "green_cube_pos",
+   "description": "If this step shows a loose green cube and no containers (the scene before the button is pressed), write the green cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [88, 106]"
+  },
+  {
+   "name": "red_cube_pos",
+   "description": "If this step shows a loose red cube and no containers (the scene before the button is pressed), write the red cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [130, 79]"
+  },
+  {
+   "name": "picks_done",
+   "description": "Number of container pick-ups completed so far, always written as a number, never left blank. If no value was carried in (as at the first decision step), treat the carried-in value as 0. Then look only at the scene at this decision step, meaning the last frame shown, and ignore every earlier execution frame (in particular a frame at the start of the execution that still shows a container held from before). If that last frame shows a container held in the gripper, write that number + 1; otherwise, including when the gripper is empty and open with every container resting on the table, write that number unchanged. It does not change when the container is put down. At the first decision step this is 0. e.g. 0 at the first decision step, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been set down"
+  }
+ ]
+}

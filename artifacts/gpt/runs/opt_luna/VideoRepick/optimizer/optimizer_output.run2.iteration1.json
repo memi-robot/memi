@@ -1,0 +1,130 @@
+{
+ "episodes": [
+  0,
+  12,
+  36,
+  94,
+  95
+ ],
+ "user_chars": 16854,
+ "usage": {
+  "prompt_tokens": 5885,
+  "completion_tokens": 867,
+  "total_tokens": 6752,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 5882,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Read the goal each time: the required number N of execution cycles is 2 for 'two times' and 1 for 'again'.",
+    "modify_to": "Read the required number N of execution cycles from the goal each time: 'again' means 1, 'two times' means 2, and 'three times' means 3; use the stated count for other explicit repetition counts."
+   },
+   {
+    "modify_from": "If the hand is raised and fully open after a release, choose A when completed_cycles < N and C when completed_cycles >= N.",
+    "modify_to": "A recognized table-height release followed by a fully open retreat takes precedence over lingering held or airborne object reports. After updating completed_cycles for that release, choose A when completed_cycles < N and C when completed_cycles >= N."
+   },
+   {
+    "modify_from": "B and C require no point.",
+    "modify_to": "B and C require no point. Emit only the exact menu label as the choice: A, B, or C in this menu, without its action description. Supply a separate [y, x] point only for A."
+   },
+   {
+    "modify_from": "If observations are ambiguous or do not fit a rule, prioritize B when the final hand appears to retain an object; otherwise choose C only if the required cycle count has been reached, and choose A at the best visible match to target_anchor if it has not.",
+    "modify_to": "If observations are ambiguous or do not fit a rule, prioritize B when the final hand posture provides evidence of retaining an object; otherwise choose C only if the required cycle count has been reached, and choose A at the best visible match to target_anchor if it has not. This fallback must not override a recognized release followed by fully open retreat, and a lingering held or airborne object report alone does not establish retention after that sequence."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_anchor",
+    "edits": [
+     {
+      "modify_from": "A single exchange moves the target to the other endpoint; two exchanges return it.",
+      "modify_to": "Resolve each exchange sequentially using continuous trajectories, carrying the tracked cube's identity and resulting location into the next exchange. Two exchanges return the target only when they swap the same pair of locations; exchanges with different partners can move it to a third location."
+     },
+     {
+      "modify_from": "In the supplied demonstrations this gives [93, 140], [122, 119], [92, 156], [112, 116], and [112, 158] for episodes 2, 4, 62, 83, and 85 respectively.",
+      "modify_to": "Determine this center from the demonstration and initial execution scene currently shown, not from an episode lookup, the original demonstration center, or the recorded grasp point."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "completed_cycles",
+    "edits": [
+     {
+      "modify_from": "Increment the incoming count once if the interval shows the hand starting in its raised grasp posture with partially closed fingers, descending to table height, opening to release, and retreating to a raised fully open posture. This is a completed put-down.",
+      "modify_to": "Increment the incoming count once if the interval shows the hand descending in a partially closed grasp posture to table height, opening there to release, and retreating to a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Opening may be sampled at approximately 88–99% before reaching full opening during retreat. This sequence is a completed put-down even if an object report still labels a cube held or airborne."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "None. The annotation fields already define the intended target identity and completed-cycle count correctly, so no annotation-side change or additional field is needed."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_anchor",
+    "edits": [
+     {
+      "modify_from": "A single exchange moves the target to the other endpoint; two exchanges return it.",
+      "modify_to": "Resolve each exchange sequentially using continuous trajectories, carrying the tracked cube's identity and resulting location into the next exchange. Two exchanges return the target only when they swap the same pair of locations; exchanges with different partners can move it to a third location."
+     },
+     {
+      "modify_from": "In the supplied demonstrations this gives [93, 140], [122, 119], [92, 156], [112, 116], and [112, 158] for episodes 2, 4, 62, 83, and 85 respectively.",
+      "modify_to": "Determine this center from the demonstration and initial execution scene currently shown, not from an episode lookup, the original demonstration center, or the recorded grasp point."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "completed_cycles",
+    "edits": [
+     {
+      "modify_from": "Increment the incoming count once if the interval shows the hand starting in its raised grasp posture with partially closed fingers, descending to table height, opening to release, and retreating to a raised fully open posture. This is a completed put-down.",
+      "modify_to": "Increment the incoming count once if the interval shows the hand descending in a partially closed grasp posture to table height, opening there to release, and retreating to a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Opening may be sampled at approximately 88–99% before reaching full opening during retreat. This sequence is a completed put-down even if an object report still labels a cube held or airborne."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Read the goal each time: the required number N of execution cycles is 2 for 'two times' and 1 for 'again'.",
+    "modify_to": "Read the required number N of execution cycles from the goal each time: 'again' means 1, 'two times' means 2, and 'three times' means 3; use the stated count for other explicit repetition counts."
+   },
+   {
+    "modify_from": "If the hand is raised and fully open after a release, choose A when completed_cycles < N and C when completed_cycles >= N.",
+    "modify_to": "A recognized table-height release followed by a fully open retreat takes precedence over lingering held or airborne object reports. After updating completed_cycles for that release, choose A when completed_cycles < N and C when completed_cycles >= N."
+   },
+   {
+    "modify_from": "B and C require no point.",
+    "modify_to": "B and C require no point. Emit only the exact menu label as the choice: A, B, or C in this menu, without its action description. Supply a separate [y, x] point only for A."
+   },
+   {
+    "modify_from": "If observations are ambiguous or do not fit a rule, prioritize B when the final hand appears to retain an object; otherwise choose C only if the required cycle count has been reached, and choose A at the best visible match to target_anchor if it has not.",
+    "modify_to": "If observations are ambiguous or do not fit a rule, prioritize B when the final hand posture provides evidence of retaining an object; otherwise choose C only if the required cycle count has been reached, and choose A at the best visible match to target_anchor if it has not. This fallback must not override a recognized release followed by fully open retreat, and a lingering held or airborne object report alone does not establish retention after that sequence."
+   }
+  ],
+  "refused": "None. The annotation fields already define the intended target identity and completed-cycle count correctly, so no annotation-side change or additional field is needed."
+ },
+ "not_applied": [],
+ "refused": "None. The annotation fields already define the intended target identity and completed-cycle count correctly, so no annotation-side change or additional field is needed.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"target_anchor\",\n      \"edits\": [\n        {\n          \"modify_from\": \"A single exchange moves the target to the other endpoint; two exchanges return it.\",\n          \"modify_to\": \"Resolve each exchange sequentially using continuous trajectories, carrying the tracked cube's identity and resulting location into the next exchange. Two exchanges return the target only when they swap the same pair of locations; exchanges with different partners can move it to a third location.\"\n        },\n        {\n          \"modify_from\": \"In the supplied demonstrations this gives [93, 140], [122, 119], [92, 156], [112, 116], and [112, 158] for episodes 2, 4, 62, 83, and 85 respectively.\",\n          \"modify_to\": \"Determine this center from the demonstration and initial execution scene currently shown, not from an episode lookup, the original demonstration center, or the recorded grasp point.\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"modify\",\n      \"field\": \"completed_cycles\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Increment the incoming count once if the interval shows the hand starting in its raised grasp posture with partially closed fingers, descending to table height, opening to release, and retreating to a raised fully open posture. This is a completed put-down.\",\n          \"modify_to\": \"Increment the incoming count once if the interval shows the hand descending in a partially closed grasp posture to table height, opening there to release, and retreating to a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Opening may be sampled at approximately 88–99% before reaching full opening during retreat. This sequence is a completed put-down even if an object report still labels a cube held or airborne.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"Read the goal each time: the required number N of execution cycles is 2 for 'two times' and 1 for 'again'.\",\n      \"modify_to\": \"Read the required number N of execution cycles from the goal each time: 'again' means 1, 'two times' means 2, and 'three times' means 3; use the stated count for other explicit repetition counts.\"\n    },\n    {\n      \"modify_from\": \"If the hand is raised and fully open after a release, choose A when completed_cycles < N and C when completed_cycles >= N.\",\n      \"modify_to\": \"A recognized table-height release followed by a fully open retreat takes precedence over lingering held or airborne object reports. After updating completed_cycles for that release, choose A when completed_cycles < N and C when completed_cycles >= N.\"\n    },\n    {\n      \"modify_from\": \"B and C require no point.\",\n      \"modify_to\": \"B and C require no point. Emit only the exact menu label as the choice: A, B, or C in this menu, without its action description. Supply a separate [y, x] point only for A.\"\n    },\n    {\n      \"modify_from\": \"If observations are ambiguous or do not fit a rule, prioritize B when the final hand appears to retain an object; otherwise choose C only if the required cycle count has been reached, and choose A at the best visible match to target_anchor if it has not.\",\n      \"modify_to\": \"If observations are ambiguous or do not fit a rule, prioritize B when the final hand posture provides evidence of retaining an object; otherwise choose C only if the required cycle count has been reached, and choose A at the best visible match to target_anchor if it has not. This fallback must not override a recognized release followed by fully open retreat, and a lingering held or airborne object report alone does not establish retention after that sequence.\"\n    }\n  ],\n  \"refused\": \"None. The annotation fields already define the intended target identity and completed-cycle count correctly, so no annotation-side change or additional field is needed.\"\n}"
+}

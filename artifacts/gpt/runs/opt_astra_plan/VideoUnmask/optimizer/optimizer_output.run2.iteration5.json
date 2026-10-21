@@ -1,0 +1,100 @@
+{
+ "episodes": [
+  1,
+  16,
+  62,
+  66,
+  89
+ ],
+ "user_chars": 13107,
+ "usage": {
+  "prompt_tokens": 5016,
+  "completion_tokens": 561,
+  "total_tokens": 5577,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 2721,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Apply the memory update from the observations before selecting the subgoal.",
+    "modify_to": "If the goal requests only one pickup and the current step shows the demonstration, locate the requested cube color before it is covered, track which container covers its location, and choose A pointing inside that container in the current execution scene. Allow small visible-centroid shifts and ignore containers covering other colors or empty locations. Output empty memory. Do not infer hidden colors from container appearance. This single-pickup path requires no further command after successful pickup; if an extra decision shows the completed pickup with the container held, choose B as the release action. For goals requesting multiple pickups, apply the following rules, starting with the memory update from the observations before selecting the subgoal."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location.",
+      "modify_to": "If the goal requests only one pickup, omit this field and output empty memory; use the demonstration association directly for the initial command. Otherwise, initialize this field at the first decision, when the demonstration is shown: read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed.",
+      "modify_to": "For goals requesting only one pickup, omit this field and write empty memory at every decision. For goals requesting multiple pickups, this field is an ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. The following initialization and update rules apply only to those multiple-pickup goals."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Do not delete remaining_targets or its pickup, put-down, and completion rules globally. The initial documents support multiple-pickup goals whose later decisions no longer show the demonstration. This round establishes that persistence is unnecessary for single-pickup goals, not that the target list is unnecessary for longer goals. Omit the field on the single-pickup path while preserving it and the existing transitions for multiple-pickup goals."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed.",
+      "modify_to": "For goals requesting only one pickup, omit this field and write empty memory at every decision. For goals requesting multiple pickups, this field is an ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. The following initialization and update rules apply only to those multiple-pickup goals."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location.",
+      "modify_to": "If the goal requests only one pickup, omit this field and output empty memory; use the demonstration association directly for the initial command. Otherwise, initialize this field at the first decision, when the demonstration is shown: read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Apply the memory update from the observations before selecting the subgoal.",
+    "modify_to": "If the goal requests only one pickup and the current step shows the demonstration, locate the requested cube color before it is covered, track which container covers its location, and choose A pointing inside that container in the current execution scene. Allow small visible-centroid shifts and ignore containers covering other colors or empty locations. Output empty memory. Do not infer hidden colors from container appearance. This single-pickup path requires no further command after successful pickup; if an extra decision shows the completed pickup with the container held, choose B as the release action. For goals requesting multiple pickups, apply the following rules, starting with the memory update from the observations before selecting the subgoal."
+   }
+  ],
+  "refused": "Do not delete remaining_targets or its pickup, put-down, and completion rules globally. The initial documents support multiple-pickup goals whose later decisions no longer show the demonstration. This round establishes that persistence is unnecessary for single-pickup goals, not that the target list is unnecessary for longer goals. Omit the field on the single-pickup path while preserving it and the existing transitions for multiple-pickup goals."
+ },
+ "not_applied": [],
+ "refused": "Do not delete remaining_targets or its pickup, put-down, and completion rules globally. The initial documents support multiple-pickup goals whose later decisions no longer show the demonstration. This round establishes that persistence is unnecessary for single-pickup goals, not that the target list is unnecessary for longer goals. Omit the field on the single-pickup path while preserving it and the existing transitions for multiple-pickup goals.",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_targets\",\n      \"edits\": [\n        {\n          \"modify_from\": \"An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed.\",\n          \"modify_to\": \"For goals requesting only one pickup, omit this field and write empty memory at every decision. For goals requesting multiple pickups, this field is an ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. The following initialization and update rules apply only to those multiple-pickup goals.\"\n        }\n      ]\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_targets\",\n      \"edits\": [\n        {\n          \"modify_from\": \"With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location.\",\n          \"modify_to\": \"If the goal requests only one pickup, omit this field and output empty memory; use the demonstration association directly for the initial command. Otherwise, initialize this field at the first decision, when the demonstration is shown: read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"Apply the memory update from the observations before selecting the subgoal.\",\n      \"modify_to\": \"If the goal requests only one pickup and the current step shows the demonstration, locate the requested cube color before it is covered, track which container covers its location, and choose A pointing inside that container in the current execution scene. Allow small visible-centroid shifts and ignore containers covering other colors or empty locations. Output empty memory. Do not infer hidden colors from container appearance. This single-pickup path requires no further command after successful pickup; if an extra decision shows the completed pickup with the container held, choose B as the release action. For goals requesting multiple pickups, apply the following rules, starting with the memory update from the observations before selecting the subgoal.\"\n    }\n  ],\n  \"refused\": \"Do not delete remaining_targets or its pickup, put-down, and completion rules globally. The initial documents support multiple-pickup goals whose later decisions no longer show the demonstration. This round establishes that persistence is unnecessary for single-pickup goals, not that the target list is unnecessary for longer goals. Omit the field on the single-pickup path while preserving it and the existing transitions for multiple-pickup goals.\"\n}"
+}

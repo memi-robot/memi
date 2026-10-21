@@ -1,0 +1,77 @@
+{
+ "task": "VideoPlaceOrder",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    23,
+    39,
+    51,
+    66,
+    87
+   ],
+   "verified_of_all": 0.6,
+   "subgoal_verified": 0.6
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    63,
+    84,
+    85,
+    93
+   ],
+   "verified_of_all": 0.7,
+   "subgoal_verified": 0.8
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    39,
+    57,
+    73,
+    92
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.8
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    17,
+    31,
+    77,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    23,
+    40,
+    54,
+    59,
+    84
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.8
+  }
+ ],
+ "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: Whether the cube is held is decided from the fingers and gripper at the scene of this decision step alone, never from the cube's own line: the cube IS held whenever the fingers are ~46% open (any partly closed value, not ~100%) and the gripper is raised (height above ~0.1), even if the cube line lacks the words 'held in the gripper' or still reports its old table coordinates; the execution steps leading to that scene show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. 1. If the goal-named cube is NOT held (fingers ~100% open): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open and gripper raised, by the test above): choose B, drop onto, pointing at the target listed in the scene at this decision step whose position is closest to goal_target from memory, using that target's coordinates exactly as listed in this step's scene rather than the memory value (targets wobble by a few pixels between frames). If goal_target is unknown, apply rule 4. 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but goal_target is unknown, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+ "fields": [
+  {
+   "name": "goal_target",
+   "description": "At the first decision step (demonstration frames are shown and the carried memory is empty), follow this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, right after frames in which the goal-named cube was carried (its line read 'held in the gripper' with the gripper raised). (3) Its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame, where all four targets are listed. (4) Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. (5) Number what is left 1, 2, 3, 4 earliest first and write the [y, x] of the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). Count forward from the earliest placement only, never backward from the most recent one; a button press between placements does not restart the count. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]; 'first' gives [99, 90]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [139, 124]"
+  }
+ ],
+ "stage": "optimized"
+}

@@ -1,0 +1,92 @@
+{
+ "task": "ButtonUnmaskSwap",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    1,
+    22,
+    25,
+    39,
+    85
+   ],
+   "verified_of_all": 0.9047619047619048,
+   "subgoal_verified": 0.9523809523809523
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    10,
+    15,
+    36,
+    39,
+    47
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    1,
+    2,
+    28,
+    34,
+    53
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    17,
+    27,
+    78,
+    79
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    14,
+    25,
+    38,
+    87,
+    93
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "stage": "optimized",
+ "fields": [
+  {
+   "name": "buttons_pressed",
+   "description": "Count of button presses completed so far. A press is shown by any execution frame at this decision step in which either a button is reported 'is pressed down', or the gripper stands within a few pixels of a button's listed position at height 0.035 or lower with fingers closed (two containers gliding and swapping in neighbouring frames confirms the same press). At most one press is counted per step. 0 at step #1, 1 at the step after the first press (the one that also shows the container shuffle), 2 from the step after the second press to the end. e.g. 1"
+  },
+  {
+   "name": "green_container",
+   "description": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed frame by frame through every shuffle: during each button press two containers glide around each other and end up having swapped places, so the green container's position becomes the other mover's resting position. Updated at every step to the last frame shown. Once this container has been lifted and the green cube is seen exposed beneath it, the field becomes the cube's last visible position and freezes there; a container later set down over the cube does not change it. e.g. [136, 108]"
+  },
+  {
+   "name": "red_container",
+   "description": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step; once the red cube has been seen exposed beneath its lifted container, the field freezes at the cube's last visible position and a container later set down over it does not change it. e.g. [100, 166]"
+  },
+  {
+   "name": "blue_container",
+   "description": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step; once the blue cube has been seen exposed beneath its lifted container, the field freezes at the cube's last visible position and a container later set down over it does not change it. e.g. [120, 181]"
+  },
+  {
+   "name": "picked_colors",
+   "description": "Ordered list of cube colors whose hiding container has been lifted so far. Empty until the step whose execution frames show a container 'held in the gripper' with a cube revealed beneath; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+  }
+ ]
+}

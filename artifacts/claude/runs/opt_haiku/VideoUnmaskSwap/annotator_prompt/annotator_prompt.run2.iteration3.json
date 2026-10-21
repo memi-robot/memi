@@ -1,0 +1,13 @@
+{
+ "task": "VideoUnmaskSwap",
+ "fields": [
+  {
+   "name": "target_containers",
+   "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step from the demonstration, by slots and swaps: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the remaining frames; each block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels) is one shuffle between the two containers whose slots are empty; when the next frame shows all containers back at slots, those two containers have exchanged slots (a second shuffle of the same pair puts them back where they were; shuffles of other pairs do not touch the named container); (4) the entry is the named cube's container's slot after all swaps, written with the coordinates listed for that slot in the last demonstration frame (slots wobble by a few pixels). Never changes afterwards; copied unchanged at every later step. e.g. [[84, 110], [93, 163]]"
+  },
+  {
+   "name": "put_down_count",
+   "description": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+  }
+ ]
+}

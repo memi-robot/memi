@@ -1,0 +1,100 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "target_cube",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  43,
+  50,
+  53,
+  73,
+  74
+ ],
+ "scored": 23,
+ "failed": 1,
+ "subgoal_wrong": 0,
+ "memory_wrong": 1,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9565217391304348,
+ "reads": {
+  "target_cube": 1,
+  "picks_done": 18
+ },
+ "field_errors": {
+  "target_cube": {
+   "in": 1,
+   "sole": 1
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "target_cube": "read at 1 step of 23: ep73 #3; it is the only wrong field at 1 failed step"
+ },
+ "loss": 0.043478260869565216,
+ "verified_of_all": 0.9565217391304348,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 23,
+ "critique": "field target_cube, ANNOTATOR PROMPT\n  DELETE this field. Across the minibatch the policy answered 22 of 23 steps without reading it, and the one step where it was the wrong field was a step whose subgoal (put it down) does not need a point at all. The fact it held is recovered at every step that needs it: at the first decision step the grasped cube is derived from the demonstration steps shown at that very step, and at every later pick-up decision step the execution steps shown contain the put-down descent (gripper at table height, below about 0.04, fingers opening), and the listed cube in the scene at that decision step nearest that descent position is the cube to pick. So the field breaks NECESSITY. It was also unstable to fill: when the only cube listed at a holding step was drawn 'lifted off the table' far from the descent, the annotated value became that drawn offset position rather than a table position, and a fresh policy read the descent frame's list instead and wrote a different cube. Drop the field rather than repair it; picks_done is the only field the memory keeps.\n\nfield target_cube, POLICY PROMPT\n  DELETE this field. The policy no longer writes it. The memory consists of picks_done only, written exactly as before: 0 at the first decision step (memory empty); at a later step, if the last frame shown has the gripper raised (height about 0.12 or more) with fingers partly closed (about 46-51%), carried value plus one; if fingers are 100% open, carried value unchanged.\n\nthe policy prompt for subgoal\n  Situation: in every episode the task is to pick up and put down the cube the demonstration grasped a stated number of times, then press the button. The policy chose the right menu option at every step and at the one failed step (holding the cube, gripper raised, fingers 46%, correct subgoal B) only the dropped target_cube value differed, so the failure was a PREDICTABILITY fault on a field that NECESSITY says should not exist. The rule that must change is the one that defines the point for A: it currently says 'pointing at target_cube' and then, as a secondary note, that a descent shown in the execution steps gives the same cube. Replace it with a rule that never mentions memory for the point. At the first decision step (memory empty) the point for A is found from the demonstration steps shown at that step: the grasped cube is the listed cube (from a demonstration frame before the gripper descended) nearest the gripper position in the demonstration frame where the gripper is lowest (height about 0.02) with fingers about 46-51% open, and it is the cube reported 'held in the gripper' in the following frames; cubes that vanish from the list earlier while the gripper is high and 100% open are only hidden by the arm. After the demonstration's put-down, follow that cube through every remaining demonstration frame by nearest-neighbour matching (cubes swap places during the shuffle and move tens of pixels per frame; lists are sorted by y, not identity; do not assume it returns to its old spot), and point at the cube in the scene at the start of execution nearest its last demonstration position. At every later decision step where A is chosen, the execution steps shown always contain the put-down descent: the frame where the gripper is at table height (below about 0.04) with the fingers opening; point at the listed cube, in the scene at this decision step (the last frame shown), nearest that descent position. Never point at any other cube. The holding test (gripper raised, height about 0.12 or more, fingers about 46-51%, cube list irrelevant) and the choice between B when holding, A when picks_done is below the required count, and C when picks_done reaches it, stay as they are; the required count still comes from the goal instruction ('again' = 1, 'for two times' = 2, 'three times' = 3). Remove every mention of target_cube from the instruction.\n\nrefused\n  The failed step reported that the memory instruction did not say which frame's cube list to read when writing target_cube, and that when the gripper is raised with fingers partly closed the cube to record should be the one drawn 'lifted off the table' even if far from the descent. This repair is not passed on because the field it would repair is being dropped: nothing in any episode reads target_cube at a step where it decides anything, and the value the policy wanted to record there (a drawn, lifted position far from any table spot) would itself have been useless as a pick point. The subgoal at that step (put it down) was answered correctly and picks_done was correct, so no change to picks_done or to the holding test is needed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Situation: in every episode the task is to pick up and put down the cube the demonstration grasped a stated number of times, then press the button. The policy chose the right menu option at every step and at the one failed step (holding the cube, gripper raised, fingers 46%, correct subgoal B) only the dropped target_cube value differed, so the failure was a PREDICTABILITY fault on a field that NECESSITY says should not exist. The rule that must change is the one that defines the point for A: it currently says 'pointing at target_cube' and then, as a secondary note, that a descent shown in the execution steps gives the same cube. Replace it with a rule that never mentions memory for the point. At the first decision step (memory empty) the point for A is found from the demonstration steps shown at that step: the grasped cube is the listed cube (from a demonstration frame before the gripper descended) nearest the gripper position in the demonstration frame where the gripper is lowest (height about 0.02) with fingers about 46-51% open, and it is the cube reported 'held in the gripper' in the following frames; cubes that vanish from the list earlier while the gripper is high and 100% open are only hidden by the arm. After the demonstration's put-down, follow that cube through every remaining demonstration frame by nearest-neighbour matching (cubes swap places during the shuffle and move tens of pixels per frame; lists are sorted by y, not identity; do not assume it returns to its old spot), and point at the cube in the scene at the start of execution nearest its last demonstration position. At every later decision step where A is chosen, the execution steps shown always contain the put-down descent: the frame where the gripper is at table height (below about 0.04) with the fingers opening; point at the listed cube, in the scene at this decision step (the last frame shown), nearest that descent position. Never point at any other cube. The holding test (gripper raised, height about 0.12 or more, fingers about 46-51%, cube list irrelevant) and the choice between B when holding, A when picks_done is below the required count, and C when picks_done reaches it, stay as they are; the required count still comes from the goal instruction ('again' = 1, 'for two times' = 2, 'three times' = 3). Remove every mention of target_cube from the instruction.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_cube",
+    "description": "DELETE this field. The policy no longer writes it. The memory consists of picks_done only, written exactly as before: 0 at the first decision step (memory empty); at a later step, if the last frame shown has the gripper raised (height about 0.12 or more) with fingers partly closed (about 46-51%), carried value plus one; if fingers are 100% open, carried value unchanged."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_cube",
+    "description": "DELETE this field. Across the minibatch the policy answered 22 of 23 steps without reading it, and the one step where it was the wrong field was a step whose subgoal (put it down) does not need a point at all. The fact it held is recovered at every step that needs it: at the first decision step the grasped cube is derived from the demonstration steps shown at that very step, and at every later pick-up decision step the execution steps shown contain the put-down descent (gripper at table height, below about 0.04, fingers opening), and the listed cube in the scene at that decision step nearest that descent position is the cube to pick. So the field breaks NECESSITY. It was also unstable to fill: when the only cube listed at a holding step was drawn 'lifted off the table' far from the descent, the annotated value became that drawn offset position rather than a table position, and a fresh policy read the descent frame's list instead and wrote a different cube. Drop the field rather than repair it; picks_done is the only field the memory keeps."
+   }
+  ],
+  "refused": "The failed step reported that the memory instruction did not say which frame's cube list to read when writing target_cube, and that when the gripper is raised with fingers partly closed the cube to record should be the one drawn 'lifted off the table' even if far from the descent. This repair is not passed on because the field it would repair is being dropped: nothing in any episode reads target_cube at a step where it decides anything, and the value the policy wanted to record there (a drawn, lifted position far from any table spot) would itself have been useless as a pick point. The subgoal at that step (put it down) was answered correctly and picks_done was correct, so no change to picks_done or to the holding test is needed."
+ },
+ "critiques": [
+  {
+   "step": [
+    53,
+    "exec",
+    387
+   ],
+   "memory_in": "target_cube=[88, 116]; picks_done=0",
+   "answered": "B: put it down",
+   "recorded": "B: put it down",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At this step the lowest gripper frame (t=352, [89,117]) lists only a cube at [83,156] while the last frame (t=387) lists only [112,125] 'lifted off the table'. The instruction did not make clear that the position to write is read from the cube list of the LAST frame shown (the scene at this decision step), not from the descent frame, and that when the gripper is raised with fingers partly closed the cube to record is the one reported 'lifted off the table' (the held cube, wherever it is drawn), even if it is far from the descent position; a cube listed in the descent frame itself is a different, non-target cube.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

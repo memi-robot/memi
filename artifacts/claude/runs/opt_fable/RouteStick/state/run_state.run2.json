@@ -1,0 +1,355 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "RouteStick",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   0,
+   19,
+   58,
+   86,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. The leg visible in the execution steps of this decision step is demo_moves[carried-in legs_done]; it is already finished and is never issued again. The letter to issue is always the one after it. Before answering, check that the letter you issue is not the letter describing the movement you just watched in the execution steps (its direction and side, read as in the demonstration); if it is, you have used the carried-in index and must move one index further. Worked line: carried-in legs_done=3 -> the observed leg was demo_moves[3] (already done) -> write legs_done=4 -> issue demo_moves[4]. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+  "fields": [
+   {
+    "name": "demo_moves",
+    "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']",
+    "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']"
+   },
+   {
+    "name": "legs_done",
+    "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+    "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+   }
+  ]
+ },
+ "initial": {
+  "task": "RouteStick",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   0,
+   19,
+   58,
+   86,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+  "fields": [
+   {
+    "name": "demo_moves",
+    "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+    "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. e.g. [\"A\", \"B\", \"A\", \"D\"]"
+   },
+   {
+    "name": "legs_done",
+    "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+    "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 20,
+    "subgoal_wrong": 2,
+    "memory_wrong": 5,
+    "memory_only": 5,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "demo_moves": 5,
+     "legs_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 2,
+    "point_wrong": 0
+   },
+   "critique": "field demo_moves, ANNOTATOR PROMPT\n  At the first decision step of every episode the policy rebuilt the list of legs from the demonstration correctly, letter for letter, yet its value was scored as different from the annotated one because the annotated value is serialized as a Python-style list with single-quoted letters (['D', 'B', 'C']) while the rule's example shows double-quoted letters ([\"A\", \"B\", \"A\", \"D\"]). This breaks PREDICTABILITY: the same content at the same step yields two unequal strings. The field keeps holding the ordered list of menu letters, one per demonstration leg, written at the first decision step and copied unchanged afterwards; what changes is the stated serialization. Write it exactly as a Python-style list with single-quoted uppercase letters separated by comma and space, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A'], and replace the example in the rule with that form.\n\nfield demo_moves, POLICY PROMPT\n  At every first decision step the policy derived the right letters from the demonstration but wrote them inside double quotes, following the instruction's example, while the recorded value uses single quotes; the only mismatch was serialization (PREDICTABILITY). The field is unchanged in meaning: one letter per demonstration leg, in order, written when the carried-in memory is empty, copied unchanged at every later step. Add one explicit line: write the list exactly as a Python-style list with single-quoted uppercase letters, comma and space between them, no other characters, e.g. ['D', 'B', 'C'], and replace the current double-quoted example with that form.\n\nthe policy prompt for subgoal\n  At decision steps after the first, with the demonstration no longer visible, the policy had the correct demo_moves list and correctly wrote legs_done as carried-in plus one, but then indexed demo_moves with the carried-in value rather than the value it had just written, issuing the previous leg's letter again (for example, carrying in 3, writing 4, yet issuing demo_moves[3] instead of demo_moves[4]). The memory and the step together did settle the subgoal, so this is a SUFFICIENCY failure caused by an ambiguous rule: 'first update the memory, then issue demo_moves[legs_done]' leaves it unclear which legs_done is meant. Replace that rule with one explicit arithmetic rule: at the first decision step (carried-in memory empty) issue demo_moves[0]; at every later decision step issue demo_moves[carried-in legs_done + 1], which is the same number as the legs_done you write at this step, never the carried-in number. Give one worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4]. Keep the letter meanings, the no-point note and the fallback rule unchanged.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "demo_moves",
+      "edits": [
+       {
+        "modify_from": "The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+        "modify_to": "The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "demo_moves",
+      "edits": [
+       {
+        "modify_from": "At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+        "modify_to": "At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on.",
+      "modify_to": "At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. Worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4]."
+     }
+    ],
+    "refused": "Nothing refused. All three requested changes are serialization or indexing clarifications that leave the fields' meaning and the earlier committed text intact."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 21,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "demo_moves": 0,
+     "legs_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "the policy prompt for subgoal\n  Situation: midway through an execution with several legs already done, the observed steps showed the gripper leaving the previously highlighted target, passing on the forward side of a stick, and arriving at a new highlighted target, with the carried-in memory holding the full letter list and legs_done equal to the number of legs completed before this one. The policy wrote legs_done correctly (carried-in plus one) but issued the letter at the carried-in index, which is exactly the leg it had just watched being executed, instead of the letter at the index it had just written. This breaks SUFFICIENCY: the memory and the step contained everything needed, but the rule mapping them to a letter was misread. The instruction already has the rule 'issue demo_moves[carried-in legs_done + 1]' with a worked line; it has to be reinforced with a self-check rather than replaced. Add: the leg visible in the observed execution steps of this decision step is the leg described by demo_moves[carried-in legs_done]; it is finished and is never issued again. The letter to issue is always the next one, demo_moves[legs_done written at this step]. Before answering, verify that the letter you issue is NOT the letter that describes the movement you just watched in the observed steps (its direction and side, read the same way as in the demonstration); if it is, you have used the carried-in index and must move one further. Keep the worked line and extend it: carried-in legs_done=3 -> the observed leg was demo_moves[3] (already done) -> write legs_done=4 -> issue demo_moves[4]. No rule is removed.\n\nrefused\n  Nothing is dropped outright. The single report asked for the subgoal instruction to say plainly that the leg visible in the observed steps is the one just finished and that the letter to issue is the one after it. The instruction already states this with a worked line using the very same numbers, so no new rule is missing; what is passed on is only a restatement and a self-check, not a change in meaning. No memory field was reported lacking and the annotated memory was correct at that step, so neither the annotator prompt nor the memory instruction changes.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. Worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4].",
+      "modify_to": "At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. The leg visible in the execution steps of this decision step is demo_moves[carried-in legs_done]; it is already finished and is never issued again. The letter to issue is always the one after it. Before answering, check that the letter you issue is not the letter describing the movement you just watched in the execution steps (its direction and side, read as in the demonstration); if it is, you have used the carried-in index and must move one index further. Worked line: carried-in legs_done=3 -> the observed leg was demo_moves[3] (already done) -> write legs_done=4 -> issue demo_moves[4]."
+     }
+    ],
+    "refused": "Nothing refused. The report asked only for a restatement and self-check on the subgoal instruction, which is committed; it leaves the round-1 indexing rule, the letter meanings, the no-point note and the fallback intact, and no memory field changes on either side since the annotated memory was correct."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 2,
+ "quiet": 2,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    44,
+    76,
+    79,
+    85,
+    86
+   ],
+   "verified_of_all": 0.65,
+   "subgoal_verified": 0.9,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. e.g. [\"A\", \"B\", \"A\", \"D\"]"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    2,
+    32,
+    40,
+    65,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. Worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4]. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    2,
+    48,
+    75,
+    79,
+    80
+   ],
+   "verified_of_all": 0.9523809523809523,
+   "subgoal_verified": 0.9523809523809523,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. Worked line: carried-in legs_done=3 -> write legs_done=4 -> issue demo_moves[4]. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    8,
+    17,
+    18,
+    40,
+    70
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. The leg visible in the execution steps of this decision step is demo_moves[carried-in legs_done]; it is already finished and is never issued again. The letter to issue is always the one after it. Before answering, check that the letter you issue is not the letter describing the movement you just watched in the execution steps (its direction and side, read as in the demonstration); if it is, you have used the carried-in index and must move one index further. Worked line: carried-in legs_done=3 -> the observed leg was demo_moves[3] (already done) -> write legs_done=4 -> issue demo_moves[4]. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    10,
+    22,
+    38,
+    73
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At the first decision step (carried-in memory empty) write legs_done=0 and issue demo_moves[0] (zero-based). At every later decision step issue demo_moves[carried-in legs_done + 1]: the index is the legs_done you write at this step, never the carried-in number. The leg visible in the execution steps of this decision step is demo_moves[carried-in legs_done]; it is already finished and is never issued again. The letter to issue is always the one after it. Before answering, check that the letter you issue is not the letter describing the movement you just watched in the execution steps (its direction and side, read as in the demonstration); if it is, you have used the carried-in index and must move one index further. Worked line: carried-in legs_done=3 -> the observed leg was demo_moves[3] (already done) -> write legs_done=4 -> issue demo_moves[4]. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'B', 'C']",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Write it exactly as a Python-style list of single-quoted uppercase letters separated by a comma and a space, no other characters. e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  }
+ ]
+}

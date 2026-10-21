@@ -1,0 +1,88 @@
+{
+ "episodes": [
+  14,
+  20,
+  25,
+  43,
+  99
+ ],
+ "user_chars": 13935,
+ "usage": {
+  "prompt_tokens": 5296,
+  "completion_tokens": 576,
+  "total_tokens": 5872,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 5293,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "passage_count",
+    "edits": [
+     {
+      "modify_from": "Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears.",
+      "modify_to": "Process all newly shown observations chronologically, including the final decision observation after the preceding execution observations, starting with incoming last_side as the preceding side (0 for empty memory). Compute the sign of cube x minus target x: strictly negative is -1 and strictly positive is 1, however small the separation. Do not introduce a proximity deadband or require a later confirmation frame. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. A change first visible in the final decision observation counts immediately. If the preceding side is 0, the first nonzero sign establishes the side without incrementing. At exact equality retain the working side and do not increment. Compute passage_count and last_side from this same scan and write both resulting values together."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "last_side",
+    "edits": [
+     {
+      "modify_from": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command.",
+      "modify_to": "Write the working side resulting from the same chronological scan used for passage_count, after processing every newly shown observation including the final decision frame. Set it to -1 when cube x is strictly smaller than target x and 1 when it is strictly larger, even when the separation is small. Retain the preceding nonzero side only at exact equality; use 0 only if no nonzero side has yet been observed. Do not require a confirmation frame or wait for the cube to move clear of the target. Record this observed side, not the side expected after the selected command."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "None of the requested substantive changes are refused. The annotator prompt and subgoal instruction remain unchanged because the reported failure concerns applying the existing memory definition to the final observation, not the annotated values or subgoal selection."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "passage_count",
+    "edits": [
+     {
+      "modify_from": "Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears.",
+      "modify_to": "Process all newly shown observations chronologically, including the final decision observation after the preceding execution observations, starting with incoming last_side as the preceding side (0 for empty memory). Compute the sign of cube x minus target x: strictly negative is -1 and strictly positive is 1, however small the separation. Do not introduce a proximity deadband or require a later confirmation frame. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. A change first visible in the final decision observation counts immediately. If the preceding side is 0, the first nonzero sign establishes the side without incrementing. At exact equality retain the working side and do not increment. Compute passage_count and last_side from this same scan and write both resulting values together."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "last_side",
+    "edits": [
+     {
+      "modify_from": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command.",
+      "modify_to": "Write the working side resulting from the same chronological scan used for passage_count, after processing every newly shown observation including the final decision frame. Set it to -1 when cube x is strictly smaller than target x and 1 when it is strictly larger, even when the separation is small. Retain the preceding nonzero side only at exact equality; use 0 only if no nonzero side has yet been observed. Do not require a confirmation frame or wait for the cube to move clear of the target. Record this observed side, not the side expected after the selected command."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "None of the requested substantive changes are refused. The annotator prompt and subgoal instruction remain unchanged because the reported failure concerns applying the existing memory definition to the final observation, not the annotated values or subgoal selection."
+ },
+ "not_applied": [],
+ "refused": "None of the requested substantive changes are refused. The annotator prompt and subgoal instruction remain unchanged because the reported failure concerns applying the existing memory definition to the final observation, not the annotated values or subgoal selection.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"policy_prompt_for_memory\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"passage_count\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears.\",\n          \"modify_to\": \"Process all newly shown observations chronologically, including the final decision observation after the preceding execution observations, starting with incoming last_side as the preceding side (0 for empty memory). Compute the sign of cube x minus target x: strictly negative is -1 and strictly positive is 1, however small the separation. Do not introduce a proximity deadband or require a later confirmation frame. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. A change first visible in the final decision observation counts immediately. If the preceding side is 0, the first nonzero sign establishes the side without incrementing. At exact equality retain the working side and do not increment. Compute passage_count and last_side from this same scan and write both resulting values together.\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"modify\",\n      \"field\": \"last_side\",\n      \"edits\": [\n        {\n          \"modify_from\": \"The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command.\",\n          \"modify_to\": \"Write the working side resulting from the same chronological scan used for passage_count, after processing every newly shown observation including the final decision frame. Set it to -1 when cube x is strictly smaller than target x and 1 when it is strictly larger, even when the separation is small. Retain the preceding nonzero side only at exact equality; use 0 only if no nonzero side has yet been observed. Do not require a confirmation frame or wait for the cube to move clear of the target. Record this observed side, not the side expected after the selected command.\"\n        }\n      ]\n    }\n  ],\n  \"policy_prompt_for_subgoal\": [],\n  \"refused\": \"None of the requested substantive changes are refused. The annotator prompt and subgoal instruction remain unchanged because the reported failure concerns applying the existing memory definition to the final observation, not the annotated values or subgoal selection.\"\n}"
+}

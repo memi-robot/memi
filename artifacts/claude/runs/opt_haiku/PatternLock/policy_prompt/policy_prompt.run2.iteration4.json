@@ -1,0 +1,14 @@
+{
+ "task": "PatternLock",
+ "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+ "fields": [
+  {
+   "name": "plan",
+   "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; use its coordinates as the starting highlighted position for the first dy/dx computation); each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. Write the value as a JSON array of double-quoted letters with a space after each comma, exactly like the example: never single quotes, never bare letters. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+  },
+  {
+   "name": "moves_done",
+   "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2"
+  }
+ ]
+}

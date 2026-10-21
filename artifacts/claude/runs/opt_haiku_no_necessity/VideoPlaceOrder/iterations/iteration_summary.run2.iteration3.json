@@ -1,0 +1,123 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "demo_placements",
+  "goal_target"
+ ],
+ "ablate": "necessity",
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  3,
+  39,
+  57,
+  73,
+  92
+ ],
+ "scored": 10,
+ "failed": 2,
+ "subgoal_wrong": 0,
+ "memory_wrong": 2,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.8,
+ "reads": {
+  "demo_placements": 0,
+  "goal_target": 5
+ },
+ "field_errors": {
+  "demo_placements": {
+   "in": 1,
+   "sole": 1
+  },
+  "goal_target": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {
+  "demo_placements": "read at no step of 10"
+ },
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field demo_placements, ANNOTATOR PROMPT\n  Keep the field as it is (ordered list of stable pre-shuffle target positions, in [y, x], on which the goal-named cube was released during the demonstration), but make the entry condition explicit: an entry is written only for a release that ends a real carry. A real carry is a run of frames in which the cube is labelled held while the gripper is raised (height about 0.15) and the cube's position moves away from the spot where it last rested, ending with the gripper lowering to table height and the fingers opening from ~46% to ~100%. A frame where the fingers show a partial opening (e.g. 39-46%) with the cube labelled held at table height at the very spot it already rested on, with no raised carry before it, is an artifact (it typically occurs right after a button press where the fingers were 0% open) and produces no entry. Likewise a re-grasp that lifts the cube and sets it back on the same target without the cube having rested anywhere else produces no entry. Define the stable set concretely as the four target positions listed in the frames where the cube is held raised and carried toward the image centre just before the final centre release; every entry is copied to the pixel from that list, never from a release frame, an opening frame or a parked frame. Example: releases on [107, 166], then [125, 119], then [97, 88], followed by a button press, a spurious 39%-open frame over [97, 88], then the centre carry: demo_placements = [[107, 166], [125, 119], [97, 88]].\n\nfield goal_target, ANNOTATOR PROMPT\n  Keep the procedure, but state that the swap test is decided by the parked frames taken one at a time, not by the last of them: scan every parked frame (gripper at about [54, 128], height 0.200, fingers 100% open); if ANY single parked frame lists a position that matches no stable target within a few pixels, the two stable targets absent from that frame are the movers and they exchange places, even though the last parked frames and the first execution frame may again list four positions within a few pixels of the stable set (the movers end on each other's original spots, so the final layout looks unchanged). Only when every parked frame matches the stable set does nothing move. Then, as before: if the ordinal entry is a mover, goal_target is the first-execution-frame target nearest the OTHER mover's stable position; otherwise the one nearest the ordinal entry. Example: ordinal entry 3 = [143, 116]; one parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116]; final frames list [116, 100] and [141, 117] again; movers are [116, 101] and [143, 116], so goal_target = [116, 100].\n\nfield demo_placements, POLICY PROMPT\n  Add to the first-decision-step procedure: (1) first find the stable target set: the four target positions listed in the demo frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]); every entry you write is one of those four positions, to the pixel; never write a position read from a release frame, an opening frame or a parked frame, even if it differs by only a pixel or two. (2) An entry is written only for a release that ends a real carry: frames labelled held with the gripper raised (height about 0.15) and the cube moving away from where it last rested, then the gripper lowered to table height and the fingers opening from ~46% to ~100%. A frame with fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (it happens right after a button press, where the fingers were 0% open) and is NOT a placement; a re-grasp that lifts and sets the cube back on the same target without resting elsewhere is NOT a placement either. The step at which the memory failed was the first decision step, where the policy wrote a duplicate fourth entry for the same target (one copied from a release frame, one from the stable set) after such an artifact; this breaks PREDICTABILITY. Example: [[107, 166], [125, 119], [97, 88]].\n\nfield goal_target, POLICY PROMPT\n  Replace the swap test with this wording: scan EVERY parked frame at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open) one at a time. If any single parked frame lists a position that matches no stable target within a few pixels, then the two stable targets absent from that frame are the movers and they have exchanged places, each ending on the other's original spot. Do this even if the last parked frames and the scene at the start of execution again list four positions within a few pixels of the stable set: a swap ends with the movers standing on each other's old spots, so an unchanged-looking final layout is NOT evidence that nothing moved. Only if every parked frame matches the stable set did nothing move. Then: ordinal entry a mover -> write the execution-scene target nearest the OTHER mover's stable position; otherwise write the execution-scene target nearest the ordinal entry. The step at which this failed was a first decision step where the goal asked for the third target, two middle parked frames listed four unmatched positions with entries 2 and 3 absent, the final frames looked like the stable set again, and the policy wrote the ordinal entry's own spot instead of the other mover's; this breaks PREDICTABILITY and would have sent the later drop to the wrong target. Example: entry 3 = [143, 116]; a parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116]; execution scene lists [116, 100]; goal_target = [116, 100].\n\nthe policy prompt for subgoal\n  No change. At both unsettled steps the policy chose the recorded subgoal (pick up the goal-named cube at its centre position); the faults were in how the memory was written, and the subgoal rules, which read goal_target directly for the drop, are sufficient once goal_target is written correctly.\n\nrefused\n  One report asked for the statements 'the same target never appears twice in a row in demo_placements' and 'the list has at most as many entries as distinct carries' to be added. These are consequences of the entry condition now written (an entry only for a release that ends a real raised carry away from the cube's last resting spot), not separate rules, and stating them as flat prohibitions could mislead on a demonstration where the cube is genuinely carried away, rested elsewhere and then carried back to the same target. The carry condition alone is passed on.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No change. At both unsettled steps the policy chose the recorded subgoal (pick up the goal-named cube at its centre position); the faults were in how the memory was written, and the subgoal rules, which read goal_target directly for the drop, are sufficient once goal_target is written correctly.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "demo_placements",
+    "description": "Add to the first-decision-step procedure: (1) first find the stable target set: the four target positions listed in the demo frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]); every entry you write is one of those four positions, to the pixel; never write a position read from a release frame, an opening frame or a parked frame, even if it differs by only a pixel or two. (2) An entry is written only for a release that ends a real carry: frames labelled held with the gripper raised (height about 0.15) and the cube moving away from where it last rested, then the gripper lowered to table height and the fingers opening from ~46% to ~100%. A frame with fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (it happens right after a button press, where the fingers were 0% open) and is NOT a placement; a re-grasp that lifts and sets the cube back on the same target without resting elsewhere is NOT a placement either. The step at which the memory failed was the first decision step, where the policy wrote a duplicate fourth entry for the same target (one copied from a release frame, one from the stable set) after such an artifact; this breaks PREDICTABILITY. Example: [[107, 166], [125, 119], [97, 88]]."
+   },
+   {
+    "field": "goal_target",
+    "description": "Replace the swap test with this wording: scan EVERY parked frame at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open) one at a time. If any single parked frame lists a position that matches no stable target within a few pixels, then the two stable targets absent from that frame are the movers and they have exchanged places, each ending on the other's original spot. Do this even if the last parked frames and the scene at the start of execution again list four positions within a few pixels of the stable set: a swap ends with the movers standing on each other's old spots, so an unchanged-looking final layout is NOT evidence that nothing moved. Only if every parked frame matches the stable set did nothing move. Then: ordinal entry a mover -> write the execution-scene target nearest the OTHER mover's stable position; otherwise write the execution-scene target nearest the ordinal entry. The step at which this failed was a first decision step where the goal asked for the third target, two middle parked frames listed four unmatched positions with entries 2 and 3 absent, the final frames looked like the stable set again, and the policy wrote the ordinal entry's own spot instead of the other mover's; this breaks PREDICTABILITY and would have sent the later drop to the wrong target. Example: entry 3 = [143, 116]; a parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116]; execution scene lists [116, 100]; goal_target = [116, 100]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "demo_placements",
+    "description": "Keep the field as it is (ordered list of stable pre-shuffle target positions, in [y, x], on which the goal-named cube was released during the demonstration), but make the entry condition explicit: an entry is written only for a release that ends a real carry. A real carry is a run of frames in which the cube is labelled held while the gripper is raised (height about 0.15) and the cube's position moves away from the spot where it last rested, ending with the gripper lowering to table height and the fingers opening from ~46% to ~100%. A frame where the fingers show a partial opening (e.g. 39-46%) with the cube labelled held at table height at the very spot it already rested on, with no raised carry before it, is an artifact (it typically occurs right after a button press where the fingers were 0% open) and produces no entry. Likewise a re-grasp that lifts the cube and sets it back on the same target without the cube having rested anywhere else produces no entry. Define the stable set concretely as the four target positions listed in the frames where the cube is held raised and carried toward the image centre just before the final centre release; every entry is copied to the pixel from that list, never from a release frame, an opening frame or a parked frame. Example: releases on [107, 166], then [125, 119], then [97, 88], followed by a button press, a spurious 39%-open frame over [97, 88], then the centre carry: demo_placements = [[107, 166], [125, 119], [97, 88]]."
+   },
+   {
+    "field": "goal_target",
+    "description": "Keep the procedure, but state that the swap test is decided by the parked frames taken one at a time, not by the last of them: scan every parked frame (gripper at about [54, 128], height 0.200, fingers 100% open); if ANY single parked frame lists a position that matches no stable target within a few pixels, the two stable targets absent from that frame are the movers and they exchange places, even though the last parked frames and the first execution frame may again list four positions within a few pixels of the stable set (the movers end on each other's original spots, so the final layout looks unchanged). Only when every parked frame matches the stable set does nothing move. Then, as before: if the ordinal entry is a mover, goal_target is the first-execution-frame target nearest the OTHER mover's stable position; otherwise the one nearest the ordinal entry. Example: ordinal entry 3 = [143, 116]; one parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116]; final frames list [116, 100] and [141, 117] again; movers are [116, 101] and [143, 116], so goal_target = [116, 100]."
+   }
+  ],
+  "refused": "One report asked for the statements 'the same target never appears twice in a row in demo_placements' and 'the list has at most as many entries as distinct carries' to be added. These are consequences of the entry condition now written (an entry only for a release that ends a real raised carry away from the cube's last resting spot), not separate rules, and stating them as flat prohibitions could mislead on a demonstration where the cube is genuinely carried away, rested elsewhere and then carried back to the same target. The carry condition alone is passed on."
+ },
+ "critiques": [
+  {
+   "step": [
+    3,
+    "exec",
+    1124
+   ],
+   "memory_in": "demo_placements=; goal_target=",
+   "answered": "A: pick up the cube at [82, 126]",
+   "recorded": "A: pick up the cube at [83, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not stress that the swap test must be applied even when the LAST parked frames list the same four positions as the stable set: here t=1072 and t=1088 showed positions matching no stable target ([113,127],[148,85],[125,89],[129,128]) with [116,101] and [143,116] both absent, so entries 2 and 3 are the movers and swapped, and the final frames merely show them back on each other's original spots; the fact that the final layout looks unchanged within a few pixels is NOT evidence that nothing moved. It should state explicitly: check every parked frame, and if any one of them contains an unmatched position, the two stable targets absent from that frame have swapped, regardless of what the final frames show. It should also say again, concretely, that demo_placements entries must be copied from the frames just before the centre carry (t=928-976 here: [116,101], [143,116]), not from the final frames ([116,100], [141,117]).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    57,
+    "exec",
+    887
+   ],
+   "memory_in": "demo_placements=; goal_target=",
+   "answered": "A: pick up the cube at [82, 128]",
+   "recorded": "A: pick up the cube at [83, 129]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not tell me to ignore the spurious release at t=592-608: right after the button press (fingers 0%), one frame shows fingers 39% with the cube labelled 'held' at [97, 87] while it is still sitting on the target it was already released onto at t=480, and the next frame shows fingers 100% with the cube unmoved. I counted that as a fourth placement ([97, 88]) on top of the real third one ([97, 89]). The instruction should say: a release only counts if the cube was carried there, i.e. the preceding 'held' frames show the gripper raised (height ~0.15) with the cube moving away from where it last rested; a 'held' label at table height with the cube at the same position it already rested on, especially right after a 0%-finger button press, is an artifact and is not a placement. It should also say that the same target never appears twice in a row in demo_placements, and that the list has at most as many entries as distinct carries.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

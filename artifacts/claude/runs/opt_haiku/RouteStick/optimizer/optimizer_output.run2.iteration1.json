@@ -1,0 +1,117 @@
+{
+ "episodes": [
+  44,
+  76,
+  79,
+  85,
+  86
+ ],
+ "user_chars": 13983,
+ "usage": {
+  "prompt_tokens": 8026,
+  "completion_tokens": 1349,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 8022
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 313
+  }
+ },
+ "reasoning": "I need to draft edits covering the annotator prompt and policy memory: counting a leg at every highlight change including return legs, short legs, and the last-frame change, plus the two-highlight frame rule and side-letter determination from frames strictly between changes. I'm also noticing a formatting inconsistency—the example uses double-quoted lists like [\"A\", \"B\", \"A\", \"D\"], but the annotator's actual list format appears single-quoted, so I need to decide how to reconcile that discrepancy.\n\nI'll make both sides explicitly specify single-quoted list formatting to avoid mismatches, keep the edits minimal and general, and write the result as JSON.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target).",
+      "modify_to": "First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one."
+     },
+     {
+      "modify_from": "Gripper y at the middle frames of the leg smaller than",
+      "modify_to": "Gripper y in the frames strictly between the two change frames of the leg smaller than"
+     },
+     {
+      "modify_from": "At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "modify_to": "At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target).",
+      "modify_to": "A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one."
+     },
+     {
+      "modify_from": "Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets",
+      "modify_to": "Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets"
+     },
+     {
+      "modify_from": "e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "modify_to": "Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing refused. The subgoal instruction stays as it is, since every recorded subgoal matched demo_moves[legs_done]. The quoting form is fixed on both sides at once (single quotes) so the annotator and the policy write the same value, rather than only telling the policy to use single quotes."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target).",
+      "modify_to": "A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one."
+     },
+     {
+      "modify_from": "Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets",
+      "modify_to": "Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets"
+     },
+     {
+      "modify_from": "e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "modify_to": "Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_moves",
+    "edits": [
+     {
+      "modify_from": "A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target).",
+      "modify_to": "First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one."
+     },
+     {
+      "modify_from": "Gripper y at the middle frames of the leg smaller than",
+      "modify_to": "Gripper y in the frames strictly between the two change frames of the leg smaller than"
+     },
+     {
+      "modify_from": "At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "modify_to": "At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "Nothing refused. The subgoal instruction stays as it is, since every recorded subgoal matched demo_moves[legs_done]. The quoting form is fixed on both sides at once (single quotes) so the annotator and the policy write the same value, rather than only telling the policy to use single quotes."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. The subgoal instruction stays as it is, since every recorded subgoal matched demo_moves[legs_done]. The quoting form is fixed on both sides at once (single quotes) so the annotator and the policy write the same value, rather than only telling the policy to use single quotes.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"demo_moves\", \"edits\": [{\"modify_from\": \"A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target).\", \"modify_to\": \"A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one.\"}, {\"modify_from\": \"Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets\", \"modify_to\": \"Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets\"}, {\"modify_from\": \"e.g. [\\\"A\\\", \\\"B\\\", \\\"A\\\", \\\"D\\\"]\", \"modify_to\": \"Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"demo_moves\", \"edits\": [{\"modify_from\": \"A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target).\", \"modify_to\": \"First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one.\"}, {\"modify_from\": \"Gripper y at the middle frames of the leg smaller than\", \"modify_to\": \"Gripper y in the frames strictly between the two change frames of the leg smaller than\"}, {\"modify_from\": \"At every later step copy the list carried in unchanged. e.g. [\\\"A\\\", \\\"B\\\", \\\"A\\\", \\\"D\\\"]\", \"modify_to\": \"At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"Nothing refused. The subgoal instruction stays as it is, since every recorded subgoal matched demo_moves[legs_done]. The quoting form is fixed on both sides at once (single quotes) so the annotator and the policy write the same value, rather than only telling the policy to use single quotes.\"}"
+}

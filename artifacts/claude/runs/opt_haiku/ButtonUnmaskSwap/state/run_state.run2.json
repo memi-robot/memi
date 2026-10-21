@@ -1,0 +1,1040 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "ButtonUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   8,
+   15,
+   66,
+   73,
+   79
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start every episode in A (press the first button). Apply the first matching rule, after updating memory for this step: 1. If the carried-in memory is empty and this step shows no execution frames (the very first decision step, gripper out of frame): A. 2. If the scene at this decision step shows a container 'held in the gripper': D (put down the container), whatever buttons_pressed reads. 3. Rewrite buttons_pressed from this step's frames FIRST, never test the carried-in count. If any frame of this step says a button 'is pressed down' or shows the gripper on a button (height below about 0.06, fingers closed) and the carried count was 1, the count is now 2 and this rule cannot fire; go to rule 4. B fires only when the UPDATED count is exactly 1, which happens only at the step whose frames show the first press (normally the step right after A). A is executed at the first step only. 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot: the point is the <color>_container value written AT THIS STEP after the full chain, not the carried-in value; if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point; if this step is a moved step (any frame lists a container more than about 6 px from every container of the previous frame) and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. The point is that color's value written at this step after the full chain, not the carried-in value; if this step is a moved step and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container reached by chaining frame by frame from that cube's last known position as the memory instruction describes (after a swap a different container stands on the old spot, so do not take the nearest one); if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+  "fields": [
+   {
+    "name": "buttons_pressed",
+    "description": "Rewrite this count from this step's frames BEFORE choosing the subgoal. The four outcomes, in order: empty carried-in memory and no execution frames -> 0; carried 0 and a press in this step's frames -> 1; carried 1 and a press in this step's frames -> 2; carried 2, or any container held or grasped in this step -> 2. A frame saying a button 'is pressed down' in this step is a press of this step even if that button is the one the robot was already heading for. In detail: write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame of this step says a button 'is pressed down' OR shows the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; otherwise the carried-in count. A frame with the gripper over a container (height around 0.1, 20 px or more from the nearest button) is not a press, even if a button is missing from the list in that frame because it is occluded. Each step shows at most one press, so the count never rises by more than 1. If any frame of this step shows a container 'held in the gripper' or the gripper lowered onto a container with fingers closing, write 2 regardless of the carried count, because both presses precede any pick-up. e.g. 2",
+    "annotation": "Number of button presses whose execution frames have been shown at or before this step. The value changes at the step whose OWN execution frames show the press, not at the next step: 0 at the first step (no execution frames); 1 at the step whose frames show the first press (normally the step right after A); 2 at the step whose frames show the second press (normally the step right after B) and at every later step. A press is a frame saying a button 'is pressed down', or the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed. The gripper lowering onto a container (height around 0.1, 20 px or more from any button, a button merely missing from the list because it is occluded) is not a press. Each step shows at most one press. Safety net: at any step whose frames show a container 'held in the gripper' or the gripper lowered onto a container, the value is 2 whatever the earlier count, since both presses precede any pick-up. e.g. 2"
+   },
+   {
+    "name": "green_container",
+    "description": "[y, x] of the container hiding the green cube. At the first step (empty carried-in memory, no execution frames) write the green cube's own [y, x] from the scene, and likewise red_container and blue_container with their cubes, buttons_pressed=0 and picked_colors=[]; no field is left blank at the first step. SECOND, before any chaining, for this field and likewise for red_container and blue_container: if green is already in the carried-in picked_colors, or any frame of this step shows the green cube itself (its container lifted or 'held in the gripper'), do not chain containers for green; write the cube's position from the last frame in which the cube is visible, and keep that position at every later step even when a container is set down over it and only containers are listed in the last frames. Never write the position of a container 'held in the gripper' or of a container lowered back onto the cube. Only for colors not yet exposed, apply what follows. At every step whose frames show containers, rewrite this field, and likewise red_container and blue_container, whether or not the color is named in the goal and whether or not its container moved. When containers first appear, take the container standing on the carried-in position. At every later step: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame shown nearest the carried value, even if it is 10-15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write that container's last-frame position. Never match the carried value straight to the last frame. Scale: frames are sparse, about 16 ticks apart, so a gliding container is normally 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' means only a container that did not move. Mandatory joint procedure: (a) MOVED-STEP TRIGGER: if any frame of this step lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first), this is a moved step and you MUST run the chain for ALL THREE colors through every frame as a ONE-TO-ONE ASSIGNMENT: in each frame each container is assigned to exactly one color, so two fields can never end on the same container, and a container that one color leaves must be taken up by another color; (b) when the nearest candidate for one color is a near-tie (displacements within a few pixels of each other), choose the assignment that also gives the other colors a distinct nearest container with the smallest total displacement; (c) an identical container layout in the first and last frames of a step does not mean nothing moved; if middle frames show displacement, the result is usually a swap of two colors, and the chain decides which; This holds without exception, including when the first frame already shows containers 10-15 px off the carried values and when the last frame shows containers exactly on the carried values. Per frame transition choose the one-to-one assignment with the smallest total displacement (e.g. 23+29 beats 28+29). (d) consistency check before writing: the three written values must be three different containers of the last frame, and if one field moved to a new container, the field that carried that container's old position must have moved too. Joint example: carried green [100, 166] and blue [130, 162]; frames show one container gliding [101, 168], [110, 178], [125, 182], [130, 163], [130, 160] while the other glides [130, 162], [121, 151], [106, 147], [102, 165], [101, 168]; write green_container=[130, 160] and blue_container=[101, 168], even if the goal names only one of them. Worked example of the swap trap: carried [131, 115]; first frame has containers at [118, 118] and [113, 162], pick [118, 118]; next frame it is at [99, 134], next at [101, 161]; write [101, 161], although the OTHER container, which came from [113, 162], now stands at [131, 116], almost exactly the carried value. SWAP TRAP rule: in a moved step a last-frame container standing within 5 px of the carried value is NOT a match; matching a carried value straight to a last-frame container is forbidden, and the only legal path is carried value -> nearest first-frame container -> frame by frame -> last frame. Unmoved step: every frame's containers stand within about 6 px of the previous frame's; then write the same container's last-frame position. Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one circling pass swaps them, two passes return them). Sanity check after a moved step: two containers that circled around each other while the third stood still almost always end swapped; if the chain says nothing swapped, recompute the chain before writing. Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]",
+    "annotation": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed by chaining through every frame shown: starting from the previous step's last frame, each container is matched to the container of the previous frame with the smallest displacement (the gliding may already be under way in the first frame of a step). Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' or 'jitter' refers only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first); in a moved step the joint one-to-one chain is run through every frame for all three colors and its result is written, even when the last-frame layout coincides with the previous step's last-frame layout. In an unmoved step (every frame's containers within about 6 px of the previous frame's) each field keeps the same container's last-frame position. During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. The three color chains (green, red, blue) are run jointly as a one-to-one assignment frame to frame: in each frame every container gets exactly one color, so no two color fields end on the same container and no moving container is left unassigned. When the two nearest candidates for one color are nearly tied (displacements within a few pixels of each other), the tie is broken by the assignment that leaves a distinct container for the other colors with the smallest total displacement. A step whose last frame shows the containers in the same arrangement as the previous step's last frame is not evidence that nothing moved: when any intermediate frame shows a container displaced, every color is re-chained through every frame, and the result is usually two colors swapped. Example: carried green [100, 166]; frames show a container at [101, 168], then [110, 178], [125, 182], [130, 163], last frame [130, 160]; write [130, 160] even though the goal names only blue. Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal. Precedence, applied before any chaining: if green is already in picked_colors at the previous step, or any frame of this step shows the green cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible (not the position the container had before it was lifted), and the container chain is not run for green at this step or any later step; the held container's position and the position of a container set back down on the cube are never written, even when only containers are listed in the last frames of the step. e.g. [109, 126]"
+   },
+   {
+    "name": "red_container",
+    "description": "[y, x] of the container hiding the red cube, kept exactly as green_container: first, if red is in the carried-in picked_colors or the red cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube, at this and every later step; otherwise, rewritten at every step that shows containers even when red is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it): write the red cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained whenever any frame shows a container displaced even if the step's first and last layouts look identical, the three written values being three distinct last-frame containers. Example: carried red [112, 194] passes [121, 184], [119, 162] (chosen over [95, 182] because blue's chain takes that one), [103, 153], last frame [101, 152]; write [101, 152]; e.g. [101, 165]",
+    "annotation": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical, written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal; with precedence over all chaining: if red is already in picked_colors at the previous step, or any frame of this step shows the red cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for red at this step or any later step, and neither the held container's position nor that of a container set back down on the cube is ever written. e.g. [101, 165]"
+   },
+   {
+    "name": "blue_container",
+    "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container: first, if blue is in the carried-in picked_colors or the blue cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube, at this and every later step; otherwise, rewritten at every step that shows containers even when blue is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it): write the blue cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained whenever any frame shows a container displaced even if the step's first and last layouts look identical, the three written values being three distinct last-frame containers. Example: carried blue [101, 152] passes [95, 163], [95, 182], [112, 194], last frame [114, 195]; write [114, 195]; e.g. [102, 79]",
+    "annotation": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical, written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal; with precedence over all chaining: if blue is already in picked_colors at the previous step, or any frame of this step shows the blue cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for blue at this step or any later step, and neither the held container's position nor that of a container set back down on the cube is ever written. e.g. [102, 79]"
+   },
+   {
+    "name": "picked_colors",
+    "description": "Written as the exact JSON text, double quotes, no spaces: [] at the first step and whenever empty, [\"red\"] after the red cube is exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is a mismatch. Carried-in list; append the color of a cube that appears visible beneath a lifted or 'held in the gripper' container among this step's frames, if that color is not already in the list. e.g. [\"green\"]",
+    "annotation": "Ordered list of cube colors whose hiding container has been lifted so far. Written as the literal JSON text with double quotes and no spaces: [] when empty (including at the first step), [\"red\"] after the red cube has been exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is not the recorded value. [] until the step whose execution frames show a cube visible beneath a lifted or 'held in the gripper' container; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "ButtonUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   8,
+   15,
+   66,
+   73,
+   79
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start every episode in A (press the first button). Apply the first matching rule, after updating memory for this step: 1. If buttons_pressed is 0: A. 2. If buttons_pressed is 1: B. 3. If the scene at this decision step shows a container 'held in the gripper': D (put down the container). 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container nearest that cube's last known position; if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+  "fields": [
+   {
+    "name": "buttons_pressed",
+    "description": "Carried-in count plus 1 if any execution frame shown at this step says a button 'is pressed down'; otherwise the carried-in count. Start at 0. e.g. 1",
+    "annotation": "Count of button presses completed so far, including any press whose 'is pressed down' frame appears among the execution steps shown at this decision step. 0 at step #1, 1 at the step after the first press, 2 from the step after the second press to the end. e.g. 1"
+   },
+   {
+    "name": "green_container",
+    "description": "[y, x] of the container hiding the green cube. If a frame shows the green cube uncovered and no containers, write the cube's position. When containers appear, take the one standing on the carried-in green position. Then follow that container through the frames shown: match each container to the nearest container in the previous frame; during a button press two containers glide around each other and finish swapped, so after the press the green container sits where the other moving container started. Write its position in the last frame shown. If the green cube is exposed by lifting its container, write the exposed cube's position. Start with the cube position seen at the first step. e.g. [109, 126]",
+    "annotation": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed frame by frame through every shuffle: during each button press two containers glide around each other and end up having swapped places, so the green container's position becomes the other mover's resting position. Updated at every step to the last frame shown. Once this container has been lifted and the cube is exposed, keep the cube's exposed position. e.g. [109, 126]"
+   },
+   {
+    "name": "red_container",
+    "description": "[y, x] of the container hiding the red cube, kept exactly as green_container: cube position when visible, then the container that covered it, followed frame to frame (two movers during a press swap places), written at the last frame shown. e.g. [82, 152]",
+    "annotation": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step. e.g. [82, 152]"
+   },
+   {
+    "name": "blue_container",
+    "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container: cube position when visible, then the container that covered it, followed frame to frame (two movers during a press swap places), written at the last frame shown. e.g. [102, 79]",
+    "annotation": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step. e.g. [102, 79]"
+   },
+   {
+    "name": "picked_colors",
+    "description": "Carried-in list; append the color of the cube that appears beneath a container shown 'held in the gripper' among this step's frames, if that color is not already in the list. Start empty. e.g. [\"green\"]",
+    "annotation": "Ordered list of cube colors whose hiding container has been lifted so far. Empty until the step whose execution frames show a container 'held in the gripper' with a cube revealed beneath; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 21,
+    "subgoal_wrong": 7,
+    "memory_wrong": 16,
+    "memory_only": 9,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "buttons_pressed": 5,
+     "green_container": 8,
+     "red_container": 9,
+     "blue_container": 6,
+     "picked_colors": 8
+    },
+    "format_wrong": 0,
+    "choice_wrong": 5,
+    "point_wrong": 2
+   },
+   "critique": "field buttons_pressed, ANNOTATOR PROMPT\n  Situation: during the first press in every episode no frame carries the phrase 'is pressed down'; the press shows only as the gripper lowered to about 0.025 height, fingers closed, directly over a button whose coordinates shift a pixel or two. The rule counted presses by the phrase alone, so it did not define the value the annotator actually wrote (PREDICTABILITY). Change the field to: count of completed presses, where a press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's position at height below about 0.06 with fingers closed. 0 at the first step, 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1\n\nfield green_container, ANNOTATOR PROMPT\n  Situation: two containers glide around each other during each press; in most episodes they finish swapped, but in one episode the pair circled twice during the second press and finished at their starting spots. The rule stated 'end up having swapped places' as a fact, which contradicts that episode (PREDICTABILITY). Change the tracking to: at the first step, the green cube's [y, x]; when containers appear, the one standing on that spot; thereafter the container is followed by chaining through every frame shown, each container matched to the container of the previous frame with the smallest displacement, starting from the previous step's last frame (the gliding may already be under way in the first frame of a step). A single circling pass ends swapped; a double pass ends unswapped. Value is the tracked container's position in the last frame shown. Once the cube beneath it is visible (container lifted or held), the field becomes the cube's position and from then on keeps the cube's last visible position, even after the container is lowered back over it. e.g. [109, 126]\n\nfield red_container, ANNOTATOR PROMPT\n  Same change as green_container: chained smallest-displacement matching frame by frame rather than an assumed swap; once the red cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [82, 152]\n\nfield blue_container, ANNOTATOR PROMPT\n  Same change as green_container: chained smallest-displacement matching frame by frame rather than an assumed swap; once the blue cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [102, 79]\n\nfield picked_colors, ANNOTATOR PROMPT\n  Written form: a JSON list with double-quoted strings, [] when empty, written explicitly at every step including the first. e.g. [\"green\"]\n\nfield buttons_pressed, POLICY PROMPT\n  Situation: at the step after the first press the frames never say 'is pressed down'; they show the gripper descending with closed fingers to height about 0.025 on top of a button while two containers glide. The policy, told to count only the literal phrase, kept 0, then answered A again (PREDICTABILITY, and it broke the subgoal). New text: write 0 at the first step (empty memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1\n\nfield green_container, POLICY PROMPT\n  Situation: (a) at the first step the policy left the field blank instead of writing the cube's position; (b) during presses it either ignored the gliding containers or shortcut to the container nearest the carried-in spot in the last frame, which gives the wrong one when the pair swapped and a container now stands on the old spot; (c) when the container was held with the cube visible beneath it, it wrote the airborne container's position, and after the container was set back down it wrote the container's position instead of the cube's (PREDICTABILITY). New text: at the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame. Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one pass swaps, two passes return). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]\n\nfield red_container, POLICY PROMPT\n  Same as green_container: write the red cube's position at the first step; chain smallest-displacement matches from the first frame shown; once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]\n\nfield blue_container, POLICY PROMPT\n  Same as green_container: write the blue cube's position at the first step; chain smallest-displacement matches from the first frame shown; once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]\n\nfield picked_colors, POLICY PROMPT\n  Situation: the policy left the field blank at the first step and later wrote Python-style single quotes, both read as mismatches (PREDICTABILITY). New text: a JSON list with double-quoted strings; write [] explicitly at the first step and whenever empty; append a color when a frame shows that cube visible beneath a lifted or held container, if not already listed. e.g. [\"red\"]\n\nthe policy prompt for subgoal\n  Rule 1 ('if buttons_pressed is 0: A') sent the policy wrong: at the step after the first press no frame said 'is pressed down', the policy kept the count at 0 and answered A a second time (SUFFICIENCY via a miscounted memory). Replace rules 1 and 2 with: A only at the very first decision step, recognized by empty carried-in memory and a scene with no execution frames and the gripper out of frame. At any step that shows execution frames, A has already been executed; answer B when buttons_pressed (after this step's update) is 1, which includes the case where the frames show the gripper lowered onto a button with closed fingers. Rules 3 to 6 stay. In the fallback, remove the suggestion to point at the container nearest the cube's last known position; instead say to point at the position obtained by chaining the container frame by frame as the memory instruction describes, since after a swap a different container stands on the old spot.\n\nrefused\n  One step proposed that buttons_pressed be 'at least 1 at the first decision step'; the first decision step is the one before any execution frames, where the count is 0, so that wording is dropped in favor of counting the press from the gripper lowered onto a button. Several steps proposed stating as a rule that whenever two containers move during a step they have swapped. One episode shows the same pair circling twice during the second press and finishing at their starting spots, and the correct pick there follows the unswapped positions, so the flat swap rule is not passed on; the chained smallest-displacement match, which yields the swap in the ordinary case and the return in the double-circle case, is given instead.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "buttons_pressed",
+      "edits": [
+       {
+        "modify_from": "Count of button presses completed so far, including any press whose 'is pressed down' frame appears among the execution steps shown at this decision step. 0 at step #1, 1 at the step after the first press, 2 from the step after the second press to the end. e.g. 1",
+        "modify_to": "Count of button presses completed so far. A press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed. 0 at the first step (no execution frames), 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "then followed frame by frame through every shuffle: during each button press two containers glide around each other and end up having swapped places, so the green container's position becomes the other mover's resting position. Updated at every step to the last frame shown. Once this container has been lifted and the cube is exposed, keep the cube's exposed position.",
+        "modify_to": "then followed by chaining through every frame shown: starting from the previous step's last frame, each container is matched to the container of the previous frame with the smallest displacement (the gliding may already be under way in the first frame of a step). During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. Value is the tracked container's position in the last frame shown. Once the cube beneath it is visible (container lifted or held in the gripper), the field becomes the cube's position and from then on keeps the cube's last visible position, even after a container is lowered back over it."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step.",
+        "modify_to": "followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), written at the last frame shown; once the red cube is visible, the cube's last visible position, kept after the container is set back down."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step.",
+        "modify_to": "followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), written at the last frame shown; once the blue cube is visible, the cube's last visible position, kept after the container is set back down."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "picked_colors",
+      "edits": [
+       {
+        "modify_from": "Empty until the step whose execution frames show a container 'held in the gripper' with a cube revealed beneath; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]",
+        "modify_to": "Written as a JSON list with double-quoted strings, explicitly [] when empty, including at the first step. [] until the step whose execution frames show a cube visible beneath a lifted or 'held in the gripper' container; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "buttons_pressed",
+      "edits": [
+       {
+        "modify_from": "Carried-in count plus 1 if any execution frame shown at this step says a button 'is pressed down'; otherwise the carried-in count. Start at 0. e.g. 1",
+        "modify_to": "Write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "[y, x] of the container hiding the green cube. If a frame shows the green cube uncovered and no containers, write the cube's position. When containers appear, take the one standing on the carried-in green position. Then follow that container through the frames shown: match each container to the nearest container in the previous frame; during a button press two containers glide around each other and finish swapped, so after the press the green container sits where the other moving container started. Write its position in the last frame shown. If the green cube is exposed by lifting its container, write the exposed cube's position. Start with the cube position seen at the first step. e.g. [109, 126]",
+        "modify_to": "[y, x] of the container hiding the green cube. At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame. Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one circling pass swaps them, two passes return them). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "[y, x] of the container hiding the red cube, kept exactly as green_container: cube position when visible, then the container that covered it, followed frame to frame (two movers during a press swap places), written at the last frame shown. e.g. [82, 152]",
+        "modify_to": "[y, x] of the container hiding the red cube, kept exactly as green_container: write the red cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap); once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "[y, x] of the container hiding the blue cube, kept exactly as green_container: cube position when visible, then the container that covered it, followed frame to frame (two movers during a press swap places), written at the last frame shown. e.g. [102, 79]",
+        "modify_to": "[y, x] of the container hiding the blue cube, kept exactly as green_container: write the blue cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap); once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "picked_colors",
+      "edits": [
+       {
+        "modify_from": "Carried-in list; append the color of the cube that appears beneath a container shown 'held in the gripper' among this step's frames, if that color is not already in the list. Start empty. e.g. [\"green\"]",
+        "modify_to": "A JSON list with double-quoted strings; write [] explicitly at the first step and whenever empty. Carried-in list; append the color of a cube that appears visible beneath a lifted or 'held in the gripper' container among this step's frames, if that color is not already in the list. e.g. [\"green\"]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "1. If buttons_pressed is 0: A. 2. If buttons_pressed is 1: B.",
+      "modify_to": "1. If the carried-in memory is empty and this step shows no execution frames (the very first decision step, gripper out of frame): A. 2. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; at any step that shows execution frames, A has already been done, so if buttons_pressed is still 0 or 1 answer B (the frames showing the gripper lowered onto a button with closed fingers count as the first press)."
+     },
+     {
+      "modify_from": "if the needed color's memory position is unknown, point C at the container nearest that cube's last known position;",
+      "modify_to": "if the needed color's memory position is unknown, point C at the container reached by chaining frame by frame from that cube's last known position as the memory instruction describes (after a swap a different container stands on the old spot, so do not take the nearest one);"
+     }
+    ],
+    "refused": "The proposal that buttons_pressed be 'at least 1 at the first decision step' stays out: the first decision step precedes any execution frames and its count is 0; the press is counted from the gripper lowered onto a button instead. The proposal to state as a rule that two moving containers always finish swapped stays out: one episode shows a double circling pass that returns them to their starting spots, and the chained smallest-displacement match covers both cases, so no flat swap clause is added. Nothing else from the report is withheld."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 23,
+    "subgoal_wrong": 1,
+    "memory_wrong": 5,
+    "memory_only": 4,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "buttons_pressed": 0,
+     "green_container": 2,
+     "red_container": 2,
+     "blue_container": 3,
+     "picked_colors": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field red_container, ANNOTATOR PROMPT\n  The value changes only through the frame-by-frame smallest-displacement chain from the previous step's written value; it never jumps to a different container. In one episode the red cube's container was chained through a circling pass to one of two stationary containers at the end of the press step, and at the next step, where neither of those two containers moved at all, the annotation switched to the other stationary container. That breaks PREDICTABILITY: the chain from the carried value through unmoving containers can only give the same container, so no reader of that step could produce the written value. The rule must state that when the tracked container does not move across a step, the field keeps that container's last-frame position (only jitter of a few pixels), and that a value may change containers only when a frame-to-frame link in the chain says so. The chain is confirmed reliable by every lift in the batch (the revealed cube always sat under the chained container), so the annotation must trust it even across a single sampled circling pass. Same discipline for green_container and blue_container. e.g. [127, 138]\n\nfield green_container, POLICY PROMPT\n  Say explicitly: at every step whose frames show containers, rewrite ALL THREE container fields, including colors the goal never names and containers that never moved. Twice a policy at the press step updated only the goal color and left the other two fields at the first-step cube positions, and once it left the unnamed color's field stale although its container had just swapped places in a circling pass; the annotated value was the chained container's last-frame position, so the step broke PREDICTABILITY. Procedure to state: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame nearest the carried value, even if that nearest one is 10–15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write the last-frame position. Add a worked example of the swap trap: carried [131,115]; first frame has [118,118] and [113,162], pick [118,118]; next frame [99,134], next [101,161]; final [101,161], while the OTHER container, which came from [113,162], now stands at [131,116], almost exactly the carried value. A container standing in the last frame at the carried position is NOT a reason to write that position; only the chain decides, and the chain here says the pair swapped. Conversely, when no container moves during a step, the chain returns the same container and the value stays. Cube-visible override unchanged. e.g. [133, 174]\n\nfield red_container, POLICY PROMPT\n  Same text as green_container: rewrite at every step with containers, even when red is not named in the goal and even when its container stood still (snap from the cube's original position to the container on it); chain from the first frame via nearest match, never from the carried value to the last frame; a last-frame container coinciding with the carried position is the swap trap, not a match. e.g. [101, 161]\n\nfield blue_container, POLICY PROMPT\n  Same text as green_container: rewrite at every step with containers, even when blue is not named in the goal; chain from the first frame via nearest match and smallest displacement per frame; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it. e.g. [103, 168]\n\nthe policy prompt for subgoal\n  No rule sent the policy wrong on its own; every wrong C point in the batch came from a memory field that was not chained, and the point then landed on the swapped-in container. Add one sentence to rules 4 and 5: the point for C is the <color>_container value written AT THIS STEP after the full chain (not the carried-in value), and if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point. Keep the fallback as is.\n\nrefused\n  One press step reported that its carried-in red_container was already wrong before the step, because the recorded value named the other stationary container. Reading the whole episode, the carried-in value was the correct chain result and the recorded value at that step was the annotation's own inconsistency, so this is not a missing memory fact and the memory fields do not change; it is answered as an annotation correction above. Also not passed on verbatim: the suggestion that a last-frame container coinciding with the carried-in position is itself 'evidence of a completed swap'. That is false when nothing moved (the coinciding container is then the same one); the instruction instead says that such a coincidence is neither for nor against and only the chain decides.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "Value is the tracked container's position in the last frame shown.",
+        "modify_to": "Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "written at the last frame shown;",
+        "modify_to": "written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal;"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "written at the last frame shown;",
+        "modify_to": "written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal;"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "[y, x] of the container hiding the green cube.",
+        "modify_to": "[y, x] of the container hiding the green cube. At every step whose frames show containers, rewrite this field, and likewise red_container and blue_container, whether or not the color is named in the goal and whether or not its container moved."
+       },
+       {
+        "modify_from": "At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame.",
+        "modify_to": "At every later step: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame shown nearest the carried value, even if it is 10-15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write that container's last-frame position. Never match the carried value straight to the last frame. Worked example of the swap trap: carried [131, 115]; first frame has containers at [118, 118] and [113, 162], pick [118, 118]; next frame it is at [99, 134], next at [101, 161]; write [101, 161], although the OTHER container, which came from [113, 162], now stands at [131, 116], almost exactly the carried value. A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside)."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "kept exactly as green_container:",
+        "modify_to": "kept exactly as green_container, rewritten at every step that shows containers even when red is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it):"
+       },
+       {
+        "modify_from": "(trust the chain, not an assumed swap);",
+        "modify_to": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match);"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "kept exactly as green_container:",
+        "modify_to": "kept exactly as green_container, rewritten at every step that shows containers even when blue is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it):"
+       },
+       {
+        "modify_from": "(trust the chain, not an assumed swap);",
+        "modify_to": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it);"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Use the remembered container position, not the cube's original spot.",
+      "modify_to": "Use the remembered container position, not the cube's original spot: the point is the <color>_container value written AT THIS STEP after the full chain, not the carried-in value; if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point."
+     },
+     {
+      "modify_from": "do not point at the one just put down.",
+      "modify_to": "do not point at the one just put down. The point is that color's value written at this step after the full chain, not the carried-in value."
+     }
+    ],
+    "refused": "The suggestion that a last-frame container coinciding with the carried-in position is itself evidence of a completed swap stays out, as the report itself advised: when nothing moved the coinciding container is the same one, so the instruction says the coincidence is neither for nor against and only the chain decides. The report's request to treat the carried-in red_container as wrong at the press step is not acted on as a memory change; it was an annotation inconsistency, settled by the rule-side clause that a tracked container keeps its identity across a step in which it does not move. No field is added or removed; the chained-match rule committed in round 1 stands and is only made stricter about identity and about rewriting all three fields."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 17,
+    "subgoal_wrong": 0,
+    "memory_wrong": 3,
+    "memory_only": 3,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "buttons_pressed": 0,
+     "green_container": 1,
+     "red_container": 1,
+     "blue_container": 1,
+     "picked_colors": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field green_container, ANNOTATOR PROMPT\n  Keep the field as described, with one addition about how the chain is run: the three color chains (green, red, blue) are run jointly as a one-to-one assignment, frame to frame. In each frame every container gets exactly one color, so no two color fields may end on the same container and no moving container may be left unassigned. When the two nearest candidates for one color are nearly tied (a few pixels apart in displacement), the tie is broken by the assignment that leaves a distinct container for the other colors with the smallest total displacement. A step whose last frame shows the containers in the same arrangement as the previous step's last frame is NOT evidence that nothing moved: when any intermediate frame shows containers displaced, the chain is still run through every frame and usually ends with two colors swapped. Example: carried green [100, 166], first frame container at [101, 168], then [110, 178], [125, 182], [130, 163], last frame [130, 160]; write [130, 160] even though the goal names only blue. e.g. [130, 160]\n\nfield red_container, ANNOTATOR PROMPT\n  Same addition as green_container: chained jointly with the other two colors as a one-to-one assignment per frame, near-ties resolved by consistency with the other chains, every color re-chained at any step whose frames show a container displaced, even when the start and end layouts of the step look identical and even when red is not named in the goal. e.g. [101, 152]\n\nfield blue_container, ANNOTATOR PROMPT\n  Same addition as green_container: chained jointly with the other two colors as a one-to-one assignment per frame, near-ties resolved by consistency with the other chains, every color re-chained at any step whose frames show a container displaced, even when the start and end layouts of the step look identical and even when blue is not named in the goal. e.g. [114, 195]\n\nfield picked_colors, ANNOTATOR PROMPT\n  Unchanged in content; state the exact textual form: the value is the literal JSON text with double quotes and no spaces, [] when empty, [\"red\"] after the red cube has been exposed, [\"red\",\"green\"] after both. Single-quoted lists such as ['red'] are not the recorded value. e.g. [\"red\"]\n\nfield green_container, POLICY PROMPT\n  Situation: at the decision step after the second press, while the two non-goal containers had circled each other during the press, the policy re-chained only the goal color and copied the other two fields unchanged, so one non-goal field still held a position where a different container now stood; at another step the start and end layouts of the step were identical and a near-tie between two candidates in a middle frame made the single-color chain ambiguous. This breaks PREDICTABILITY: the recorded values were the jointly chained ones. Change the instruction to a mandatory procedure placed before the worked example: (a) at every step whose frames show containers, rewrite ALL THREE fields green_container, red_container and blue_container, not only the goal color; (b) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for all three colors through every frame as a ONE-TO-ONE ASSIGNMENT: in each frame each container is assigned to exactly one color, so two fields can never end on the same container, and a container that one color leaves must be taken up by another color; (c) when the nearest candidate for one color is a near-tie (displacements within a few pixels of each other), choose the assignment that also gives the other colors a distinct nearest container with the smallest total displacement; (d) an identical container layout in the first and last frames of a step does not mean nothing moved; if middle frames show displacement, the result is usually a swap of two colors, and the chain decides which; (e) consistency check before writing: the three written values must be three different containers of the last frame, and if the goal color's field moved to a new container, the field that carried that container's old position must have moved too. Example: carried green [100, 166] and blue [130, 162]; frames show [101, 168] gliding to [110, 178], [125, 182], [130, 163], [130, 160] while the other glides from [130, 162] to [121, 151], [106, 147], [102, 165], [101, 168]; write green_container=[130, 160] and blue_container=[101, 168]. e.g. [130, 160]\n\nfield red_container, POLICY PROMPT\n  Same change as green_container: rewritten at every step showing containers, chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, identical start/end layouts still chained, and the three written values must be three distinct last-frame containers. Example: carried red [112, 194] passes [121, 184], [119, 162] (chosen over [95, 182] because blue's chain takes that one), [103, 153], last frame [101, 152]; write [101, 152]. e.g. [101, 152]\n\nfield blue_container, POLICY PROMPT\n  Same change as green_container: rewritten at every step showing containers, chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, identical start/end layouts still chained, and the three written values must be three distinct last-frame containers. Example: carried blue [101, 152] passes [95, 163], [95, 182], [112, 194], last frame [114, 195]; write [114, 195]. e.g. [114, 195]\n\nfield picked_colors, POLICY PROMPT\n  Situation: with the red container held in the gripper and the red cube exposed, the policy appended the right color but wrote the list in single-quoted Python form, which did not match the recorded double-quoted JSON text. This breaks PREDICTABILITY on form only. Change: state that the field is written as the exact JSON text, double quotes, no spaces: [] when empty, [\"red\"] after the red cube is exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is a mismatch. The event (a cube visible beneath a lifted or held container in this step's frames) is unchanged. e.g. [\"red\"]\n\nrefused\n  No report is dropped. The subgoal instruction was found sufficient at every reported step: the chosen menu option and the pointed container were the recorded ones in each case, so no subgoal rule changes. The only subgoal-side discrepancy, a point a few pixels off the recorded one on the same container, is within the jitter of container centres and needs no rule.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which.",
+        "modify_to": "During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. The three color chains (green, red, blue) are run jointly as a one-to-one assignment frame to frame: in each frame every container gets exactly one color, so no two color fields end on the same container and no moving container is left unassigned. When the two nearest candidates for one color are nearly tied (displacements within a few pixels of each other), the tie is broken by the assignment that leaves a distinct container for the other colors with the smallest total displacement. A step whose last frame shows the containers in the same arrangement as the previous step's last frame is not evidence that nothing moved: when any intermediate frame shows a container displaced, every color is re-chained through every frame, and the result is usually two colors swapped. Example: carried green [100, 166]; frames show a container at [101, 168], then [110, 178], [125, 182], [130, 163], last frame [130, 160]; write [130, 160] even though the goal names only blue."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "(one circling pass swaps the pair, two passes return them; trust the chain)",
+        "modify_to": "(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "(one circling pass swaps the pair, two passes return them; trust the chain)",
+        "modify_to": "(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "picked_colors",
+      "edits": [
+       {
+        "modify_from": "Written as a JSON list with double-quoted strings, explicitly [] when empty, including at the first step.",
+        "modify_to": "Written as the literal JSON text with double quotes and no spaces: [] when empty (including at the first step), [\"red\"] after the red cube has been exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is not the recorded value."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "(4) write that container's last-frame position. Never match the carried value straight to the last frame.",
+        "modify_to": "(4) write that container's last-frame position. Never match the carried value straight to the last frame. Mandatory joint procedure: (a) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for ALL THREE colors through every frame as a ONE-TO-ONE ASSIGNMENT: in each frame each container is assigned to exactly one color, so two fields can never end on the same container, and a container that one color leaves must be taken up by another color; (b) when the nearest candidate for one color is a near-tie (displacements within a few pixels of each other), choose the assignment that also gives the other colors a distinct nearest container with the smallest total displacement; (c) an identical container layout in the first and last frames of a step does not mean nothing moved; if middle frames show displacement, the result is usually a swap of two colors, and the chain decides which; (d) consistency check before writing: the three written values must be three different containers of the last frame, and if one field moved to a new container, the field that carried that container's old position must have moved too. Joint example: carried green [100, 166] and blue [130, 162]; frames show one container gliding [101, 168], [110, 178], [125, 182], [130, 163], [130, 160] while the other glides [130, 162], [121, 151], [106, 147], [102, 165], [101, 168]; write green_container=[130, 160] and blue_container=[101, 168], even if the goal names only one of them."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match)",
+        "modify_to": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained whenever any frame shows a container displaced even if the step's first and last layouts look identical, the three written values being three distinct last-frame containers. Example: carried red [112, 194] passes [121, 184], [119, 162] (chosen over [95, 182] because blue's chain takes that one), [103, 153], last frame [101, 152]; write [101, 152]"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it)",
+        "modify_to": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained whenever any frame shows a container displaced even if the step's first and last layouts look identical, the three written values being three distinct last-frame containers. Example: carried blue [101, 152] passes [95, 163], [95, 182], [112, 194], last frame [114, 195]; write [114, 195]"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "picked_colors",
+      "edits": [
+       {
+        "modify_from": "A JSON list with double-quoted strings; write [] explicitly at the first step and whenever empty.",
+        "modify_to": "Written as the exact JSON text, double quotes, no spaces: [] at the first step and whenever empty, [\"red\"] after the red cube is exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is a mismatch."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing from the report is withheld. The subgoal instruction is left untouched, as the report found it sufficient at every step; the few-pixel point offset on the same container is container-centre jitter and needs no rule. The joint one-to-one chaining is committed as a strengthening of the round-1 chained match and the round-2 rewrite-all-three-fields clause, not a replacement: the smallest-displacement chain still decides identity, now with the constraint that the three chains never share a container and that any mid-step displacement forces all three to be re-chained even when first and last layouts coincide."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 21,
+    "subgoal_wrong": 8,
+    "memory_wrong": 9,
+    "memory_only": 6,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "buttons_pressed": 8,
+     "green_container": 0,
+     "red_container": 4,
+     "blue_container": 0,
+     "picked_colors": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 8,
+    "point_wrong": 0
+   },
+   "critique": "field buttons_pressed, ANNOTATOR PROMPT\n  Situation: in every episode the goal asks for both buttons first, then container pick-ups. The step after A shows the gripper descending onto the first button (either a frame saying the button 'is pressed down', or the gripper within a few pixels of the button's [y, x] at height below about 0.06 with fingers closed); the step after B shows the same on the other button. The recorded subgoal at the step showing the second press is already C at the first named color's container. But the annotated count was filled one step late: 0 at the step that shows the first press, 1 at the step that shows the second press, 2 only at the step after that. So the policy, following its instruction, wrote 1 at the step showing the first press and the record said 0 (PREDICTABILITY), and at the step showing the second press the annotated 1 could not justify C under the subgoal rules that need 2 (SUFFICIENCY). The phrase 'at the step after the first such frame' was read as 'the step after the step containing that frame'. Change: buttons_pressed holds the number of button presses whose execution frames have been shown at or before this step. It changes value at the step whose own execution frames show a press, not at the next step. 0 at the first step (no execution frames); 1 at the step whose frames show the first press (normally the step right after A); 2 at the step whose frames show the second press (normally the step right after B), and 2 at every later step. A press is a frame saying a button 'is pressed down', or the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; the gripper lowering onto a container (height around 0.1, 20 px or more from any button, button merely missing from the list because it is occluded) is not a press. Safety net: at any step whose frames show a container 'held in the gripper' or the gripper lowered onto a container, the value is 2 whatever the earlier count. e.g. 2\n\nfield red_container, ANNOTATOR PROMPT\n  Situation: after the red container had been lifted and the red cube seen beneath it, the next step showed the held container being lowered back onto the cube, with the cube visible in an early frame and only containers in the last frames; the policy chained containers and wrote the set-down container's position, or at the lifting step wrote the held container's own position, instead of the cube's last visible position. The record kept the cube position. PREDICTABILITY. Change: no new content, but precedence must be stated first for every color field: if the color is already in picked_colors, or any frame of this step shows that cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible and the container chain is not run for that color at this step or any later step; the held container's position and the position of a container set back down on the cube are never written. e.g. [101, 165]\n\nfield buttons_pressed, POLICY PROMPT\n  The policy's count was right and the record was late; now the record counts at the step whose frames show the press, so the instruction stays as a per-step increment but must be stated plainly with the press test and the exclusion: write 0 at the first step (empty memory, no execution frames). Otherwise write the carried count plus 1 if any execution frame of this step says a button 'is pressed down' OR shows the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; a frame with the gripper over a container (height around 0.1, 20 px or more from the nearest button) is not a press even if a button is missing from the list in that frame. Each step shows at most one press, so the count never rises by more than 1. If any frame of this step shows a container 'held in the gripper' or the gripper lowered onto a container with fingers closing, write 2 regardless of the carried count, because both presses precede any pick-up. e.g. 2\n\nfield green_container, POLICY PROMPT\n  Put the cube rule first, before the chain procedure, for all three color fields: if green is already in the carried picked_colors, or any frame of this step shows the green cube itself (its container lifted or 'held in the gripper'), do not chain containers for green; write the cube's position from the last frame in which the cube is visible, and keep that position at every later step even when a container is set down over it and only containers are listed in the last frames. Never write the position of a container 'held in the gripper'. Only then, for colors not yet exposed, run the chain exactly as described. e.g. [105, 161]\n\nfield red_container, POLICY PROMPT\n  Same reordering as green_container: the exposed-cube rule comes first and freezes the field. If red is in the carried picked_colors or the red cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube; otherwise chain as before. e.g. [101, 165]\n\nfield blue_container, POLICY PROMPT\n  Same reordering as green_container: the exposed-cube rule comes first and freezes the field. If blue is in the carried picked_colors or the blue cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube; otherwise chain as before. e.g. [102, 79]\n\nthe policy prompt for subgoal\n  The ordering of rules sent the policy wrong twice over. First, rule 2 (buttons_pressed is 1 → B) stood before rule 3 (container held → D), so at the step where the container had just been lifted with the cube visible beneath it, a count of 1 produced B instead of D. The held-container rule must be the first rule after the first-step rule: if the scene at this decision step shows a container 'held in the gripper', answer D whatever buttons_pressed reads. Second, with the count now written at the step whose frames show the press, the button rules read: if buttons_pressed after this step's update is 1, answer B; if it is 2 and nothing is held, go to the pick-up rules (C at the first named color's container when picked_colors is empty, C at the second named color's container when picked_colors has one entry and the goal names a second cube, D when every named cube is picked). Remove the sentence saying that at any step with execution frames a count of 0 or 1 means B; a count of 0 at a step with execution frames can no longer occur, and 1 means exactly one press shown so far. The point for C stays the color's container value written at this step. The fallback stays as it is.\n\nrefused\n  Several steps asked for new machinery to repair a 'stale' carried count: a list of pressed button positions, a rule that any step with execution frames implies A's press even if unseen, and a rule that a press on a button different from the first one means both are done. All of these were reactions to the one-step lag in how the count was annotated; once the count is written at the step whose frames show the press, the carried value is 1 after the first press and 2 after the second, and the plain count settles every step in the minibatch. A list of button positions would duplicate the count and is not needed. One step claimed a press should be detected when a button disappears from the list while the gripper is lowered about 20 px away at height around 0.1 with fingers closed; in that episode the gripper was closing on a container next to the button, which was merely occluded, and the real second press had been shown in the previous step. That heuristic would count false presses and is not passed on; the opposite exclusion is added instead. Suggestions that buttons_pressed should be incremented one step later or only at the second press are dropped: the record, not the policy, was late, and the rule is changed to match the policy's reading.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "buttons_pressed",
+      "edits": [
+       {
+        "modify_from": "Count of button presses completed so far. A press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed. 0 at the first step (no execution frames), 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1",
+        "modify_to": "Number of button presses whose execution frames have been shown at or before this step. The value changes at the step whose OWN execution frames show the press, not at the next step: 0 at the first step (no execution frames); 1 at the step whose frames show the first press (normally the step right after A); 2 at the step whose frames show the second press (normally the step right after B) and at every later step. A press is a frame saying a button 'is pressed down', or the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed. The gripper lowering onto a container (height around 0.1, 20 px or more from any button, a button merely missing from the list because it is occluded) is not a press. Each step shows at most one press. Safety net: at any step whose frames show a container 'held in the gripper' or the gripper lowered onto a container, the value is 2 whatever the earlier count, since both presses precede any pick-up. e.g. 2"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "Once the cube beneath it is visible (container lifted or held in the gripper), the field becomes the cube's position and from then on keeps the cube's last visible position, even after a container is lowered back over it.",
+        "modify_to": "Precedence, applied before any chaining: if green is already in picked_colors at the previous step, or any frame of this step shows the green cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible, and the container chain is not run for green at this step or any later step; the held container's position and the position of a container set back down on the cube are never written, even when only containers are listed in the last frames of the step."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "once the red cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [82, 152]",
+        "modify_to": "with precedence over all chaining: if red is already in picked_colors at the previous step, or any frame of this step shows the red cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible, the chain is not run for red at this step or any later step, and neither the held container's position nor that of a container set back down on the cube is ever written. e.g. [101, 165]"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "once the blue cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [102, 79]",
+        "modify_to": "with precedence over all chaining: if blue is already in picked_colors at the previous step, or any frame of this step shows the blue cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible, the chain is not run for blue at this step or any later step, and neither the held container's position nor that of a container set back down on the cube is ever written. e.g. [102, 79]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "buttons_pressed",
+      "edits": [
+       {
+        "modify_from": "Write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1",
+        "modify_to": "Write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame of this step says a button 'is pressed down' OR shows the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; otherwise the carried-in count. A frame with the gripper over a container (height around 0.1, 20 px or more from the nearest button) is not a press, even if a button is missing from the list in that frame because it is occluded. Each step shows at most one press, so the count never rises by more than 1. If any frame of this step shows a container 'held in the gripper' or the gripper lowered onto a container with fingers closing, write 2 regardless of the carried count, because both presses precede any pick-up. e.g. 2"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "[y, x] of the container hiding the green cube. At every step whose frames show containers, rewrite this field,",
+        "modify_to": "[y, x] of the container hiding the green cube. FIRST, before any chaining, for this field and likewise for red_container and blue_container: if green is already in the carried-in picked_colors, or any frame of this step shows the green cube itself (its container lifted or 'held in the gripper'), do not chain containers for green; write the cube's position from the last frame in which the cube is visible, and keep that position at every later step even when a container is set down over it and only containers are listed in the last frames. Never write the position of a container 'held in the gripper' or of a container lowered back onto the cube. Only for colors not yet exposed, apply what follows. At every step whose frames show containers, rewrite this field,"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "[y, x] of the container hiding the red cube, kept exactly as green_container,",
+        "modify_to": "[y, x] of the container hiding the red cube, kept exactly as green_container: first, if red is in the carried-in picked_colors or the red cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube, at this and every later step; otherwise,"
+       },
+       {
+        "modify_from": "once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]",
+        "modify_to": "e.g. [101, 165]"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "[y, x] of the container hiding the blue cube, kept exactly as green_container,",
+        "modify_to": "[y, x] of the container hiding the blue cube, kept exactly as green_container: first, if blue is in the carried-in picked_colors or the blue cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube, at this and every later step; otherwise,"
+       },
+       {
+        "modify_from": "once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]",
+        "modify_to": "e.g. [102, 79]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "2. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; at any step that shows execution frames, A has already been done, so if buttons_pressed is still 0 or 1 answer B (the frames showing the gripper lowered onto a button with closed fingers count as the first press). 3. If the scene at this decision step shows a container 'held in the gripper': D (put down the container).",
+      "modify_to": "2. If the scene at this decision step shows a container 'held in the gripper': D (put down the container), whatever buttons_pressed reads. 3. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; frames showing the gripper lowered onto a button with closed fingers count as a press, and buttons_pressed is written at the step whose frames show the press, so 1 means exactly one press shown so far and 2 means both are done."
+     }
+    ],
+    "refused": "The list of pressed button positions, the rule that any step with execution frames implies A's unseen press, and the rule that a press on a different button means both are done stay out: all three were reactions to the record counting presses one step late, and with the count now written at the step whose own frames show the press (which is how the round-1 policy prompt and subgoal rule 2 already read it) the plain count settles every step; a position list would only duplicate it. The heuristic that a button vanishing from the list while the gripper is lowered about 20 px away at height around 0.1 counts as a press stays out, since that frame shows the gripper closing on a container beside an occluded button; the opposite exclusion is committed instead. Suggestions to increment the count one step later or only at the second press stay out: the record, not the policy, was late, and the rule is aligned to the policy's reading. The joint one-to-one chaining, the identity-keeping clause and the rewrite-all-three clause from rounds 1 to 3 are untouched; the exposed-cube precedence only sits ahead of them for colors already revealed."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 19,
+    "subgoal_wrong": 3,
+    "memory_wrong": 6,
+    "memory_only": 3,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "buttons_pressed": 1,
+     "green_container": 3,
+     "red_container": 4,
+     "blue_container": 4,
+     "picked_colors": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 2
+   },
+   "critique": "field green_container, ANNOTATOR PROMPT\n  No change to what the field holds or when it changes. Two clarifications of wording, so the annotator prompt and the policy prompt read the same way. (1) Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is to be judged at that scale, and the phrases 'a few pixels' and 'jitter' refer only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame; in a moved step the joint one-to-one chain is run through every frame for all three colors, and the result is written even when the last-frame layout coincides with the previous step's last-frame layout. (2) The first step with empty memory writes the green cube's own [y, x]; this is stated as the first sentence. Also, where the precedence clause applies (cube visible in some frame), the value is the cube's position in the last frame where the cube is visible, so a step in which the cube is listed at [135, 131] in its last frames is annotated [135, 131], not the position the container had before it was lifted. e.g. [128, 122]\n\nfield red_container, ANNOTATOR PROMPT\n  Same two clarifications as green_container: sparse frames mean 15-35 px per-frame displacements are normal gliding, a moved step is one where any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide; first-step value is the red cube's own position, stated first; precedence writes the cube's last visible position, not the container's pre-lift position. e.g. [104, 94]\n\nfield blue_container, ANNOTATOR PROMPT\n  Same two clarifications as green_container and red_container: sparse-frame displacement scale, moved-step trigger, chain always written in a moved step, first-step cube position stated first, precedence writes the cube's last visible position. e.g. [105, 168]\n\nfield buttons_pressed, POLICY PROMPT\n  Keep the content; add that the count is rewritten BEFORE the subgoal is chosen, and give the four concrete outcomes in order: empty carried memory -> 0; carried 0 and a press in this step's frames -> 1; carried 1 and a press in this step's frames -> 2; carried 2 or any container held/grasped in this step -> 2. A frame saying a button 'is pressed down' in this step is a press of this step even if that button is the one the robot is already heading for. e.g. 2\n\nfield green_container, POLICY PROMPT\n  Restructure so the first sentence is the first-step rule: with empty carried-in memory and no execution frames, write the green cube's own [y, x] from the scene (and likewise red_container, blue_container, buttons_pressed=0, picked_colors=[]); no field is left blank at the first step. Second sentence: the exposure precedence (green in carried picked_colors, or the green cube visible in any frame -> write the cube's last visible position, ignore all containers at this and later steps). Then the chain, rewritten around three plain facts the policy failed on: (a) frames are sparse, about 16 ticks apart, so a gliding container is normally 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' means only a container that did not move; (b) MOVED-STEP TRIGGER: if any frame of this step lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first), the step is a moved step and the joint one-to-one chain MUST be run for all three colors through every frame and its result written, no exception; this includes the case where the first frame already shows containers 10-15 px off the carried values, and the case where the last frame shows containers exactly on the carried values; (c) SWAP TRAP stated as a rule: in a moved step, a last-frame container standing within 5 px of the carried value is not a match; matching a carried value straight to a last-frame container is forbidden, the only legal path is carried value -> nearest first-frame container -> frame by frame -> last frame. Keep the joint assignment: per frame transition choose the one-to-one assignment with the smallest total displacement (e.g. 23+29 beats 28+29). Sanity check after a moved step: two containers that circled around each other while the third stood still almost always end swapped; if the chain says nothing swapped, recompute before writing. Keep one worked example of the swap (carried [100, 166] passing [104, 181], [119, 182], [121, 162] to [121, 159] while the other color goes [112, 152], [97, 151], [95, 169] to [95, 172]). Unmoved step: every frame's containers stand within about 6 px of the previous frame's, write the same container's last-frame position. e.g. [128, 122]\n\nfield red_container, POLICY PROMPT\n  Same restructuring as green_container: first-step cube position as the first sentence, exposure precedence second, then the chain with the sparse-frame scale, the moved-step trigger, the forbidden straight match to a coinciding last-frame container, the joint smallest-total-displacement assignment, and the post-chain swap sanity check. e.g. [104, 94]\n\nfield blue_container, POLICY PROMPT\n  Same restructuring as green_container and red_container: first-step cube position first, precedence second, then the chain with the sparse-frame scale, the moved-step trigger, the forbidden straight match, the joint assignment, and the swap sanity check. e.g. [105, 168]\n\nthe policy prompt for subgoal\n  The situation: both buttons had been pressed, the second press being shown in this step's own frames with the count carried in as 1; the policy applied rule 3 to the carried-in count and answered B again, while the recorded subgoal was C pointing at the container the chain assigns to the goal color. This breaks SUFFICIENCY only through ordering: the instruction says 'after updating memory' once at the top, but rule 3 reads as if it tests the carried count. Replace rule 3 with an explicit guard: 'Rewrite buttons_pressed from this step's frames first. If any frame of this step says a button is pressed down or shows the gripper on a button (height below about 0.06, fingers closed) and the carried count was 1, the count is now 2 and rule 3 cannot fire; go to rule 4. Rule 3 (B) fires only when the updated count is exactly 1, which happens only at the step whose frames show the first press.' Add to rule 4 and rule 5 the same chain-first wording tied to the memory instruction's moved-step trigger: the C point is the goal color's container value written at this step after running the chain; if this step is a moved step and the point you are about to give equals the carried-in value, the chain has not been run, run it before pointing. The rule that identifies the first step (empty memory, no execution frames -> A) stays. No rule needs removing.\n\nrefused\n  One report said the memory instruction lacked nothing and only the subgoal ordering was at fault; another said the subgoal instruction lacked nothing and only its own failure to run the chain was at fault; both are answered by the changes above and nothing further is passed on. The proposal to add a standalone rule of thumb that two circling containers always finish swapped (blue takes the old red spot, red the old blue spot) is not passed on as a rule: every moved step in this minibatch does end swapped, but the annotator prompt and the recorded values come from the chain, and a rule that bypasses it would write the wrong container on a double pass; it is kept only as a sanity check that triggers a recompute. The suggested per-field restatement of the first-step values for a particular scene is passed on as the generic first-sentence rule, not with that scene's coordinates.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "(the gliding may already be under way in the first frame of a step).",
+        "modify_to": "(the gliding may already be under way in the first frame of a step). Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' or 'jitter' refers only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first); in a moved step the joint one-to-one chain is run through every frame for all three colors and its result is written, even when the last-frame layout coincides with the previous step's last-frame layout. In an unmoved step (every frame's containers within about 6 px of the previous frame's) each field keeps the same container's last-frame position."
+       },
+       {
+        "modify_from": "the field is the cube's position in the last frame where the cube is visible, and the container chain is not run for green at this step or any later step;",
+        "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the position the container had before it was lifted), and the container chain is not run for green at this step or any later step;"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and blue",
+        "modify_to": "(one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and blue"
+       },
+       {
+        "modify_from": "the field is the cube's position in the last frame where the cube is visible, the chain is not run for red",
+        "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for red"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "(one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and red",
+        "modify_to": "(one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and red"
+       },
+       {
+        "modify_from": "the field is the cube's position in the last frame where the cube is visible, the chain is not run for blue",
+        "modify_to": "the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for blue"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "buttons_pressed",
+      "edits": [
+       {
+        "modify_from": "Write 0 at the first step (empty carried-in memory, no execution frames).",
+        "modify_to": "Rewrite this count from this step's frames BEFORE choosing the subgoal. The four outcomes, in order: empty carried-in memory and no execution frames -> 0; carried 0 and a press in this step's frames -> 1; carried 1 and a press in this step's frames -> 2; carried 2, or any container held or grasped in this step -> 2. A frame saying a button 'is pressed down' in this step is a press of this step even if that button is the one the robot was already heading for. In detail: write 0 at the first step (empty carried-in memory, no execution frames)."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "green_container",
+      "edits": [
+       {
+        "modify_from": "[y, x] of the container hiding the green cube. FIRST, before any chaining,",
+        "modify_to": "[y, x] of the container hiding the green cube. At the first step (empty carried-in memory, no execution frames) write the green cube's own [y, x] from the scene, and likewise red_container and blue_container with their cubes, buttons_pressed=0 and picked_colors=[]; no field is left blank at the first step. SECOND, before any chaining,"
+       },
+       {
+        "modify_from": "At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear",
+        "modify_to": "When containers first appear"
+       },
+       {
+        "modify_from": "Mandatory joint procedure: (a) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for ALL THREE colors",
+        "modify_to": "Scale: frames are sparse, about 16 ticks apart, so a gliding container is normally 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' means only a container that did not move. Mandatory joint procedure: (a) MOVED-STEP TRIGGER: if any frame of this step lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first), this is a moved step and you MUST run the chain for ALL THREE colors"
+       },
+       {
+        "modify_from": "(d) consistency check before writing:",
+        "modify_to": "This holds without exception, including when the first frame already shows containers 10-15 px off the carried values and when the last frame shows containers exactly on the carried values. Per frame transition choose the one-to-one assignment with the smallest total displacement (e.g. 23+29 beats 28+29). (d) consistency check before writing:"
+       },
+       {
+        "modify_from": "A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside).",
+        "modify_to": "SWAP TRAP rule: in a moved step a last-frame container standing within 5 px of the carried value is NOT a match; matching a carried value straight to a last-frame container is forbidden, and the only legal path is carried value -> nearest first-frame container -> frame by frame -> last frame. Unmoved step: every frame's containers stand within about 6 px of the previous frame's; then write the same container's last-frame position."
+       },
+       {
+        "modify_from": "(one circling pass swaps them, two passes return them). Write the followed container's position in the last frame.",
+        "modify_to": "(one circling pass swaps them, two passes return them). Sanity check after a moved step: two containers that circled around each other while the third stood still almost always end swapped; if the chain says nothing swapped, recompute the chain before writing. Write the followed container's position in the last frame."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "red_container",
+      "edits": [
+       {
+        "modify_from": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match), chained jointly",
+        "modify_to": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "blue_container",
+      "edits": [
+       {
+        "modify_from": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it), chained jointly",
+        "modify_to": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it; frames are sparse so 15-35 px per-frame glides are normal and 'a few pixels' means a container that did not move; whenever any frame lists a container more than about 6 px from every container of the previous frame the step is a moved step and the joint chain MUST be run and written, even if the last frame shows containers exactly on the carried values; after a moved step, if the chain says the two circling containers did not swap, recompute before writing), chained jointly"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "3. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; frames showing the gripper lowered onto a button with closed fingers count as a press, and buttons_pressed is written at the step whose frames show the press, so 1 means exactly one press shown so far and 2 means both are done.",
+      "modify_to": "3. Rewrite buttons_pressed from this step's frames FIRST, never test the carried-in count. If any frame of this step says a button 'is pressed down' or shows the gripper on a button (height below about 0.06, fingers closed) and the carried count was 1, the count is now 2 and this rule cannot fire; go to rule 4. B fires only when the UPDATED count is exactly 1, which happens only at the step whose frames show the first press (normally the step right after A). A is executed at the first step only."
+     },
+     {
+      "modify_from": "if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point.",
+      "modify_to": "if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point; if this step is a moved step (any frame lists a container more than about 6 px from every container of the previous frame) and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing."
+     },
+     {
+      "modify_from": "The point is that color's value written at this step after the full chain, not the carried-in value.",
+      "modify_to": "The point is that color's value written at this step after the full chain, not the carried-in value; if this step is a moved step and the point you are about to give equals the carried-in value, the chain has not been run: run it before pointing."
+     }
+    ],
+    "refused": "The standalone rule that two circling containers always finish swapped stays out, as it did in rounds 1 and 2 and as this report itself advised: the chain decides, and a double pass returns them; the swap expectation is committed only as a sanity check that forces a recompute. The full top-to-bottom rewrite of the three container fields is not done as a replacement: the round-1 chain, the round-2 identity and rewrite-all-three clauses, the round-3 joint assignment and the round-4 exposure precedence all stand, and the new scale, moved-step trigger, swap-trap rule and sanity check are inserted into them, with the first-step rule moved to the opening sentence. The existing joint worked example is kept rather than replaced by the report's new coordinates, since both show the same swap and one example suffices. The per-scene first-step coordinates are passed on only as the generic first-sentence rule."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    1,
+    22,
+    25,
+    39,
+    85
+   ],
+   "verified_of_all": 0.23809523809523808,
+   "subgoal_verified": 0.6666666666666666,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start every episode in A (press the first button). Apply the first matching rule, after updating memory for this step: 1. If buttons_pressed is 0: A. 2. If buttons_pressed is 1: B. 3. If the scene at this decision step shows a container 'held in the gripper': D (put down the container). 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container nearest that cube's last known position; if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+    "fields": [
+     {
+      "name": "buttons_pressed",
+      "description": "Carried-in count plus 1 if any execution frame shown at this step says a button 'is pressed down'; otherwise the carried-in count. Start at 0. e.g. 1",
+      "annotation": "Count of button presses completed so far, including any press whose 'is pressed down' frame appears among the execution steps shown at this decision step. 0 at step #1, 1 at the step after the first press, 2 from the step after the second press to the end. e.g. 1"
+     },
+     {
+      "name": "green_container",
+      "description": "[y, x] of the container hiding the green cube. If a frame shows the green cube uncovered and no containers, write the cube's position. When containers appear, take the one standing on the carried-in green position. Then follow that container through the frames shown: match each container to the nearest container in the previous frame; during a button press two containers glide around each other and finish swapped, so after the press the green container sits where the other moving container started. Write its position in the last frame shown. If the green cube is exposed by lifting its container, write the exposed cube's position. Start with the cube position seen at the first step. e.g. [109, 126]",
+      "annotation": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed frame by frame through every shuffle: during each button press two containers glide around each other and end up having swapped places, so the green container's position becomes the other mover's resting position. Updated at every step to the last frame shown. Once this container has been lifted and the cube is exposed, keep the cube's exposed position. e.g. [109, 126]"
+     },
+     {
+      "name": "red_container",
+      "description": "[y, x] of the container hiding the red cube, kept exactly as green_container: cube position when visible, then the container that covered it, followed frame to frame (two movers during a press swap places), written at the last frame shown. e.g. [82, 152]",
+      "annotation": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step. e.g. [82, 152]"
+     },
+     {
+      "name": "blue_container",
+      "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container: cube position when visible, then the container that covered it, followed frame to frame (two movers during a press swap places), written at the last frame shown. e.g. [102, 79]",
+      "annotation": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step. e.g. [102, 79]"
+     },
+     {
+      "name": "picked_colors",
+      "description": "Carried-in list; append the color of the cube that appears beneath a container shown 'held in the gripper' among this step's frames, if that color is not already in the list. Start empty. e.g. [\"green\"]",
+      "annotation": "Ordered list of cube colors whose hiding container has been lifted so far. Empty until the step whose execution frames show a container 'held in the gripper' with a cube revealed beneath; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    10,
+    15,
+    36,
+    39,
+    47
+   ],
+   "verified_of_all": 0.782608695652174,
+   "subgoal_verified": 0.9565217391304348,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start every episode in A (press the first button). Apply the first matching rule, after updating memory for this step: 1. If the carried-in memory is empty and this step shows no execution frames (the very first decision step, gripper out of frame): A. 2. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; at any step that shows execution frames, A has already been done, so if buttons_pressed is still 0 or 1 answer B (the frames showing the gripper lowered onto a button with closed fingers count as the first press). 3. If the scene at this decision step shows a container 'held in the gripper': D (put down the container). 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container reached by chaining frame by frame from that cube's last known position as the memory instruction describes (after a swap a different container stands on the old spot, so do not take the nearest one); if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+    "fields": [
+     {
+      "name": "buttons_pressed",
+      "description": "Write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1",
+      "annotation": "Count of button presses completed so far. A press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed. 0 at the first step (no execution frames), 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1"
+     },
+     {
+      "name": "green_container",
+      "description": "[y, x] of the container hiding the green cube. At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame. Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one circling pass swaps them, two passes return them). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]",
+      "annotation": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed by chaining through every frame shown: starting from the previous step's last frame, each container is matched to the container of the previous frame with the smallest displacement (the gliding may already be under way in the first frame of a step). During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. Value is the tracked container's position in the last frame shown. Once the cube beneath it is visible (container lifted or held in the gripper), the field becomes the cube's position and from then on keeps the cube's last visible position, even after a container is lowered back over it. e.g. [109, 126]"
+     },
+     {
+      "name": "red_container",
+      "description": "[y, x] of the container hiding the red cube, kept exactly as green_container: write the red cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap); once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]",
+      "annotation": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), written at the last frame shown; once the red cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [82, 152]"
+     },
+     {
+      "name": "blue_container",
+      "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container: write the blue cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap); once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]",
+      "annotation": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), written at the last frame shown; once the blue cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [102, 79]"
+     },
+     {
+      "name": "picked_colors",
+      "description": "A JSON list with double-quoted strings; write [] explicitly at the first step and whenever empty. Carried-in list; append the color of a cube that appears visible beneath a lifted or 'held in the gripper' container among this step's frames, if that color is not already in the list. e.g. [\"green\"]",
+      "annotation": "Ordered list of cube colors whose hiding container has been lifted so far. Written as a JSON list with double-quoted strings, explicitly [] when empty, including at the first step. [] until the step whose execution frames show a cube visible beneath a lifted or 'held in the gripper' container; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    1,
+    2,
+    28,
+    34,
+    53
+   ],
+   "verified_of_all": 0.8235294117647058,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start every episode in A (press the first button). Apply the first matching rule, after updating memory for this step: 1. If the carried-in memory is empty and this step shows no execution frames (the very first decision step, gripper out of frame): A. 2. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; at any step that shows execution frames, A has already been done, so if buttons_pressed is still 0 or 1 answer B (the frames showing the gripper lowered onto a button with closed fingers count as the first press). 3. If the scene at this decision step shows a container 'held in the gripper': D (put down the container). 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot: the point is the <color>_container value written AT THIS STEP after the full chain, not the carried-in value; if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. The point is that color's value written at this step after the full chain, not the carried-in value. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container reached by chaining frame by frame from that cube's last known position as the memory instruction describes (after a swap a different container stands on the old spot, so do not take the nearest one); if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+    "fields": [
+     {
+      "name": "buttons_pressed",
+      "description": "Write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1",
+      "annotation": "Count of button presses completed so far. A press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed. 0 at the first step (no execution frames), 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1"
+     },
+     {
+      "name": "green_container",
+      "description": "[y, x] of the container hiding the green cube. At every step whose frames show containers, rewrite this field, and likewise red_container and blue_container, whether or not the color is named in the goal and whether or not its container moved. At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame shown nearest the carried value, even if it is 10-15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write that container's last-frame position. Never match the carried value straight to the last frame. Worked example of the swap trap: carried [131, 115]; first frame has containers at [118, 118] and [113, 162], pick [118, 118]; next frame it is at [99, 134], next at [101, 161]; write [101, 161], although the OTHER container, which came from [113, 162], now stands at [131, 116], almost exactly the carried value. A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside). Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one circling pass swaps them, two passes return them). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]",
+      "annotation": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed by chaining through every frame shown: starting from the previous step's last frame, each container is matched to the container of the previous frame with the smallest displacement (the gliding may already be under way in the first frame of a step). During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal. Once the cube beneath it is visible (container lifted or held in the gripper), the field becomes the cube's position and from then on keeps the cube's last visible position, even after a container is lowered back over it. e.g. [109, 126]"
+     },
+     {
+      "name": "red_container",
+      "description": "[y, x] of the container hiding the red cube, kept exactly as green_container, rewritten at every step that shows containers even when red is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it): write the red cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match); once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]",
+      "annotation": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal; once the red cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [82, 152]"
+     },
+     {
+      "name": "blue_container",
+      "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container, rewritten at every step that shows containers even when blue is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it): write the blue cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it); once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]",
+      "annotation": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal; once the blue cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [102, 79]"
+     },
+     {
+      "name": "picked_colors",
+      "description": "A JSON list with double-quoted strings; write [] explicitly at the first step and whenever empty. Carried-in list; append the color of a cube that appears visible beneath a lifted or 'held in the gripper' container among this step's frames, if that color is not already in the list. e.g. [\"green\"]",
+      "annotation": "Ordered list of cube colors whose hiding container has been lifted so far. Written as a JSON list with double-quoted strings, explicitly [] when empty, including at the first step. [] until the step whose execution frames show a cube visible beneath a lifted or 'held in the gripper' container; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    17,
+    27,
+    78,
+    79
+   ],
+   "verified_of_all": 0.3333333333333333,
+   "subgoal_verified": 0.6190476190476191,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start every episode in A (press the first button). Apply the first matching rule, after updating memory for this step: 1. If the carried-in memory is empty and this step shows no execution frames (the very first decision step, gripper out of frame): A. 2. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; at any step that shows execution frames, A has already been done, so if buttons_pressed is still 0 or 1 answer B (the frames showing the gripper lowered onto a button with closed fingers count as the first press). 3. If the scene at this decision step shows a container 'held in the gripper': D (put down the container). 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot: the point is the <color>_container value written AT THIS STEP after the full chain, not the carried-in value; if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. The point is that color's value written at this step after the full chain, not the carried-in value. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container reached by chaining frame by frame from that cube's last known position as the memory instruction describes (after a swap a different container stands on the old spot, so do not take the nearest one); if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+    "fields": [
+     {
+      "name": "buttons_pressed",
+      "description": "Write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1",
+      "annotation": "Count of button presses completed so far. A press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed. 0 at the first step (no execution frames), 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1"
+     },
+     {
+      "name": "green_container",
+      "description": "[y, x] of the container hiding the green cube. At every step whose frames show containers, rewrite this field, and likewise red_container and blue_container, whether or not the color is named in the goal and whether or not its container moved. At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame shown nearest the carried value, even if it is 10-15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write that container's last-frame position. Never match the carried value straight to the last frame. Mandatory joint procedure: (a) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for ALL THREE colors through every frame as a ONE-TO-ONE ASSIGNMENT: in each frame each container is assigned to exactly one color, so two fields can never end on the same container, and a container that one color leaves must be taken up by another color; (b) when the nearest candidate for one color is a near-tie (displacements within a few pixels of each other), choose the assignment that also gives the other colors a distinct nearest container with the smallest total displacement; (c) an identical container layout in the first and last frames of a step does not mean nothing moved; if middle frames show displacement, the result is usually a swap of two colors, and the chain decides which; (d) consistency check before writing: the three written values must be three different containers of the last frame, and if one field moved to a new container, the field that carried that container's old position must have moved too. Joint example: carried green [100, 166] and blue [130, 162]; frames show one container gliding [101, 168], [110, 178], [125, 182], [130, 163], [130, 160] while the other glides [130, 162], [121, 151], [106, 147], [102, 165], [101, 168]; write green_container=[130, 160] and blue_container=[101, 168], even if the goal names only one of them. Worked example of the swap trap: carried [131, 115]; first frame has containers at [118, 118] and [113, 162], pick [118, 118]; next frame it is at [99, 134], next at [101, 161]; write [101, 161], although the OTHER container, which came from [113, 162], now stands at [131, 116], almost exactly the carried value. A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside). Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one circling pass swaps them, two passes return them). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]",
+      "annotation": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed by chaining through every frame shown: starting from the previous step's last frame, each container is matched to the container of the previous frame with the smallest displacement (the gliding may already be under way in the first frame of a step). During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. The three color chains (green, red, blue) are run jointly as a one-to-one assignment frame to frame: in each frame every container gets exactly one color, so no two color fields end on the same container and no moving container is left unassigned. When the two nearest candidates for one color are nearly tied (displacements within a few pixels of each other), the tie is broken by the assignment that leaves a distinct container for the other colors with the smallest total displacement. A step whose last frame shows the containers in the same arrangement as the previous step's last frame is not evidence that nothing moved: when any intermediate frame shows a container displaced, every color is re-chained through every frame, and the result is usually two colors swapped. Example: carried green [100, 166]; frames show a container at [101, 168], then [110, 178], [125, 182], [130, 163], last frame [130, 160]; write [130, 160] even though the goal names only blue. Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal. Once the cube beneath it is visible (container lifted or held in the gripper), the field becomes the cube's position and from then on keeps the cube's last visible position, even after a container is lowered back over it. e.g. [109, 126]"
+     },
+     {
+      "name": "red_container",
+      "description": "[y, x] of the container hiding the red cube, kept exactly as green_container, rewritten at every step that shows containers even when red is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it): write the red cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained whenever any frame shows a container displaced even if the step's first and last layouts look identical, the three written values being three distinct last-frame containers. Example: carried red [112, 194] passes [121, 184], [119, 162] (chosen over [95, 182] because blue's chain takes that one), [103, 153], last frame [101, 152]; write [101, 152]; once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]",
+      "annotation": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical, written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal; once the red cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [82, 152]"
+     },
+     {
+      "name": "blue_container",
+      "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container, rewritten at every step that shows containers even when blue is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it): write the blue cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained whenever any frame shows a container displaced even if the step's first and last layouts look identical, the three written values being three distinct last-frame containers. Example: carried blue [101, 152] passes [95, 163], [95, 182], [112, 194], last frame [114, 195]; write [114, 195]; once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]",
+      "annotation": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical, written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal; once the blue cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [102, 79]"
+     },
+     {
+      "name": "picked_colors",
+      "description": "Written as the exact JSON text, double quotes, no spaces: [] at the first step and whenever empty, [\"red\"] after the red cube is exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is a mismatch. Carried-in list; append the color of a cube that appears visible beneath a lifted or 'held in the gripper' container among this step's frames, if that color is not already in the list. e.g. [\"green\"]",
+      "annotation": "Ordered list of cube colors whose hiding container has been lifted so far. Written as the literal JSON text with double quotes and no spaces: [] when empty (including at the first step), [\"red\"] after the red cube has been exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is not the recorded value. [] until the step whose execution frames show a cube visible beneath a lifted or 'held in the gripper' container; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    14,
+    25,
+    38,
+    87,
+    93
+   ],
+   "verified_of_all": 0.6842105263157895,
+   "subgoal_verified": 0.8421052631578947,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start every episode in A (press the first button). Apply the first matching rule, after updating memory for this step: 1. If the carried-in memory is empty and this step shows no execution frames (the very first decision step, gripper out of frame): A. 2. If the scene at this decision step shows a container 'held in the gripper': D (put down the container), whatever buttons_pressed reads. 3. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; frames showing the gripper lowered onto a button with closed fingers count as a press, and buttons_pressed is written at the step whose frames show the press, so 1 means exactly one press shown so far and 2 means both are done. 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot: the point is the <color>_container value written AT THIS STEP after the full chain, not the carried-in value; if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. The point is that color's value written at this step after the full chain, not the carried-in value. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container reached by chaining frame by frame from that cube's last known position as the memory instruction describes (after a swap a different container stands on the old spot, so do not take the nearest one); if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+    "fields": [
+     {
+      "name": "buttons_pressed",
+      "description": "Write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame of this step says a button 'is pressed down' OR shows the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; otherwise the carried-in count. A frame with the gripper over a container (height around 0.1, 20 px or more from the nearest button) is not a press, even if a button is missing from the list in that frame because it is occluded. Each step shows at most one press, so the count never rises by more than 1. If any frame of this step shows a container 'held in the gripper' or the gripper lowered onto a container with fingers closing, write 2 regardless of the carried count, because both presses precede any pick-up. e.g. 2",
+      "annotation": "Number of button presses whose execution frames have been shown at or before this step. The value changes at the step whose OWN execution frames show the press, not at the next step: 0 at the first step (no execution frames); 1 at the step whose frames show the first press (normally the step right after A); 2 at the step whose frames show the second press (normally the step right after B) and at every later step. A press is a frame saying a button 'is pressed down', or the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed. The gripper lowering onto a container (height around 0.1, 20 px or more from any button, a button merely missing from the list because it is occluded) is not a press. Each step shows at most one press. Safety net: at any step whose frames show a container 'held in the gripper' or the gripper lowered onto a container, the value is 2 whatever the earlier count, since both presses precede any pick-up. e.g. 2"
+     },
+     {
+      "name": "green_container",
+      "description": "[y, x] of the container hiding the green cube. FIRST, before any chaining, for this field and likewise for red_container and blue_container: if green is already in the carried-in picked_colors, or any frame of this step shows the green cube itself (its container lifted or 'held in the gripper'), do not chain containers for green; write the cube's position from the last frame in which the cube is visible, and keep that position at every later step even when a container is set down over it and only containers are listed in the last frames. Never write the position of a container 'held in the gripper' or of a container lowered back onto the cube. Only for colors not yet exposed, apply what follows. At every step whose frames show containers, rewrite this field, and likewise red_container and blue_container, whether or not the color is named in the goal and whether or not its container moved. At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame shown nearest the carried value, even if it is 10-15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write that container's last-frame position. Never match the carried value straight to the last frame. Mandatory joint procedure: (a) if any frame shows a container displaced from its position in the previous frame by more than a few pixels, run the chain for ALL THREE colors through every frame as a ONE-TO-ONE ASSIGNMENT: in each frame each container is assigned to exactly one color, so two fields can never end on the same container, and a container that one color leaves must be taken up by another color; (b) when the nearest candidate for one color is a near-tie (displacements within a few pixels of each other), choose the assignment that also gives the other colors a distinct nearest container with the smallest total displacement; (c) an identical container layout in the first and last frames of a step does not mean nothing moved; if middle frames show displacement, the result is usually a swap of two colors, and the chain decides which; (d) consistency check before writing: the three written values must be three different containers of the last frame, and if one field moved to a new container, the field that carried that container's old position must have moved too. Joint example: carried green [100, 166] and blue [130, 162]; frames show one container gliding [101, 168], [110, 178], [125, 182], [130, 163], [130, 160] while the other glides [130, 162], [121, 151], [106, 147], [102, 165], [101, 168]; write green_container=[130, 160] and blue_container=[101, 168], even if the goal names only one of them. Worked example of the swap trap: carried [131, 115]; first frame has containers at [118, 118] and [113, 162], pick [118, 118]; next frame it is at [99, 134], next at [101, 161]; write [101, 161], although the OTHER container, which came from [113, 162], now stands at [131, 116], almost exactly the carried value. A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside). Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one circling pass swaps them, two passes return them). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]",
+      "annotation": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed by chaining through every frame shown: starting from the previous step's last frame, each container is matched to the container of the previous frame with the smallest displacement (the gliding may already be under way in the first frame of a step). During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. The three color chains (green, red, blue) are run jointly as a one-to-one assignment frame to frame: in each frame every container gets exactly one color, so no two color fields end on the same container and no moving container is left unassigned. When the two nearest candidates for one color are nearly tied (displacements within a few pixels of each other), the tie is broken by the assignment that leaves a distinct container for the other colors with the smallest total displacement. A step whose last frame shows the containers in the same arrangement as the previous step's last frame is not evidence that nothing moved: when any intermediate frame shows a container displaced, every color is re-chained through every frame, and the result is usually two colors swapped. Example: carried green [100, 166]; frames show a container at [101, 168], then [110, 178], [125, 182], [130, 163], last frame [130, 160]; write [130, 160] even though the goal names only blue. Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal. Precedence, applied before any chaining: if green is already in picked_colors at the previous step, or any frame of this step shows the green cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible, and the container chain is not run for green at this step or any later step; the held container's position and the position of a container set back down on the cube are never written, even when only containers are listed in the last frames of the step. e.g. [109, 126]"
+     },
+     {
+      "name": "red_container",
+      "description": "[y, x] of the container hiding the red cube, kept exactly as green_container: first, if red is in the carried-in picked_colors or the red cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube, at this and every later step; otherwise, rewritten at every step that shows containers even when red is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it): write the red cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained whenever any frame shows a container displaced even if the step's first and last layouts look identical, the three written values being three distinct last-frame containers. Example: carried red [112, 194] passes [121, 184], [119, 162] (chosen over [95, 182] because blue's chain takes that one), [103, 153], last frame [101, 152]; write [101, 152]; e.g. [101, 165]",
+      "annotation": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical, written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal; with precedence over all chaining: if red is already in picked_colors at the previous step, or any frame of this step shows the red cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible, the chain is not run for red at this step or any later step, and neither the held container's position nor that of a container set back down on the cube is ever written. e.g. [101, 165]"
+     },
+     {
+      "name": "blue_container",
+      "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container: first, if blue is in the carried-in picked_colors or the blue cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube, at this and every later step; otherwise, rewritten at every step that shows containers even when blue is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it): write the blue cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained whenever any frame shows a container displaced even if the step's first and last layouts look identical, the three written values being three distinct last-frame containers. Example: carried blue [101, 152] passes [95, 163], [95, 182], [112, 194], last frame [114, 195]; write [114, 195]; e.g. [102, 79]",
+      "annotation": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical, written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal; with precedence over all chaining: if blue is already in picked_colors at the previous step, or any frame of this step shows the blue cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible, the chain is not run for blue at this step or any later step, and neither the held container's position nor that of a container set back down on the cube is ever written. e.g. [102, 79]"
+     },
+     {
+      "name": "picked_colors",
+      "description": "Written as the exact JSON text, double quotes, no spaces: [] at the first step and whenever empty, [\"red\"] after the red cube is exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is a mismatch. Carried-in list; append the color of a cube that appears visible beneath a lifted or 'held in the gripper' container among this step's frames, if that color is not already in the list. e.g. [\"green\"]",
+      "annotation": "Ordered list of cube colors whose hiding container has been lifted so far. Written as the literal JSON text with double quotes and no spaces: [] when empty (including at the first step), [\"red\"] after the red cube has been exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is not the recorded value. [] until the step whose execution frames show a cube visible beneath a lifted or 'held in the gripper' container; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+     }
+    ]
+   }
+  }
+ ]
+}

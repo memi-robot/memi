@@ -1,0 +1,13 @@
+{
+ "task": "VideoUnmaskSwap",
+ "fields": [
+  {
+   "name": "target_containers",
+   "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled once at the first decision step from the demonstration, by slots and swaps: (1) in the first cube frames note each named cube's position; (2) at the first container frame, the named cube's container is the one resting nearest that cube; every container's resting position in that frame is its slot; (3) scan the frames after the first container frame in order and split them into runs: a run is a maximal block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels, however their positions change inside the block), and it ends at the first following frame in which every container is again at a slot. Each run is exactly one shuffle, and it swaps the slots of the two containers whose slots are empty during that run. A later run, even of the same two slots, is a separate shuffle. List the runs in order, apply the swaps in order (an odd number of runs of a pair leaves them swapped, an even number leaves them where they started; runs of other pairs do not touch the named container), and only then read off the named container's slot; (4) the entry is the named cube's container's slot after all swaps, written with the coordinates listed for that slot in the last demonstration frame (slots wobble by a few pixels). Never changes afterwards; copied unchanged at every later step. e.g. [[84, 110], [93, 163]]"
+  },
+  {
+   "name": "put_down_count",
+   "description": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+  }
+ ]
+}

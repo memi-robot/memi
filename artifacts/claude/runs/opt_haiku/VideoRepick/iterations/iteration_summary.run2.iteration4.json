@@ -1,0 +1,134 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "target_cube",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  7,
+  12,
+  23,
+  49,
+  95
+ ],
+ "scored": 29,
+ "failed": 3,
+ "subgoal_wrong": 2,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.9310344827586207,
+ "memory_verified": 0.896551724137931,
+ "reads": {
+  "target_cube": 12,
+  "picks_done": 24
+ },
+ "field_errors": {
+  "target_cube": {
+   "in": 3,
+   "sole": 3
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.10344827586206896,
+ "verified_of_all": 0.896551724137931,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 29,
+ "critique": "field target_colour, ANNOTATOR PROMPT\n  New field. The colour word of the cube the demonstration picked up ('red', 'blue', 'green', or 'cube' when the scene lists cubes without colour). It is fixed at the first decision step from the colour of the listed cube identified as the picked cube in the demonstration, and never changes afterwards. Needed because at a decision step just after a put-down the released cube can be missing from the resting list while cubes of other colours rest close to the release point; without the colour the nearest-cube match lands on a wrong cube (NECESSITY of a fact the later step does not recover). e.g. blue\n\nfield target_cube, ANNOTATOR PROMPT\n  Same field, but the update after a put-down changes. Situation: the goal asked for two pick-ups; the execution steps showed the robot lower the blue target cube, reopen its fingers while still a few centimetres up, and rise; at the decision step the released cube appeared only as a 'lifted off the table' line (still settling, drifting under the gripper) and the resting list held a different blue cube about 11 px away and a green cube about 9 px from the reopen point. The recorded value kept the carried position; the policy relocated it to the neighbouring blue cube. PREDICTABILITY broke because the rule said 'nearest listed cube to the reopen point' and did not exclude cubes of another colour or say what to do when the released cube has not landed. New rule: the released cube always lands where it was picked, so at every later decision step the value is the position of the resting listed cube of target_colour within about 8 px of the previous value (not a 'held in the gripper' or 'lifted off the table' line); if no such cube is listed, because the target is occluded, held, or still shown as 'lifted off the table', the value is the previous value unchanged. The reopen-frame gripper position and mid-air coordinates are never used. e.g. [76, 173]\n\nfield target_colour, POLICY PROMPT\n  At the first decision step (memory empty) write the colour word of the cube identified as the picked cube in the demonstration ('red', 'blue', 'green', or 'cube' when the list has no colours). At every later step copy the carried value unchanged. e.g. blue\n\nfield target_cube, POLICY PROMPT\n  Two changes. (1) First decision step: the swap tracking must be carried out as a written ledger, not read off the final list. Situation: in two demonstrations with three uncoloured cubes, the picked cube was put back on its spot, then two swaps happened in which that spot was a mover in the first swap, so the picked cube moved to its partner's spot, and the second swap either moved it again or moved two other cubes, leaving a different cube resting on the original pick spot. The policy pointed at the cube on the original pick spot both times (PREDICTABILITY: the instruction described the procedure, but the policy skipped it and matched the final list to the pick position). Replace the prose with this procedure: step 1, write the pick spot P (listed cube nearest the gripper at the lowest frame where fingers first read about 46%) and the spot where the cube is put down (the listed cube reappearing beside the gripper when fingers reopen); label that spot L. Step 2, go through the remaining demonstration frames; every time the list becomes still again after frames in which exactly two spots were vacated, write one ledger line 'swap: spot X <-> spot Y; L now = ...': if L equals X write Y, if L equals Y write X, otherwise L is unchanged. Step 3, after the last frame, write the listed position in the scene at the start of execution nearest L (within about 10 px). Never write the cube resting on P when P appeared in any swap line. The number of swaps is unlimited and partners vary. (2) Later decision steps: do not match the released cube to the gripper position at the reopen frame. The robot always puts the cube back where it picked it, so write the position of the resting listed cube of target_colour within about 8 px of the carried value; if there is none (the target is held, occluded, or listed only as 'lifted off the table' and still settling), copy the carried value unchanged. Never relocate to a cube of another colour or to a different resting cube nearby. e.g. [85, 109]\n\nthe policy prompt for subgoal\n  No rule change. Add one line: the point for A is always the carried-and-updated target_cube, and when target_cube is absent from the resting list at this step (held or settling), still point at target_cube itself rather than at any other listed cube.\n\nrefused\n  The two first-step reports asked for a rule to 'reject the cube on the original pick spot whenever that spot was ever a mover'; the existing text already says that and it is kept, so only the ledger procedure is added, not a second rejection rule. The put-down report asked for the colour restriction to be applied inside the reopen-point matching; the matching is instead dropped entirely in favour of anchoring to the carried value, since in every episode the cube is put back where it was picked and the reopen-point match was the source of the drift.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No rule change. Add one line: the point for A is always the carried-and-updated target_cube, and when target_cube is absent from the resting list at this step (held or settling), still point at target_cube itself rather than at any other listed cube.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_colour",
+    "description": "At the first decision step (memory empty) write the colour word of the cube identified as the picked cube in the demonstration ('red', 'blue', 'green', or 'cube' when the list has no colours). At every later step copy the carried value unchanged. e.g. blue"
+   },
+   {
+    "field": "target_cube",
+    "description": "Two changes. (1) First decision step: the swap tracking must be carried out as a written ledger, not read off the final list. Situation: in two demonstrations with three uncoloured cubes, the picked cube was put back on its spot, then two swaps happened in which that spot was a mover in the first swap, so the picked cube moved to its partner's spot, and the second swap either moved it again or moved two other cubes, leaving a different cube resting on the original pick spot. The policy pointed at the cube on the original pick spot both times (PREDICTABILITY: the instruction described the procedure, but the policy skipped it and matched the final list to the pick position). Replace the prose with this procedure: step 1, write the pick spot P (listed cube nearest the gripper at the lowest frame where fingers first read about 46%) and the spot where the cube is put down (the listed cube reappearing beside the gripper when fingers reopen); label that spot L. Step 2, go through the remaining demonstration frames; every time the list becomes still again after frames in which exactly two spots were vacated, write one ledger line 'swap: spot X <-> spot Y; L now = ...': if L equals X write Y, if L equals Y write X, otherwise L is unchanged. Step 3, after the last frame, write the listed position in the scene at the start of execution nearest L (within about 10 px). Never write the cube resting on P when P appeared in any swap line. The number of swaps is unlimited and partners vary. (2) Later decision steps: do not match the released cube to the gripper position at the reopen frame. The robot always puts the cube back where it picked it, so write the position of the resting listed cube of target_colour within about 8 px of the carried value; if there is none (the target is held, occluded, or listed only as 'lifted off the table' and still settling), copy the carried value unchanged. Never relocate to a cube of another colour or to a different resting cube nearby. e.g. [85, 109]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_colour",
+    "description": "New field. The colour word of the cube the demonstration picked up ('red', 'blue', 'green', or 'cube' when the scene lists cubes without colour). It is fixed at the first decision step from the colour of the listed cube identified as the picked cube in the demonstration, and never changes afterwards. Needed because at a decision step just after a put-down the released cube can be missing from the resting list while cubes of other colours rest close to the release point; without the colour the nearest-cube match lands on a wrong cube (NECESSITY of a fact the later step does not recover). e.g. blue"
+   },
+   {
+    "field": "target_cube",
+    "description": "Same field, but the update after a put-down changes. Situation: the goal asked for two pick-ups; the execution steps showed the robot lower the blue target cube, reopen its fingers while still a few centimetres up, and rise; at the decision step the released cube appeared only as a 'lifted off the table' line (still settling, drifting under the gripper) and the resting list held a different blue cube about 11 px away and a green cube about 9 px from the reopen point. The recorded value kept the carried position; the policy relocated it to the neighbouring blue cube. PREDICTABILITY broke because the rule said 'nearest listed cube to the reopen point' and did not exclude cubes of another colour or say what to do when the released cube has not landed. New rule: the released cube always lands where it was picked, so at every later decision step the value is the position of the resting listed cube of target_colour within about 8 px of the previous value (not a 'held in the gripper' or 'lifted off the table' line); if no such cube is listed, because the target is occluded, held, or still shown as 'lifted off the table', the value is the previous value unchanged. The reopen-frame gripper position and mid-air coordinates are never used. e.g. [76, 173]"
+   }
+  ],
+  "refused": "The two first-step reports asked for a rule to 'reject the cube on the original pick spot whenever that spot was ever a mover'; the existing text already says that and it is kept, so only the ledger procedure is added, not a second rejection rule. The put-down report asked for the colour restriction to be applied inside the reopen-point matching; the matching is instead dropped entirely in favour of anchoring to the carried value, since in every episode the cube is put back where it was picked and the reopen-point match was the source of the drift."
+ },
+ "critiques": [
+  {
+   "step": [
+    12,
+    "exec",
+    312
+   ],
+   "memory_in": "target_cube=; picks_done=",
+   "answered": "A: pick up the cube at [100, 147]",
+   "recorded": "A: pick up the cube at [85, 111]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The swap-tracking procedure was stated but I did not apply it; an explicit worked ledger would have forced it: here the picked cube was put down on spot [101,147]; swap 1 (t=192->t=240) moved the [101,147] and [112,119] cubes through mid-crossing positions [95,122]/[116,147] and refilled the same two spots, so the picked cube is on [112,119]; swap 2 (t=240->t=288) moved the [84,110] and [112,119] cubes through [89,127]/[107,102] and refilled, so the picked cube is on [85,109]. The instruction should tell the policy to write one line per swap ('spot X <-> spot Y, picked now on Z') and only then take the final spot, instead of taking the cube that is still on the original pick spot.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    23,
+    "exec",
+    463
+   ],
+   "memory_in": "target_cube=[76, 173]; picks_done=2",
+   "answered": "C: press the button to finish",
+   "recorded": "C: press the button to finish",
+   "missing_from_memory": "The colour of the demonstration's picked cube (blue). Without it, 'nearest listed cube to the gripper at the reopen frame' could be matched to a green ([70, 180]) or red ([56, 169]) cube, or to the blue cube at [69, 164] that was never carried.",
+   "missing_from_policy_prompt_for_memory": "It did not say what to do when the released cube has not landed yet: here the reopen was at height 0.047, and at the scene the only candidate near the gripper is 'blue cube at [57, 178] is lifted off the table' (still settling), while the nearest resting listed cubes ([69, 164] blue, [70, 180] green) are other cubes. The recorded answer keeps the carried [76, 173]. The instruction should say: if the released cube still appears only as 'lifted off the table' at this decision step (no resting listed cube of the same colour within ~10 px of the reopen point), copy the carried target_cube unchanged rather than relocating it to the nearest resting cube; and that the match must be restricted to cubes of the picked cube's colour.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "The colour of the demonstration's picked cube (blue). Without it, 'nearest listed cube to the gripper at the reopen frame' could be matched to a green ([70, 180]) or red ([56, 169]) cube, or to the blue cube at [69, 164] that was never carried."
+  },
+  {
+   "step": [
+    49,
+    "exec",
+    333
+   ],
+   "memory_in": "target_cube=; picks_done=",
+   "answered": "A: pick up the cube at [81, 141]",
+   "recorded": "A: pick up the cube at [92, 103]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not force an explicit frame-by-frame swap trace. In this demonstration the pick spot [81,142] was a mover in the first swap (t=208 [80,142],[91,102] -> t=256 [80,141],[92,103], so the picked cube moved to [92,103]) and then NOT a mover in the second swap (t=256->t=304 the movers were [80,141] and [128,146]), so the picked cube stayed at [92,103] while a different cube ended back on [81,141]. The instruction should require listing, for every settled frame, which two spots emptied and refilled and where the 'picked' label sits after that swap, and should state outright that the cube resting on the original pick spot at the end of the shuffle is to be rejected whenever that spot was ever a mover, rather than letting the policy match the final list to the pick position.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

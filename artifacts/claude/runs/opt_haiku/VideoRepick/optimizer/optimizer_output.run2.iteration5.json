@@ -1,0 +1,93 @@
+{
+ "episodes": [
+  5,
+  10,
+  19,
+  41,
+  87
+ ],
+ "user_chars": 73741,
+ "usage": {
+  "prompt_tokens": 26784,
+  "completion_tokens": 2248,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 26780
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 548
+  }
+ },
+ "reasoning": "I need to weigh three edits: making the ledger explicit through still-configuration comparison, removing target_colour, and adjusting subgoal wording. Looking back, target_colour was introduced in round 4 to handle a put-down step where a similarly-distant blue and green cube confused matching, which the round's fix resolved by anchoring to carried-value proximity within 8px instead of the reopen point.\n\nGiven the unresolved uncertainty about whether that green cube would still conflict under pure 8px carried-value anchoring, I'd rather keep target_colour as a harmless tie-breaker than risk regressing round 4 — so I'm refusing the deletion and the dependent subgoal change, while still proceeding with the ledger edit to replace the swap-definition passages on both the annotation and policy sides with the still-configuration comparison procedure.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_cube",
+    "edits": [
+     {
+      "modify_from": "Step 2: go through the remaining demonstration frames. A swap is a run of frames in which exactly two listed spots are vacated and, when the list is still again, the same two spots are filled again: the two movers have EXCHANGED spots. Each time this happens write one ledger line 'swap: spot X <-> spot Y; L now = ...': if L equals X write Y, if L equals Y write X, otherwise L is unchanged. Mid-crossing frames only tell you a swap is happening; never use them to decide where L lands. Continue to the last demonstration frame however many swaps occur and whatever partners they involve (two consecutive swaps of the same pair return L to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started).",
+      "modify_to": "Step 2: from that frame onward, write out every STILL FRAME: a frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot, while the gripper is parked raised. Mid-crossing frames (cubes listed off every resting spot) are skipped and never used to decide where L lands. Step 2b: compare each still configuration to the NEXT still configuration, one pair at a time, writing one line for every pair until the pair that ends at the last demonstration frame. Where the two configurations are identical write 'no swap'. Where they differ, exactly two spots changed occupants: write 'swap k: spot X <-> spot Y; L now = ...' (if L is within about 10 px of X write Y, if of Y write X, otherwise unchanged). After the line for the last demonstration frame write 'swaps found: n' and only then stop. Expect commonly three swaps and sometimes one or two; never stop when L happens to be back on P, because a later swap can move it again, including a swap with a cube the gripper never touched. Two consecutive swaps of the same pair return L to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "target_cube",
+    "edits": [
+     {
+      "modify_from": "The 'picked' label is then carried through the shuffle one swap at a time. A swap is a stretch of demonstration frames during which exactly two listed positions leave their resting spots and, when the list is still again, those same two spots are occupied again: the two movers have EXCHANGED spots.",
+      "modify_to": "The 'picked' label is then carried through the shuffle one swap at a time, the shuffle being read as a sequence of STILL CONFIGURATIONS. A still configuration is a demonstration frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot and the gripper parked raised. Each still configuration is compared with the NEXT still configuration, pair by pair, up to and including the pair that ends at the last demonstration frame. Two consecutive still configurations that are identical are 'no swap'. Two that differ are exactly one swap: the two spots whose occupants changed have EXCHANGED occupants (the frames between them with cubes off every resting spot are mid-crossing frames)."
+     },
+     {
+      "modify_from": "This is applied swap by swap to the last demonstration frame however many swaps occur and whoever the partners are: two consecutive swaps of the same pair return the labelled cube to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started.",
+      "modify_to": "This is applied swap by swap to the last demonstration frame however many swaps occur and whoever the partners are (commonly three, sometimes one or two): two consecutive swaps of the same pair return the labelled cube to its original spot, and a later swap, possibly with a cube the gripper never touched, may move it away again; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started. The label is never settled before the last demonstration frame, even when it is back on the pick spot."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The deletion of target_colour on both sides is not committed. It was added in round 4 because a put-down step had a different blue cube about 11 px and a green cube about 9 px from the release point, and the policy relocated the target; the colour restriction inside the 8 px anchor is part of what settled that step, and the present report's claim that position alone suffices rests on this round's episodes only. Deleting it would risk undoing round 4 for nothing this round failed on, so the field stays and the later-step match on 'resting listed cube of target_colour within about 8 px' stays as it reads. The subgoal wording change is likewise not committed: it only removes mentions of colour that follow from the deletion, and the subgoal instruction already points A at target_cube as updated at this step with the existing nearest-cube fallback. The only change committed is the explicit still-configuration comparison carried to the last demonstration frame, on both sides, which settles the early-stopped ledger without changing any earlier commitment."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "target_cube",
+    "edits": [
+     {
+      "modify_from": "The 'picked' label is then carried through the shuffle one swap at a time. A swap is a stretch of demonstration frames during which exactly two listed positions leave their resting spots and, when the list is still again, those same two spots are occupied again: the two movers have EXCHANGED spots.",
+      "modify_to": "The 'picked' label is then carried through the shuffle one swap at a time, the shuffle being read as a sequence of STILL CONFIGURATIONS. A still configuration is a demonstration frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot and the gripper parked raised. Each still configuration is compared with the NEXT still configuration, pair by pair, up to and including the pair that ends at the last demonstration frame. Two consecutive still configurations that are identical are 'no swap'. Two that differ are exactly one swap: the two spots whose occupants changed have EXCHANGED occupants (the frames between them with cubes off every resting spot are mid-crossing frames)."
+     },
+     {
+      "modify_from": "This is applied swap by swap to the last demonstration frame however many swaps occur and whoever the partners are: two consecutive swaps of the same pair return the labelled cube to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started.",
+      "modify_to": "This is applied swap by swap to the last demonstration frame however many swaps occur and whoever the partners are (commonly three, sometimes one or two): two consecutive swaps of the same pair return the labelled cube to its original spot, and a later swap, possibly with a cube the gripper never touched, may move it away again; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started. The label is never settled before the last demonstration frame, even when it is back on the pick spot."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_cube",
+    "edits": [
+     {
+      "modify_from": "Step 2: go through the remaining demonstration frames. A swap is a run of frames in which exactly two listed spots are vacated and, when the list is still again, the same two spots are filled again: the two movers have EXCHANGED spots. Each time this happens write one ledger line 'swap: spot X <-> spot Y; L now = ...': if L equals X write Y, if L equals Y write X, otherwise L is unchanged. Mid-crossing frames only tell you a swap is happening; never use them to decide where L lands. Continue to the last demonstration frame however many swaps occur and whatever partners they involve (two consecutive swaps of the same pair return L to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started).",
+      "modify_to": "Step 2: from that frame onward, write out every STILL FRAME: a frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot, while the gripper is parked raised. Mid-crossing frames (cubes listed off every resting spot) are skipped and never used to decide where L lands. Step 2b: compare each still configuration to the NEXT still configuration, one pair at a time, writing one line for every pair until the pair that ends at the last demonstration frame. Where the two configurations are identical write 'no swap'. Where they differ, exactly two spots changed occupants: write 'swap k: spot X <-> spot Y; L now = ...' (if L is within about 10 px of X write Y, if of Y write X, otherwise unchanged). After the line for the last demonstration frame write 'swaps found: n' and only then stop. Expect commonly three swaps and sometimes one or two; never stop when L happens to be back on P, because a later swap can move it again, including a swap with a cube the gripper never touched. Two consecutive swaps of the same pair return L to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "The deletion of target_colour on both sides is not committed. It was added in round 4 because a put-down step had a different blue cube about 11 px and a green cube about 9 px from the release point, and the policy relocated the target; the colour restriction inside the 8 px anchor is part of what settled that step, and the present report's claim that position alone suffices rests on this round's episodes only. Deleting it would risk undoing round 4 for nothing this round failed on, so the field stays and the later-step match on 'resting listed cube of target_colour within about 8 px' stays as it reads. The subgoal wording change is likewise not committed: it only removes mentions of colour that follow from the deletion, and the subgoal instruction already points A at target_cube as updated at this step with the existing nearest-cube fallback. The only change committed is the explicit still-configuration comparison carried to the last demonstration frame, on both sides, which settles the early-stopped ledger without changing any earlier commitment."
+ },
+ "not_applied": [],
+ "refused": "The deletion of target_colour on both sides is not committed. It was added in round 4 because a put-down step had a different blue cube about 11 px and a green cube about 9 px from the release point, and the policy relocated the target; the colour restriction inside the 8 px anchor is part of what settled that step, and the present report's claim that position alone suffices rests on this round's episodes only. Deleting it would risk undoing round 4 for nothing this round failed on, so the field stays and the later-step match on 'resting listed cube of target_colour within about 8 px' stays as it reads. The subgoal wording change is likewise not committed: it only removes mentions of colour that follow from the deletion, and the subgoal instruction already points A at target_cube as updated at this step with the existing nearest-cube fallback. The only change committed is the explicit still-configuration comparison carried to the last demonstration frame, on both sides, which settles the early-stopped ledger without changing any earlier commitment.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"target_cube\", \"edits\": [{\"modify_from\": \"The 'picked' label is then carried through the shuffle one swap at a time. A swap is a stretch of demonstration frames during which exactly two listed positions leave their resting spots and, when the list is still again, those same two spots are occupied again: the two movers have EXCHANGED spots.\", \"modify_to\": \"The 'picked' label is then carried through the shuffle one swap at a time, the shuffle being read as a sequence of STILL CONFIGURATIONS. A still configuration is a demonstration frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot and the gripper parked raised. Each still configuration is compared with the NEXT still configuration, pair by pair, up to and including the pair that ends at the last demonstration frame. Two consecutive still configurations that are identical are 'no swap'. Two that differ are exactly one swap: the two spots whose occupants changed have EXCHANGED occupants (the frames between them with cubes off every resting spot are mid-crossing frames).\"}, {\"modify_from\": \"This is applied swap by swap to the last demonstration frame however many swaps occur and whoever the partners are: two consecutive swaps of the same pair return the labelled cube to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started.\", \"modify_to\": \"This is applied swap by swap to the last demonstration frame however many swaps occur and whoever the partners are (commonly three, sometimes one or two): two consecutive swaps of the same pair return the labelled cube to its original spot, and a later swap, possibly with a cube the gripper never touched, may move it away again; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started. The label is never settled before the last demonstration frame, even when it is back on the pick spot.\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"target_cube\", \"edits\": [{\"modify_from\": \"Step 2: go through the remaining demonstration frames. A swap is a run of frames in which exactly two listed spots are vacated and, when the list is still again, the same two spots are filled again: the two movers have EXCHANGED spots. Each time this happens write one ledger line 'swap: spot X <-> spot Y; L now = ...': if L equals X write Y, if L equals Y write X, otherwise L is unchanged. Mid-crossing frames only tell you a swap is happening; never use them to decide where L lands. Continue to the last demonstration frame however many swaps occur and whatever partners they involve (two consecutive swaps of the same pair return L to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started).\", \"modify_to\": \"Step 2: from that frame onward, write out every STILL FRAME: a frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot, while the gripper is parked raised. Mid-crossing frames (cubes listed off every resting spot) are skipped and never used to decide where L lands. Step 2b: compare each still configuration to the NEXT still configuration, one pair at a time, writing one line for every pair until the pair that ends at the last demonstration frame. Where the two configurations are identical write 'no swap'. Where they differ, exactly two spots changed occupants: write 'swap k: spot X <-> spot Y; L now = ...' (if L is within about 10 px of X write Y, if of Y write X, otherwise unchanged). After the line for the last demonstration frame write 'swaps found: n' and only then stop. Expect commonly three swaps and sometimes one or two; never stop when L happens to be back on P, because a later swap can move it again, including a swap with a cube the gripper never touched. Two consecutive swaps of the same pair return L to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started.\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"The deletion of target_colour on both sides is not committed. It was added in round 4 because a put-down step had a different blue cube about 11 px and a green cube about 9 px from the release point, and the policy relocated the target; the colour restriction inside the 8 px anchor is part of what settled that step, and the present report's claim that position alone suffices rests on this round's episodes only. Deleting it would risk undoing round 4 for nothing this round failed on, so the field stays and the later-step match on 'resting listed cube of target_colour within about 8 px' stays as it reads. The subgoal wording change is likewise not committed: it only removes mentions of colour that follow from the deletion, and the subgoal instruction already points A at target_cube as updated at this step with the existing nearest-cube fallback. The only change committed is the explicit still-configuration comparison carried to the last demonstration frame, on both sides, which settles the early-stopped ledger without changing any earlier commitment.\"}"
+}

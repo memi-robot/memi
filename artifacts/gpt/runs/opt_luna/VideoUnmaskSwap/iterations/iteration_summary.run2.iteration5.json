@@ -1,0 +1,115 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "remaining_targets"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  0,
+  2,
+  17,
+  60,
+  75
+ ],
+ "scored": 9,
+ "failed": 3,
+ "subgoal_wrong": 1,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.8888888888888888,
+ "memory_verified": 0.6666666666666666,
+ "reads": {
+  "remaining_targets": 4
+ },
+ "field_errors": {
+  "remaining_targets": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3333333333333333,
+ "verified_of_all": 0.6666666666666666,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 9,
+ "critique": "field remaining_targets, POLICY PROMPT\n  At initialization from the demonstration, a requested red container exchanged resting positions with another container while a third stayed stationary. The policy selected the red container's original position and wrote that position into memory instead of its exchanged endpoint. In a two-target demonstration, the policy correctly selected the first target but kept the second target at its original position after that target exchanged with an extra container. These failures affect PREDICTABILITY of the initialized list and, when its first entry is wrong, SUFFICIENCY for target selection. Strengthen the existing exchange procedure with an explicit completion check: partition the demonstration into movement intervals bounded by settled layouts; identify the two departing resting positions in each interval, excluding stationary containers. When the intermediate motion establishes a completed exchange, assign the identity previously at each departing position to the opposite resting endpoint, jointly and exactly once. Do this even when the unordered occupied positions before and after the interval are nearly identical. Do not subsequently override this committed swap by nearest-position matching. Process each later interval against the updated assignment. Before constructing the output, verify the final assignment of every requested identity, including requested targets not selected by the current command and identities exchanged with extra containers. Two completed exchanges of the same pair restore its assignment; exchanges of different pairs must each be applied independently. remaining_targets remains the ordered list of final container locations for requested pickups not yet completed; for example, a first target exchanged with one container and a second target exchanged with an extra container can yield [[82, 121], [131, 154]]. Initialize only with absent incoming memory and a visible demonstration. Preserve the existing later update rule: remove the first entry only on observed successful pickup, not on selection or release. No additional persistent field is needed.\n\nrefused\n  A reported first-target pickup used a visible container center rather than the recorded interior grasp point, while its initialized memory correctly contained both requested identities at their final locations. Both points select the same container, so this is not a SUFFICIENCY or PREDICTABILITY failure and does not warrant changing the policy prompt for subgoal or prescribing exact recorded pixels. The other correctly selected first target likewise needs no subgoal change, although its incorrectly initialized second target is addressed by the memory-policy prompt clarification. The proposed red-container repair also supplied a particular intermediate identity path. That path is not supported by continuous branch tracking: it associates the red identity with the other moving branch before asserting the correct exchanged endpoint. Retain the conclusion that this is one completed exchange, but do not insert that path or a coordinate-specific exception. The annotator prompt already requires the correct exchanged endpoints for every requested identity, including extra-container exchanges, and the policy prompt for subgoal already selects the first remaining target and handles successful pickups and releases correctly. Neither requires a change.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_targets",
+    "description": "At initialization from the demonstration, a requested red container exchanged resting positions with another container while a third stayed stationary. The policy selected the red container's original position and wrote that position into memory instead of its exchanged endpoint. In a two-target demonstration, the policy correctly selected the first target but kept the second target at its original position after that target exchanged with an extra container. These failures affect PREDICTABILITY of the initialized list and, when its first entry is wrong, SUFFICIENCY for target selection. Strengthen the existing exchange procedure with an explicit completion check: partition the demonstration into movement intervals bounded by settled layouts; identify the two departing resting positions in each interval, excluding stationary containers. When the intermediate motion establishes a completed exchange, assign the identity previously at each departing position to the opposite resting endpoint, jointly and exactly once. Do this even when the unordered occupied positions before and after the interval are nearly identical. Do not subsequently override this committed swap by nearest-position matching. Process each later interval against the updated assignment. Before constructing the output, verify the final assignment of every requested identity, including requested targets not selected by the current command and identities exchanged with extra containers. Two completed exchanges of the same pair restore its assignment; exchanges of different pairs must each be applied independently. remaining_targets remains the ordered list of final container locations for requested pickups not yet completed; for example, a first target exchanged with one container and a second target exchanged with an extra container can yield [[82, 121], [131, 154]]. Initialize only with absent incoming memory and a visible demonstration. Preserve the existing later update rule: remove the first entry only on observed successful pickup, not on selection or release. No additional persistent field is needed."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "A reported first-target pickup used a visible container center rather than the recorded interior grasp point, while its initialized memory correctly contained both requested identities at their final locations. Both points select the same container, so this is not a SUFFICIENCY or PREDICTABILITY failure and does not warrant changing the policy prompt for subgoal or prescribing exact recorded pixels. The other correctly selected first target likewise needs no subgoal change, although its incorrectly initialized second target is addressed by the memory-policy prompt clarification. The proposed red-container repair also supplied a particular intermediate identity path. That path is not supported by continuous branch tracking: it associates the red identity with the other moving branch before asserting the correct exchanged endpoint. Retain the conclusion that this is one completed exchange, but do not insert that path or a coordinate-specific exception. The annotator prompt already requires the correct exchanged endpoints for every requested identity, including extra-container exchanges, and the policy prompt for subgoal already selects the first remaining target and handles successful pickups and releases correctly. Neither requires a change."
+ },
+ "critiques": [
+  {
+   "step": [
+    17,
+    "exec",
+    114
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [80, 99]",
+   "recorded": "A: pick up the container at [77, 99]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    60,
+    "exec",
+    114
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [111, 111]",
+   "recorded": "A: pick up the container at [96, 157]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make the branch association explicit for this sparse exchange: the red-covering container starts at [111, 111], passes through [113, 150] at t=80 and [121, 130] at t=96, and settles at [99, 155]. The blue-covering container at [75, 120] is stationary. This is one completed exchange, not a return of the red identity to its original position. Initialize remaining_targets=[[99, 155]].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    75,
+    "exec",
+    168
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [82, 121]",
+   "recorded": "A: pick up the container at [77, 122]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

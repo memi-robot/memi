@@ -1,0 +1,300 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "MoveCube",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   30,
+   38,
+   56,
+   83,
+   96
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Use demonstrated_method as initialized from the demonstration at the first decision step, or retained from incoming memory later. Determine current possession from the execution frames only; never treat the demonstration's final hand state as the execution state. A descent to an object, closure to a nonzero opening, and subsequent raised wrist with the opening maintained establish a successful pickup even if the object detector continues reporting the old object location. In these episodes cube grasping leaves about 46% opening, whereas peg grasping leaves about 22–23%; identify the object primarily from the pickup approach rather than these numbers alone. For demonstrated_method=\"lift\", start with D (pick up the cube) when the execution hand is empty. Point at the current cube if a point is required. Once execution shows the cube pickup completed and the hand raised while maintaining its grasp, choose E (place the cube onto the target), pointing at the current target if required. For demonstrated_method=\"hook\", start with A (pick up the peg) when the hand is empty; the peg is the object labeled stick for hooking. Point at that object's current location if required. Once execution shows the peg pickup completed and the wrist raised with its grasp maintained, choose B (hook the cube to the target with the peg). B acts on the current cube toward the current target; if a destination point is required, select the target. For demonstrated_method=\"push\", start with C (close gripper and push the cube to the target), using the current cube and target; if a destination point is required, select the target. Do not insert a pickup for pushing. Use execution-scene coordinates, never demonstration coordinates, and express points as [y, x]. After B, C, or E has visibly delivered the cube to the target, the task is complete and no further manipulation is needed. If queried again before success, apply the same possession-based rules: repeat the method's pickup when empty, or its transport operation when holding the appropriate object. For unclear possession, inspect the entire available execution interval for closure and lift rather than demanding an explicit held label. For any remaining unmatched situation, make a best-effort choice consistent with the retained method: E if holding the cube, B if holding the peg, otherwise its prescribed starting action; with method=\"unknown\", use the same possession rules and default to D when empty.",
+  "fields": [
+   {
+    "name": "demonstrated_method",
+    "description": "When memory is empty at the first decision step, classify only the demonstration frames, separately from the reset execution scene. Write \"lift\" if the hand grasps the cube and raises it before carrying it to the target; write \"hook\" if the hand grasps and raises the peg before using it to move the cube; write \"push\" if the closed hand moves the cube at tabletop height without lifting it. Prioritize the coherent motion after gripper closure and during cube displacement over object detections. The initial open-hand descent from a raised position is not a pickup lift, nor is a small variation in tabletop height. Classify as \"hook\" only when the demonstration shows a coherent peg grasp, subsequent raising, and use of that grasped tool to move the cube. Changing peg detections, visible head/tail labels, or incidental peg displacement alone do not establish hooking. Classify as \"lift\" when a cube grasp is followed by raising and carrying the cube. When the fingers close essentially fully and the hand moves the cube at sustained tabletop height without lifting either cube or peg, classify as \"push\", even if peg detections change or the cube is temporarily occluded. A momentary 'held' label does not establish lifting. At every subsequent decision step copy the incoming value unchanged. If demonstration evidence is inconclusive, write \"unknown\" and retain it. Do not use \"unknown\" merely because object detections fluctuate when the motion evidence establishes the method. e.g. \"hook\"",
+    "annotation": "Record the demonstrated cube-moving method at the first decision step and retain it unchanged throughout the episode. Values are \"lift\", \"hook\", or \"push\". Use \"lift\" when the demonstration grasps and raises the cube before transporting and placing it; \"hook\" when it grasps and raises the peg and then uses that tool to move the cube; \"push\" when the closed gripper moves the cube along the surface without lifting it. Classify by the motion over time, not isolated held-object labels. Episode 30 has \"lift\" at both steps; episodes 38 and 56 have \"hook\" at both steps; episodes 83 and 96 have \"push\" at their sole steps. e.g. \"hook\""
+   }
+  ]
+ },
+ "initial": {
+  "task": "MoveCube",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   30,
+   38,
+   56,
+   83,
+   96
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Use demonstrated_method as initialized from the demonstration at the first decision step, or retained from incoming memory later. Determine current possession from the execution frames only; never treat the demonstration's final hand state as the execution state. A descent to an object, closure to a nonzero opening, and subsequent raised wrist with the opening maintained establish a successful pickup even if the object detector continues reporting the old object location. In these episodes cube grasping leaves about 46% opening, whereas peg grasping leaves about 22–23%; identify the object primarily from the pickup approach rather than these numbers alone. For demonstrated_method=\"lift\", start with D (pick up the cube) when the execution hand is empty. Point at the current cube if a point is required. Once execution shows the cube pickup completed and the hand raised while maintaining its grasp, choose E (place the cube onto the target), pointing at the current target if required. For demonstrated_method=\"hook\", start with A (pick up the peg) when the hand is empty; the peg is the object labeled stick for hooking. Point at that object's current location if required. Once execution shows the peg pickup completed and the wrist raised with its grasp maintained, choose B (hook the cube to the target with the peg). B acts on the current cube toward the current target; if a destination point is required, select the target. For demonstrated_method=\"push\", start with C (close gripper and push the cube to the target), using the current cube and target; if a destination point is required, select the target. Do not insert a pickup for pushing. Use execution-scene coordinates, never demonstration coordinates, and express points as [y, x]. After B, C, or E has visibly delivered the cube to the target, the task is complete and no further manipulation is needed. If queried again before success, apply the same possession-based rules: repeat the method's pickup when empty, or its transport operation when holding the appropriate object. For unclear possession, inspect the entire available execution interval for closure and lift rather than demanding an explicit held label. For any remaining unmatched situation, make a best-effort choice consistent with the retained method: E if holding the cube, B if holding the peg, otherwise its prescribed starting action; with method=\"unknown\", use the same possession rules and default to D when empty.",
+  "fields": [
+   {
+    "name": "demonstrated_method",
+    "description": "When memory is empty at the first decision step, classify only the demonstration frames, separately from the reset execution scene. Write \"lift\" if the hand grasps the cube and raises it before carrying it to the target; write \"hook\" if the hand grasps and raises the peg before using it to move the cube; write \"push\" if the closed hand moves the cube at tabletop height without lifting it. Use the complete motion: a momentary 'held' label does not establish lifting, and incidental peg movement does not establish tool use. At every subsequent decision step copy the incoming value unchanged. If demonstration evidence is inconclusive, write \"unknown\" and retain it. e.g. \"hook\"",
+    "annotation": "Record the demonstrated cube-moving method at the first decision step and retain it unchanged throughout the episode. Values are \"lift\", \"hook\", or \"push\". Use \"lift\" when the demonstration grasps and raises the cube before transporting and placing it; \"hook\" when it grasps and raises the peg and then uses that tool to move the cube; \"push\" when the closed gripper moves the cube along the surface without lifting it. Classify by the motion over time, not isolated held-object labels. Episode 30 has \"lift\" at both steps; episodes 38 and 56 have \"hook\" at both steps; episodes 83 and 96 have \"push\" at their sole steps. e.g. \"hook\""
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "demonstrated_method": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  The goal required moving the cube by the demonstrated method. With demonstrated_method=\"hook\" carried in, the execution interval showed the hand descend to the peg, close to a stable nonzero opening, and rise while maintaining that opening. The detector continued listing the peg at its old tabletop location. The policy repeated A (pick up the peg) instead of choosing B (hook the cube to the target with the peg), but retained the correct memory and reported no missing information. No document change is warranted: the existing policy prompt for subgoal explicitly treats this closure-and-lift sequence as a successful pickup despite stale object locations, and explicitly requires B after peg pickup. This is a failure to apply an already stated rule, not an established SUFFICIENCY or PREDICTABILITY gap. Adding pickup history to memory would also be unnecessary because the available execution interval already supplies that evidence.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No changes committed. The report requests no document change: the existing policy prompt for subgoal already establishes successful peg pickup from the approach, stable nonzero closure, and subsequent lift despite stale detector locations, and requires B afterward. The reported choice of A does not establish a missing rule or memory fact. Pickup-history memory is unnecessary because the available execution interval supplies the relevant evidence."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 6,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "demonstrated_method": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "field demonstrated_method, POLICY PROMPT\n  When asked to reproduce the demonstrated manner of moving the cube, the policy classified a surface push as hook and chose to pick up the peg. During the demonstration the peg's visible parts and reported positions changed, but the hand closed fully near the cube and transported it at tabletop height without a post-closure lift. The annotation requires push. This is a PREDICTABILITY failure in initializing demonstrated_method, which then produces the wrong subgoal. Strengthen the existing motion-based classification with an explicit evidence priority: hook requires a coherent peg pickup followed by use of that grasped tool to move the cube; changing peg detections, visible head/tail labels, or incidental peg displacement alone are not evidence of hooking. Examine the interval after closure and during cube displacement, not the initial open-hand descent from a raised position. When the fingers close essentially fully and the hand moves the cube at sustained tabletop height without lifting either cube or peg, write push even if peg detections change or the cube is temporarily occluded. A small tabletop-height variation is not a pickup lift. Preserve lift for a demonstrated cube grasp followed by raising and carrying it, and hook for a demonstrated peg grasp followed by raising and using it. The field still holds only the demonstrated method, is initialized from the demonstration at the first decision step, and is copied unchanged thereafter; for example, \"push\". Do not use unknown merely because object detections fluctuate when this motion evidence establishes pushing.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "demonstrated_method",
+      "edits": [
+       {
+        "modify_from": "Use the complete motion: a momentary 'held' label does not establish lifting, and incidental peg movement does not establish tool use.",
+        "modify_to": "Prioritize the coherent motion after gripper closure and during cube displacement over object detections. The initial open-hand descent from a raised position is not a pickup lift, nor is a small variation in tabletop height. Classify as \"hook\" only when the demonstration shows a coherent peg grasp, subsequent raising, and use of that grasped tool to move the cube. Changing peg detections, visible head/tail labels, or incidental peg displacement alone do not establish hooking. Classify as \"lift\" when a cube grasp is followed by raising and carrying the cube. When the fingers close essentially fully and the hand moves the cube at sustained tabletop height without lifting either cube or peg, classify as \"push\", even if peg detections change or the cube is temporarily occluded. A momentary 'held' label does not establish lifting."
+       },
+       {
+        "modify_from": "If demonstration evidence is inconclusive, write \"unknown\" and retain it.",
+        "modify_to": "If demonstration evidence is inconclusive, write \"unknown\" and retain it. Do not use \"unknown\" merely because object detections fluctuate when the motion evidence establishes the method."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": ""
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 2,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    0,
+    33,
+    75,
+    85,
+    90
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Use demonstrated_method as initialized from the demonstration at the first decision step, or retained from incoming memory later. Determine current possession from the execution frames only; never treat the demonstration's final hand state as the execution state. A descent to an object, closure to a nonzero opening, and subsequent raised wrist with the opening maintained establish a successful pickup even if the object detector continues reporting the old object location. In these episodes cube grasping leaves about 46% opening, whereas peg grasping leaves about 22–23%; identify the object primarily from the pickup approach rather than these numbers alone. For demonstrated_method=\"lift\", start with D (pick up the cube) when the execution hand is empty. Point at the current cube if a point is required. Once execution shows the cube pickup completed and the hand raised while maintaining its grasp, choose E (place the cube onto the target), pointing at the current target if required. For demonstrated_method=\"hook\", start with A (pick up the peg) when the hand is empty; the peg is the object labeled stick for hooking. Point at that object's current location if required. Once execution shows the peg pickup completed and the wrist raised with its grasp maintained, choose B (hook the cube to the target with the peg). B acts on the current cube toward the current target; if a destination point is required, select the target. For demonstrated_method=\"push\", start with C (close gripper and push the cube to the target), using the current cube and target; if a destination point is required, select the target. Do not insert a pickup for pushing. Use execution-scene coordinates, never demonstration coordinates, and express points as [y, x]. After B, C, or E has visibly delivered the cube to the target, the task is complete and no further manipulation is needed. If queried again before success, apply the same possession-based rules: repeat the method's pickup when empty, or its transport operation when holding the appropriate object. For unclear possession, inspect the entire available execution interval for closure and lift rather than demanding an explicit held label. For any remaining unmatched situation, make a best-effort choice consistent with the retained method: E if holding the cube, B if holding the peg, otherwise its prescribed starting action; with method=\"unknown\", use the same possession rules and default to D when empty.",
+    "fields": [
+     {
+      "name": "demonstrated_method",
+      "description": "When memory is empty at the first decision step, classify only the demonstration frames, separately from the reset execution scene. Write \"lift\" if the hand grasps the cube and raises it before carrying it to the target; write \"hook\" if the hand grasps and raises the peg before using it to move the cube; write \"push\" if the closed hand moves the cube at tabletop height without lifting it. Use the complete motion: a momentary 'held' label does not establish lifting, and incidental peg movement does not establish tool use. At every subsequent decision step copy the incoming value unchanged. If demonstration evidence is inconclusive, write \"unknown\" and retain it. e.g. \"hook\"",
+      "annotation": "Record the demonstrated cube-moving method at the first decision step and retain it unchanged throughout the episode. Values are \"lift\", \"hook\", or \"push\". Use \"lift\" when the demonstration grasps and raises the cube before transporting and placing it; \"hook\" when it grasps and raises the peg and then uses that tool to move the cube; \"push\" when the closed gripper moves the cube along the surface without lifting it. Classify by the motion over time, not isolated held-object labels. Episode 30 has \"lift\" at both steps; episodes 38 and 56 have \"hook\" at both steps; episodes 83 and 96 have \"push\" at their sole steps. e.g. \"hook\""
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    6,
+    37,
+    51,
+    81,
+    99
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Use demonstrated_method as initialized from the demonstration at the first decision step, or retained from incoming memory later. Determine current possession from the execution frames only; never treat the demonstration's final hand state as the execution state. A descent to an object, closure to a nonzero opening, and subsequent raised wrist with the opening maintained establish a successful pickup even if the object detector continues reporting the old object location. In these episodes cube grasping leaves about 46% opening, whereas peg grasping leaves about 22–23%; identify the object primarily from the pickup approach rather than these numbers alone. For demonstrated_method=\"lift\", start with D (pick up the cube) when the execution hand is empty. Point at the current cube if a point is required. Once execution shows the cube pickup completed and the hand raised while maintaining its grasp, choose E (place the cube onto the target), pointing at the current target if required. For demonstrated_method=\"hook\", start with A (pick up the peg) when the hand is empty; the peg is the object labeled stick for hooking. Point at that object's current location if required. Once execution shows the peg pickup completed and the wrist raised with its grasp maintained, choose B (hook the cube to the target with the peg). B acts on the current cube toward the current target; if a destination point is required, select the target. For demonstrated_method=\"push\", start with C (close gripper and push the cube to the target), using the current cube and target; if a destination point is required, select the target. Do not insert a pickup for pushing. Use execution-scene coordinates, never demonstration coordinates, and express points as [y, x]. After B, C, or E has visibly delivered the cube to the target, the task is complete and no further manipulation is needed. If queried again before success, apply the same possession-based rules: repeat the method's pickup when empty, or its transport operation when holding the appropriate object. For unclear possession, inspect the entire available execution interval for closure and lift rather than demanding an explicit held label. For any remaining unmatched situation, make a best-effort choice consistent with the retained method: E if holding the cube, B if holding the peg, otherwise its prescribed starting action; with method=\"unknown\", use the same possession rules and default to D when empty.",
+    "fields": [
+     {
+      "name": "demonstrated_method",
+      "description": "When memory is empty at the first decision step, classify only the demonstration frames, separately from the reset execution scene. Write \"lift\" if the hand grasps the cube and raises it before carrying it to the target; write \"hook\" if the hand grasps and raises the peg before using it to move the cube; write \"push\" if the closed hand moves the cube at tabletop height without lifting it. Use the complete motion: a momentary 'held' label does not establish lifting, and incidental peg movement does not establish tool use. At every subsequent decision step copy the incoming value unchanged. If demonstration evidence is inconclusive, write \"unknown\" and retain it. e.g. \"hook\"",
+      "annotation": "Record the demonstrated cube-moving method at the first decision step and retain it unchanged throughout the episode. Values are \"lift\", \"hook\", or \"push\". Use \"lift\" when the demonstration grasps and raises the cube before transporting and placing it; \"hook\" when it grasps and raises the peg and then uses that tool to move the cube; \"push\" when the closed gripper moves the cube along the surface without lifting it. Classify by the motion over time, not isolated held-object labels. Episode 30 has \"lift\" at both steps; episodes 38 and 56 have \"hook\" at both steps; episodes 83 and 96 have \"push\" at their sole steps. e.g. \"hook\""
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    15,
+    38,
+    43,
+    72,
+    73
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Use demonstrated_method as initialized from the demonstration at the first decision step, or retained from incoming memory later. Determine current possession from the execution frames only; never treat the demonstration's final hand state as the execution state. A descent to an object, closure to a nonzero opening, and subsequent raised wrist with the opening maintained establish a successful pickup even if the object detector continues reporting the old object location. In these episodes cube grasping leaves about 46% opening, whereas peg grasping leaves about 22–23%; identify the object primarily from the pickup approach rather than these numbers alone. For demonstrated_method=\"lift\", start with D (pick up the cube) when the execution hand is empty. Point at the current cube if a point is required. Once execution shows the cube pickup completed and the hand raised while maintaining its grasp, choose E (place the cube onto the target), pointing at the current target if required. For demonstrated_method=\"hook\", start with A (pick up the peg) when the hand is empty; the peg is the object labeled stick for hooking. Point at that object's current location if required. Once execution shows the peg pickup completed and the wrist raised with its grasp maintained, choose B (hook the cube to the target with the peg). B acts on the current cube toward the current target; if a destination point is required, select the target. For demonstrated_method=\"push\", start with C (close gripper and push the cube to the target), using the current cube and target; if a destination point is required, select the target. Do not insert a pickup for pushing. Use execution-scene coordinates, never demonstration coordinates, and express points as [y, x]. After B, C, or E has visibly delivered the cube to the target, the task is complete and no further manipulation is needed. If queried again before success, apply the same possession-based rules: repeat the method's pickup when empty, or its transport operation when holding the appropriate object. For unclear possession, inspect the entire available execution interval for closure and lift rather than demanding an explicit held label. For any remaining unmatched situation, make a best-effort choice consistent with the retained method: E if holding the cube, B if holding the peg, otherwise its prescribed starting action; with method=\"unknown\", use the same possession rules and default to D when empty.",
+    "fields": [
+     {
+      "name": "demonstrated_method",
+      "description": "When memory is empty at the first decision step, classify only the demonstration frames, separately from the reset execution scene. Write \"lift\" if the hand grasps the cube and raises it before carrying it to the target; write \"hook\" if the hand grasps and raises the peg before using it to move the cube; write \"push\" if the closed hand moves the cube at tabletop height without lifting it. Use the complete motion: a momentary 'held' label does not establish lifting, and incidental peg movement does not establish tool use. At every subsequent decision step copy the incoming value unchanged. If demonstration evidence is inconclusive, write \"unknown\" and retain it. e.g. \"hook\"",
+      "annotation": "Record the demonstrated cube-moving method at the first decision step and retain it unchanged throughout the episode. Values are \"lift\", \"hook\", or \"push\". Use \"lift\" when the demonstration grasps and raises the cube before transporting and placing it; \"hook\" when it grasps and raises the peg and then uses that tool to move the cube; \"push\" when the closed gripper moves the cube along the surface without lifting it. Classify by the motion over time, not isolated held-object labels. Episode 30 has \"lift\" at both steps; episodes 38 and 56 have \"hook\" at both steps; episodes 83 and 96 have \"push\" at their sole steps. e.g. \"hook\""
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    12,
+    48,
+    52,
+    59
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 0.9,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Use demonstrated_method as initialized from the demonstration at the first decision step, or retained from incoming memory later. Determine current possession from the execution frames only; never treat the demonstration's final hand state as the execution state. A descent to an object, closure to a nonzero opening, and subsequent raised wrist with the opening maintained establish a successful pickup even if the object detector continues reporting the old object location. In these episodes cube grasping leaves about 46% opening, whereas peg grasping leaves about 22–23%; identify the object primarily from the pickup approach rather than these numbers alone. For demonstrated_method=\"lift\", start with D (pick up the cube) when the execution hand is empty. Point at the current cube if a point is required. Once execution shows the cube pickup completed and the hand raised while maintaining its grasp, choose E (place the cube onto the target), pointing at the current target if required. For demonstrated_method=\"hook\", start with A (pick up the peg) when the hand is empty; the peg is the object labeled stick for hooking. Point at that object's current location if required. Once execution shows the peg pickup completed and the wrist raised with its grasp maintained, choose B (hook the cube to the target with the peg). B acts on the current cube toward the current target; if a destination point is required, select the target. For demonstrated_method=\"push\", start with C (close gripper and push the cube to the target), using the current cube and target; if a destination point is required, select the target. Do not insert a pickup for pushing. Use execution-scene coordinates, never demonstration coordinates, and express points as [y, x]. After B, C, or E has visibly delivered the cube to the target, the task is complete and no further manipulation is needed. If queried again before success, apply the same possession-based rules: repeat the method's pickup when empty, or its transport operation when holding the appropriate object. For unclear possession, inspect the entire available execution interval for closure and lift rather than demanding an explicit held label. For any remaining unmatched situation, make a best-effort choice consistent with the retained method: E if holding the cube, B if holding the peg, otherwise its prescribed starting action; with method=\"unknown\", use the same possession rules and default to D when empty.",
+    "fields": [
+     {
+      "name": "demonstrated_method",
+      "description": "When memory is empty at the first decision step, classify only the demonstration frames, separately from the reset execution scene. Write \"lift\" if the hand grasps the cube and raises it before carrying it to the target; write \"hook\" if the hand grasps and raises the peg before using it to move the cube; write \"push\" if the closed hand moves the cube at tabletop height without lifting it. Use the complete motion: a momentary 'held' label does not establish lifting, and incidental peg movement does not establish tool use. At every subsequent decision step copy the incoming value unchanged. If demonstration evidence is inconclusive, write \"unknown\" and retain it. e.g. \"hook\"",
+      "annotation": "Record the demonstrated cube-moving method at the first decision step and retain it unchanged throughout the episode. Values are \"lift\", \"hook\", or \"push\". Use \"lift\" when the demonstration grasps and raises the cube before transporting and placing it; \"hook\" when it grasps and raises the peg and then uses that tool to move the cube; \"push\" when the closed gripper moves the cube along the surface without lifting it. Classify by the motion over time, not isolated held-object labels. Episode 30 has \"lift\" at both steps; episodes 38 and 56 have \"hook\" at both steps; episodes 83 and 96 have \"push\" at their sole steps. e.g. \"hook\""
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    11,
+    57,
+    74,
+    84,
+    96
+   ],
+   "verified_of_all": 0.8333333333333334,
+   "subgoal_verified": 0.8333333333333334,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Use demonstrated_method as initialized from the demonstration at the first decision step, or retained from incoming memory later. Determine current possession from the execution frames only; never treat the demonstration's final hand state as the execution state. A descent to an object, closure to a nonzero opening, and subsequent raised wrist with the opening maintained establish a successful pickup even if the object detector continues reporting the old object location. In these episodes cube grasping leaves about 46% opening, whereas peg grasping leaves about 22–23%; identify the object primarily from the pickup approach rather than these numbers alone. For demonstrated_method=\"lift\", start with D (pick up the cube) when the execution hand is empty. Point at the current cube if a point is required. Once execution shows the cube pickup completed and the hand raised while maintaining its grasp, choose E (place the cube onto the target), pointing at the current target if required. For demonstrated_method=\"hook\", start with A (pick up the peg) when the hand is empty; the peg is the object labeled stick for hooking. Point at that object's current location if required. Once execution shows the peg pickup completed and the wrist raised with its grasp maintained, choose B (hook the cube to the target with the peg). B acts on the current cube toward the current target; if a destination point is required, select the target. For demonstrated_method=\"push\", start with C (close gripper and push the cube to the target), using the current cube and target; if a destination point is required, select the target. Do not insert a pickup for pushing. Use execution-scene coordinates, never demonstration coordinates, and express points as [y, x]. After B, C, or E has visibly delivered the cube to the target, the task is complete and no further manipulation is needed. If queried again before success, apply the same possession-based rules: repeat the method's pickup when empty, or its transport operation when holding the appropriate object. For unclear possession, inspect the entire available execution interval for closure and lift rather than demanding an explicit held label. For any remaining unmatched situation, make a best-effort choice consistent with the retained method: E if holding the cube, B if holding the peg, otherwise its prescribed starting action; with method=\"unknown\", use the same possession rules and default to D when empty.",
+    "fields": [
+     {
+      "name": "demonstrated_method",
+      "description": "When memory is empty at the first decision step, classify only the demonstration frames, separately from the reset execution scene. Write \"lift\" if the hand grasps the cube and raises it before carrying it to the target; write \"hook\" if the hand grasps and raises the peg before using it to move the cube; write \"push\" if the closed hand moves the cube at tabletop height without lifting it. Use the complete motion: a momentary 'held' label does not establish lifting, and incidental peg movement does not establish tool use. At every subsequent decision step copy the incoming value unchanged. If demonstration evidence is inconclusive, write \"unknown\" and retain it. e.g. \"hook\"",
+      "annotation": "Record the demonstrated cube-moving method at the first decision step and retain it unchanged throughout the episode. Values are \"lift\", \"hook\", or \"push\". Use \"lift\" when the demonstration grasps and raises the cube before transporting and placing it; \"hook\" when it grasps and raises the peg and then uses that tool to move the cube; \"push\" when the closed gripper moves the cube along the surface without lifting it. Classify by the motion over time, not isolated held-object labels. Episode 30 has \"lift\" at both steps; episodes 38 and 56 have \"hook\" at both steps; episodes 83 and 96 have \"push\" at their sole steps. e.g. \"hook\""
+     }
+    ]
+   }
+  }
+ ]
+}

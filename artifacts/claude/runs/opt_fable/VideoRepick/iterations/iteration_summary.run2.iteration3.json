@@ -1,0 +1,82 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  8,
+  16,
+  57,
+  93
+ ],
+ "scored": 29,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9655172413793104,
+ "memory_verified": 1.0,
+ "reads": {
+  "picks_done": 24
+ },
+ "field_errors": {
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.034482758620689655,
+ "verified_of_all": 0.9655172413793104,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 29,
+ "critique": "the policy prompt for subgoal\n  The failure is at the first decision step, where the point for A is taken from the demonstration. The goal asked for two pick-ups of the block the demonstration grasped. The demonstration grasped the middle cube, set it back down at nearly the same spot, and then two of the three cubes were shuffled for several frames while the third never moved. At the end the two shuffled cubes sat within a few px of their pre-shuffle spots. The policy, following the current frame-by-frame nearest-cube tracking, mis-tracked at a frame where the two candidates were 14 and 27 px away, then again at one where they were 18 and 22 px away, and ended on the wrong cube; it pointed at the other shuffled cube. Memory was empty and correct (picks_done 0). This breaks SUFFICIENCY: the step shows all the frames needed, but the point rule as written (greedy nearest cube, frame to frame) is too fragile on frames where the two shuffled cubes are nearly equidistant from the tracked cube's previous position, which happens in most of these episodes, sometimes with a margin under 1 px. Replace the greedy per-frame nearest-neighbour clause in the point rule for A at the first decision step with a joint tracking rule over the whole shuffle: (1) Identify the shuffle frames as the consecutive demonstration frames, after the gripper has parked high and 100% open, in which cube positions change by more than a few px. (2) The cube that keeps the same position (within a few px) through all of them is the stationary cube and is excluded; the grasped cube is one of the two moving cubes. (3) Follow the two moving cubes together: at each shuffle frame the two moving listed cubes must be assigned one each to the two tracked cubes (never both to the same listed cube). Choose, over the whole run of shuffle frames, the single consistent assignment whose total frame-to-frame displacement summed over both cubes and all frames is smallest, rather than deciding each frame on its own. State explicitly that per-frame distances are often nearly equal (differences of a few px or less), that a cube can jump 20-30 px between frames, that the two cubes may or may not swap places by the end (both outcomes occur), and that the pair may also be a different two cubes in a later stretch of the shuffle while the previously tracked cube rests. (4) The grasped cube's position at the last demonstration frame under that assignment is the point; point at the cube in the scene at the start of execution nearest it. Keep the existing text that the grasped cube is identified from the lowest-gripper frame with fingers about 46-51% and the 'held in the gripper' lines, that cubes vanishing while the gripper is high and open are only hidden by the arm, and that lists are sorted by y, not identity. Keep the rules for later decision steps (point at the cube nearest the put-down descent) unchanged.\n\nrefused\n  The failed first step also proposed two tie-breaks: continue the cube's prior direction of motion, and, when the shuffled cubes finish within a few px of their pre-shuffle spots, assume the grasped cube is back where it was set down. Both are dropped. In another episode of this minibatch the two shuffled cubes finished exactly at each other's pre-shuffle spots, so the grasped cube ended where the other cube had been; assuming it returns to its set-down spot would point at the wrong cube there. Velocity continuation also fails in this minibatch: in one episode the tracked cube had barely moved in the prior frame, so the predicted position favoured the wrong candidate by a couple of px. The joint minimum-total-displacement rule passed on above resolves every shuffle in these episodes without either heuristic. Memory is not involved in this failure; picks_done was written and carried correctly at every step.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The failure is at the first decision step, where the point for A is taken from the demonstration. The goal asked for two pick-ups of the block the demonstration grasped. The demonstration grasped the middle cube, set it back down at nearly the same spot, and then two of the three cubes were shuffled for several frames while the third never moved. At the end the two shuffled cubes sat within a few px of their pre-shuffle spots. The policy, following the current frame-by-frame nearest-cube tracking, mis-tracked at a frame where the two candidates were 14 and 27 px away, then again at one where they were 18 and 22 px away, and ended on the wrong cube; it pointed at the other shuffled cube. Memory was empty and correct (picks_done 0). This breaks SUFFICIENCY: the step shows all the frames needed, but the point rule as written (greedy nearest cube, frame to frame) is too fragile on frames where the two shuffled cubes are nearly equidistant from the tracked cube's previous position, which happens in most of these episodes, sometimes with a margin under 1 px. Replace the greedy per-frame nearest-neighbour clause in the point rule for A at the first decision step with a joint tracking rule over the whole shuffle: (1) Identify the shuffle frames as the consecutive demonstration frames, after the gripper has parked high and 100% open, in which cube positions change by more than a few px. (2) The cube that keeps the same position (within a few px) through all of them is the stationary cube and is excluded; the grasped cube is one of the two moving cubes. (3) Follow the two moving cubes together: at each shuffle frame the two moving listed cubes must be assigned one each to the two tracked cubes (never both to the same listed cube). Choose, over the whole run of shuffle frames, the single consistent assignment whose total frame-to-frame displacement summed over both cubes and all frames is smallest, rather than deciding each frame on its own. State explicitly that per-frame distances are often nearly equal (differences of a few px or less), that a cube can jump 20-30 px between frames, that the two cubes may or may not swap places by the end (both outcomes occur), and that the pair may also be a different two cubes in a later stretch of the shuffle while the previously tracked cube rests. (4) The grasped cube's position at the last demonstration frame under that assignment is the point; point at the cube in the scene at the start of execution nearest it. Keep the existing text that the grasped cube is identified from the lowest-gripper frame with fingers about 46-51% and the 'held in the gripper' lines, that cubes vanishing while the gripper is high and open are only hidden by the arm, and that lists are sorted by y, not identity. Keep the rules for later decision steps (point at the cube nearest the put-down descent) unchanged.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "The failed first step also proposed two tie-breaks: continue the cube's prior direction of motion, and, when the shuffled cubes finish within a few px of their pre-shuffle spots, assume the grasped cube is back where it was set down. Both are dropped. In another episode of this minibatch the two shuffled cubes finished exactly at each other's pre-shuffle spots, so the grasped cube ended where the other cube had been; assuming it returns to its set-down spot would point at the wrong cube there. Velocity continuation also fails in this minibatch: in one episode the tracked cube had barely moved in the prior frame, so the predicted position favoured the wrong candidate by a couple of px. The joint minimum-total-displacement rule passed on above resolves every shuffle in these episodes without either heuristic. Memory is not involved in this failure; picks_done was written and carried correctly at every step."
+ },
+ "critiques": [
+  {
+   "step": [
+    16,
+    "exec",
+    315
+   ],
+   "memory_in": "picks_done=",
+   "answered": "A: pick up the cube at [87, 146]",
+   "recorded": "A: pick up the cube at [107, 119]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The frame-by-frame nearest-cube tracking through the shuffle is ambiguous here: at t=224 the candidates [84,125] and [110,141] are 14 and 27 px from the tracked cube's previous position [96,118], and at t=240 [87,143] and [106,121] are 18 and 22 px from [84,125]; I mis-tracked and ended at [87,146]. Careful nearest-neighbour tracking (t=192 [106,118] -> [96,118] -> [84,125] -> [87,143] -> [92,148] -> [109,143] -> [107,124] -> [106,118]) ends at [106,118]. The instruction should give a tie-break for near-equal distances (e.g. continue the cube's previous direction of motion / the two shuffled cubes move along a loop and swap, so pick the candidate consistent with the cube's velocity in the prior frame), and should state that when the two shuffled cubes finish within a few px of their pre-shuffle positions, the grasped cube is at the same spot it was set down ([108,117]/[106,118]), so the point is that cube, not the one at [87,146].",
+   "missing": ""
+  }
+ ]
+}

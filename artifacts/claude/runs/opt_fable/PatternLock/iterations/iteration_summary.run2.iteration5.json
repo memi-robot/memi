@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "plan",
+  "moves_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  21,
+  24,
+  60,
+  82,
+  88
+ ],
+ "scored": 12,
+ "failed": 1,
+ "subgoal_wrong": 0,
+ "memory_wrong": 1,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9166666666666666,
+ "reads": {
+  "plan": 7,
+  "moves_done": 7
+ },
+ "field_errors": {
+  "plan": {
+   "in": 1,
+   "sole": 1
+  },
+  "moves_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.08333333333333333,
+ "verified_of_all": 0.9166666666666666,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 12,
+ "critique": "field plan, ANNOTATOR PROMPT\n  The failure: a demonstration that was only three frames long began with the start cell shown as a 'highlighted area' rather than a 'highlighted target', and only one new target became highlighted during it. The annotated plan at the first decision step was written as the literal 'unknown', while the rule as written yields a one-letter list (start [102, 154], new highlight [82, 151]: dy = -20 backward, dx = -3 under threshold, so [\"B\"]). The policy, following the rule, wrote [\"B\"] and chose the correct subgoal B. This breaks PREDICTABILITY: the annotated value and the value the instruction asks for are two different answers to one field at one step. Change: the start point of the plan is whatever cell is highlighted at demo t=0, whether it is labelled 'highlighted target' or 'highlighted area'; use its coordinates exactly as the start. A demonstration may show very few frames and only one newly highlighted target; the plan is then a list of one letter. The plan is never written as 'unknown', empty, or any value other than the JSON array of letters. Then copy unchanged at every later step. Example for that case: [\"B\"]. Example for a longer demo: [\"G\", \"D\", \"E\"].\n\nfield plan, POLICY PROMPT\n  Build the plan at the first decision step exactly as before, with these additions. The start point is whatever cell is highlighted at demo t=0; it may be labelled 'highlighted area' instead of 'highlighted target', and either label counts as the start. Count one letter for each target that newly becomes highlighted in a later demo frame (dy/dx from the previously highlighted cell, same thresholds). A short demonstration with only one newly highlighted target gives a one-letter list, e.g. [\"B\"]; that is a complete, valid plan. Never write 'unknown' or an empty value; the plan always has at least one letter when a demonstration is shown. Afterwards copy it character for character.\n\nthe policy prompt for subgoal\n  No rule sent the policy wrong at the failed step: with the one-letter plan it correctly chose plan[0]. Add one clarification so the short-demonstration case is explicit: the plan may contain a single letter; the first decision step performs that letter, and if a later decision step ever occurs with n at or beyond the plan length, repeat the last letter as already stated. The start cell of the demonstration may be shown as a 'highlighted area' rather than a 'highlighted target'; it is the start for the direction computation and does not itself add a letter.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No rule sent the policy wrong at the failed step: with the one-letter plan it correctly chose plan[0]. Add one clarification so the short-demonstration case is explicit: the plan may contain a single letter; the first decision step performs that letter, and if a later decision step ever occurs with n at or beyond the plan length, repeat the last letter as already stated. The start cell of the demonstration may be shown as a 'highlighted area' rather than a 'highlighted target'; it is the start for the direction computation and does not itself add a letter.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "plan",
+    "description": "Build the plan at the first decision step exactly as before, with these additions. The start point is whatever cell is highlighted at demo t=0; it may be labelled 'highlighted area' instead of 'highlighted target', and either label counts as the start. Count one letter for each target that newly becomes highlighted in a later demo frame (dy/dx from the previously highlighted cell, same thresholds). A short demonstration with only one newly highlighted target gives a one-letter list, e.g. [\"B\"]; that is a complete, valid plan. Never write 'unknown' or an empty value; the plan always has at least one letter when a demonstration is shown. Afterwards copy it character for character."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "plan",
+    "description": "The failure: a demonstration that was only three frames long began with the start cell shown as a 'highlighted area' rather than a 'highlighted target', and only one new target became highlighted during it. The annotated plan at the first decision step was written as the literal 'unknown', while the rule as written yields a one-letter list (start [102, 154], new highlight [82, 151]: dy = -20 backward, dx = -3 under threshold, so [\"B\"]). The policy, following the rule, wrote [\"B\"] and chose the correct subgoal B. This breaks PREDICTABILITY: the annotated value and the value the instruction asks for are two different answers to one field at one step. Change: the start point of the plan is whatever cell is highlighted at demo t=0, whether it is labelled 'highlighted target' or 'highlighted area'; use its coordinates exactly as the start. A demonstration may show very few frames and only one newly highlighted target; the plan is then a list of one letter. The plan is never written as 'unknown', empty, or any value other than the JSON array of letters. Then copy unchanged at every later step. Example for that case: [\"B\"]. Example for a longer demo: [\"G\", \"D\", \"E\"]."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    88,
+    "exec",
+    32
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "B: move backward",
+   "recorded": "B: move backward",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction told me to build the plan from the demonstration (one newly highlighted target at [82, 151] from the start highlight at [102, 154]: dy=-20 backward, dx=-3 below threshold, so [\"B\"]), and I did; it never says any case in which plan should instead be written as the literal value unknown (e.g. when the demonstration shows only a few frames and the pattern may be incomplete). If unknown is the intended value here, the rule must state that condition; otherwise the recorded plan=unknown looks like the annotation, not my value, that is wrong.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

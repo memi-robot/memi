@@ -1,0 +1,121 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "blue_cube_pos",
+  "green_cube_pos",
+  "red_cube_pos",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  7,
+  8,
+  38,
+  87,
+  90
+ ],
+ "scored": 14,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "blue_cube_pos": 4,
+  "green_cube_pos": 0,
+  "red_cube_pos": 3,
+  "picks_done": 8
+ },
+ "field_errors": {
+  "blue_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "green_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "red_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "green_cube_pos": "read at no step of 14"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 14,
+ "critique": "field green_cube_pos, ANNOTATOR PROMPT\n  DELETE. The goal instruction, repeated at every step, names which cubes matter; the green cube was never named in any goal here and its position was carried through every episode and read at no step. Its fact folds into the new ordered field goal_cube_positions below, which records positions only for cubes the goal names.\n\nfield blue_cube_pos, ANNOTATOR PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield red_cube_pos, ANNOTATOR PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield goal_cube_positions, ANNOTATOR PROMPT\n  Ordered list of the [y, x] positions of the cubes named in the goal instruction, in the order the goal names them, as those cubes were seen at the first step (t=0) while loose and before any container has come down. One entry per cube the goal names (one entry for a one-container goal, two for a two-container goal); cubes the goal does not name are not recorded. Written at the first step and held unchanged for the rest of the episode, never overwritten from a cube briefly re-exposed under a lifted container. e.g. [[78, 157], [106, 105]] for a goal that names the blue cube then the red cube.\n\nfield green_cube_pos, POLICY PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield blue_cube_pos, POLICY PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield red_cube_pos, POLICY PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield goal_cube_positions, POLICY PROMPT\n  Ordered list of [y, x] positions of the cubes the goal instruction names, in the goal's order. If this step shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal, take each cube it names in order, and write that cube's [y, x] as shown; skip cubes the goal does not name. Otherwise copy the carried-in list unchanged; never overwrite an entry from a cube briefly exposed under a lifted container. e.g. [[78, 157], [106, 105]] when the goal names blue then red.\n\nthe policy prompt for subgoal\n  Rule 1 should now say: when the step shows loose cubes and no containers and nothing held, choose A (press the button) and at the same time record goal_cube_positions from the goal's named cubes in goal order. Rule 2 should no longer look up blue_cube_pos / green_cube_pos / red_cube_pos; instead, when containers are on the table and nothing is held, take the entry of goal_cube_positions at index picks_done (first entry when picks_done is 0, second when 1) and point at the center of the container nearest that recorded position, written [y, x], ignoring containers that cover no recorded position. Rule 3 (choose C whenever a container is held) stays. The fallback for all named cubes already picked and the unforeseen-situation clause stay, with 'the last entry of goal_cube_positions' replacing 'the recorded position of the last named cube'. Nothing else changes; every step in this minibatch was answered correctly under the existing rules, so the only edit is the field substitution.\n\nrefused\n  No step was reported as failed, so nothing from the policy is being dropped. The only action taken is on the field block: green_cube_pos was carried through all fourteen steps and read at none, because no goal in these episodes named the green cube; rather than drop it alone and leave two per-colour fields that each also go unread whenever their colour is absent from the goal, all three per-colour fields are folded into one goal-ordered list, which keeps exactly the positions the goal makes necessary.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 1 should now say: when the step shows loose cubes and no containers and nothing held, choose A (press the button) and at the same time record goal_cube_positions from the goal's named cubes in goal order. Rule 2 should no longer look up blue_cube_pos / green_cube_pos / red_cube_pos; instead, when containers are on the table and nothing is held, take the entry of goal_cube_positions at index picks_done (first entry when picks_done is 0, second when 1) and point at the center of the container nearest that recorded position, written [y, x], ignoring containers that cover no recorded position. Rule 3 (choose C whenever a container is held) stays. The fallback for all named cubes already picked and the unforeseen-situation clause stay, with 'the last entry of goal_cube_positions' replacing 'the recorded position of the last named cube'. Nothing else changes; every step in this minibatch was answered correctly under the existing rules, so the only edit is the field substitution.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "green_cube_pos",
+    "description": "DELETE. Folded into goal_cube_positions."
+   },
+   {
+    "field": "blue_cube_pos",
+    "description": "DELETE. Folded into goal_cube_positions."
+   },
+   {
+    "field": "red_cube_pos",
+    "description": "DELETE. Folded into goal_cube_positions."
+   },
+   {
+    "field": "goal_cube_positions",
+    "description": "Ordered list of [y, x] positions of the cubes the goal instruction names, in the goal's order. If this step shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal, take each cube it names in order, and write that cube's [y, x] as shown; skip cubes the goal does not name. Otherwise copy the carried-in list unchanged; never overwrite an entry from a cube briefly exposed under a lifted container. e.g. [[78, 157], [106, 105]] when the goal names blue then red."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "green_cube_pos",
+    "description": "DELETE. The goal instruction, repeated at every step, names which cubes matter; the green cube was never named in any goal here and its position was carried through every episode and read at no step. Its fact folds into the new ordered field goal_cube_positions below, which records positions only for cubes the goal names."
+   },
+   {
+    "field": "blue_cube_pos",
+    "description": "DELETE. Folded into goal_cube_positions."
+   },
+   {
+    "field": "red_cube_pos",
+    "description": "DELETE. Folded into goal_cube_positions."
+   },
+   {
+    "field": "goal_cube_positions",
+    "description": "Ordered list of the [y, x] positions of the cubes named in the goal instruction, in the order the goal names them, as those cubes were seen at the first step (t=0) while loose and before any container has come down. One entry per cube the goal names (one entry for a one-container goal, two for a two-container goal); cubes the goal does not name are not recorded. Written at the first step and held unchanged for the rest of the episode, never overwritten from a cube briefly re-exposed under a lifted container. e.g. [[78, 157], [106, 105]] for a goal that names the blue cube then the red cube."
+   }
+  ],
+  "refused": "No step was reported as failed, so nothing from the policy is being dropped. The only action taken is on the field block: green_cube_pos was carried through all fourteen steps and read at none, because no goal in these episodes named the green cube; rather than drop it alone and leave two per-colour fields that each also go unread whenever their colour is absent from the goal, all three per-colour fields are folded into one goal-ordered list, which keeps exactly the positions the goal makes necessary."
+ },
+ "critiques": []
+}

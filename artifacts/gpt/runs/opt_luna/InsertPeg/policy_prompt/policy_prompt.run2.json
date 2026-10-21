@@ -1,0 +1,77 @@
+{
+ "task": "InsertPeg",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 3,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    27,
+    76,
+    82,
+    88,
+    96
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    13,
+    17,
+    66,
+    96
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    12,
+    36,
+    45,
+    64,
+    65
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    51,
+    63,
+    85,
+    89
+   ],
+   "verified_of_all": 0.6,
+   "subgoal_verified": 0.8
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    2,
+    12,
+    36,
+    43,
+    45
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Start in A when the execution scene shows an empty, open gripper. At this first decision, identify the demonstrated peg by gripper closure followed by sustained co-motion during the initial lift. Determine whether its head or tail was grasped from that closure and lift, and trace that endpoint back to its unobscured pre-contact position. Continuous motion evidence overrides a conflicting late held-object label on an endpoint that stayed stationary; such a label must not change the identified peg or grasp end. Match the identified peg and endpoint to the reset execution scene and point to that endpoint's current visible position, not a shifted or occluded centroid during demonstration contact.  When the current execution observation shows a peg held after pickup, switch from A to B if insertion_side is \"right\", or to C if insertion_side is \"left\". Accept an explicit held-object label as evidence of a successful grasp only when consistent with the observed motion. Closure followed by sustained co-motion of the peg with the raised hand is sufficient evidence of a successful grasp, even when the wrist later leaves the frame. A conflicting label on a stationary endpoint does not override that evidence, and the wrist being outside the frame does not imply an empty hand. B and C require no point. Do not choose insertion side from the current pickup location. The demonstrated insertion command completes the supplied episodes; no subsequent menu transition is required. For an unanticipated decision, prioritize visible state: if still holding a peg, use the remembered insertion side; if that value is \"unknown\", use the side of the box on which the held peg currently lies, choosing B for smaller x and C for larger x. If empty-handed and a demonstration remains visible, reapply the demonstrated pickup rule. If empty-handed with no demonstration available, choose A at the clearest accessible peg endpoint as a best-effort fallback rather than claiming to recall an unrecorded target.",
+ "fields": [
+  {
+   "name": "insertion_side",
+   "description": "When the current observation includes the demonstration and incoming memory is empty, isolate the demonstration's final low-height approach into the box. Identify the carried peg by gripper closure followed by sustained co-motion during the initial lift, and track that peg and its gripper into the final approach. Continuous motion evidence overrides conflicting held-object labels on stationary pegs. Compare the carried peg/gripper's x position on the approach side with the box's x coordinate: x greater than box x means \"left\"; x less than box x means \"right\". Classify the side from which it approaches, not the direction of motion: motion toward smaller x from larger x is insertion from robot-left, not robot-right. These labels are robot-relative, not camera-relative. If the peg disappears into the box, use the last clearly visible approach before occlusion, not the final occluded frame. Ignore the original pickup location, the high transport path (including any crossing over the box), and the reset execution scene when assigning the side. Write this value at the first decision. Write \"unknown\" only if the demonstration genuinely does not establish an approach side. At steps without a demonstration, copy the incoming value unchanged; do not infer a new side from the currently held peg's location. e.g. \"right\""
+  }
+ ],
+ "stage": "optimized"
+}

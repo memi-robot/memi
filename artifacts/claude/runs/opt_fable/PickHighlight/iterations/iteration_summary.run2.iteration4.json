@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "button_pressed",
+  "pending_cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  4,
+  11,
+  16,
+  37,
+  97
+ ],
+ "scored": 14,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9285714285714286,
+ "memory_verified": 0.9285714285714286,
+ "reads": {
+  "button_pressed": 3,
+  "pending_cubes": 4
+ },
+ "field_errors": {
+  "button_pressed": {
+   "in": 0,
+   "sole": 0
+  },
+  "pending_cubes": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.07142857142857142,
+ "verified_of_all": 0.9285714285714286,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 14,
+ "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Situation: at the decision step right after the button press, three highlighted areas appeared (near a green cube at the robot's far left, a blue cube in the middle, and a blue cube at the robot's right), and the episode went on to pick the green cube first, then the middle blue, then the right blue. The rule's remark that a blue highlighted cube is always picked before a highlighted cube of any other colour is contradicted by this: colour does not decide the order. This breaks PREDICTABILITY, since the policy was told to derive the order colour-first and wrote a different list from the annotated one. The field keeps holding the ordered list of [y, x] positions of highlighted cubes not yet picked up, written at the button-press step and consumed as cubes are grasped, with the order read from the later pick-up steps. Drop the colour remark; replace it with: in the episodes seen, when several cubes are highlighted the recorded order has coincided with decreasing x (the robot's left-most highlighted cube first, right-most last), colour ignored, and the annotator should note any episode that departs from that. Example at the button-press step: [[70, 166], [57, 141], [92, 85]].\n\nfield pending_cubes, POLICY PROMPT\n  Situation: the execution steps shown right after the button press listed three highlighted areas, nearest a green cube at the robot's far left, a blue cube in the middle and a blue cube at the robot's right. The instruction told the policy to order blue first and then by increasing x, so it wrote the right blue, the middle blue, then the green; the annotated list was green, middle blue, right blue. PREDICTABILITY is broken: the ordering rule given to the policy does not reproduce the annotated order. Change the ordering sentence to: write one entry per highlighted area, the [y, x] of the cube nearest that area in the same execution step, and order the entries by DECREASING x (the robot's left-most highlighted cube first, right-most last); colour plays no part, and the order the areas are printed in plays no part. Replace the colour-based examples with: highlighted cubes at [57, 141], [70, 166], [92, 85] -> [[70, 166], [57, 141], [92, 85]]. Removal on grasp and no change on place stay as they are.\n\nthe policy prompt for subgoal\n  Rule 3's clause for the button-press step sent the policy wrong: it told the policy to point at the highlighted cube chosen blue-before-red-before-green and smallest x, which selected the blue cube at the robot's right, while the recorded pick was the green cube at the robot's far left (largest x). Replace that clause with: on the button-press step, point at the first entry of pending_cubes as written at this step under the memory instruction, i.e. the highlighted cube with the largest x (robot's left-most), colour ignored, using that cube's current position (or the highlighted-area position from the execution step when the cube is not in the scene list). Also remove the sentence 'Never redirect the point to a cube ... of a different colour from the one that was on the highlighted area' only insofar as it implies colour ordering; keep the ban on redirecting to a cube far from the stored entry. All other rules stand.\n\nrefused\n  Nothing from the reported step is dropped. One caution for the committer rather than a refusal: the previous memory instruction carried an example in which two same-coloured cubes were listed in increasing x, which the new decreasing-x ordering contradicts. The minibatch in front of me contains only one multi-cube episode and it follows decreasing x, so I pass on decreasing x as the ordering; if an earlier round's episode genuinely showed the smaller-x cube picked first, no single coordinate sort fits both and the annotator prompt's statement that the order is read from the episode remains the ground truth, with the policy rule being a best-fit guess.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 3's clause for the button-press step sent the policy wrong: it told the policy to point at the highlighted cube chosen blue-before-red-before-green and smallest x, which selected the blue cube at the robot's right, while the recorded pick was the green cube at the robot's far left (largest x). Replace that clause with: on the button-press step, point at the first entry of pending_cubes as written at this step under the memory instruction, i.e. the highlighted cube with the largest x (robot's left-most), colour ignored, using that cube's current position (or the highlighted-area position from the execution step when the cube is not in the scene list). Also remove the sentence 'Never redirect the point to a cube ... of a different colour from the one that was on the highlighted area' only insofar as it implies colour ordering; keep the ban on redirecting to a cube far from the stored entry. All other rules stand.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pending_cubes",
+    "description": "Situation: the execution steps shown right after the button press listed three highlighted areas, nearest a green cube at the robot's far left, a blue cube in the middle and a blue cube at the robot's right. The instruction told the policy to order blue first and then by increasing x, so it wrote the right blue, the middle blue, then the green; the annotated list was green, middle blue, right blue. PREDICTABILITY is broken: the ordering rule given to the policy does not reproduce the annotated order. Change the ordering sentence to: write one entry per highlighted area, the [y, x] of the cube nearest that area in the same execution step, and order the entries by DECREASING x (the robot's left-most highlighted cube first, right-most last); colour plays no part, and the order the areas are printed in plays no part. Replace the colour-based examples with: highlighted cubes at [57, 141], [70, 166], [92, 85] -> [[70, 166], [57, 141], [92, 85]]. Removal on grasp and no change on place stay as they are."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pending_cubes",
+    "description": "Situation: at the decision step right after the button press, three highlighted areas appeared (near a green cube at the robot's far left, a blue cube in the middle, and a blue cube at the robot's right), and the episode went on to pick the green cube first, then the middle blue, then the right blue. The rule's remark that a blue highlighted cube is always picked before a highlighted cube of any other colour is contradicted by this: colour does not decide the order. This breaks PREDICTABILITY, since the policy was told to derive the order colour-first and wrote a different list from the annotated one. The field keeps holding the ordered list of [y, x] positions of highlighted cubes not yet picked up, written at the button-press step and consumed as cubes are grasped, with the order read from the later pick-up steps. Drop the colour remark; replace it with: in the episodes seen, when several cubes are highlighted the recorded order has coincided with decreasing x (the robot's left-most highlighted cube first, right-most last), colour ignored, and the annotator should note any episode that departs from that. Example at the button-press step: [[70, 166], [57, 141], [92, 85]]."
+   }
+  ],
+  "refused": "Nothing from the reported step is dropped. One caution for the committer rather than a refusal: the previous memory instruction carried an example in which two same-coloured cubes were listed in increasing x, which the new decreasing-x ordering contradicts. The minibatch in front of me contains only one multi-cube episode and it follows decreasing x, so I pass on decreasing x as the ordering; if an earlier round's episode genuinely showed the smaller-x cube picked first, no single coordinate sort fits both and the annotator prompt's statement that the order is read from the episode remains the ground truth, with the policy rule being a best-fit guess."
+ },
+ "critiques": [
+  {
+   "step": [
+    11,
+    "exec",
+    125
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [92, 85]",
+   "recorded": "B: pick up the highlighted cube at [71, 167]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The ordering rule it gives is wrong for this episode. It says order by colour first (blue before red before green) and then by increasing x. The highlighted areas here are at [61, 141], [73, 165], [97, 86], whose nearest cubes are blue [57, 141], green [70, 166], blue [92, 85]; following the instruction I wrote [[92, 85], [57, 141], [70, 166]], but the recorded list is [[70, 166], [57, 141], [92, 85]] — green first and the blue cubes in decreasing x. The recorded order is simply decreasing x (robot's left-most cube first, right-most last) with colour playing no part. The instruction should state that ordering instead of the colour-first/increasing-x one.",
+   "missing_from_policy_prompt_for_subgoal": "On the button-press step it tells me to point at the first entry 'blue before red before green; among same-coloured cubes the smallest x', which sent me to [92, 85]. The recorded target is the green cube at [70, 166] (recorded point [71, 167]), i.e. the highlighted cube with the largest x (robot's left-most). It should say: point at the first entry of pending_cubes as written at this step, where that list is ordered by decreasing x, colour ignored.",
+   "missing": ""
+  }
+ ]
+}

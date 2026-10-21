@@ -1,0 +1,321 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   14,
+   28,
+   53,
+   80,
+   90
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+  "fields": [
+   {
+    "name": "target_containers",
+    "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]. e.g. [[81, 90], [87, 134]]",
+    "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+   },
+   {
+    "name": "put_down_count",
+    "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+    "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   14,
+   28,
+   53,
+   80,
+   90
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+  "fields": [
+   {
+    "name": "target_containers",
+    "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry. e.g. [[81, 90], [87, 134]]",
+    "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+   },
+   {
+    "name": "put_down_count",
+    "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+    "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 13,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "target_containers": 1,
+     "put_down_count": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field target_containers, ANNOTATOR PROMPT\n  Situation: the goal named one cube; the demonstration showed the cube's container and a neighbouring container trade places in a three-frame shuffle, and the policy's tracking kept the wrong container, so its memory held the container that returned to the cube's original spot instead of the one that actually covered the cube. Condition broken: PREDICTABILITY (the annotated value and the value the policy computed from the same demonstration differ). Keep the field as is (ordered list of [y, x], one per named cube in goal order, position at the last demonstration frame of the container hiding that cube; written at the first decision step, copied unchanged afterwards), but state how the hiding container is found in terms of shuffles rather than frame-to-frame nearest matching: at the frame containers first appear, each cube's container is the one nearest it; thereafter the demonstration consists of shuffles, each a run of consecutive frames in which exactly two containers are displaced from their resting positions while the others stay put, and at the end of every shuffle those two containers have exchanged resting positions. Apply each shuffle in order to the tracked container: if it was one of the two that moved, its new resting position is the other mover's old resting position; otherwise it stays. The entry is its resting position in the last demonstration frame. Example: [[103, 159]] when the cube started under the container at [71, 123] and that container swapped with the one at [103, 159].\n\nfield target_containers, POLICY PROMPT\n  Situation: at the first decision step the policy had to follow the named cube's container through a shuffle in which it and another container swapped places; the two candidates at the middle frame were nearly equally near, both had moved toward larger y, and the y-only tie-break chose the wrong one, so the memory held the container that ended at the cube's original spot and the pick-up point was wrong. Condition broken: PREDICTABILITY. Replace step (3) of the procedure with this: after the frame where containers first appear, the demonstration is a sequence of shuffles; a shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting positions while all others are unchanged, and it ends at the frame where all containers are back on resting positions. At the end of every shuffle the two containers that moved have exchanged resting positions (compare the resting positions before and after the run: the two spots that are occupied again are the same two spots, and the movers have swapped them). So track the named cube's container by resting spot only: if the spot it rests on is one of the two spots vacated during a shuffle, after that shuffle it rests on the other vacated spot; otherwise it keeps its spot. Do this for each shuffle in order; the entry is its resting position in the last demonstration frame (use that frame's listed coordinates, which may wobble a few pixels from the earlier value). Never match frame to frame by nearest position inside a shuffle. Example: cube at [74, 123] covered by the container at [71, 123]; a shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]. Two shuffles of the same pair return it to its first spot.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "target_containers",
+      "edits": [
+       {
+        "modify_from": "(cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle)",
+        "modify_to": "(cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot)"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "target_containers",
+      "edits": [
+       {
+        "modify_from": "(3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry.",
+        "modify_to": "(3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing refused. This is the first round and the report's shuffle-based resting-spot tracking is the general rule for the shell game, so it replaces the frame-to-frame nearest matching on both sides. The subgoal instruction and put_down_count were not reported and stay as they are."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 1,
+ "quiet": 4,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    2,
+    28,
+    31,
+    67,
+    79
+   ],
+   "verified_of_all": 0.9230769230769231,
+   "subgoal_verified": 0.9230769230769231,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) follow that container through the remaining demonstration frames: at each frame it is the listed container nearest to its position in the previous frame, and when two moving containers are nearly equally near, keep the one that continues the same arc (the container that moved toward larger y keeps the larger y, the one that moved toward smaller y keeps the smaller y); containers that never move keep their position; (4) its position in the last demonstration frame is the entry. e.g. [[81, 90], [87, 134]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames, container that came down on each cube at the frame containers first appear, then that container followed frame to frame through every shuffle). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    33,
+    57,
+    61,
+    70,
+    92
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]. e.g. [[81, 90], [87, 134]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    0,
+    14,
+    17,
+    48,
+    50
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]. e.g. [[81, 90], [87, 134]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    47,
+    50,
+    55,
+    62
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]. e.g. [[81, 90], [87, 134]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    0,
+    2,
+    17,
+    60,
+    75
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     14,
+     28,
+     53,
+     80,
+     90
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (pick up the container), with the point on the first entry of target_containers computed from the demonstration at that same step. Rules at any decision step: (1) If the scene shows the gripper raised with fingers partly closed (about 46% open), it is holding a container: choose B (put down the container). (2) If the fingers are fully open (about 100%) and put_down_count is less than the number of entries in target_containers, choose A and point at the container whose current listed position is nearest to target_containers[put_down_count + 1] (1-based: the first entry when put_down_count is 0, the second when it is 1); write the point as that container's listed position. (3) If the fingers are fully open and put_down_count equals the number of entries, every named container has been handled; choose A and point at the last entry of target_containers again (harmless repeat). If a situation matches none of these rules (e.g. gripper state unclear), pick the rule whose gripper description is closest: partly closed fingers mean B, open fingers mean A on the next unhandled target.",
+    "fields": [
+     {
+      "name": "target_containers",
+      "description": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them. Write it at the first decision step (memory empty, demonstration steps shown) by this procedure, then copy it unchanged at every later step. Procedure: (1) from the first demonstration frames note the position of each named cube; (2) at the first frame where containers are listed instead of cubes, the named cube's container is the one nearest that cube's position; (3) after that frame the demonstration is a sequence of shuffles. A shuffle is a run of consecutive frames (usually three) in which exactly two containers are away from their resting spots while all others are unchanged; it ends at the frame where every container is back on a resting spot. At the end of every shuffle the two containers that moved have exchanged resting spots (the same two spots are occupied again, by the movers swapped). Track the named cube's container by resting spot only, never by nearest position frame to frame inside a shuffle: for each shuffle in order, if the spot it rests on is one of the two spots vacated during that shuffle, after the shuffle it rests on the other vacated spot; otherwise it keeps its spot. Two shuffles of the same pair return it to its first spot; (4) its resting position in the last demonstration frame, using that frame's listed coordinates (which may wobble a few pixels), is the entry. Example: cube at [74, 123] covered by the container resting at [71, 123]; one shuffle displaces the containers resting at [71, 123] and [103, 159]; afterwards the cube's container rests at [103, 159], so the entry is [103, 159]. e.g. [[81, 90], [87, 134]]",
+      "annotation": "Ordered list of container positions [y, x], one per cube named in the goal instruction, in the order the goal names them; each entry is the position, at the last demonstration frame, of the container that ends up hiding that cube. Filled at the first decision step from the demonstration (cube positions in the early frames; at the frame containers first appear, each named cube's container is the one nearest that cube; after that the demonstration is a sequence of shuffles, each a run of consecutive frames in which exactly two containers are away from their resting spots while all others stay put, ending at the frame where all containers rest again, and at the end of every shuffle those two containers have exchanged resting spots; the tracked container is followed by resting spot only, shuffle by shuffle in order: if its spot is one of the two vacated in a shuffle it ends on the other vacated spot, otherwise it keeps its spot). Never changes afterwards; copied unchanged at every later step. e.g. [[81, 90], [87, 134]]"
+     },
+     {
+      "name": "put_down_count",
+      "description": "Number of containers picked up and then put down so far. Write 0 at the first decision step. Add one to the carried-in value when the execution steps of the current step show the fingers reopening from about 46% to about 100% after being lowered over a container (a put-down just completed); otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Number of containers the robot has picked up and then put down so far in this episode. 0 at the first decision step; increases by one at the decision step whose execution steps show the fingers reopening (from about 46% back to about 100%) while over a container, i.e. the step right after a 'put down the container' subgoal finished. e.g. 1"
+     }
+    ]
+   }
+  }
+ ]
+}

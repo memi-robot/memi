@@ -1,0 +1,197 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "placed",
+  "cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  46,
+  87,
+  89,
+  99
+ ],
+ "scored": 31,
+ "failed": 8,
+ "subgoal_wrong": 7,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.7741935483870968,
+ "memory_verified": 0.967741935483871,
+ "reads": {
+  "placed": 13,
+  "cubes": 21
+ },
+ "field_errors": {
+  "placed": {
+   "in": 0,
+   "sole": 0
+  },
+  "cubes": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.25806451612903225,
+ "verified_of_all": 0.7419354838709677,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 7,
+ "decisions": 31,
+ "critique": "field cubes, ANNOTATOR PROMPT\n  Keep the field as the ordered list of goal-color cubes on the table and not yet picked, each as [color, [y, x]], but change two things. (1) The initial ordering. At step #1 the list is ordered by distance to a reference point that lies 10 px to the larger-x side of the reported bin center (the bin's visible-pixel centroid sits to the robot's right of its true center; reference = [bin_y, bin_x + 10]), nearest first, ties by smaller y. This ordering is what the recorded picks follow among cubes present from the start: a cube 30 px below-right of the bin's reported center loses to one 30 px straight below it with x beyond the bin's, and two cubes at near-equal Euclidean distance to the reported center are separated by this shifted point. Cubes that appear during execution are still appended after all initial cubes in order of first appearance, and that spawn order is never changed. (2) Matching detections to entries is one-to-one per frame: each carried entry absorbs at most one detection, the nearest one within about 10 px; a second detection in the same frame that lies within 10 px of an already-matched entry but has no unmatched entry within about 10 px is a new cube and is appended at its first appearance. A detection about 10 px or more from every entry is a different cube, not a drifted one. Example after one pick-up and one spawn: [[\"red\", [69, 179]], [\"red\", [79, 153]], [\"red\", [113, 132]], [\"red\", [58, 160]]].\n\nfield cubes, POLICY PROMPT\n  Same field, same name. When the carried-in memory is blank, list every visible cube of a goal color ordered by distance to the point 10 px to the larger-x side of the reported bin center ([bin_y, bin_x + 10]), nearest first, ties by smaller y; do not use the reported bin center itself. Otherwise copy the carried list, remove the entry the shown steps' fingers closed on (about 100% to about 46% open within about 10 px of it, then reported held), and match detections to entries ONE-TO-ONE in each frame: an entry takes the nearest detection within about 10 px and only that one; any further detection within 10 px of that entry but with no other unmatched entry within about 10 px is a new cube and is appended in order of first appearance. A detection about 10 px or more from every carried entry is a new cube. Exclusions (held cube, detections within 10 px of the held cube, detections within 10 px of the reported bin center) stay as before. Never reorder. Example: carried [[\"red\", [58, 160]]] and a frame showing red at [60, 163] and [67, 167] becomes [[\"red\", [60, 163]], [\"red\", [67, 167]]].\n\nthe policy prompt for subgoal\n  Two rules sent the policy wrong and one is missing. First, the bin-proximity set-aside (cubes within about 40 px of the bin center are skipped while a farther same-color cube exists) must be deleted entirely: at every pick step where it fired, the recorded pick was the cube 26 to 32 px from the bin's reported center, chosen purely by its position in `cubes`. In every episode, after the start color is fixed, the pick is the FIRST entry of `cubes` (as updated at this step) of the chosen color, with no distance condition of any kind; the only remaining prohibition is never pointing at a detection within about 10 px of the reported bin center. The failures where a near-bin oldest cube was skipped, and the one where the second entry was recorded instead of the first, are both resolved by the new `cubes` ordering (initial cubes ordered by distance to the point 10 px to the larger-x side of the reported bin center, then spawned cubes by age) combined with 'first entry of that color'. So the SUFFICIENCY failure at those steps becomes: point at the first entry of the needed color in `cubes`; if a detection of that color lies within about 10 px of it in the current scene, point at that detection, otherwise at the remembered position. Second, the start-color rule ('when `placed` is empty start with the color of the first entry in `cubes`') is wrong: in both multi-color episodes the recorded policy started with the color whose required count is smallest (the color needed once) even though a cube of the other color was nearer the bin, and only then moved to the other color. Replace it with: when `placed` is empty, start with the needed color that the goal asks the fewest of; if two colors tie on count, take the color of the first entry in `cubes`. The rule that a started color is finished before another is touched stays. Rules 1 (holding -> B) and 2 (all counts met -> C) stay as written. Delete the step #1 special clause about 'the needed-color cube nearest the bin's center' and the sentence listing forbidden criteria that mentions the near-bin exception; the first entry of the chosen color in `cubes` is the whole criterion.\n\nrefused\n  One step reported that the memory's age order might itself be the wrong criterion and proposed alternatives such as largest y or a different set-aside radius; this is not passed on as stated, because across the minibatch the picks of cubes that appeared during execution follow their order of appearance exactly, and the only mismatches are among cubes present from the start, which the revised initial ordering (distance to a point 10 px to the larger-x side of the reported bin center) resolves. Steps proposing a smaller set-aside radius (15 to 30 px) are answered together by removing the set-aside altogether rather than shrinking it: no recorded pick in the minibatch skipped a cube because it was near the bin, so any radius is unsupported. The suggestion that the step #1 start cube is the needed-color cube farthest from the bin is dropped; it contradicts the single-color episodes, where the start cube was among the nearest to the bin. The suggestion that the first-named color in the goal is started first is dropped; one episode started with the second-named color, and the smallest-required-count rule fits both multi-color episodes.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Two rules sent the policy wrong and one is missing. First, the bin-proximity set-aside (cubes within about 40 px of the bin center are skipped while a farther same-color cube exists) must be deleted entirely: at every pick step where it fired, the recorded pick was the cube 26 to 32 px from the bin's reported center, chosen purely by its position in `cubes`. In every episode, after the start color is fixed, the pick is the FIRST entry of `cubes` (as updated at this step) of the chosen color, with no distance condition of any kind; the only remaining prohibition is never pointing at a detection within about 10 px of the reported bin center. The failures where a near-bin oldest cube was skipped, and the one where the second entry was recorded instead of the first, are both resolved by the new `cubes` ordering (initial cubes ordered by distance to the point 10 px to the larger-x side of the reported bin center, then spawned cubes by age) combined with 'first entry of that color'. So the SUFFICIENCY failure at those steps becomes: point at the first entry of the needed color in `cubes`; if a detection of that color lies within about 10 px of it in the current scene, point at that detection, otherwise at the remembered position. Second, the start-color rule ('when `placed` is empty start with the color of the first entry in `cubes`') is wrong: in both multi-color episodes the recorded policy started with the color whose required count is smallest (the color needed once) even though a cube of the other color was nearer the bin, and only then moved to the other color. Replace it with: when `placed` is empty, start with the needed color that the goal asks the fewest of; if two colors tie on count, take the color of the first entry in `cubes`. The rule that a started color is finished before another is touched stays. Rules 1 (holding -> B) and 2 (all counts met -> C) stay as written. Delete the step #1 special clause about 'the needed-color cube nearest the bin's center' and the sentence listing forbidden criteria that mentions the near-bin exception; the first entry of the chosen color in `cubes` is the whole criterion.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "cubes",
+    "description": "Same field, same name. When the carried-in memory is blank, list every visible cube of a goal color ordered by distance to the point 10 px to the larger-x side of the reported bin center ([bin_y, bin_x + 10]), nearest first, ties by smaller y; do not use the reported bin center itself. Otherwise copy the carried list, remove the entry the shown steps' fingers closed on (about 100% to about 46% open within about 10 px of it, then reported held), and match detections to entries ONE-TO-ONE in each frame: an entry takes the nearest detection within about 10 px and only that one; any further detection within 10 px of that entry but with no other unmatched entry within about 10 px is a new cube and is appended in order of first appearance. A detection about 10 px or more from every carried entry is a new cube. Exclusions (held cube, detections within 10 px of the held cube, detections within 10 px of the reported bin center) stay as before. Never reorder. Example: carried [[\"red\", [58, 160]]] and a frame showing red at [60, 163] and [67, 167] becomes [[\"red\", [60, 163]], [\"red\", [67, 167]]]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "cubes",
+    "description": "Keep the field as the ordered list of goal-color cubes on the table and not yet picked, each as [color, [y, x]], but change two things. (1) The initial ordering. At step #1 the list is ordered by distance to a reference point that lies 10 px to the larger-x side of the reported bin center (the bin's visible-pixel centroid sits to the robot's right of its true center; reference = [bin_y, bin_x + 10]), nearest first, ties by smaller y. This ordering is what the recorded picks follow among cubes present from the start: a cube 30 px below-right of the bin's reported center loses to one 30 px straight below it with x beyond the bin's, and two cubes at near-equal Euclidean distance to the reported center are separated by this shifted point. Cubes that appear during execution are still appended after all initial cubes in order of first appearance, and that spawn order is never changed. (2) Matching detections to entries is one-to-one per frame: each carried entry absorbs at most one detection, the nearest one within about 10 px; a second detection in the same frame that lies within 10 px of an already-matched entry but has no unmatched entry within about 10 px is a new cube and is appended at its first appearance. A detection about 10 px or more from every entry is a different cube, not a drifted one. Example after one pick-up and one spawn: [[\"red\", [69, 179]], [\"red\", [79, 153]], [\"red\", [113, 132]], [\"red\", [58, 160]]]."
+   }
+  ],
+  "refused": "One step reported that the memory's age order might itself be the wrong criterion and proposed alternatives such as largest y or a different set-aside radius; this is not passed on as stated, because across the minibatch the picks of cubes that appeared during execution follow their order of appearance exactly, and the only mismatches are among cubes present from the start, which the revised initial ordering (distance to a point 10 px to the larger-x side of the reported bin center) resolves. Steps proposing a smaller set-aside radius (15 to 30 px) are answered together by removing the set-aside altogether rather than shrinking it: no recorded pick in the minibatch skipped a cube because it was near the bin, so any radius is unsupported. The suggestion that the step #1 start cube is the needed-color cube farthest from the bin is dropped; it contradicts the single-color episodes, where the start cube was among the nearest to the bin. The suggestion that the first-named color in the goal is started first is dropped; one episode started with the second-named color, and the smallest-required-count rule fits both multi-color episodes.",
+  "untraced": "the policy prompt edit answers 25% of what the policy reported (79 of 106 reported words appear nowhere in it): it may be an account of the episodes rather than of the failures"
+ },
+ "critiques": [
+  {
+   "step": [
+    5,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=; cubes=",
+   "answered": "A: pick up the cube at [113, 132]",
+   "recorded": "A: pick up the cube at [70, 180]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The bin-proximity set-aside radius of 'about 40 px' does not reproduce the recorded choice. Bin center is [99, 172]; the red cubes' distances to it are [79,153]≈28 px, [69,179]≈31 px, [113,132]≈42 px, [60,148]≈46 px. With a 40 px radius both [79,153] and [69,179] are set aside and the first remaining entry is [113,132], which I chose. The recorded target is [70,180], i.e. the second entry [69,179] at ≈31 px, so only the ≈28 px cube is set aside. The instruction needs to state the actual radius (about 30 px, so a cube at 31 px is NOT set aside while one at 28 px is), or state the real criterion (e.g. set aside only the single cube closest to the bin / cubes within ~30 px) so that at step #1 here the pick is the second entry of `cubes`, [69,179].",
+   "missing": ""
+  },
+  {
+   "step": [
+    46,
+    "exec",
+    303
+   ],
+   "memory_in": "placed=[\"red\"]; cubes=[[\"red\", [91, 162]], [\"red\", [62, 132]], [\"red\", [58, 160]], [\"red\", [108, 152]]]",
+   "answered": "B: put it into the bin",
+   "recorded": "B: put it into the bin",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At t=256 two red detections, [60,163] and [67,167], both lay within about 10 px of the single carried entry [58,160]; the instruction gives no rule for that case, so I treated [67,167] as a repeat of the same entry and dropped it. The recorded answer treats it as a second cube: each carried entry absorbs at most one detection per frame (the nearest), and any further detection in the same frame that has no unmatched entry within about 10 px is appended as a new entry at its first appearance (so [67,167] became the entry later refreshed to [71,164], appended before [105,181] because it was seen first). It should also say that a detection about 10 px or more away (the [71,164] vs [62,159] distance is ~10.3) counts as a different cube, not a drifted one.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=; cubes=",
+   "answered": "A: pick up the cube at [84, 112]",
+   "recorded": "A: pick up the cube at [66, 110]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The start-color rule pointed me the wrong way. With placed empty it told me to start with the first entry of `cubes` (the needed-color cube nearest the bin center), which here is the blue at [84, 112], only 32 px from the bin center [116, 107]; the set-aside clause did not apply because no other blue cube was on the table. The recorded answer instead starts with the green cube at [65, 109] (51 px from the bin). The instruction needs to say that when placed is empty and the only cube of a needed color lies within about 40 px of the bin center, the start color is instead a needed color that has a cube farther from the bin (the near-bin cube is left for later, when more cubes of its color have appeared or it is the last needed cube), or more generally that the step #1 start cube is the needed-color cube FARTHEST from the bin center rather than nearest, and whether the one-needed count of green versus three blue has any bearing.",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    204
+   ],
+   "memory_in": "placed=[]; cubes=[[\"blue\", [84, 112]], [\"blue\", [105, 188]], [\"green\", [118, 180]], [\"blue\", [92, 96]], [\"green\", [54, 130]]]",
+   "answered": "A: pick up the cube at [105, 188]",
+   "recorded": "A: pick up the cube at [86, 113]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The bin-proximity set-aside threshold is wrong for this step. The first blue entry [85, 111] lies about 31 px from the bin center [116, 107] (and [91, 95] about 28 px), so under the 'within about 40 px' clause both were set aside and I moved on to the next blue entry [105, 188]. The recorded answer picks the oldest blue entry [85, 111] anyway, so the instruction should say the set-aside applies only to cubes much closer to the bin center (roughly within 15-20 px, i.e. cubes actually sitting on/in the bin), and that a cube 25-35 px from the bin center is a normal table cube chosen by age order alone.",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    520
+   ],
+   "memory_in": "placed=[\"green\", \"blue\"]; cubes=[[\"green\", [118, 180]], [\"blue\", [92, 96]], [\"green\", [54, 129]], [\"blue\", [81, 78]], [\"blue\", [62, 86]]]",
+   "answered": "A: pick up the cube at [81, 78]",
+   "recorded": "A: pick up the cube at [93, 97]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The bin-proximity set-aside radius is wrong or too large. The oldest blue entry in `cubes` is [92, 96], which is about 26 px from the bin center [116, 107]; the instruction's 'within about 40 px of the bin center' clause told me to set it aside and pick the next-oldest blue at [81, 78], but the recorded answer picks [92, 96] (detected at [93, 97]). The instruction should state that a cube counts as near-bin only within about 20 px of the bin center (matching the memory instruction's 20 px real-table-cube threshold), so a cube ~26 px away is picked as the oldest blue.",
+   "missing": ""
+  },
+  {
+   "step": [
+    99,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=; cubes=",
+   "answered": "A: pick up the cube at [76, 148]",
+   "recorded": "A: pick up the cube at [56, 145]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The start-color default at step #1 is wrong for this episode. Following it literally: the first entry of `cubes` is blue [90,96], which is within 40 px of the bin [118,108] so it is set aside; the next entry blue [76,148] is not set aside, so the instruction yields A at [76,148]. The recorded answer picks the red cube at [55,144] first, so the rule for which color to start with when `placed` is empty must be something else (e.g. the first color named in the goal instruction, 'one red cube and two blue cubes' -> red). Also, among the two red cubes the recorded point [56,145] is the second red entry in `cubes` ([55,144]), not the first ([52,80]), so the 'oldest entry in `cubes`' tie-break among same-colored cubes does not reproduce the recorded choice either; the instruction needs to state the actual criterion that selects [55,144] over [52,80] (it is not age order, not nearest-to-bin, and neither is set aside by the 40 px clause).",
+   "missing": ""
+  },
+  {
+   "step": [
+    99,
+    "exec",
+    227
+   ],
+   "memory_in": "placed=[]; cubes=[[\"blue\", [90, 96]], [\"blue\", [76, 148]], [\"blue\", [113, 168]], [\"blue\", [63, 77]], [\"red\", [52, 80]], [\"blue\", [72, 163]], [\"blue\", [63, 157]]]",
+   "answered": "A: pick up the cube at [76, 148]",
+   "recorded": "A: pick up the cube at [91, 97]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The bin-proximity set-aside clause ('within about 40 px of the bin center') excluded the first blue entry [89, 96], which is about 31 px from the bin center [118, 108], so I skipped to the second entry [76, 148]. The recorded answer picks [89, 96] (the oldest blue entry, nearest the bin). The instruction should state that the set-aside radius is much smaller (about 20 px, matching the memory rule's 20 px 'real table cube' threshold) or that a cube ~30 px from the bin center is a normal table cube and is picked by age order like any other; the 40 px figure is wrong.",
+   "missing": ""
+  },
+  {
+   "step": [
+    99,
+    "exec",
+    378
+   ],
+   "memory_in": "placed=[\"red\"]; cubes=[[\"blue\", [76, 148]], [\"blue\", [113, 168]], [\"blue\", [66, 75]], [\"red\", [54, 75]], [\"blue\", [72, 163]], [\"blue\", [63, 157]]]",
+   "answered": "A: pick up the cube at [76, 148]",
+   "recorded": "A: pick up the cube at [114, 169]",
+   "missing_from_memory": "nothing, unless the age order in `cubes` is itself wrong: the carried list put [76, 148] before [113, 168], and the recorded pick was [113, 168], so either the list order does not reflect the order the recorded policy uses or the order is not the criterion at all.",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The instruction says that among same-color cubes not within 40 px of the bin the oldest entry in `cubes` is picked. Here both blue entries [76, 148] (about 58 px from bin [118, 108]) and [113, 168] (about 60 px) are outside the 40 px set-aside, [76, 148] is the first entry, yet the recorded choice is the second entry [113, 168] (detected at [114, 169]). The instruction does not state the criterion that prefers [113, 168] over [76, 148] in this situation: it is not age order, not nearest to bin, not nearest to gripper, not smallest y. It should say what actually selects the next blue cube (e.g. largest y / farthest forward, or a different distance threshold or distance measure to the bin that sets aside [76, 148]), or the set-aside radius/measure needs to be defined so that [76, 148] counts as near-bin while [113, 168] does not.",
+   "missing": "nothing, unless the age order in `cubes` is itself wrong: the carried list put [76, 148] before [113, 168], and the recorded pick was [113, 168], so either the list order does not reflect the order the recorded policy uses or the order is not the criterion at all."
+  }
+ ]
+}

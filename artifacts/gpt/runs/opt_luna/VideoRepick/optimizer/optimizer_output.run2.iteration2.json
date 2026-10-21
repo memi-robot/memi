@@ -1,0 +1,98 @@
+{
+ "episodes": [
+  43,
+  50,
+  53,
+  73,
+  74
+ ],
+ "user_chars": 25200,
+ "usage": {
+  "prompt_tokens": 7561,
+  "completion_tokens": 705,
+  "total_tokens": 8266,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 5266,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "A recognized table-height release followed by a fully open retreat takes precedence over lingering held or airborne object reports.",
+    "modify_to": "Recognize a completed release using the sequence-based criterion in the completed_cycles policy prompt: descent in a grasp posture to table height followed by opening and a fully open retreat, without requiring a particular opening percentage at table height or a sampled instant of release. This sequence takes precedence over lingering held or airborne object reports."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_anchor",
+    "edits": [
+     {
+      "modify_from": "Follow continuous motion through exchanges, using direction and trajectory continuity rather than assigning identity by nearest endpoint or retaining the original grasp location. Resolve each exchange sequentially using continuous trajectories, carrying the tracked cube's identity and resulting location into the next exchange. Two exchanges return the target only when they swap the same pair of locations; exchanges with different partners can move it to a third location.",
+      "modify_to": "Follow the grasped cube through release. For each subsequent exchange, track both moving cubes through the intermediate samples until they settle, matching their trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: the same set of positions can remain occupied while the cubes exchange identities. Carry the target's resulting identity and location into the next exchange. If the next exchange involves its new location and a third location, follow it onward to that third location. Two exchanges return the target only when they swap the same pair of locations; do not retain the original grasp location as the target."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "completed_cycles",
+    "edits": [
+     {
+      "modify_from": "Increment the incoming count once if the interval shows the hand descending in a partially closed grasp posture to table height, opening there to release, and retreating to a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Opening may be sampled at approximately 88–99% before reaching full opening during retreat. This sequence is a completed put-down even if an object report still labels a cube held or airborne.",
+      "modify_to": "Increment the incoming count once when the interval shows descent in a partially closed grasp posture to table height followed by opening and retreat ending in a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Recognize completion from this sequence, not from a required finger-opening percentage at table height. The table-height sample may show partial opening or still show the grasp opening if release occurs between samples and the next sample shows a fully open hand beginning retreat. No sample at 88–99% opening is required. This completed-release sequence takes precedence over lingering reports that a cube is held or airborne."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "No annotation-rule changes or additional fields are needed: the annotated target identity and completed-cycle count remain correct. The numerical trajectory examples are not added as lookup rules; the whole-exchange tracking procedure covers them without episode-specific coordinates."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_anchor",
+    "edits": [
+     {
+      "modify_from": "Follow continuous motion through exchanges, using direction and trajectory continuity rather than assigning identity by nearest endpoint or retaining the original grasp location. Resolve each exchange sequentially using continuous trajectories, carrying the tracked cube's identity and resulting location into the next exchange. Two exchanges return the target only when they swap the same pair of locations; exchanges with different partners can move it to a third location.",
+      "modify_to": "Follow the grasped cube through release. For each subsequent exchange, track both moving cubes through the intermediate samples until they settle, matching their trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: the same set of positions can remain occupied while the cubes exchange identities. Carry the target's resulting identity and location into the next exchange. If the next exchange involves its new location and a third location, follow it onward to that third location. Two exchanges return the target only when they swap the same pair of locations; do not retain the original grasp location as the target."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "completed_cycles",
+    "edits": [
+     {
+      "modify_from": "Increment the incoming count once if the interval shows the hand descending in a partially closed grasp posture to table height, opening there to release, and retreating to a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Opening may be sampled at approximately 88–99% before reaching full opening during retreat. This sequence is a completed put-down even if an object report still labels a cube held or airborne.",
+      "modify_to": "Increment the incoming count once when the interval shows descent in a partially closed grasp posture to table height followed by opening and retreat ending in a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Recognize completion from this sequence, not from a required finger-opening percentage at table height. The table-height sample may show partial opening or still show the grasp opening if release occurs between samples and the next sample shows a fully open hand beginning retreat. No sample at 88–99% opening is required. This completed-release sequence takes precedence over lingering reports that a cube is held or airborne."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "A recognized table-height release followed by a fully open retreat takes precedence over lingering held or airborne object reports.",
+    "modify_to": "Recognize a completed release using the sequence-based criterion in the completed_cycles policy prompt: descent in a grasp posture to table height followed by opening and a fully open retreat, without requiring a particular opening percentage at table height or a sampled instant of release. This sequence takes precedence over lingering held or airborne object reports."
+   }
+  ],
+  "refused": "No annotation-rule changes or additional fields are needed: the annotated target identity and completed-cycle count remain correct. The numerical trajectory examples are not added as lookup rules; the whole-exchange tracking procedure covers them without episode-specific coordinates."
+ },
+ "not_applied": [],
+ "refused": "No annotation-rule changes or additional fields are needed: the annotated target identity and completed-cycle count remain correct. The numerical trajectory examples are not added as lookup rules; the whole-exchange tracking procedure covers them without episode-specific coordinates.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"target_anchor\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Follow continuous motion through exchanges, using direction and trajectory continuity rather than assigning identity by nearest endpoint or retaining the original grasp location. Resolve each exchange sequentially using continuous trajectories, carrying the tracked cube's identity and resulting location into the next exchange. Two exchanges return the target only when they swap the same pair of locations; exchanges with different partners can move it to a third location.\",\n          \"modify_to\": \"Follow the grasped cube through release. For each subsequent exchange, track both moving cubes through the intermediate samples until they settle, matching their trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: the same set of positions can remain occupied while the cubes exchange identities. Carry the target's resulting identity and location into the next exchange. If the next exchange involves its new location and a third location, follow it onward to that third location. Two exchanges return the target only when they swap the same pair of locations; do not retain the original grasp location as the target.\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"modify\",\n      \"field\": \"completed_cycles\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Increment the incoming count once if the interval shows the hand descending in a partially closed grasp posture to table height, opening there to release, and retreating to a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Opening may be sampled at approximately 88–99% before reaching full opening during retreat. This sequence is a completed put-down even if an object report still labels a cube held or airborne.\",\n          \"modify_to\": \"Increment the incoming count once when the interval shows descent in a partially closed grasp posture to table height followed by opening and retreat ending in a raised fully open posture. The first visible sample may already be partway through the descent; a raised starting sample is not required. Recognize completion from this sequence, not from a required finger-opening percentage at table height. The table-height sample may show partial opening or still show the grasp opening if release occurs between samples and the next sample shows a fully open hand beginning retreat. No sample at 88–99% opening is required. This completed-release sequence takes precedence over lingering reports that a cube is held or airborne.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"A recognized table-height release followed by a fully open retreat takes precedence over lingering held or airborne object reports.\",\n      \"modify_to\": \"Recognize a completed release using the sequence-based criterion in the completed_cycles execution plan: descent in a grasp posture to table height followed by opening and a fully open retreat, without requiring a particular opening percentage at table height or a sampled instant of release. This sequence takes precedence over lingering held or airborne object reports.\"\n    }\n  ],\n  \"refused\": \"No annotation-rule changes or additional fields are needed: the annotated target identity and completed-cycle count remain correct. The numerical trajectory examples are not added as lookup rules; the whole-exchange tracking procedure covers them without episode-specific coordinates.\"\n}"
+}

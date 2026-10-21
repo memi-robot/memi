@@ -1,0 +1,84 @@
+{
+ "task": "StopCube",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    14,
+    20,
+    25,
+    43,
+    99
+   ],
+   "verified_of_all": 0.9130434782608695,
+   "subgoal_verified": 0.9130434782608695
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    2,
+    38,
+    66,
+    93
+   ],
+   "verified_of_all": 0.9411764705882353,
+   "subgoal_verified": 0.9411764705882353
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    14,
+    26,
+    39,
+    80,
+    95
+   ],
+   "verified_of_all": 0.9130434782608695,
+   "subgoal_verified": 0.9565217391304348
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    66,
+    68,
+    72,
+    77,
+    83
+   ],
+   "verified_of_all": 0.9615384615384616,
+   "subgoal_verified": 0.9615384615384616
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    34,
+    36,
+    41,
+    60,
+    88
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "stage": "optimized",
+ "fields": [
+  {
+   "name": "crossings",
+   "description": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+  },
+  {
+   "name": "first_cross_t",
+   "description": "The timestep at which the cube first crossed the target line, computed from the last observed frame on the starting side and the first observed frame on the other side (if the flip lies between the scene of one decision step and the first frame of the next, the earlier frame is that scene, as recorded in the carried-in scene_frame). With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (that frame's own target_x) and d2 likewise at the later frame: t_cross = t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. No extrapolation is ever used. Empty at every step before the one whose shown frames contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30"
+  },
+  {
+   "name": "scene_frame",
+   "description": "The scene at this decision step (the last frame shown), as the ordered list [t, cube_x, target_x]: its timestep, the cube's x-coordinate and the target's x-coordinate in that frame. Overwritten at every step; at step #1 it is read from the t=0 frame. The cube's side of the target line in that frame is the sign of cube_x minus target_x (smaller_x if negative, larger_x if positive), and the frame it records is the earlier member of the pair whenever the first crossing falls between the scene of one decision step and the first frame of the next. e.g. [56, 104, 117]"
+  }
+ ]
+}

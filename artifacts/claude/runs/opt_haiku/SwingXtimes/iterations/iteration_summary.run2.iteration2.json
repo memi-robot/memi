@@ -1,0 +1,134 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "visits_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  6,
+  31,
+  48,
+  58,
+  64
+ ],
+ "scored": 35,
+ "failed": 4,
+ "subgoal_wrong": 2,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.9428571428571428,
+ "memory_verified": 0.9428571428571428,
+ "reads": {
+  "visits_done": 34
+ },
+ "field_errors": {
+  "visits_done": {
+   "in": 2,
+   "sole": 2
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.11428571428571428,
+ "verified_of_all": 0.8857142857142857,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 0,
+ "decisions": 35,
+ "critique": "field visits_done, ANNOTATOR PROMPT\n  Situation: on a back-and-forth step, the arrival highlight was already present in the earliest execution frame shown for that step (the target lit up right after the previous decision), so the rule's clause 'the target was plain in the first execution frame of the step' said not to increment, while the value I wrote (correctly) was the incremented count. This breaks PREDICTABILITY: the value the rule describes and the value needed are two different answers. Change: drop every reference to earlier frames of the step. visits_done is the number of completed arrivals of the held cube over a target. It is 0 at the first step (written explicitly, never left blank) and through the pick-up step. It increases by exactly 1 at every decision step whose FINAL scene (the scene at the decision step itself) shows the cube 'is held in the gripper' AND exactly one target listed as 'highlighted target' whose x lies within about 15 of the gripper's x (the target directly under the gripper). Each such step is one arrival, because every 'move to the top of the target' subgoal ends with exactly one new target under the cube. It does not change at the pick-up step (cube held, no highlighted target), at the put-down step (final scene no longer says 'is held', fingers 100% open), or at the press-button step. Where both targets appear highlighted in a mid-step frame, only the final scene counts. e.g. 3\n\nfield visits_done, POLICY PROMPT\n  Two failures. First: at the very first decision step, with empty carried-in memory, the policy wrote nothing instead of 0 (PREDICTABILITY). Second: on a back-and-forth step where every frame shown already listed the highlighted target under the held cube, the clause 'add only if the first execution frame showed it plain' told the policy not to add, so it kept the stale count (PREDICTABILITY). Replace with: If the carried-in memory is empty, write visits_done=0 explicitly as this step's memory. Otherwise carry the value in and look ONLY at the last frame shown (the scene at this decision step). Add 1 if and only if that last frame says the cube 'is held in the gripper' AND lists a 'highlighted target' whose x is within about 15 of the gripper's x. Do not look at earlier frames of the step for this test; whether the highlight was already present earlier in the step is irrelevant, one such final scene is one arrival. Do not add when the last frame shows the cube held with no highlighted target (that is the pick-up step), or when the last frame does not say 'is held' (put-down done, or button step). Compute this before choosing the subgoal; the subgoal rules read the updated value. e.g. 3\n\nthe policy prompt for subgoal\n  Two steps went wrong because the policy judged whether the cube was held from the earlier execution frames rather than from the scene at the decision step. In one, the frames showed the pick-up being carried out (cube on the table, fingers open) and the final scene showed the cube held and raised; the policy repeated A instead of B at the right-side target. In the other, the frames showed the cube held over the highlighted left target and the final scene showed it released on the table with fingers 100% open and the gripper raised; the policy chose C again instead of D, with visits_done already at the required count. Both break SUFFICIENCY only because the rules did not say which frame to read. Add a rule before rules 1-4: every test of cube state ('held' or 'not held'), finger opening, gripper height and target highlighting is applied to the LAST frame shown, the scene at the decision step. The earlier frames are the previous command being executed and are already finished; they never decide the subgoal. 'Held' means the last frame literally says 'is held in the gripper'; if it omits that phrase and the fingers are 100% open, the cube is on the table. Also replace rule 2's memory wording to match the new memory instruction: the increment is read from the final scene alone (held cube plus highlighted target under the gripper), not from any first-frame comparison. Rules 1-4 otherwise stand, including: after pick-up with no highlighted target, B at the right-side (smaller x) target; while held with visits_done below REQ, B at the target that is not highlighted; held with visits_done at or above REQ, C; not held with visits_done at or above REQ, D.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Two steps went wrong because the policy judged whether the cube was held from the earlier execution frames rather than from the scene at the decision step. In one, the frames showed the pick-up being carried out (cube on the table, fingers open) and the final scene showed the cube held and raised; the policy repeated A instead of B at the right-side target. In the other, the frames showed the cube held over the highlighted left target and the final scene showed it released on the table with fingers 100% open and the gripper raised; the policy chose C again instead of D, with visits_done already at the required count. Both break SUFFICIENCY only because the rules did not say which frame to read. Add a rule before rules 1-4: every test of cube state ('held' or 'not held'), finger opening, gripper height and target highlighting is applied to the LAST frame shown, the scene at the decision step. The earlier frames are the previous command being executed and are already finished; they never decide the subgoal. 'Held' means the last frame literally says 'is held in the gripper'; if it omits that phrase and the fingers are 100% open, the cube is on the table. Also replace rule 2's memory wording to match the new memory instruction: the increment is read from the final scene alone (held cube plus highlighted target under the gripper), not from any first-frame comparison. Rules 1-4 otherwise stand, including: after pick-up with no highlighted target, B at the right-side (smaller x) target; while held with visits_done below REQ, B at the target that is not highlighted; held with visits_done at or above REQ, C; not held with visits_done at or above REQ, D.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "visits_done",
+    "description": "Two failures. First: at the very first decision step, with empty carried-in memory, the policy wrote nothing instead of 0 (PREDICTABILITY). Second: on a back-and-forth step where every frame shown already listed the highlighted target under the held cube, the clause 'add only if the first execution frame showed it plain' told the policy not to add, so it kept the stale count (PREDICTABILITY). Replace with: If the carried-in memory is empty, write visits_done=0 explicitly as this step's memory. Otherwise carry the value in and look ONLY at the last frame shown (the scene at this decision step). Add 1 if and only if that last frame says the cube 'is held in the gripper' AND lists a 'highlighted target' whose x is within about 15 of the gripper's x. Do not look at earlier frames of the step for this test; whether the highlight was already present earlier in the step is irrelevant, one such final scene is one arrival. Do not add when the last frame shows the cube held with no highlighted target (that is the pick-up step), or when the last frame does not say 'is held' (put-down done, or button step). Compute this before choosing the subgoal; the subgoal rules read the updated value. e.g. 3"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "visits_done",
+    "description": "Situation: on a back-and-forth step, the arrival highlight was already present in the earliest execution frame shown for that step (the target lit up right after the previous decision), so the rule's clause 'the target was plain in the first execution frame of the step' said not to increment, while the value I wrote (correctly) was the incremented count. This breaks PREDICTABILITY: the value the rule describes and the value needed are two different answers. Change: drop every reference to earlier frames of the step. visits_done is the number of completed arrivals of the held cube over a target. It is 0 at the first step (written explicitly, never left blank) and through the pick-up step. It increases by exactly 1 at every decision step whose FINAL scene (the scene at the decision step itself) shows the cube 'is held in the gripper' AND exactly one target listed as 'highlighted target' whose x lies within about 15 of the gripper's x (the target directly under the gripper). Each such step is one arrival, because every 'move to the top of the target' subgoal ends with exactly one new target under the cube. It does not change at the pick-up step (cube held, no highlighted target), at the put-down step (final scene no longer says 'is held', fingers 100% open), or at the press-button step. Where both targets appear highlighted in a mid-step frame, only the final scene counts. e.g. 3"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    31,
+    "exec",
+    0
+   ],
+   "memory_in": "visits_done=",
+   "answered": "A: pick up the cube at [87, 82]",
+   "recorded": "A: pick up the cube at [88, 83]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say that on the first step, where the carried-in memory is empty, visits_done must be explicitly written as 0 (listed as a memory update), rather than left blank; it said 'start at 0' but did not say to emit the value 0 as a change from the empty carried-in field.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    31,
+    "exec",
+    132
+   ],
+   "memory_in": "visits_done=0",
+   "answered": "B: move to the top of the target at [93, 192]",
+   "recorded": "B: move to the top of the target at [94, 193]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The increment condition required the first execution frame shown to list the reached position only as a plain target or no highlighted target, but at this step the frames shown (t=128, t=132) all already list 'highlighted target at [80, 81]' under the held red cube, so the condition literally said 'do not add' while the recorded value is 1. The instruction should say: add 1 whenever the final scene of the step shows the cube held in the gripper AND a highlighted target listed (the target the cube now sits over), regardless of whether earlier frames of the same step already showed it highlighted; the only steps that do not add are the pick-up step (cube held, no highlighted target) and steps where the cube is on the table. Each B execution reaches exactly one new target, so one highlighted target under the held cube means one new visit.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    64,
+    "exec",
+    156
+   ],
+   "memory_in": "visits_done=0",
+   "answered": "A: pick up the cube at [47, 121]",
+   "recorded": "B: move to the top of the target at [83, 93]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It did not say that the cube's state (held vs on the table) is to be read from the LAST observed step (t=156, 'green cube at [16, 118] is held in the gripper', gripper raised to height 0.149), not from the earlier execution frames where the cube still sat on the table with fingers open. Those earlier frames are the pick-up being carried out, so when the final scene lists the cube as held, subgoal A is already complete and rule 2 applies: choose B pointing at the right-side target [82, 92] (smaller x) since no target is highlighted.",
+   "missing": ""
+  },
+  {
+   "step": [
+    64,
+    "exec",
+    280
+   ],
+   "memory_in": "visits_done=2",
+   "answered": "C: put the cube on the table",
+   "recorded": "D: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It did not say that the held/not-held test in rules 1-4 is applied to the LAST observed step (the scene at the decision step), not to the earlier execution frames. Here t=256 showed the cube 'held in the gripper' above the highlighted left target, but the final scene t=280 lists the cube at [67, 183] with no 'held' note, fingers 100% open, gripper raised to height 0.147 -- i.e. the put-down (C) already completed during this step. With visits_done=2 >= REQ=2 and the cube on the table in the final scene, rule 4 (D, press the button) applies, not rule 3. The instruction should state explicitly: 'held' means the latest frame says 'is held in the gripper'; if the latest frame omits that phrase and fingers are 100% open, the cube is on the table and the put-down is done, so choose D when visits_done >= REQ.",
+   "missing": ""
+  }
+ ]
+}

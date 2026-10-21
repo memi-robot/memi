@@ -1,0 +1,112 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "button_pressed",
+  "pending_cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  8,
+  18,
+  38,
+  58,
+  61
+ ],
+ "scored": 16,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.875,
+ "memory_verified": 1.0,
+ "reads": {
+  "button_pressed": 12,
+  "pending_cubes": 12
+ },
+ "field_errors": {
+  "button_pressed": {
+   "in": 0,
+   "sole": 0
+  },
+  "pending_cubes": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.125,
+ "verified_of_all": 0.875,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 16,
+ "critique": "field pending_cubes, ANNOTATOR PROMPT\n  The field must become an ORDERED list, not an unordered set, because the order is what settles which cube is picked next. Situation: after the button press the gripper hovers raised with two cubes sitting on highlighted areas; the recorded pick-up is sometimes the cube nearer the gripper and with the smaller y, and sometimes the farther one with the larger y, so neither distance nor position decides it. What decides it across the episodes is the order the cubes appear in the observation listing: objects are listed by colour name (blue, green, red, ...) and within one colour in the order given, and the recorded first pick is always the pending cube that comes earliest in that listing; the second pick is the remaining one. The failure is SUFFICIENCY, with the memory giving the policy no ordering to read. Change: `[]` at the first step as before. At the step whose execution steps show the highlighted areas, write one entry per highlighted area, holding the [y, x] of the cube nearest that area, but ORDER the entries by where those cubes stand in the observation listing of that step (earlier-listed colour first; within a colour, the earlier-listed instance first), not by the order the highlighted areas are listed. At every later step, as before, drop the one entry nearest the cube the execution steps show being picked up and keep the others in their existing order; a placing step leaves the list unchanged; an entry stays even while its cube is hidden by the arm. The first entry is always the next cube to pick. e.g. [[106, 104], [53, 101]] when the blue cube at [106, 104] and the green cube at [53, 101] both sit on highlighted areas (blue is listed before green).\n\nfield pending_cubes, POLICY PROMPT\n  Ordered list of [y, x] of cubes on highlighted areas not yet picked up; the FIRST entry is the next cube to pick. At the first decision step write `[]` explicitly. When the execution steps shown at this step list `highlighted area` positions, write one entry per highlighted area holding the [y, x] of the cube nearest that area, and order the entries by the position of those cubes in the observation listing of the same execution step: the cube whose colour is listed earlier (blue before green before red, i.e. the order the observation uses) comes first, and within one colour the instance listed earlier comes first. Do NOT order by the highlighted-area order, by distance to the gripper, or by y. Otherwise copy the carried list in its existing order, and if the execution steps show a pick-up (gripper descends onto a cube with open fingers, closes to about 46%, the cube is then marked held) remove the one entry nearest the position where the gripper closed, keeping the rest in order. A placing step (first frame already shows a cube held, later frames show fingers reopening and the cube resting on the table) leaves the list unchanged. Never remove an entry because its cube is currently unobserved; it can be hidden by the arm. Example: highlighted areas at [57, 102] and [110, 105], observation lists blue cube at [106, 104] then green cube at [53, 101] -> write [[106, 104], [53, 101]]. e.g. [[106, 104], [53, 101]]\n\nthe policy prompt for subgoal\n  Rule 3 sent the policy wrong. It told the policy to point at the pending entry farthest from the gripper; with the gripper raised near the button just after the press and two pending cubes, the recorded pick is not the farthest one, and across the episodes it is also not always the nearest one nor the one with the smallest y. It is the pending cube that comes earliest in the observation listing (colour groups in listed order, instances in listed order within a colour), which is what the reordered pending_cubes now stores first. Replace the selection clause of rule 3 with: when the gripper is empty, button_pressed is yes and pending_cubes is non-empty, choose B at the FIRST entry of pending_cubes (as written at this step), pointing at that stored [y, x] or at the cube visible within a few pixels of it; if no cube is observed there it is hidden by the arm, still point at the stored [y, x]. Remove every mention of distance from the gripper and of 'farthest' in rules 3, 4 and 5; rule 4's fallback after a placing step and rule 5's catch-all must likewise say 'B at the first entry of pending_cubes'. Rules 1, 2 and the rest of 4 stand unchanged.\n\nrefused\n  Two steps, both at the moment just after the button press with two pending cubes, proposed that the next cube be the one nearest the gripper, equivalently the one with the smallest y or the first-listed highlighted area. That is not passed on: in another episode of this minibatch the recorded first pick, from the same raised position after the press, was the cube farther from the gripper, with the larger y, matching the second-listed highlighted area. The only ordering consistent with every episode is the order of the cubes in the observation listing, which is what the correction above adopts.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 3 sent the policy wrong. It told the policy to point at the pending entry farthest from the gripper; with the gripper raised near the button just after the press and two pending cubes, the recorded pick is not the farthest one, and across the episodes it is also not always the nearest one nor the one with the smallest y. It is the pending cube that comes earliest in the observation listing (colour groups in listed order, instances in listed order within a colour), which is what the reordered pending_cubes now stores first. Replace the selection clause of rule 3 with: when the gripper is empty, button_pressed is yes and pending_cubes is non-empty, choose B at the FIRST entry of pending_cubes (as written at this step), pointing at that stored [y, x] or at the cube visible within a few pixels of it; if no cube is observed there it is hidden by the arm, still point at the stored [y, x]. Remove every mention of distance from the gripper and of 'farthest' in rules 3, 4 and 5; rule 4's fallback after a placing step and rule 5's catch-all must likewise say 'B at the first entry of pending_cubes'. Rules 1, 2 and the rest of 4 stand unchanged.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pending_cubes",
+    "description": "Ordered list of [y, x] of cubes on highlighted areas not yet picked up; the FIRST entry is the next cube to pick. At the first decision step write `[]` explicitly. When the execution steps shown at this step list `highlighted area` positions, write one entry per highlighted area holding the [y, x] of the cube nearest that area, and order the entries by the position of those cubes in the observation listing of the same execution step: the cube whose colour is listed earlier (blue before green before red, i.e. the order the observation uses) comes first, and within one colour the instance listed earlier comes first. Do NOT order by the highlighted-area order, by distance to the gripper, or by y. Otherwise copy the carried list in its existing order, and if the execution steps show a pick-up (gripper descends onto a cube with open fingers, closes to about 46%, the cube is then marked held) remove the one entry nearest the position where the gripper closed, keeping the rest in order. A placing step (first frame already shows a cube held, later frames show fingers reopening and the cube resting on the table) leaves the list unchanged. Never remove an entry because its cube is currently unobserved; it can be hidden by the arm. Example: highlighted areas at [57, 102] and [110, 105], observation lists blue cube at [106, 104] then green cube at [53, 101] -> write [[106, 104], [53, 101]]. e.g. [[106, 104], [53, 101]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pending_cubes",
+    "description": "The field must become an ORDERED list, not an unordered set, because the order is what settles which cube is picked next. Situation: after the button press the gripper hovers raised with two cubes sitting on highlighted areas; the recorded pick-up is sometimes the cube nearer the gripper and with the smaller y, and sometimes the farther one with the larger y, so neither distance nor position decides it. What decides it across the episodes is the order the cubes appear in the observation listing: objects are listed by colour name (blue, green, red, ...) and within one colour in the order given, and the recorded first pick is always the pending cube that comes earliest in that listing; the second pick is the remaining one. The failure is SUFFICIENCY, with the memory giving the policy no ordering to read. Change: `[]` at the first step as before. At the step whose execution steps show the highlighted areas, write one entry per highlighted area, holding the [y, x] of the cube nearest that area, but ORDER the entries by where those cubes stand in the observation listing of that step (earlier-listed colour first; within a colour, the earlier-listed instance first), not by the order the highlighted areas are listed. At every later step, as before, drop the one entry nearest the cube the execution steps show being picked up and keep the others in their existing order; a placing step leaves the list unchanged; an entry stays even while its cube is hidden by the arm. The first entry is always the next cube to pick. e.g. [[106, 104], [53, 101]] when the blue cube at [106, 104] and the green cube at [53, 101] both sit on highlighted areas (blue is listed before green)."
+   }
+  ],
+  "refused": "Two steps, both at the moment just after the button press with two pending cubes, proposed that the next cube be the one nearest the gripper, equivalently the one with the smallest y or the first-listed highlighted area. That is not passed on: in another episode of this minibatch the recorded first pick, from the same raised position after the press, was the cube farther from the gripper, with the larger y, matching the second-listed highlighted area. The only ordering consistent with every episode is the order of the cubes in the observation listing, which is what the correction above adopts."
+ },
+ "critiques": [
+  {
+   "step": [
+    18,
+    "exec",
+    109
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [97, 152]",
+   "recorded": "B: pick up the highlighted cube at [63, 140]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3 told me to point at the pending entry FARTHEST from the gripper's [y, x] (gripper at [39, 99]: [62, 139] is ~46 px away, [97, 152] is ~79 px away, so I chose [97, 152]). The recorded answer picks [63, 140], the NEAREST pending cube to the gripper (equivalently the first-listed highlighted area / the one with the smallest y, closest to the robot). The instruction should say to pick the pending entry closest to the gripper's current [y, x] (or the backward-most one, smallest y), not the farthest.",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    107
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [113, 120]",
+   "recorded": "B: pick up the highlighted cube at [83, 126]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3 told me to point at the pending entry FARTHEST from the gripper's [y, x] ([36, 70] here), which selects [113, 120] (distance ~92 vs ~71). The recorded answer picks [83, 126], the entry NEAREST the gripper (equivalently the first-listed highlighted area, the one with the smaller y, i.e. closest to the robot). The instruction should say: choose the pending entry nearest the gripper's current [y, x] (the one with the smallest y / first listed), not the farthest.",
+   "missing": ""
+  }
+ ]
+}

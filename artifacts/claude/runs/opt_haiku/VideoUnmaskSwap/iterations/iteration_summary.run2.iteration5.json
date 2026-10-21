@@ -1,0 +1,121 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "target_containers",
+  "put_down_count"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  0,
+  2,
+  17,
+  60,
+  75
+ ],
+ "scored": 9,
+ "failed": 3,
+ "subgoal_wrong": 3,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.6666666666666666,
+ "memory_verified": 0.6666666666666666,
+ "reads": {
+  "target_containers": 2,
+  "put_down_count": 2
+ },
+ "field_errors": {
+  "target_containers": {
+   "in": 3,
+   "sole": 3
+  },
+  "put_down_count": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3333333333333333,
+ "verified_of_all": 0.6666666666666666,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 3,
+ "decisions": 9,
+ "critique": "field target_containers, POLICY PROMPT\n  Situation: at the first decision step of every failed episode the demonstration showed the named cube covered, then two containers swinging through intermediate positions that match no slot (e.g. the pair that had rested at [71, 123] and [103, 159] is listed at [73, 140] and [101, 139], then at [86, 158] and [88, 121]) and then all containers resting at slots again. The annotation, following the rule, swapped the two emptied slots and wrote the named container's new slot (e.g. [103, 159]). The policy instead wrote the container that first sat over the cube ([73, 123]), i.e. it skipped the shuffle entirely; in the two-cube episode it did this for both cubes even though two different pairs each shuffled once. This breaks PREDICTABILITY: the written value and the annotated value are two answers to one field at one step, and the subgoal then fails SUFFICIENCY because the point goes to the wrong container. The policy itself said the procedure was present but it did not apply it, so the fix is to make the procedure impossible to skip. Change: keep the same field and meaning (ordered list of the named containers' slots after all shuffles, slot coordinates taken from the last demonstration frame, written once at the first decision step and copied unchanged afterwards), but (a) require the policy to actually write out, before the entry, four things: the frame-by-frame labels for EVERY container frame after the first ('all at slots' or 'slots P and Q empty'), the numbered list of runs/shuffles, the slot table after each swap, and the parity check; the entry may only be written after these four appear; (b) state plainly that a frame in which two listed positions match no slot (containers in mid-swing, at intermediate positions) is an 'empty' frame for the two slots that nobody occupies in it, that a block of one or more consecutive such frames is one shuffle even when it is the only shuffle in the video, and that a position within a few pixels of a slot (e.g. [98, 153] for [99, 155]) counts as at that slot; (c) state the trap directly: when a run empties the named container's own slot, the named container ends at the OTHER slot of that pair, so the entry must differ from the container that first sat nearest the cube whenever its slot was emptied an odd number of times, and in these demonstrations there is always at least one shuffle, so an answer that finds zero shuffles or that returns every named cube to its first container must be recounted; (d) note that listed container positions carry no identity, so a container can only be followed through slots, never by matching positions in the last frame to positions in the first; (e) add a third worked example in which two cubes are named and two different pairs each shuffle once so that BOTH named containers move: green cube at [92, 156] and blue cube at [125, 117]; first container frame lists [80, 121], [89, 157], [123, 116], [131, 154]; green's slot is [89, 157], blue's is [123, 116]; frames 80-96 list two positions matching no slot while [123, 116] and [131, 154] stay, so 'slots [80, 121] and [89, 157] empty'; frame 112 'all at slots'; frames 128-160 'slots [123, 116] and [131, 154] empty'; last frame 'all at slots'. Shuffle 1 swaps [80, 121] and [89, 157]: green now at [80, 121]. Shuffle 2 swaps [123, 116] and [131, 154]: blue now at [131, 154]. Last frame lists those slots as [82, 121] and [131, 154]; entry [[82, 121], [131, 154]]. Example value: [[103, 159]].\n\nthe policy prompt for subgoal\n  No transition rule sent the policy wrong; every wrong subgoal came from a wrong target_containers value written at the same step. One clarification to rule (2) and the opening sentence: the point selects a container, so it should be the container's listed position in the current scene, and a point within a few pixels of that position (the recorded demonstrations typically sit three to five pixels toward smaller y, i.e. toward the robot's side of the container) selects the same container; the policy need not reproduce that offset and must not treat a few pixels' difference as a reason to doubt its container choice. Rule (2) should also say explicitly that at the first decision step the entry used is the one the policy has just computed in its own memory answer for target_containers, so the point and the memory must name the same container.\n\nrefused\n  Two first-step reports said the recorded point differs by a few pixels from the container's listed position and asked whether some offset is required. Not passed on as a fault: the point only has to select the right container, every recorded point in the minibatch is within five pixels of a listed container, and the policy's errors at those steps were on which container, not on the pixel offset. It is answered only as a clarification in the subgoal instruction, not as a change to the memory fields or the annotator prompt. The annotator prompt itself is unchanged: the annotated values follow it exactly and match the recorded subgoals in every episode, so the failures are all in the policy's application of the memory procedure.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No transition rule sent the policy wrong; every wrong subgoal came from a wrong target_containers value written at the same step. One clarification to rule (2) and the opening sentence: the point selects a container, so it should be the container's listed position in the current scene, and a point within a few pixels of that position (the recorded demonstrations typically sit three to five pixels toward smaller y, i.e. toward the robot's side of the container) selects the same container; the policy need not reproduce that offset and must not treat a few pixels' difference as a reason to doubt its container choice. Rule (2) should also say explicitly that at the first decision step the entry used is the one the policy has just computed in its own memory answer for target_containers, so the point and the memory must name the same container.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_containers",
+    "description": "Situation: at the first decision step of every failed episode the demonstration showed the named cube covered, then two containers swinging through intermediate positions that match no slot (e.g. the pair that had rested at [71, 123] and [103, 159] is listed at [73, 140] and [101, 139], then at [86, 158] and [88, 121]) and then all containers resting at slots again. The annotation, following the rule, swapped the two emptied slots and wrote the named container's new slot (e.g. [103, 159]). The policy instead wrote the container that first sat over the cube ([73, 123]), i.e. it skipped the shuffle entirely; in the two-cube episode it did this for both cubes even though two different pairs each shuffled once. This breaks PREDICTABILITY: the written value and the annotated value are two answers to one field at one step, and the subgoal then fails SUFFICIENCY because the point goes to the wrong container. The policy itself said the procedure was present but it did not apply it, so the fix is to make the procedure impossible to skip. Change: keep the same field and meaning (ordered list of the named containers' slots after all shuffles, slot coordinates taken from the last demonstration frame, written once at the first decision step and copied unchanged afterwards), but (a) require the policy to actually write out, before the entry, four things: the frame-by-frame labels for EVERY container frame after the first ('all at slots' or 'slots P and Q empty'), the numbered list of runs/shuffles, the slot table after each swap, and the parity check; the entry may only be written after these four appear; (b) state plainly that a frame in which two listed positions match no slot (containers in mid-swing, at intermediate positions) is an 'empty' frame for the two slots that nobody occupies in it, that a block of one or more consecutive such frames is one shuffle even when it is the only shuffle in the video, and that a position within a few pixels of a slot (e.g. [98, 153] for [99, 155]) counts as at that slot; (c) state the trap directly: when a run empties the named container's own slot, the named container ends at the OTHER slot of that pair, so the entry must differ from the container that first sat nearest the cube whenever its slot was emptied an odd number of times, and in these demonstrations there is always at least one shuffle, so an answer that finds zero shuffles or that returns every named cube to its first container must be recounted; (d) note that listed container positions carry no identity, so a container can only be followed through slots, never by matching positions in the last frame to positions in the first; (e) add a third worked example in which two cubes are named and two different pairs each shuffle once so that BOTH named containers move: green cube at [92, 156] and blue cube at [125, 117]; first container frame lists [80, 121], [89, 157], [123, 116], [131, 154]; green's slot is [89, 157], blue's is [123, 116]; frames 80-96 list two positions matching no slot while [123, 116] and [131, 154] stay, so 'slots [80, 121] and [89, 157] empty'; frame 112 'all at slots'; frames 128-160 'slots [123, 116] and [131, 154] empty'; last frame 'all at slots'. Shuffle 1 swaps [80, 121] and [89, 157]: green now at [80, 121]. Shuffle 2 swaps [123, 116] and [131, 154]: blue now at [131, 154]. Last frame lists those slots as [82, 121] and [131, 154]; entry [[82, 121], [131, 154]]. Example value: [[103, 159]]."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "Two first-step reports said the recorded point differs by a few pixels from the container's listed position and asked whether some offset is required. Not passed on as a fault: the point only has to select the right container, every recorded point in the minibatch is within five pixels of a listed container, and the policy's errors at those steps were on which container, not on the pixel offset. It is answered only as a clarification in the subgoal instruction, not as a change to the memory fields or the annotator prompt. The annotator prompt itself is unchanged: the annotated values follow it exactly and match the recorded subgoals in every episode, so the failures are all in the policy's application of the memory procedure."
+ },
+ "critiques": [
+  {
+   "step": [
+    2,
+    "exec",
+    114
+   ],
+   "memory_in": "target_containers=; put_down_count=",
+   "answered": "A: pick up the container at [73, 123]",
+   "recorded": "A: pick up the container at [101, 161]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "An explicit statement that a frame like t=80 ('container at [73, 140], [101, 139], [104, 86], [139, 117]'), where two containers appear at intermediate positions not matching any slot, must be labelled 'slots [71, 123] and [103, 159] empty' and counts as a shuffle of exactly those two slots, so the green cube's container (slot [71, 123]) ends at [103, 159]; the procedure let me treat the all-at-slots closing frames t=112-114 as 'nothing moved' and write the original slot [73, 123].",
+   "missing_from_policy_prompt_for_subgoal": "nothing (the recorded point [101, 161] differs slightly from the listed position [103, 159] that the instruction says to write; either the instruction should say to use the entry itself or the recorded answer is off by a couple of pixels)",
+   "missing": ""
+  },
+  {
+   "step": [
+    60,
+    "exec",
+    114
+   ],
+   "memory_in": "target_containers=; put_down_count=",
+   "answered": "A: pick up the container at [111, 111]",
+   "recorded": "A: pick up the container at [96, 157]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The procedure was present but I failed to apply it: at t=80 and t=96 the containers listed at [99, 117]/[113, 150] and [91, 137]/[121, 130] match no slot, so slots [99, 155] and [111, 111] were empty for that run, which is one shuffle swapping the red cube's container (slot [111, 111]) with the other, landing it at [99, 155]. The instruction should state plainly that a frame in which two listed positions match no slot (containers in mid-swing) is an 'empty' frame for the two unoccupied slots, that a single such run of frames is still one shuffle even when only one shuffle occurs, and that a container re-listed within a few pixels of a slot (e.g. [98, 153] for [99, 155]) counts as 'at slot'. It should also forbid writing the cube's original container slot when any run of empty frames includes that slot.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    75,
+    "exec",
+    168
+   ],
+   "memory_in": "target_containers=; put_down_count=",
+   "answered": "A: pick up the container at [88, 157]",
+   "recorded": "A: pick up the container at [77, 122]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The procedure was all there and I failed to apply it: at frames 80-96 slots [80,121] and [89,157] were empty (green's container swapped to [82,121]), and at frames 128-144 slots [123,116] and [131,154] were empty (blue's container swapped to [131,154]), yet I wrote each cube's original nearest container. The instruction could state the trap in this exact form: when a shuffle run involves the named container's own slot, the named container ends at the OTHER slot of that pair, and the entry must never equal the container that first sat nearest the cube unless an even number of shuffles touched its pair; a worked example where two different pairs each shuffle once and BOTH named containers move would have made this concrete.",
+   "missing_from_policy_prompt_for_subgoal": "The recorded point [77, 122] is not the container's listed position [82, 121]; the instruction says to write the listed position, so it should say whether the point is the listed container position or some offset (e.g. a few pixels toward smaller y) from it.",
+   "missing": ""
+  }
+ ]
+}

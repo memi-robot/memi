@@ -1,0 +1,31 @@
+{
+ "episodes": [
+  2,
+  4,
+  62,
+  83,
+  85
+ ],
+ "shown_steps": 21,
+ "system_chars": 9109,
+ "user_chars": 42894,
+ "model": "gpt-6-astra",
+ "usage": {
+  "prompt_tokens": 17191,
+  "completion_tokens": 1086,
+  "total_tokens": 18277,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 17188,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 112,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"name\": \"target_anchor\",\n      \"description\": \"A [y, x] point identifying the demonstrated cube at the start of execution. Identify the cube actually grasped in the demonstration, then follow its identity through the release and all subsequent demonstration movements, including exchanges with other cubes. Use its visible center in the initial execution scene, not its original grasp location. Keep this anchor unchanged throughout execution; small subsequent placement shifts do not change which cube it identifies. Initial anchors are [93, 140] in episode 2, [122, 119] in episode 4, [92, 156] in episode 62, [112, 116] in episode 83, and [112, 158] in episode 85. e.g. [122, 119]\"\n    },\n    {\n      \"name\": \"completed_cycles\",\n      \"description\": \"The number of completed execution pick-up-and-put-down cycles as of this decision step, excluding the demonstration. Initialize to 0. Increase by one at the decision step following a completed put-down command, never when merely selecting that command. Internal releases or retries during a pick-up command do not count. Values across steps are [0, 0, 1, 1, 2] for episodes 2, 83, and 85, and [0, 0, 1] for episodes 4 and 62. e.g. 1\"\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"name\": \"target_anchor\",\n      \"description\": \"With empty memory, inspect the demonstration to identify the cube grasped when the fingers close at table height and the hand lifts. Track that same cube through the rest of the demonstration and locate it in the initial execution scene. Follow continuous motion through exchanges, using direction and trajectory continuity rather than assigning identity by nearest endpoint or retaining the original grasp location. A single exchange moves the target to the other endpoint; two exchanges return it. Store its initial execution visible center as [y, x]. In the supplied demonstrations this gives [93, 140], [122, 119], [92, 156], [112, 116], and [112, 158] for episodes 2, 4, 62, 83, and 85 respectively. At every later step copy the incoming anchor unchanged. e.g. [122, 119]\"\n    },\n    {\n      \"name\": \"completed_cycles\",\n      \"description\": \"With empty memory write 0, ignoring demonstration actions. Otherwise inspect the execution interval shown at this step. Increment the incoming count once if the interval shows the hand starting in its raised grasp posture with partially closed fingers, descending to table height, opening to release, and retreating to a raised fully open posture. This is a completed put-down. Leave the count unchanged for an interval ending in the raised partially closed grasp posture, even if that pick-up interval contains unsuccessful closures, incidental lifts, releases, or retries. Do not increment for the command being chosen now. e.g. 1\"\n    }\n  ],\n  \"subgoal_execution_plan\": \"Read the goal each time: the required number N of execution cycles is 2 for 'two times' and 1 for 'again'. Initialize or update memory from the currently shown interval before applying these rules. An episode starts with A: select the cube identified by target_anchor in the initial execution scene. Later, if the interval ends with the raised hand in a grasp posture, choose B, regardless of completed_cycles. In these recordings approximately 46% finger opening after closing at table height and raising is sufficient evidence of that posture; an explicit held-object label is not required, and a cube center still reported on the table does not override it. If the hand is raised and fully open after a release, choose A when completed_cycles < N and C when completed_cycles >= N. Thus a completed A leads to B; a completed B leads to another A only if more cycles remain, otherwise to C. For every A, point at the current visible center of the same cube identified by target_anchor, allowing small shifts after placement; use the release trajectory in the current interval to disambiguate nearby cubes. Do not point at the raised wrist or an airborne cube centroid as a table grasp location. B and C require no point. If observations are ambiguous or do not fit a rule, prioritize B when the final hand appears to retain an object; otherwise choose C only if the required cycle count has been reached, and choose A at the best visible match to target_anchor if it has not. Never count demonstration cycles or internal pick-up retries toward N.\"\n}"
+}

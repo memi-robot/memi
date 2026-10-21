@@ -1,0 +1,78 @@
+{
+ "task": "RouteStick",
+ "run": 2,
+ "ablate": "predictability",
+ "iterations": 5,
+ "revisions": 5,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    44,
+    76,
+    79,
+    85,
+    86
+   ],
+   "verified_of_all": 0.75,
+   "subgoal_verified": 0.85
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    2,
+    32,
+    40,
+    65,
+    85
+   ],
+   "verified_of_all": 0.75,
+   "subgoal_verified": 0.9375
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    2,
+    48,
+    75,
+    79,
+    80
+   ],
+   "verified_of_all": 0.7619047619047619,
+   "subgoal_verified": 0.9047619047619048
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    8,
+    17,
+    18,
+    40,
+    70
+   ],
+   "verified_of_all": 0.6875,
+   "subgoal_verified": 0.9375
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    10,
+    22,
+    38,
+    73
+   ],
+   "verified_of_all": 0.7368421052631579,
+   "subgoal_verified": 0.7894736842105263
+  }
+ ],
+ "policy_prompt_for_subgoal": "When demonstration frames are present and carried memory is empty, decode the complete demonstrated route according to the policy prompt for memory. Select its first letter as the initial command and write the complete route as remaining_path without removing that letter. The visible demonstration determines this command, not the initial location alone. When carried memory is present, update remaining_path according to the policy prompt for memory, removing the one traversal completed in the intervening execution before selecting the new leading letter. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point.  Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. Use a location-based fallback only if the demonstrated route is exhausted but a menu answer is nevertheless required, or if the demonstration supplies insufficient evidence to decode the next traversal. Do not use it instead of a traversal supported by the visible demonstration. If fallback is necessary, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is not an additional demonstrated move.",
+ "fields": [
+  {
+   "name": "remaining_path",
+   "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+  }
+ ],
+ "stage": "optimized"
+}

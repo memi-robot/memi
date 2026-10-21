@@ -1,0 +1,139 @@
+{
+ "episodes": [
+  34,
+  36,
+  41,
+  60,
+  88
+ ],
+ "user_chars": 63533,
+ "usage": {
+  "prompt_tokens": 24728,
+  "completion_tokens": 1138,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 24724
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "cube_x is always the SECOND number of the cube's [y, x] position. (1)",
+    "modify_to": "cube_x is always the SECOND number of the cube's [y, x] position, and target_x the SECOND number of the target's [y, x] position; the first numbers are y and are never compared. (1)"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "cube_side",
+    "edits": [
+     {
+      "modify_from": "'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. Overwrite it every step. e.g. larger_x",
+      "modify_to": "'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. cube_x is the SECOND number of the cube's [y, x] position and target_x the SECOND number of the target's [y, x] position; the first numbers are y and are never used here. Worked example: cube at [131, 61] and target at [107, 145] -> compare 61 with 145 -> 61 < 145 -> smaller_x. Overwrite it every step; at the first step read it from the single frame shown. e.g. smaller_x"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "crossings",
+    "edits": [
+     {
+      "modify_from": "then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown",
+      "modify_to": "then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x, where cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions) of each frame shown"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "cube_side",
+    "edits": [
+     {
+      "modify_from": "'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. At step #1 it is read from the t=0 frame. e.g. larger_x",
+      "modify_to": "'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions (the first numbers are y and are never used here): a cube at [131, 61] and a target at [107, 145] give 61 and 145, and 61 < 145 -> 'smaller_x'. At step #1 it is read from the t=0 frame. e.g. smaller_x"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "crossings",
+    "edits": [
+     {
+      "modify_from": "(a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips;",
+      "modify_to": "(cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions; a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips;"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing in the report is refused. The only change is to state in the cube_side entries, on both sides, that the comparison uses the second (x) numbers of the [y, x] positions, with the worked example the report gives; the same clause is added to crossings, which derives sides the same way, and to the subgoal instruction's side-flip test, so every place that compares cube and target positions says the same thing. No thresholds, fields or transition conditions from rounds 1 to 4 are touched."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "cube_side",
+    "edits": [
+     {
+      "modify_from": "'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. At step #1 it is read from the t=0 frame. e.g. larger_x",
+      "modify_to": "'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions (the first numbers are y and are never used here): a cube at [131, 61] and a target at [107, 145] give 61 and 145, and 61 < 145 -> 'smaller_x'. At step #1 it is read from the t=0 frame. e.g. smaller_x"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "crossings",
+    "edits": [
+     {
+      "modify_from": "(a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips;",
+      "modify_to": "(cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions; a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips;"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "cube_side",
+    "edits": [
+     {
+      "modify_from": "'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. Overwrite it every step. e.g. larger_x",
+      "modify_to": "'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. cube_x is the SECOND number of the cube's [y, x] position and target_x the SECOND number of the target's [y, x] position; the first numbers are y and are never used here. Worked example: cube at [131, 61] and target at [107, 145] -> compare 61 with 145 -> 61 < 145 -> smaller_x. Overwrite it every step; at the first step read it from the single frame shown. e.g. smaller_x"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "crossings",
+    "edits": [
+     {
+      "modify_from": "then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown",
+      "modify_to": "then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x, where cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions) of each frame shown"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "cube_x is always the SECOND number of the cube's [y, x] position. (1)",
+    "modify_to": "cube_x is always the SECOND number of the cube's [y, x] position, and target_x the SECOND number of the target's [y, x] position; the first numbers are y and are never compared. (1)"
+   }
+  ],
+  "refused": "Nothing in the report is refused. The only change is to state in the cube_side entries, on both sides, that the comparison uses the second (x) numbers of the [y, x] positions, with the worked example the report gives; the same clause is added to crossings, which derives sides the same way, and to the subgoal instruction's side-flip test, so every place that compares cube and target positions says the same thing. No thresholds, fields or transition conditions from rounds 1 to 4 are touched."
+ },
+ "not_applied": [],
+ "refused": "Nothing in the report is refused. The only change is to state in the cube_side entries, on both sides, that the comparison uses the second (x) numbers of the [y, x] positions, with the worked example the report gives; the same clause is added to crossings, which derives sides the same way, and to the subgoal instruction's side-flip test, so every place that compares cube and target positions says the same thing. No thresholds, fields or transition conditions from rounds 1 to 4 are touched.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"cube_side\", \"edits\": [{\"modify_from\": \"'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. At step #1 it is read from the t=0 frame. e.g. larger_x\", \"modify_to\": \"'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions (the first numbers are y and are never used here): a cube at [131, 61] and a target at [107, 145] give 61 and 145, and 61 < 145 -> 'smaller_x'. At step #1 it is read from the t=0 frame. e.g. smaller_x\"}]}, {\"kind\": \"modify\", \"field\": \"crossings\", \"edits\": [{\"modify_from\": \"(a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips;\", \"modify_to\": \"(cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions; a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips;\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"cube_side\", \"edits\": [{\"modify_from\": \"'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. Overwrite it every step. e.g. larger_x\", \"modify_to\": \"'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. cube_x is the SECOND number of the cube's [y, x] position and target_x the SECOND number of the target's [y, x] position; the first numbers are y and are never used here. Worked example: cube at [131, 61] and target at [107, 145] -> compare 61 with 145 -> 61 < 145 -> smaller_x. Overwrite it every step; at the first step read it from the single frame shown. e.g. smaller_x\"}]}, {\"kind\": \"modify\", \"field\": \"crossings\", \"edits\": [{\"modify_from\": \"then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown\", \"modify_to\": \"then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x, where cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions) of each frame shown\"}]}], \"policy_prompt_for_subgoal\": [{\"modify_from\": \"cube_x is always the SECOND number of the cube's [y, x] position. (1)\", \"modify_to\": \"cube_x is always the SECOND number of the cube's [y, x] position, and target_x the SECOND number of the target's [y, x] position; the first numbers are y and are never compared. (1)\"}], \"refused\": \"Nothing in the report is refused. The only change is to state in the cube_side entries, on both sides, that the comparison uses the second (x) numbers of the [y, x] positions, with the worked example the report gives; the same clause is added to crossings, which derives sides the same way, and to the subgoal instruction's side-flip test, so every place that compares cube and target positions says the same thing. No thresholds, fields or transition conditions from rounds 1 to 4 are touched.\"}"
+}

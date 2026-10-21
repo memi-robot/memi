@@ -1,0 +1,81 @@
+{
+ "task": "ButtonUnmask",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 2,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    9,
+    43,
+    48,
+    60,
+    80
+   ],
+   "verified_of_all": 0.9166666666666666,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    15,
+    20,
+    47,
+    86,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    5,
+    21,
+    34,
+    38,
+    69
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    26,
+    46,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    7,
+    8,
+    38,
+    87,
+    90
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record goal_cube_positions: the [y, x] of each cube the goal names, in the goal's order. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target position is the entry of goal_cube_positions at index picks_done (first entry when picks_done is 0, second entry when picks_done is 1). Point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded position. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last entry of goal_cube_positions. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the entry of goal_cube_positions at index picks_done (the last entry if picks_done is beyond the list); if no containers are visible, choose A.",
+ "fields": [
+  {
+   "name": "picks_done",
+   "description": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1"
+  },
+  {
+   "name": "goal_cube_positions",
+   "description": "Ordered list of the [y, x] positions of the cubes the goal instruction names, in the goal's order. If this step shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal, take each cube it names in order, and write that cube's [y, x] as shown; skip cubes the goal does not name. Otherwise copy the carried-in list unchanged; never overwrite an entry from a cube briefly exposed under a lifted container. e.g. [[78, 157], [106, 105]] when the goal names blue then red."
+  }
+ ],
+ "stage": "optimized"
+}

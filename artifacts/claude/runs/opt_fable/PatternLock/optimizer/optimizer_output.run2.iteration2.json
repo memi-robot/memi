@@ -1,0 +1,111 @@
+{
+ "episodes": [
+  18,
+  41,
+  59,
+  63,
+  91
+ ],
+ "user_chars": 19495,
+ "usage": {
+  "prompt_tokens": 9833,
+  "completion_tokens": 2304,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 9829
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 789
+  }
+ },
+ "reasoning": "I'm weighing whether simply reverting to the round-1 indexing convention actually fixes anything, since both round 1 and round 2 each introduced one slip with different indexing choices. Reverting doesn't resolve the underlying ambiguity, so I'm looking for a formulation that states the relationship unambiguously rather than just flipping back to the prior convention.\n\nI want to give the same quantity two equivalent names — carried+1 and moves_done written at this step — and pin down an explicit per-step rule: at step k, the subgoal is plan[k-1], with the just-completed move matching plan[carried moves_done] and the subgoal being the next letter after it. That gives a concrete self-check anchor pulled straight from the report, plus a matching formatting rule for how the plan should be referenced consistently on both sides of the passage I'm about to edit.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step.",
+    "modify_to": "At every later decision step (memory carried in, no demonstration shown), first compute one number n = carried moves_done + 1. n is the count of planned moves finished so far, including the one the execution steps just showed, and it is also exactly the moves_done value written at this step; these are the same number, not two different ones, so never add one to n again. The execution steps just completed plan[n - 1]; the subgoal is plan[n] (0-based), the letter immediately after the one just completed. Self-check from what the step shows: the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule as the plan) must equal plan[n - 1]; the subgoal is the letter right after it in the plan, never plan[n - 1] again (unless the plan genuinely repeats it) and never plan[n + 1]. So the first step performs plan[0]; the second step (carried moves_done = 0, n = 1) performs plan[1]; the third step (carried moves_done = 1, n = 2) performs plan[2]; and so on: the k-th decision step of the episode performs plan[k - 1]."
+   },
+   {
+    "modify_from": "If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter.",
+    "modify_to": "If n (carried moves_done + 1) is at or beyond the length of the plan (nothing remains), repeat the last plan letter."
+   },
+   {
+    "modify_from": "In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A.",
+    "modify_to": "In any other unforeseen situation, pick plan[n] with n = carried moves_done + 1 if it exists (plan[0] when memory is empty), else A."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "plan",
+    "edits": [
+     {
+      "modify_from": "If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "modify_to": "If the step shows no demonstration, copy the carried-in plan character for character. Write the list exactly as a JSON array with double-quoted uppercase letters, square brackets, comma-space separated: [\"C\", \"E\", \"C\", \"G\"], never ['C', 'E', 'C', 'G'], never without brackets, never with spaces inside the quotes. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "plan",
+    "edits": [
+     {
+      "modify_from": "One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "modify_to": "One letter per newly highlighted target, in demo order. Always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The report asks to replace the indexing rule with 'subgoal is plan[moves_done] using the value just written at this step'. That is word for word the rule as initialized, which round 1 reported as the cause of its failure (the policy indexed by the carried value instead of the written one) and which round 1's edit replaced. Round 2's slip is the mirror of round 1's: each phrasing left two quantities that both read as 'moves_done + 1' or 'moves_done'. Reverting would undo round 1 and settle nothing. Instead the rule now names a single number n, states explicitly that n is both the carried value plus one and the value being written, forbids adding one to it again, anchors it to the observable just-completed move (the report's self-check, committed), and gives the position-based form plan[k - 1] at the k-th decision step. The format rule for plan is committed on both sides as asked."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "plan",
+    "edits": [
+     {
+      "modify_from": "One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "modify_to": "One letter per newly highlighted target, in demo order. Always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "plan",
+    "edits": [
+     {
+      "modify_from": "If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "modify_to": "If the step shows no demonstration, copy the carried-in plan character for character. Write the list exactly as a JSON array with double-quoted uppercase letters, square brackets, comma-space separated: [\"C\", \"E\", \"C\", \"G\"], never ['C', 'E', 'C', 'G'], never without brackets, never with spaces inside the quotes. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step.",
+    "modify_to": "At every later decision step (memory carried in, no demonstration shown), first compute one number n = carried moves_done + 1. n is the count of planned moves finished so far, including the one the execution steps just showed, and it is also exactly the moves_done value written at this step; these are the same number, not two different ones, so never add one to n again. The execution steps just completed plan[n - 1]; the subgoal is plan[n] (0-based), the letter immediately after the one just completed. Self-check from what the step shows: the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule as the plan) must equal plan[n - 1]; the subgoal is the letter right after it in the plan, never plan[n - 1] again (unless the plan genuinely repeats it) and never plan[n + 1]. So the first step performs plan[0]; the second step (carried moves_done = 0, n = 1) performs plan[1]; the third step (carried moves_done = 1, n = 2) performs plan[2]; and so on: the k-th decision step of the episode performs plan[k - 1]."
+   },
+   {
+    "modify_from": "If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter.",
+    "modify_to": "If n (carried moves_done + 1) is at or beyond the length of the plan (nothing remains), repeat the last plan letter."
+   },
+   {
+    "modify_from": "In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A.",
+    "modify_to": "In any other unforeseen situation, pick plan[n] with n = carried moves_done + 1 if it exists (plan[0] when memory is empty), else A."
+   }
+  ],
+  "refused": "The report asks to replace the indexing rule with 'subgoal is plan[moves_done] using the value just written at this step'. That is word for word the rule as initialized, which round 1 reported as the cause of its failure (the policy indexed by the carried value instead of the written one) and which round 1's edit replaced. Round 2's slip is the mirror of round 1's: each phrasing left two quantities that both read as 'moves_done + 1' or 'moves_done'. Reverting would undo round 1 and settle nothing. Instead the rule now names a single number n, states explicitly that n is both the carried value plus one and the value being written, forbids adding one to it again, anchors it to the observable just-completed move (the report's self-check, committed), and gives the position-based form plan[k - 1] at the k-th decision step. The format rule for plan is committed on both sides as asked."
+ },
+ "not_applied": [],
+ "refused": "The report asks to replace the indexing rule with 'subgoal is plan[moves_done] using the value just written at this step'. That is word for word the rule as initialized, which round 1 reported as the cause of its failure (the policy indexed by the carried value instead of the written one) and which round 1's edit replaced. Round 2's slip is the mirror of round 1's: each phrasing left two quantities that both read as 'moves_done + 1' or 'moves_done'. Reverting would undo round 1 and settle nothing. Instead the rule now names a single number n, states explicitly that n is both the carried value plus one and the value being written, forbids adding one to it again, anchors it to the observable just-completed move (the report's self-check, committed), and gives the position-based form plan[k - 1] at the k-th decision step. The format rule for plan is committed on both sides as asked.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"plan\", \"edits\": [{\"modify_from\": \"One letter per newly highlighted target, in demo order. e.g. [\\\"E\\\", \\\"D\\\", \\\"G\\\", \\\"H\\\"]\", \"modify_to\": \"One letter per newly highlighted target, in demo order. Always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping. e.g. [\\\"E\\\", \\\"D\\\", \\\"G\\\", \\\"H\\\"]\"}]}],\n \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"plan\", \"edits\": [{\"modify_from\": \"If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\\\"E\\\", \\\"D\\\", \\\"G\\\", \\\"H\\\"]\", \"modify_to\": \"If the step shows no demonstration, copy the carried-in plan character for character. Write the list exactly as a JSON array with double-quoted uppercase letters, square brackets, comma-space separated: [\\\"C\\\", \\\"E\\\", \\\"C\\\", \\\"G\\\"], never ['C', 'E', 'C', 'G'], never without brackets, never with spaces inside the quotes. e.g. [\\\"E\\\", \\\"D\\\", \\\"G\\\", \\\"H\\\"]\"}]}],\n \"policy_prompt_for_subgoal\": [{\"modify_from\": \"At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step.\", \"modify_to\": \"At every later decision step (memory carried in, no demonstration shown), first compute one number n = carried moves_done + 1. n is the count of planned moves finished so far, including the one the execution steps just showed, and it is also exactly the moves_done value written at this step; these are the same number, not two different ones, so never add one to n again. The execution steps just completed plan[n - 1]; the subgoal is plan[n] (0-based), the letter immediately after the one just completed. Self-check from what the step shows: the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule as the plan) must equal plan[n - 1]; the subgoal is the letter right after it in the plan, never plan[n - 1] again (unless the plan genuinely repeats it) and never plan[n + 1]. So the first step performs plan[0]; the second step (carried moves_done = 0, n = 1) performs plan[1]; the third step (carried moves_done = 1, n = 2) performs plan[2]; and so on: the k-th decision step of the episode performs plan[k - 1].\"}, {\"modify_from\": \"If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter.\", \"modify_to\": \"If n (carried moves_done + 1) is at or beyond the length of the plan (nothing remains), repeat the last plan letter.\"}, {\"modify_from\": \"In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A.\", \"modify_to\": \"In any other unforeseen situation, pick plan[n] with n = carried moves_done + 1 if it exists (plan[0] when memory is empty), else A.\"}],\n \"refused\": \"The report asks to replace the indexing rule with 'subgoal is plan[moves_done] using the value just written at this step'. That is word for word the rule as initialized, which round 1 reported as the cause of its failure (the policy indexed by the carried value instead of the written one) and which round 1's edit replaced. Round 2's slip is the mirror of round 1's: each phrasing left two quantities that both read as 'moves_done + 1' or 'moves_done'. Reverting would undo round 1 and settle nothing. Instead the rule now names a single number n, states explicitly that n is both the carried value plus one and the value being written, forbids adding one to it again, anchors it to the observable just-completed move (the report's self-check, committed), and gives the position-based form plan[k - 1] at the k-th decision step. The format rule for plan is committed on both sides as asked.\"}"
+}

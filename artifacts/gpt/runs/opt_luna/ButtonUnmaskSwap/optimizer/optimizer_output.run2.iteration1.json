@@ -1,0 +1,146 @@
+{
+ "episodes": [
+  1,
+  22,
+  25,
+  39,
+  85
+ ],
+ "user_chars": 18787,
+ "usage": {
+  "prompt_tokens": 6134,
+  "completion_tokens": 1067,
+  "total_tokens": 7201,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 6131,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Update memory from the observed interval before selecting the next command. Every episode starts with A. If buttons_completed is 0, choose A, press the first button. If it is 1, choose B, press the second button. Only when it is 2 may container pickup begin.",
+    "modify_to": "Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A."
+   },
+   {
+    "modify_from": "For an unanticipated ambiguous situation, preserve facts not contradicted by observations, prefer the best trajectory-consistent match for the pending target, and retry an uncompleted button or pickup rather than declaring success without evidence.",
+    "modify_to": "For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "pending_target_positions",
+    "edits": [
+     {
+      "modify_from": "Process the observed frames chronologically: associate each exposed target cube with the container descending over it, then follow that container through the observed motion.",
+      "modify_to": "At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals."
+     },
+     {
+      "modify_from": "Resolve the rotating pairs using trajectory continuity and direction across all intermediate frames, allowing identities to exchange endpoints; nearest endpoint matching alone is incorrect. Update each remaining entry to its container's center in the decision scene.",
+      "modify_to": "For each rotating pair, estimate its shared center and follow both members' angular progression around that center across intermediate frames. Resolve the two identities jointly, continuing the observed rotation direction rather than independently choosing nearest endpoints. Returning to the same unordered pair of positions does not establish that identities returned: a half-turn exchanges them, and each successive observed exchange must be applied. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "buttons_completed",
+    "edits": [
+     {
+      "modify_from": "Process the interval for a completed button press: a hand descent to the button followed by withdrawal, with button depression or contact-height evidence, increments the incoming count once, capped at 2.",
+      "modify_to": "Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene."
+     },
+     {
+      "modify_from": "A pressed-down label is sufficient supporting evidence but is not mandatory: the low contact and subsequent withdrawal in episode 66 also show the second press.",
+      "modify_to": "A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "pending_target_positions",
+    "edits": [
+     {
+      "modify_from": "Thus episode 8's first target ends the shuffles near [111, 128] and its second near [82, 155]; episode 15's targets end near [128, 200] and [102, 182]; episode 66's target ends near [123, 178]; episode 73's near [103, 123]; episode 79's targets near [133, 183] and [106, 154]. ",
+      "modify_to": ""
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "No new memory fields, episode-specific trajectory clauses, or hard-coded endpoint tables are added. The general joint-motion tracking procedure covers the reported exchanges; existing episode-specific examples are removed without changing the annotation semantics. Coordinate-list spacing does not change the represented facts and warrants no edit. The successful-lift removal rule and completion handling remain unchanged."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "pending_target_positions",
+    "edits": [
+     {
+      "modify_from": "Thus episode 8's first target ends the shuffles near [111, 128] and its second near [82, 155]; episode 15's targets end near [128, 200] and [102, 182]; episode 66's target ends near [123, 178]; episode 73's near [103, 123]; episode 79's targets near [133, 183] and [106, 154]. ",
+      "modify_to": ""
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "pending_target_positions",
+    "edits": [
+     {
+      "modify_from": "Process the observed frames chronologically: associate each exposed target cube with the container descending over it, then follow that container through the observed motion.",
+      "modify_to": "At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals."
+     },
+     {
+      "modify_from": "Resolve the rotating pairs using trajectory continuity and direction across all intermediate frames, allowing identities to exchange endpoints; nearest endpoint matching alone is incorrect. Update each remaining entry to its container's center in the decision scene.",
+      "modify_to": "For each rotating pair, estimate its shared center and follow both members' angular progression around that center across intermediate frames. Resolve the two identities jointly, continuing the observed rotation direction rather than independently choosing nearest endpoints. Returning to the same unordered pair of positions does not establish that identities returned: a half-turn exchanges them, and each successive observed exchange must be applied. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "buttons_completed",
+    "edits": [
+     {
+      "modify_from": "Process the interval for a completed button press: a hand descent to the button followed by withdrawal, with button depression or contact-height evidence, increments the incoming count once, capped at 2.",
+      "modify_to": "Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene."
+     },
+     {
+      "modify_from": "A pressed-down label is sufficient supporting evidence but is not mandatory: the low contact and subsequent withdrawal in episode 66 also show the second press.",
+      "modify_to": "A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Update memory from the observed interval before selecting the next command. Every episode starts with A. If buttons_completed is 0, choose A, press the first button. If it is 1, choose B, press the second button. Only when it is 2 may container pickup begin.",
+    "modify_to": "Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A."
+   },
+   {
+    "modify_from": "For an unanticipated ambiguous situation, preserve facts not contradicted by observations, prefer the best trajectory-consistent match for the pending target, and retry an uncompleted button or pickup rather than declaring success without evidence.",
+    "modify_to": "For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2."
+   }
+  ],
+  "refused": "No new memory fields, episode-specific trajectory clauses, or hard-coded endpoint tables are added. The general joint-motion tracking procedure covers the reported exchanges; existing episode-specific examples are removed without changing the annotation semantics. Coordinate-list spacing does not change the represented facts and warrants no edit. The successful-lift removal rule and completion handling remain unchanged."
+ },
+ "not_applied": [],
+ "refused": "No new memory fields, episode-specific trajectory clauses, or hard-coded endpoint tables are added. The general joint-motion tracking procedure covers the reported exchanges; existing episode-specific examples are removed without changing the annotation semantics. Coordinate-list spacing does not change the represented facts and warrants no edit. The successful-lift removal rule and completion handling remain unchanged.",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"pending_target_positions\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Thus episode 8's first target ends the shuffles near [111, 128] and its second near [82, 155]; episode 15's targets end near [128, 200] and [102, 182]; episode 66's target ends near [123, 178]; episode 73's near [103, 123]; episode 79's targets near [133, 183] and [106, 154]. \",\n          \"modify_to\": \"\"\n        }\n      ]\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"pending_target_positions\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Process the observed frames chronologically: associate each exposed target cube with the container descending over it, then follow that container through the observed motion.\",\n          \"modify_to\": \"At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals.\"\n        },\n        {\n          \"modify_from\": \"Resolve the rotating pairs using trajectory continuity and direction across all intermediate frames, allowing identities to exchange endpoints; nearest endpoint matching alone is incorrect. Update each remaining entry to its container's center in the decision scene.\",\n          \"modify_to\": \"For each rotating pair, estimate its shared center and follow both members' angular progression around that center across intermediate frames. Resolve the two identities jointly, continuing the observed rotation direction rather than independently choosing nearest endpoints. Returning to the same unordered pair of positions does not establish that identities returned: a half-turn exchanges them, and each successive observed exchange must be applied. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers.\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"modify\",\n      \"field\": \"buttons_completed\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Process the interval for a completed button press: a hand descent to the button followed by withdrawal, with button depression or contact-height evidence, increments the incoming count once, capped at 2.\",\n          \"modify_to\": \"Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene.\"\n        },\n        {\n          \"modify_from\": \"A pressed-down label is sufficient supporting evidence but is not mandatory: the low contact and subsequent withdrawal in episode 66 also show the second press.\",\n          \"modify_to\": \"A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"Update memory from the observed interval before selecting the next command. Every episode starts with A. If buttons_completed is 0, choose A, press the first button. If it is 1, choose B, press the second button. Only when it is 2 may container pickup begin.\",\n      \"modify_to\": \"Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A.\"\n    },\n    {\n      \"modify_from\": \"For an unanticipated ambiguous situation, preserve facts not contradicted by observations, prefer the best trajectory-consistent match for the pending target, and retry an uncompleted button or pickup rather than declaring success without evidence.\",\n      \"modify_to\": \"For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2.\"\n    }\n  ],\n  \"refused\": \"No new memory fields, episode-specific trajectory clauses, or hard-coded endpoint tables are added. The general joint-motion tracking procedure covers the reported exchanges; existing episode-specific examples are removed without changing the annotation semantics. Coordinate-list spacing does not change the represented facts and warrants no edit. The successful-lift removal rule and completion handling remain unchanged.\"\n}"
+}

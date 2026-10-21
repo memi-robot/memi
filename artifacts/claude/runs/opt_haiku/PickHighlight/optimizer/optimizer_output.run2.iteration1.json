@@ -1,0 +1,187 @@
+{
+ "episodes": [
+  22,
+  53,
+  63,
+  65,
+  66
+ ],
+ "user_chars": 16066,
+ "usage": {
+  "prompt_tokens": 8679,
+  "completion_tokens": 2948,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 8675
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 711
+  }
+ },
+ "reasoning": "This is the first round of edits, so I'm starting fresh on the report's proposals: sorting pending_cubes by descending x, dropping the nearest entry at pick-up, setting explicit initial values, and revising subgoal rules 3 through 5 so the first step becomes A. I'm drafting the exact modify_from quotes needed for the pending_cubes annotator prompt.\n\nFor sorting, I'm specifying the cube positions should be ordered by x from largest to smallest, putting the robot's leftmost cube first. For the drop logic, I'm clarifying that at each later step the entry removed should be the one whose stored position is nearest the cube actually being picked up according to the execution steps, not just whichever entry happens to be first — the list shrinks only on pick-up, stays unchanged on place, and an entry should persist even if its cube becomes hidden by the arm, only dropping once it's picked up. I'm also noting the button_pressed annotation already correctly shows \"no\" at step #1.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button.",
+    "modify_to": "The episode starts in A (press button): the first decision step, with empty memory and no execution steps, is always A. Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button."
+   },
+   {
+    "modify_from": "choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes, using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point).",
+    "modify_to": "choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes (the list is sorted with the robot's leftmost cube, largest x, first). Point at that stored [y, x], or at the cube visible within a few pixels of it (cube positions wobble). If no cube is currently listed at that position it is merely hidden by the arm: still choose B at the stored point; never skip to a later entry and never treat the list as empty."
+   },
+   {
+    "modify_from": "4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose B pointing at the cube nearest the gripper is not needed—instead repeat C (place) as a harmless no-op.",
+    "modify_to": "4. Only when the pending_cubes carried in was already empty, nothing was picked up at this step, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. A step that merely shows a placing (fingers reopened, cube back on the table) with a non-empty carried list is not finished: apply rule 3 and choose B at the first carried entry."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "pending_cubes",
+    "edits": [
+     {
+      "modify_from": "Start with `[]`.",
+      "modify_to": "At the first decision step (memory carried in empty, no execution steps) write `[]` explicitly; never leave it blank."
+     },
+     {
+      "modify_from": "write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed.",
+      "modify_to": "write one entry per highlighted area: the [y, x] of the cube nearest that area, and sort the entries by x from largest to smallest (the robot's leftmost cube first), not in the order the areas are listed."
+     },
+     {
+      "modify_from": "Otherwise copy the list carried in, but remove the first entry of the list if the execution steps shown at this step show a cube held in the gripper (a pick-up happened). Keep the list unchanged on a step that only shows a placing (gripper opens, cube left on table).",
+      "modify_to": "Otherwise copy the list carried in, but if the execution steps shown at this step show a pick-up (the gripper descends onto a cube with open fingers, closes to about 46%, and that cube is then marked 'is held in the gripper'), remove the ONE entry whose stored [y, x] is nearest the position where the gripper closed (the held cube's position just before it was lifted), whatever its place in the list, and keep all other entries. Do not remove anything on a placing step, i.e. one whose first execution frame already shows a cube held and whose later frames show the fingers opening to ~88-100% and the cube resting on the table again: copy the list unchanged. Never remove an entry just because no cube is currently observed at its position; a cube can be hidden by the arm and still remain pending. Example: carried [[118, 147], [70, 152]], execution steps show the gripper closing at [118, 147] and a cube held -> write [[70, 152]]."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "button_pressed",
+    "edits": [
+     {
+      "modify_from": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down.",
+      "modify_to": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. At the first decision step, when the memory carried in is empty, write the starting value `no` explicitly; never leave the field blank."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "pending_cubes",
+    "edits": [
+     {
+      "modify_from": "`[]` at step #1.",
+      "modify_to": "`[]` at step #1, written explicitly, never left blank."
+     },
+     {
+      "modify_from": "write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, in the order the highlighted areas are listed in the observation.",
+      "modify_to": "write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, sorted by x from largest to smallest (the robot's leftmost cube first), regardless of the order in which the highlighted areas are listed."
+     },
+     {
+      "modify_from": "At each later step, drop the entry of a cube that the execution steps show held in the gripper (picked up), so the list shrinks by one at each pick-up step and stays the same at the place step.",
+      "modify_to": "At each later step, drop the one entry whose stored [y, x] is nearest the cube that the execution steps show being picked up (gripper descends onto it with open fingers, closes, and the cube is then marked held), whatever its place in the list, and keep every other entry; the list shrinks by one at each pick-up step. A place step (first execution frame already shows the cube held, later frames show the fingers reopening and the cube resting on the table) leaves the list unchanged. An entry stays in the list even when its cube is not currently among the observed objects (it can be hidden by the arm); only a pick-up drops it."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "button_pressed",
+    "edits": [
+     {
+      "modify_from": "`no` at step #1 (nothing has happened yet).",
+      "modify_to": "`no` at step #1 (nothing has happened yet), written explicitly, never left blank."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing in the report is refused outright. The report's own rejected proposals stay out: ordering by largest y first contradicts two episodes, and dropping an entry when a cube 'is no longer on a highlighted area' is unobservable because the highlights vanish before the first pick. The remaining mismatch on two cubes five pixels apart in x is accepted as a residual rather than adding an ad hoc tie-break clause. Rule 5's catch-all already states the same ordering as the rewritten rules 2-4, so it is left unchanged rather than duplicated."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "pending_cubes",
+    "edits": [
+     {
+      "modify_from": "`[]` at step #1.",
+      "modify_to": "`[]` at step #1, written explicitly, never left blank."
+     },
+     {
+      "modify_from": "write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, in the order the highlighted areas are listed in the observation.",
+      "modify_to": "write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, sorted by x from largest to smallest (the robot's leftmost cube first), regardless of the order in which the highlighted areas are listed."
+     },
+     {
+      "modify_from": "At each later step, drop the entry of a cube that the execution steps show held in the gripper (picked up), so the list shrinks by one at each pick-up step and stays the same at the place step.",
+      "modify_to": "At each later step, drop the one entry whose stored [y, x] is nearest the cube that the execution steps show being picked up (gripper descends onto it with open fingers, closes, and the cube is then marked held), whatever its place in the list, and keep every other entry; the list shrinks by one at each pick-up step. A place step (first execution frame already shows the cube held, later frames show the fingers reopening and the cube resting on the table) leaves the list unchanged. An entry stays in the list even when its cube is not currently among the observed objects (it can be hidden by the arm); only a pick-up drops it."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "button_pressed",
+    "edits": [
+     {
+      "modify_from": "`no` at step #1 (nothing has happened yet).",
+      "modify_to": "`no` at step #1 (nothing has happened yet), written explicitly, never left blank."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "pending_cubes",
+    "edits": [
+     {
+      "modify_from": "Start with `[]`.",
+      "modify_to": "At the first decision step (memory carried in empty, no execution steps) write `[]` explicitly; never leave it blank."
+     },
+     {
+      "modify_from": "write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed.",
+      "modify_to": "write one entry per highlighted area: the [y, x] of the cube nearest that area, and sort the entries by x from largest to smallest (the robot's leftmost cube first), not in the order the areas are listed."
+     },
+     {
+      "modify_from": "Otherwise copy the list carried in, but remove the first entry of the list if the execution steps shown at this step show a cube held in the gripper (a pick-up happened). Keep the list unchanged on a step that only shows a placing (gripper opens, cube left on table).",
+      "modify_to": "Otherwise copy the list carried in, but if the execution steps shown at this step show a pick-up (the gripper descends onto a cube with open fingers, closes to about 46%, and that cube is then marked 'is held in the gripper'), remove the ONE entry whose stored [y, x] is nearest the position where the gripper closed (the held cube's position just before it was lifted), whatever its place in the list, and keep all other entries. Do not remove anything on a placing step, i.e. one whose first execution frame already shows a cube held and whose later frames show the fingers opening to ~88-100% and the cube resting on the table again: copy the list unchanged. Never remove an entry just because no cube is currently observed at its position; a cube can be hidden by the arm and still remain pending. Example: carried [[118, 147], [70, 152]], execution steps show the gripper closing at [118, 147] and a cube held -> write [[70, 152]]."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "button_pressed",
+    "edits": [
+     {
+      "modify_from": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down.",
+      "modify_to": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. At the first decision step, when the memory carried in is empty, write the starting value `no` explicitly; never leave the field blank."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button.",
+    "modify_to": "The episode starts in A (press button): the first decision step, with empty memory and no execution steps, is always A. Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button."
+   },
+   {
+    "modify_from": "choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes, using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point).",
+    "modify_to": "choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes (the list is sorted with the robot's leftmost cube, largest x, first). Point at that stored [y, x], or at the cube visible within a few pixels of it (cube positions wobble). If no cube is currently listed at that position it is merely hidden by the arm: still choose B at the stored point; never skip to a later entry and never treat the list as empty."
+   },
+   {
+    "modify_from": "4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose B pointing at the cube nearest the gripper is not needed—instead repeat C (place) as a harmless no-op.",
+    "modify_to": "4. Only when the pending_cubes carried in was already empty, nothing was picked up at this step, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. A step that merely shows a placing (fingers reopened, cube back on the table) with a non-empty carried list is not finished: apply rule 3 and choose B at the first carried entry."
+   }
+  ],
+  "refused": "Nothing in the report is refused outright. The report's own rejected proposals stay out: ordering by largest y first contradicts two episodes, and dropping an entry when a cube 'is no longer on a highlighted area' is unobservable because the highlights vanish before the first pick. The remaining mismatch on two cubes five pixels apart in x is accepted as a residual rather than adding an ad hoc tie-break clause. Rule 5's catch-all already states the same ordering as the rewritten rules 2-4, so it is left unchanged rather than duplicated."
+ },
+ "not_applied": [],
+ "refused": "Nothing in the report is refused outright. The report's own rejected proposals stay out: ordering by largest y first contradicts two episodes, and dropping an entry when a cube 'is no longer on a highlighted area' is unobservable because the highlights vanish before the first pick. The remaining mismatch on two cubes five pixels apart in x is accepted as a residual rather than adding an ad hoc tie-break clause. Rule 5's catch-all already states the same ordering as the rewritten rules 2-4, so it is left unchanged rather than duplicated.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"pending_cubes\", \"edits\": [{\"modify_from\": \"`[]` at step #1.\", \"modify_to\": \"`[]` at step #1, written explicitly, never left blank.\"}, {\"modify_from\": \"write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, in the order the highlighted areas are listed in the observation.\", \"modify_to\": \"write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, sorted by x from largest to smallest (the robot's leftmost cube first), regardless of the order in which the highlighted areas are listed.\"}, {\"modify_from\": \"At each later step, drop the entry of a cube that the execution steps show held in the gripper (picked up), so the list shrinks by one at each pick-up step and stays the same at the place step.\", \"modify_to\": \"At each later step, drop the one entry whose stored [y, x] is nearest the cube that the execution steps show being picked up (gripper descends onto it with open fingers, closes, and the cube is then marked held), whatever its place in the list, and keep every other entry; the list shrinks by one at each pick-up step. A place step (first execution frame already shows the cube held, later frames show the fingers reopening and the cube resting on the table) leaves the list unchanged. An entry stays in the list even when its cube is not currently among the observed objects (it can be hidden by the arm); only a pick-up drops it.\"}]}, {\"kind\": \"modify\", \"field\": \"button_pressed\", \"edits\": [{\"modify_from\": \"`no` at step #1 (nothing has happened yet).\", \"modify_to\": \"`no` at step #1 (nothing has happened yet), written explicitly, never left blank.\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"pending_cubes\", \"edits\": [{\"modify_from\": \"Start with `[]`.\", \"modify_to\": \"At the first decision step (memory carried in empty, no execution steps) write `[]` explicitly; never leave it blank.\"}, {\"modify_from\": \"write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed.\", \"modify_to\": \"write one entry per highlighted area: the [y, x] of the cube nearest that area, and sort the entries by x from largest to smallest (the robot's leftmost cube first), not in the order the areas are listed.\"}, {\"modify_from\": \"Otherwise copy the list carried in, but remove the first entry of the list if the execution steps shown at this step show a cube held in the gripper (a pick-up happened). Keep the list unchanged on a step that only shows a placing (gripper opens, cube left on table).\", \"modify_to\": \"Otherwise copy the list carried in, but if the execution steps shown at this step show a pick-up (the gripper descends onto a cube with open fingers, closes to about 46%, and that cube is then marked 'is held in the gripper'), remove the ONE entry whose stored [y, x] is nearest the position where the gripper closed (the held cube's position just before it was lifted), whatever its place in the list, and keep all other entries. Do not remove anything on a placing step, i.e. one whose first execution frame already shows a cube held and whose later frames show the fingers opening to ~88-100% and the cube resting on the table again: copy the list unchanged. Never remove an entry just because no cube is currently observed at its position; a cube can be hidden by the arm and still remain pending. Example: carried [[118, 147], [70, 152]], execution steps show the gripper closing at [118, 147] and a cube held -> write [[70, 152]].\"}]}, {\"kind\": \"modify\", \"field\": \"button_pressed\", \"edits\": [{\"modify_from\": \"Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down.\", \"modify_to\": \"Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. At the first decision step, when the memory carried in is empty, write the starting value `no` explicitly; never leave the field blank.\"}]}], \"policy_prompt_for_subgoal\": [{\"modify_from\": \"The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button.\", \"modify_to\": \"The episode starts in A (press button): the first decision step, with empty memory and no execution steps, is always A. Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button.\"}, {\"modify_from\": \"choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes, using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point).\", \"modify_to\": \"choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes (the list is sorted with the robot's leftmost cube, largest x, first). Point at that stored [y, x], or at the cube visible within a few pixels of it (cube positions wobble). If no cube is currently listed at that position it is merely hidden by the arm: still choose B at the stored point; never skip to a later entry and never treat the list as empty.\"}, {\"modify_from\": \"4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose B pointing at the cube nearest the gripper is not needed—instead repeat C (place) as a harmless no-op.\", \"modify_to\": \"4. Only when the pending_cubes carried in was already empty, nothing was picked up at this step, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. A step that merely shows a placing (fingers reopened, cube back on the table) with a non-empty carried list is not finished: apply rule 3 and choose B at the first carried entry.\"}], \"refused\": \"Nothing in the report is refused outright. The report's own rejected proposals stay out: ordering by largest y first contradicts two episodes, and dropping an entry when a cube 'is no longer on a highlighted area' is unobservable because the highlights vanish before the first pick. The remaining mismatch on two cubes five pixels apart in x is accepted as a residual rather than adding an ad hoc tie-break clause. Rule 5's catch-all already states the same ordering as the rewritten rules 2-4, so it is left unchanged rather than duplicated.\"}"
+}

@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "method",
+  "holding"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  15,
+  38,
+  43,
+  72,
+  73
+ ],
+ "scored": 7,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.8571428571428571,
+ "memory_verified": 0.8571428571428571,
+ "reads": {
+  "method": 2,
+  "holding": 2
+ },
+ "field_errors": {
+  "method": {
+   "in": 0,
+   "sole": 0
+  },
+  "holding": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.14285714285714285,
+ "verified_of_all": 0.8571428571428571,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 7,
+ "critique": "field holding, ANNOTATOR PROMPT\n  The failure happened at the second decision step of a hook episode: the execution steps showed the gripper fly down to table height (about 0.01) a dozen pixels from the stick's listed position, the fingers close from 100% to about 22%, and the gripper rise to about 0.19 with the fingers still at 22%. The stick's listed coordinates never changed during those execution steps and no 'is held in the gripper' mark appeared, because execution steps do not carry that mark and the stick's listed position goes stale once it is in the hand. The annotated value at that step was `peg`, but the rule only described the grasp by 'descend onto the stick', which the policy read as requiring the stick's coordinates to move or a held mark to appear, so it wrote `none` (PREDICTABILITY). The field keeps the same meaning: what the robot has in its fingers at this decision step. Rewrite the grasp events to be judged from the gripper trace alone, never from object coordinates or held marks: `peg` once the execution steps show the gripper at table height (below about 0.05) within about 20 px of the stick's listed position, the fingers going from 100% open to about 20-30%, and the gripper then rising (height above about 0.10) with the fingers still at about 20-30%; `cube` the same way but within about 20 px of the cube and with the fingers settling at about 40-60%; `none` at the first decision step, and whenever the scene at the decision step shows the fingers 100% open or closed to about 0%. State explicitly that the stick's or cube's listed position staying unchanged, and the absence of a held mark, are not evidence against a grasp. Equivalent shortcut: if the scene at the decision step shows the gripper raised above about 0.10 with fingers at about 20-30%, the value is `peg`; raised with fingers about 40-60%, `cube`. e.g. peg\n\nfield holding, POLICY PROMPT\n  Same failure: the policy, reading the execution steps after a peg grasp, saw the stick's coordinates unchanged and no held mark and concluded no grasp had happened, copying `none` where `peg` was required (PREDICTABILITY). Tell the policy that execution steps never carry an 'is held in the gripper' mark and that the stick's or cube's listed coordinates can stay frozen at their old place after it has been lifted, so a grasp is recognised only from the gripper line: gripper at table height (below about 0.05) within about 20 px of the stick's listed position, fingers going from 100% to about 20-30%, then the gripper rising above about 0.10 with fingers still at 20-30% means `peg`; the same near the cube with fingers at about 40-60% means `cube`. Simplest test, which the policy should apply first: look at the scene at the decision step itself; gripper raised above about 0.10 with fingers at about 20-30% means `peg`, raised with fingers at about 40-60% means `cube`, fingers 100% open or about 0% means `none`. `none` at the first decision step. e.g. peg\n\nthe policy prompt for subgoal\n  The rule that sent the policy wrong is the pair 'method hook and holding none choose A / method hook and holding peg choose B', because it reads `holding` as if it were a carried-in value, while at the decision step after the grasp the carried-in value is still `none` and the correct subgoal is B. The policy must decide by the value of `holding` it writes at this step, which is the state of the fingers in the scene in front of it, not by the memory carried in. Replace the hook rules with: if method is hook and the scene at this decision step shows the gripper raised with fingers at about 20-30% (the peg is in hand, regardless of whether the stick's listed coordinates moved or any held mark appears), choose B; if method is hook and the fingers are 100% open or about 0%, choose A. Likewise for pick: gripper raised with fingers at about 40-60% means E, fingers 100% open means D. Push stays C always. Keep the guard 'never B without the peg in hand, never E without the cube in hand', but define 'in hand' by the finger opening and height at the decision step, not by object coordinates.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The rule that sent the policy wrong is the pair 'method hook and holding none choose A / method hook and holding peg choose B', because it reads `holding` as if it were a carried-in value, while at the decision step after the grasp the carried-in value is still `none` and the correct subgoal is B. The policy must decide by the value of `holding` it writes at this step, which is the state of the fingers in the scene in front of it, not by the memory carried in. Replace the hook rules with: if method is hook and the scene at this decision step shows the gripper raised with fingers at about 20-30% (the peg is in hand, regardless of whether the stick's listed coordinates moved or any held mark appears), choose B; if method is hook and the fingers are 100% open or about 0%, choose A. Likewise for pick: gripper raised with fingers at about 40-60% means E, fingers 100% open means D. Push stays C always. Keep the guard 'never B without the peg in hand, never E without the cube in hand', but define 'in hand' by the finger opening and height at the decision step, not by object coordinates.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "holding",
+    "description": "Same failure: the policy, reading the execution steps after a peg grasp, saw the stick's coordinates unchanged and no held mark and concluded no grasp had happened, copying `none` where `peg` was required (PREDICTABILITY). Tell the policy that execution steps never carry an 'is held in the gripper' mark and that the stick's or cube's listed coordinates can stay frozen at their old place after it has been lifted, so a grasp is recognised only from the gripper line: gripper at table height (below about 0.05) within about 20 px of the stick's listed position, fingers going from 100% to about 20-30%, then the gripper rising above about 0.10 with fingers still at 20-30% means `peg`; the same near the cube with fingers at about 40-60% means `cube`. Simplest test, which the policy should apply first: look at the scene at the decision step itself; gripper raised above about 0.10 with fingers at about 20-30% means `peg`, raised with fingers at about 40-60% means `cube`, fingers 100% open or about 0% means `none`. `none` at the first decision step. e.g. peg"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "holding",
+    "description": "The failure happened at the second decision step of a hook episode: the execution steps showed the gripper fly down to table height (about 0.01) a dozen pixels from the stick's listed position, the fingers close from 100% to about 22%, and the gripper rise to about 0.19 with the fingers still at 22%. The stick's listed coordinates never changed during those execution steps and no 'is held in the gripper' mark appeared, because execution steps do not carry that mark and the stick's listed position goes stale once it is in the hand. The annotated value at that step was `peg`, but the rule only described the grasp by 'descend onto the stick', which the policy read as requiring the stick's coordinates to move or a held mark to appear, so it wrote `none` (PREDICTABILITY). The field keeps the same meaning: what the robot has in its fingers at this decision step. Rewrite the grasp events to be judged from the gripper trace alone, never from object coordinates or held marks: `peg` once the execution steps show the gripper at table height (below about 0.05) within about 20 px of the stick's listed position, the fingers going from 100% open to about 20-30%, and the gripper then rising (height above about 0.10) with the fingers still at about 20-30%; `cube` the same way but within about 20 px of the cube and with the fingers settling at about 40-60%; `none` at the first decision step, and whenever the scene at the decision step shows the fingers 100% open or closed to about 0%. State explicitly that the stick's or cube's listed position staying unchanged, and the absence of a held mark, are not evidence against a grasp. Equivalent shortcut: if the scene at the decision step shows the gripper raised above about 0.10 with fingers at about 20-30%, the value is `peg`; raised with fingers about 40-60%, `cube`. e.g. peg"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    43,
+    "exec",
+    367
+   ],
+   "memory_in": "method=hook; holding=none",
+   "answered": "A: pick up the peg",
+   "recorded": "B: hook the cube to the target with the peg",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say that the grasp of the stick is to be judged from the gripper trace alone: a descent to table height (0.011) within about 10-15 px of the stick's listed position ([91,84] vs stick at [101,75]), fingers closing from 100% to about 22% there, and a rise to ~0.19 with fingers still at 22% means `peg` even though the stick's listed coordinates stay unchanged and no 'held' mark appears in execution steps. I treated the unchanged stick position and absent 'held' mark as evidence the grasp had not happened and copied `none`.",
+   "missing_from_policy_prompt_for_subgoal": "It did not say to choose the subgoal from the `holding` value written at this decision step (after reading the execution steps just shown), not from the carried-in value; with holding freshly set to `peg` and method `hook` the rule gives B.",
+   "missing": ""
+  }
+ ]
+}

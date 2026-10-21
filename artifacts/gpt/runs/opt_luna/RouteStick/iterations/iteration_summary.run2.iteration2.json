@@ -1,0 +1,143 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "remaining_path"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  32,
+  40,
+  65,
+  85
+ ],
+ "scored": 16,
+ "failed": 5,
+ "subgoal_wrong": 0,
+ "memory_wrong": 5,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.6875,
+ "reads": {
+  "remaining_path": 13
+ },
+ "field_errors": {
+  "remaining_path": {
+   "in": 5,
+   "sole": 5
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3125,
+ "verified_of_all": 0.6875,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 16,
+ "critique": "field remaining_path, POLICY PROMPT\n  At the first decision, the goal required reproducing the demonstrated path around the sticks. The policy selected the correct first command but sometimes wrote an incorrect later suffix: it assigned a larger-x letter to a smaller-x crossing, reused an upper-arc letter for a later lower arc, or swapped the upper/lower letters on successive larger-x crossings. The annotated routes preserved those direction and arc changes. These are failures of reliably predicting the memory, not evidence that another memory field is needed. Strengthen the initial decoding procedure with an independent per-traversal verification before writing the list. For each pair of consecutive reached sites, determine the sign of destination target x minus departure target x first: smaller x restricts the letter to B or D, and larger x restricts it to A or C. Then independently determine the arc from intermediate wrist positions relative to the line between the endpoint wrist positions: smaller image y selects the upper arc, larger image y the lower arc. Apply the table explicitly: smaller x/upper = D; smaller x/lower = B; larger x/upper = A; larger x/lower = C. Verify every letter against both tests, including later crossings with unchanged horizontal direction and crossings immediately after reversals; neither arc nor direction may be copied from a neighboring traversal. This verification uses the demonstration frames visible at the initial decision and requires no extra stored field. remaining_path continues to hold the ordered list of demonstrated traversals not yet completed, including the command selected now. Initialize it with the entire verified route, for example [\"B\",\"C\",\"A\"] for a smaller-x lower crossing followed by larger-x lower and larger-x upper crossings. At each later decision following one completed oracle execution, remove exactly one leading letter; retain the list if no execution completed, and write [] when exhausted. Do not delete the currently selected command.\n\nrefused\n  No annotation-rule or subgoal-policy prompt change is warranted. The recorded routes agree with the demonstrated arrivals, horizontal directions, and wrist arcs, and the first subgoal was correct in every reported case. The existing memory already contains the ordered information needed later; the errors were in applying the decoding table, so additional fields and episode-specific route exceptions are not justified. One flagged initial decision returned both the correct first command D and the correct memory [\"D\",\"D\",\"D\"], and reported no missing information. That case supplies no observable discrepancy to repair. The other reports without an explanation nevertheless show incorrect later letters, so their shared decoding issue is addressed by the verification change rather than by changing the annotations.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_path",
+    "description": "At the first decision, the goal required reproducing the demonstrated path around the sticks. The policy selected the correct first command but sometimes wrote an incorrect later suffix: it assigned a larger-x letter to a smaller-x crossing, reused an upper-arc letter for a later lower arc, or swapped the upper/lower letters on successive larger-x crossings. The annotated routes preserved those direction and arc changes. These are failures of reliably predicting the memory, not evidence that another memory field is needed. Strengthen the initial decoding procedure with an independent per-traversal verification before writing the list. For each pair of consecutive reached sites, determine the sign of destination target x minus departure target x first: smaller x restricts the letter to B or D, and larger x restricts it to A or C. Then independently determine the arc from intermediate wrist positions relative to the line between the endpoint wrist positions: smaller image y selects the upper arc, larger image y the lower arc. Apply the table explicitly: smaller x/upper = D; smaller x/lower = B; larger x/upper = A; larger x/lower = C. Verify every letter against both tests, including later crossings with unchanged horizontal direction and crossings immediately after reversals; neither arc nor direction may be copied from a neighboring traversal. This verification uses the demonstration frames visible at the initial decision and requires no extra stored field. remaining_path continues to hold the ordered list of demonstrated traversals not yet completed, including the command selected now. Initialize it with the entire verified route, for example [\"B\",\"C\",\"A\"] for a smaller-x lower crossing followed by larger-x lower and larger-x upper crossings. At each later decision following one completed oracle execution, remove exactly one leading letter; retain the list if no execution completed, and write [] when exhausted. Do not delete the currently selected command."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "No annotation-rule or subgoal-policy prompt change is warranted. The recorded routes agree with the demonstrated arrivals, horizontal directions, and wrist arcs, and the first subgoal was correct in every reported case. The existing memory already contains the ordered information needed later; the errors were in applying the decoding table, so additional fields and episode-specific route exceptions are not justified. One flagged initial decision returned both the correct first command D and the correct memory [\"D\",\"D\",\"D\"], and reported no missing information. That case supplies no observable discrepancy to repair. The other reports without an explanation nevertheless show incorrect later letters, so their shared decoding issue is addressed by the verification change rather than by changing the annotations."
+ },
+ "critiques": [
+  {
+   "step": [
+    2,
+    "exec",
+    250
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "B: move to the nearest right target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The failed connection was classifying the third traversal, from [83, 130] to [80, 97] during t=96–144. Its destination has smaller x, and the intermediate wrist positions [58, 125] and [53, 113] form an upper arc, so it is D, not A. The policy prompt already supplies the necessary classification rule; applying it consistently yields [\"B\",\"D\",\"D\",\"D\",\"A\"]. No additional memory field is needed.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    32,
+    "exec",
+    150
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    40,
+    "exec",
+    100
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    65,
+    "exec",
+    150
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "B: move to the nearest right target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    85,
+    "exec",
+    150
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

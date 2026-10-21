@@ -1,0 +1,80 @@
+{
+ "episodes": [
+  1,
+  2,
+  38,
+  66,
+  93
+ ],
+ "user_chars": 21261,
+ "usage": {
+  "prompt_tokens": 6766,
+  "completion_tokens": 659,
+  "total_tokens": 7425,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 4471,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant.",
+    "modify_to": "Estimate the upcoming arrival using incoming motion_history together with all newly shown execution observations, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Do not extrapolate a near-zero endpoint velocity as constant or interpret two identical endpoint positions as evidence that the cube has permanently stopped. Apply the existing conjunction of preparedness, updated passage_count=N-1, and an estimated next crossing within approximately 35 recording time units to this combined evidence. Choose B if that crossing is farther away or the combined evidence remains genuinely insufficient; endpoint proximity alone still never authorizes C. Update crossing counts only from newly shown observations, never by recounting retained history."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "motion_history",
+    "edits": [],
+    "description": "With empty memory, start with an empty ordered list; otherwise preserve incoming motion_history. Append all newly shown execution observations chronologically, including the final observation, keeping only one sample for any repeated timestamp. Exclude demonstration observations. Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Use the combined incoming history and newly shown execution observations to estimate motion for subgoal selection. Do not recount retained history when updating passage_count: that update still uses only newly shown observations and incoming last_side. Each history entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "add",
+    "field": "motion_history",
+    "edits": [],
+    "description": "An ordered list of timestamped cube x observations from execution up to and including this decision's final observation. At the first decision, record all execution observations shown, including the initial execution observation; exclude demonstration observations. At each later decision, preserve previous entries and append newly shown execution observations chronologically, keeping only one sample for any repeated timestamp. Never include future observations or predicted command outcomes. Each entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]"
+   }
+  ],
+  "refused": ""
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "add",
+    "field": "motion_history",
+    "edits": [],
+    "description": "An ordered list of timestamped cube x observations from execution up to and including this decision's final observation. At the first decision, record all execution observations shown, including the initial execution observation; exclude demonstration observations. At each later decision, preserve previous entries and append newly shown execution observations chronologically, keeping only one sample for any repeated timestamp. Never include future observations or predicted command outcomes. Each entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "motion_history",
+    "edits": [],
+    "description": "With empty memory, start with an empty ordered list; otherwise preserve incoming motion_history. Append all newly shown execution observations chronologically, including the final observation, keeping only one sample for any repeated timestamp. Exclude demonstration observations. Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Use the combined incoming history and newly shown execution observations to estimate motion for subgoal selection. Do not recount retained history when updating passage_count: that update still uses only newly shown observations and incoming last_side. Each history entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]"
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant.",
+    "modify_to": "Estimate the upcoming arrival using incoming motion_history together with all newly shown execution observations, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Do not extrapolate a near-zero endpoint velocity as constant or interpret two identical endpoint positions as evidence that the cube has permanently stopped. Apply the existing conjunction of preparedness, updated passage_count=N-1, and an estimated next crossing within approximately 35 recording time units to this combined evidence. Choose B if that crossing is farther away or the combined evidence remains genuinely insufficient; endpoint proximity alone still never authorizes C. Update crossing counts only from newly shown observations, never by recounting retained history."
+   }
+  ],
+  "refused": ""
+ },
+ "not_applied": [],
+ "refused": "",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"add\",\n      \"field\": \"motion_history\",\n      \"description\": \"An ordered list of timestamped cube x observations from execution up to and including this decision's final observation. At the first decision, record all execution observations shown, including the initial execution observation; exclude demonstration observations. At each later decision, preserve previous entries and append newly shown execution observations chronologically, keeping only one sample for any repeated timestamp. Never include future observations or predicted command outcomes. Each entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\\\"time\\\":0,\\\"cube_x\\\":47},{\\\"time\\\":16,\\\"cube_x\\\":80},{\\\"time\\\":32,\\\"cube_x\\\":147}]\"\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"add\",\n      \"field\": \"motion_history\",\n      \"description\": \"With empty memory, start with an empty ordered list; otherwise preserve incoming motion_history. Append all newly shown execution observations chronologically, including the final observation, keeping only one sample for any repeated timestamp. Exclude demonstration observations. Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Use the combined incoming history and newly shown execution observations to estimate motion for subgoal selection. Do not recount retained history when updating passage_count: that update still uses only newly shown observations and incoming last_side. Each history entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\\\"time\\\":0,\\\"cube_x\\\":47},{\\\"time\\\":16,\\\"cube_x\\\":80},{\\\"time\\\":32,\\\"cube_x\\\":147}]\"\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant.\",\n      \"modify_to\": \"Estimate the upcoming arrival using incoming motion_history together with all newly shown execution observations, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Do not extrapolate a near-zero endpoint velocity as constant or interpret two identical endpoint positions as evidence that the cube has permanently stopped. Apply the existing conjunction of preparedness, updated passage_count=N-1, and an estimated next crossing within approximately 35 recording time units to this combined evidence. Choose B if that crossing is farther away or the combined evidence remains genuinely insufficient; endpoint proximity alone still never authorizes C. Update crossing counts only from newly shown observations, never by recounting retained history.\"\n    }\n  ],\n  \"refused\": \"\"\n}"
+}

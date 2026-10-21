@@ -1,0 +1,325 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "ButtonUnmask",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   24,
+   45,
+   71,
+   80,
+   85
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start each episode with A, press the button: the initial scene shows uncovered cubes, no held container, and no completed press in the observed execution. After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and either the goal requests a single pickup or remaining_target_positions is nonempty. Explicit 'pressed down' text is not required; the low hand contacting the button followed by withdrawal also establishes the press. For B in a single-pickup goal, read the requested color from the goal, locate its cube in the pre-covering frames of the current observation, and follow the covering event to its resting container. If descent is sampled only before and after, select the resting container nearest that observed cube position. For B in a multiple-pickup goal, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise. Point inside that container's current visible body, not at the button, exposed cube, or another distractor; small differences between stored cube centers and container centers are expected. When a successful lift leaves a container held and the updated remaining_target_positions still has entries, choose C to free the hand. After release, if the list remains nonempty, choose B at the container covering its first position; do not press the button again or pick up the replaced container. A held container with an empty updated list means the requested final pickup is complete, so no further action is needed if execution terminates. A successful lift in a single-pickup goal completes the task; do not prescribe an additional put-down. For a multiple-pickup goal in an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+  "fields": [
+   {
+    "name": "remaining_target_positions",
+    "description": "For a single-pickup goal, write [] at every decision step; no target position needs to be carried. For a multiple-pickup goal, initialize only at the first decision step, when no incoming memory exists: read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. On subsequent decisions, an empty list means no pickups remain and must not be reinitialized. Otherwise carry the incoming list unchanged unless the observed execution shows a previously resting container at the first listed position being grasped and lifted, with that container now held and its cube exposed; then remove that first entry. Require a new resting-to-held transition: a container already held at the beginning of a put-down execution must not trigger another removal. Do not remove an entry merely because a pickup is being selected, and do not restore entries after release. Preserve stored coordinates rather than updating them from shifted visible-pixel centers. e.g. [[92, 93], [128, 118]]",
+    "annotation": "For goals requesting multiple container pickups, an ordered list of the original cube positions for requested container pickups not yet completed, in goal order. Initialize from the visible cubes at the first decision step, including only requested colors. For a single-pickup goal, write [] at every decision step: recover the target from the pre-covering frames and covering event in the pickup decision's observation instead. Retain the original coordinates despite pixel wobble or subsequent covering. Remove the first entry at the decision step showing that its container has actually been grasped and lifted, not at the step selecting the pickup. Putting a container back does not restore its entry. Thus episode 71 has [[92, 93], [128, 118]] at steps 1 and 2 and [[128, 118]] at steps 3 and 4. Single-pickup episodes instead have [] throughout. e.g. [[92, 93], [128, 118]]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "ButtonUnmask",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   24,
+   45,
+   71,
+   80,
+   85
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start each episode with A, press the button: the initial scene shows uncovered cubes, no held container, and no completed press in the observed execution. After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty. Explicit 'pressed down' text is not required; the low hand contacting the button followed by withdrawal also establishes the press. For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise. Point inside that container's current visible body, not at the button, exposed cube, or another distractor; small differences between stored cube centers and container centers are expected. When a successful lift leaves a container held and the updated remaining_target_positions still has entries, choose C to free the hand. After release, if the list remains nonempty, choose B at the container covering its first position; do not press the button again or pick up the replaced container. A held container with an empty updated list means the requested final pickup is complete, so no further action is needed if execution terminates. For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+  "fields": [
+   {
+    "name": "remaining_target_positions",
+    "description": "With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless the observed execution shows a previously resting container at the first listed position being grasped and lifted, with that container now held and its cube exposed; then remove that first entry. Require a new resting-to-held transition: a container already held at the beginning of a put-down execution must not trigger another removal. Do not remove an entry merely because a pickup is being selected, and do not restore entries after release. Preserve stored coordinates rather than updating them from shifted visible-pixel centers. e.g. [[92, 93], [128, 118]]",
+    "annotation": "An ordered list of the original cube positions for requested container pickups not yet completed, in the order specified by the goal. Initialize from the visible cubes at the first decision step, including only requested colors. Retain the original coordinates despite pixel wobble or subsequent covering. Remove the first entry at the decision step showing that its container has actually been grasped and lifted, not at the step selecting the pickup. Putting a container back does not restore its entry. Thus episode 71 has [[92, 93], [128, 118]] at steps 1 and 2 and [[128, 118]] at steps 3 and 4. The other episodes retain their single initial target throughout their two recorded steps. e.g. [[92, 93], [128, 118]]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_target_positions": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field remaining_target_positions, ANNOTATOR PROMPT\n  Delete this field. In the supplied trajectories, the goal requests pressing the button and then lifting the container hiding one named cube. The initial decision shows the colored cubes; the next decision's execution window again shows those cubes before the containers descend, followed by the button press. The annotated memory retained the requested cube's original position, for example [[114, 175]], but that position and its covering container are recoverable from the very observation where the pickup is selected. The field was read at none of the decisions, and no incorrect subgoal was reported. This is a NECESSITY failure, not a SUFFICIENCY or PREDICTABILITY failure. Remove the field and its initialization, retention, and removal annotations rather than replacing it with another field.\n\nfield remaining_target_positions, POLICY PROMPT\n  Delete this field and all instructions for maintaining it. For the supplied single-pickup tasks, the decision after pressing the button includes an early frame with the requested colored cube still visible and later frames showing the container covering it. Thus the policy can recover the target association locally when needed; carrying an original position such as [[114, 175]] duplicates the current observation and breaks NECESSITY. Do not initialize a target list or maintain pickup-completion updates. No replacement memory field is required for these trajectories.\n\nthe policy prompt for subgoal\n  The supplied trajectories request one container pickup after a button press. At the pickup decision, the observed execution includes both the colored cubes before covering and the containers afterward. No wrong subgoal was reported, but the existing rules unnecessarily make target selection depend on an unread stored list, a NECESSITY failure. Retain A for the initial scene with uncovered cubes and no completed press in the observed execution. Retain recognition of a completed press from low hand contact with the button followed by withdrawal, without requiring explicit pressed-down text. After that press, with no container held, choose B: read the requested color from the goal, locate that cube in the pre-covering frames of the current observation, and follow the covering event to its resting container. Where the descent is only sampled before and after, select the resting container nearest that observed cube position. Point inside its current visible body. Replace references to the first stored position with this observation-local association. Remove rules for list removal, remaining-list tests, intermediate put-downs, and list-dependent fallback actions: they address multiple-pickup continuation not present in the supplied trajectories. A successful lift of the requested container completes these single-pickup goals; do not prescribe an additional put-down.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "remaining_target_positions",
+      "edits": [
+       {
+        "modify_from": "An ordered list of the original cube positions for requested container pickups not yet completed, in the order specified by the goal. Initialize from the visible cubes at the first decision step, including only requested colors.",
+        "modify_to": "For goals requesting multiple container pickups, an ordered list of the original cube positions for requested container pickups not yet completed, in goal order. Initialize from the visible cubes at the first decision step, including only requested colors. For a single-pickup goal, write [] at every decision step: recover the target from the pre-covering frames and covering event in the pickup decision's observation instead."
+       },
+       {
+        "modify_from": "The other episodes retain their single initial target throughout their two recorded steps.",
+        "modify_to": "Single-pickup episodes instead have [] throughout."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "remaining_target_positions",
+      "edits": [
+       {
+        "modify_from": "With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless",
+        "modify_to": "For a single-pickup goal, write [] at every decision step; no target position needs to be carried. For a multiple-pickup goal, initialize only at the first decision step, when no incoming memory exists: read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. On subsequent decisions, an empty list means no pickups remain and must not be reinitialized. Otherwise carry the incoming list unchanged unless"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty.",
+      "modify_to": "After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and either the goal requests a single pickup or remaining_target_positions is nonempty."
+     },
+     {
+      "modify_from": "For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise.",
+      "modify_to": "For B in a single-pickup goal, read the requested color from the goal, locate its cube in the pre-covering frames of the current observation, and follow the covering event to its resting container. If descent is sampled only before and after, select the resting container nearest that observed cube position. For B in a multiple-pickup goal, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise."
+     },
+     {
+      "modify_from": "For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+      "modify_to": "A successful lift in a single-pickup goal completes the task; do not prescribe an additional put-down. For a multiple-pickup goal in an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies."
+     }
+    ],
+    "refused": "Do not delete remaining_target_positions globally or remove multiple-pickup continuation rules. The initialized documents explicitly cover episode 71, in which a second target must remain available after the first lift and subsequent release, when the original covering observation is no longer available. The current report establishes observation-local recoverability for single-pickup episodes only. Those episodes now carry no target information and select their target locally; multiple-pickup episodes retain the memory and intermediate put-down rules needed for continuation."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_target_positions": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field remaining_target_positions, ANNOTATOR PROMPT\n  Delete this field. All supplied goals request pressing the button followed by one container pickup. At the pickup decision, the observation includes the requested colored cube before covering and the containers after covering. The annotated field is [] throughout, and it was read at no decision. No incorrect subgoal was reported; the fault is NECESSITY: the target is recoverable from the current observation and goal without carried memory. Replace this field with no memory fields for these single-pickup episodes; there is no value or update event to annotate.\n\nfield remaining_target_positions, POLICY PROMPT\n  Delete this field for the supplied single-pickup task. The policy observes the uncovered target cube and subsequent covering within the execution shown at the pickup decision, so carrying [] contributes nothing to its choice and violates NECESSITY. Remove the instruction to write [] and all initialization, retention, and removal instructions for this field. No memory update is needed: choose using the goal and the currently supplied observation. This deletion is supported by the supplied single-pickup episodes, not by evidence that ordered target memory is unnecessary for multiple-pickup tasks.\n\nthe policy prompt for subgoal\n  The supplied goals each request a button press and one container pickup. Their pickup observations include both the pre-covering colored cubes and the resulting resting containers; the unused memory is [] throughout. No subgoal failure was reported, so preserve the existing single-pickup behavior while removing dependencies on the deleted field and the multiple-pickup branches from this task's policy prompt. In the initial scene, with uncovered cubes and no completed press in the observed execution, choose A. When the observed execution shows button contact followed by withdrawal, choose B; explicit pressed-down text is not required. Locate the goal's requested cube color in the pre-covering frames of this same observation, then follow its covering event to the corresponding resting container. If only before-and-after covering frames are available, select the resting container nearest that cube position. Point inside its current visible body rather than at the button or another container; small center offsets are expected. A successful lift completes the single-pickup task, without an additional put-down. Remove list-based continuation, release, and fallback rules here: they serve multiple-pickup goals absent from this minibatch and cannot reference a deleted field.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Do not delete remaining_target_positions, remove its single-pickup [] convention, or remove multiple-pickup continuation and fallback rules. This repeats the scope-limited necessity finding already settled in round 1: single-pickup decisions recover their target locally and carry no target information. A constant [] encodes no episode-specific fact and does not create an additional memory requirement. The field remains necessary for multiple-pickup episodes, including initialized episode 71, where later decisions no longer show the original covering event. Removing it or its continuation rules would undo the earlier retained coverage. This round reports no incorrect subgoal or memory value and supplies no evidence against that coverage; no edits are needed."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 2,
+ "quiet": 2,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    9,
+    43,
+    48,
+    60,
+    80
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start each episode with A, press the button: the initial scene shows uncovered cubes, no held container, and no completed press in the observed execution. After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty. Explicit 'pressed down' text is not required; the low hand contacting the button followed by withdrawal also establishes the press. For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise. Point inside that container's current visible body, not at the button, exposed cube, or another distractor; small differences between stored cube centers and container centers are expected. When a successful lift leaves a container held and the updated remaining_target_positions still has entries, choose C to free the hand. After release, if the list remains nonempty, choose B at the container covering its first position; do not press the button again or pick up the replaced container. A held container with an empty updated list means the requested final pickup is complete, so no further action is needed if execution terminates. For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+    "fields": [
+     {
+      "name": "remaining_target_positions",
+      "description": "With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless the observed execution shows a previously resting container at the first listed position being grasped and lifted, with that container now held and its cube exposed; then remove that first entry. Require a new resting-to-held transition: a container already held at the beginning of a put-down execution must not trigger another removal. Do not remove an entry merely because a pickup is being selected, and do not restore entries after release. Preserve stored coordinates rather than updating them from shifted visible-pixel centers. e.g. [[92, 93], [128, 118]]",
+      "annotation": "An ordered list of the original cube positions for requested container pickups not yet completed, in the order specified by the goal. Initialize from the visible cubes at the first decision step, including only requested colors. Retain the original coordinates despite pixel wobble or subsequent covering. Remove the first entry at the decision step showing that its container has actually been grasped and lifted, not at the step selecting the pickup. Putting a container back does not restore its entry. Thus episode 71 has [[92, 93], [128, 118]] at steps 1 and 2 and [[128, 118]] at steps 3 and 4. The other episodes retain their single initial target throughout their two recorded steps. e.g. [[92, 93], [128, 118]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    15,
+    20,
+    47,
+    86,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start each episode with A, press the button: the initial scene shows uncovered cubes, no held container, and no completed press in the observed execution. After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty. Explicit 'pressed down' text is not required; the low hand contacting the button followed by withdrawal also establishes the press. For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise. Point inside that container's current visible body, not at the button, exposed cube, or another distractor; small differences between stored cube centers and container centers are expected. When a successful lift leaves a container held and the updated remaining_target_positions still has entries, choose C to free the hand. After release, if the list remains nonempty, choose B at the container covering its first position; do not press the button again or pick up the replaced container. A held container with an empty updated list means the requested final pickup is complete, so no further action is needed if execution terminates. For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+    "fields": [
+     {
+      "name": "remaining_target_positions",
+      "description": "With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless the observed execution shows a previously resting container at the first listed position being grasped and lifted, with that container now held and its cube exposed; then remove that first entry. Require a new resting-to-held transition: a container already held at the beginning of a put-down execution must not trigger another removal. Do not remove an entry merely because a pickup is being selected, and do not restore entries after release. Preserve stored coordinates rather than updating them from shifted visible-pixel centers. e.g. [[92, 93], [128, 118]]",
+      "annotation": "An ordered list of the original cube positions for requested container pickups not yet completed, in the order specified by the goal. Initialize from the visible cubes at the first decision step, including only requested colors. Retain the original coordinates despite pixel wobble or subsequent covering. Remove the first entry at the decision step showing that its container has actually been grasped and lifted, not at the step selecting the pickup. Putting a container back does not restore its entry. Thus episode 71 has [[92, 93], [128, 118]] at steps 1 and 2 and [[128, 118]] at steps 3 and 4. The other episodes retain their single initial target throughout their two recorded steps. e.g. [[92, 93], [128, 118]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    5,
+    21,
+    34,
+    38,
+    69
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start each episode with A, press the button: the initial scene shows uncovered cubes, no held container, and no completed press in the observed execution. After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and remaining_target_positions is nonempty. Explicit 'pressed down' text is not required; the low hand contacting the button followed by withdrawal also establishes the press. For B, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise. Point inside that container's current visible body, not at the button, exposed cube, or another distractor; small differences between stored cube centers and container centers are expected. When a successful lift leaves a container held and the updated remaining_target_positions still has entries, choose C to free the hand. After release, if the list remains nonempty, choose B at the container covering its first position; do not press the button again or pick up the replaced container. A held container with an empty updated list means the requested final pickup is complete, so no further action is needed if execution terminates. For an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+    "fields": [
+     {
+      "name": "remaining_target_positions",
+      "description": "With empty incoming memory, read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. Otherwise carry the incoming list unchanged unless the observed execution shows a previously resting container at the first listed position being grasped and lifted, with that container now held and its cube exposed; then remove that first entry. Require a new resting-to-held transition: a container already held at the beginning of a put-down execution must not trigger another removal. Do not remove an entry merely because a pickup is being selected, and do not restore entries after release. Preserve stored coordinates rather than updating them from shifted visible-pixel centers. e.g. [[92, 93], [128, 118]]",
+      "annotation": "An ordered list of the original cube positions for requested container pickups not yet completed, in the order specified by the goal. Initialize from the visible cubes at the first decision step, including only requested colors. Retain the original coordinates despite pixel wobble or subsequent covering. Remove the first entry at the decision step showing that its container has actually been grasped and lifted, not at the step selecting the pickup. Putting a container back does not restore its entry. Thus episode 71 has [[92, 93], [128, 118]] at steps 1 and 2 and [[128, 118]] at steps 3 and 4. The other episodes retain their single initial target throughout their two recorded steps. e.g. [[92, 93], [128, 118]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    26,
+    46,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start each episode with A, press the button: the initial scene shows uncovered cubes, no held container, and no completed press in the observed execution. After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and either the goal requests a single pickup or remaining_target_positions is nonempty. Explicit 'pressed down' text is not required; the low hand contacting the button followed by withdrawal also establishes the press. For B in a single-pickup goal, read the requested color from the goal, locate its cube in the pre-covering frames of the current observation, and follow the covering event to its resting container. If descent is sampled only before and after, select the resting container nearest that observed cube position. For B in a multiple-pickup goal, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise. Point inside that container's current visible body, not at the button, exposed cube, or another distractor; small differences between stored cube centers and container centers are expected. When a successful lift leaves a container held and the updated remaining_target_positions still has entries, choose C to free the hand. After release, if the list remains nonempty, choose B at the container covering its first position; do not press the button again or pick up the replaced container. A held container with an empty updated list means the requested final pickup is complete, so no further action is needed if execution terminates. A successful lift in a single-pickup goal completes the task; do not prescribe an additional put-down. For a multiple-pickup goal in an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+    "fields": [
+     {
+      "name": "remaining_target_positions",
+      "description": "For a single-pickup goal, write [] at every decision step; no target position needs to be carried. For a multiple-pickup goal, initialize only at the first decision step, when no incoming memory exists: read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. On subsequent decisions, an empty list means no pickups remain and must not be reinitialized. Otherwise carry the incoming list unchanged unless the observed execution shows a previously resting container at the first listed position being grasped and lifted, with that container now held and its cube exposed; then remove that first entry. Require a new resting-to-held transition: a container already held at the beginning of a put-down execution must not trigger another removal. Do not remove an entry merely because a pickup is being selected, and do not restore entries after release. Preserve stored coordinates rather than updating them from shifted visible-pixel centers. e.g. [[92, 93], [128, 118]]",
+      "annotation": "For goals requesting multiple container pickups, an ordered list of the original cube positions for requested container pickups not yet completed, in goal order. Initialize from the visible cubes at the first decision step, including only requested colors. For a single-pickup goal, write [] at every decision step: recover the target from the pre-covering frames and covering event in the pickup decision's observation instead. Retain the original coordinates despite pixel wobble or subsequent covering. Remove the first entry at the decision step showing that its container has actually been grasped and lifted, not at the step selecting the pickup. Putting a container back does not restore its entry. Thus episode 71 has [[92, 93], [128, 118]] at steps 1 and 2 and [[128, 118]] at steps 3 and 4. Single-pickup episodes instead have [] throughout. e.g. [[92, 93], [128, 118]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    7,
+    8,
+    38,
+    87,
+    90
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start each episode with A, press the button: the initial scene shows uncovered cubes, no held container, and no completed press in the observed execution. After the observed execution shows the hand descending onto the button and withdrawing, choose B if no container is held and either the goal requests a single pickup or remaining_target_positions is nonempty. Explicit 'pressed down' text is not required; the low hand contacting the button followed by withdrawal also establishes the press. For B in a single-pickup goal, read the requested color from the goal, locate its cube in the pre-covering frames of the current observation, and follow the covering event to its resting container. If descent is sampled only before and after, select the resting container nearest that observed cube position. For B in a multiple-pickup goal, select the resting container covering the first stored position, using the covering event when visible or the nearest resting container to that position otherwise. Point inside that container's current visible body, not at the button, exposed cube, or another distractor; small differences between stored cube centers and container centers are expected. When a successful lift leaves a container held and the updated remaining_target_positions still has entries, choose C to free the hand. After release, if the list remains nonempty, choose B at the container covering its first position; do not press the button again or pick up the replaced container. A held container with an empty updated list means the requested final pickup is complete, so no further action is needed if execution terminates. A successful lift in a single-pickup goal completes the task; do not prescribe an additional put-down. For a multiple-pickup goal in an unanticipated situation where another menu response is nevertheless required, choose C if holding a container; otherwise choose B at the nearest resting container to the first remaining position if available, and A if neither condition applies.",
+    "fields": [
+     {
+      "name": "remaining_target_positions",
+      "description": "For a single-pickup goal, write [] at every decision step; no target position needs to be carried. For a multiple-pickup goal, initialize only at the first decision step, when no incoming memory exists: read the requested cube colors in goal order and write their visible initial [y, x] positions as an ordered list. On subsequent decisions, an empty list means no pickups remain and must not be reinitialized. Otherwise carry the incoming list unchanged unless the observed execution shows a previously resting container at the first listed position being grasped and lifted, with that container now held and its cube exposed; then remove that first entry. Require a new resting-to-held transition: a container already held at the beginning of a put-down execution must not trigger another removal. Do not remove an entry merely because a pickup is being selected, and do not restore entries after release. Preserve stored coordinates rather than updating them from shifted visible-pixel centers. e.g. [[92, 93], [128, 118]]",
+      "annotation": "For goals requesting multiple container pickups, an ordered list of the original cube positions for requested container pickups not yet completed, in goal order. Initialize from the visible cubes at the first decision step, including only requested colors. For a single-pickup goal, write [] at every decision step: recover the target from the pre-covering frames and covering event in the pickup decision's observation instead. Retain the original coordinates despite pixel wobble or subsequent covering. Remove the first entry at the decision step showing that its container has actually been grasped and lifted, not at the step selecting the pickup. Putting a container back does not restore its entry. Thus episode 71 has [[92, 93], [128, 118]] at steps 1 and 2 and [[128, 118]] at steps 3 and 4. Single-pickup episodes instead have [] throughout. e.g. [[92, 93], [128, 118]]"
+     }
+    ]
+   }
+  }
+ ]
+}

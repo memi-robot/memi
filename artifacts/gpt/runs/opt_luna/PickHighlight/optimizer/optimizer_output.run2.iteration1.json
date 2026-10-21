@@ -1,0 +1,188 @@
+{
+ "episodes": [
+  22,
+  53,
+  63,
+  65,
+  66
+ ],
+ "user_chars": 16749,
+ "usage": {
+  "prompt_tokens": 5883,
+  "completion_tokens": 1506,
+  "total_tokens": 7389,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 3588,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 30,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Each episode starts with A, press button: the initial scene has no held cube and remaining_targets is null. If remaining_targets is still null and no completed reveal is available, choose A.",
+    "modify_to": "Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button."
+   },
+   {
+    "modify_from": "When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting the currently visible table cube corresponding to the first stored coordinate.",
+    "modify_to": "When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority."
+   },
+   {
+    "modify_from": "This selects the blue cube near [89, 146] in episode 6, the green cube near [64, 91] in episode 28, the red cube near [81, 125] in episode 38, the blue cube near [84, 92] in episode 57, and the green cube near [99, 104] in episode 98.",
+    "modify_to": ""
+   },
+   {
+    "modify_from": "After placement, an empty gripper and a nonempty remaining_targets list lead back to B for its first entry; never pick up an already removed cube again.",
+    "modify_to": "After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again."
+   },
+   {
+    "modify_from": "For other unmodeled situations, choose C if holding a cube, otherwise B at the first remaining target if one exists, otherwise A only when remaining_targets is null.",
+    "modify_to": "For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "Initialize to null when the incoming memory is empty.",
+      "modify_to": "Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null."
+     },
+     {
+      "modify_from": "If the incoming value is null and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x].",
+      "modify_to": "If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x]."
+     },
+     {
+      "modify_from": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y.",
+      "modify_to": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority."
+     },
+     {
+      "modify_from": "An unsuccessful closure or temporary disappearance is not sufficient for removal. Placement does not add an entry back.",
+      "modify_to": "An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released."
+     },
+     {
+      "modify_from": "An empty list means all revealed targets have been picked up; null means the reveal has not yet been recorded.",
+      "modify_to": "Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "Before the button-reveal interval has been observed, use null rather than an empty list.",
+      "modify_to": "Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list."
+     },
+     {
+      "modify_from": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y.",
+      "modify_to": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority."
+     },
+     {
+      "modify_from": "At each decision following a successful pickup, remove the picked cube.",
+      "modify_to": "At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup."
+     },
+     {
+      "modify_from": "Thus episode 6 has null, [[89, 146], [63, 150]], [[63, 150]], [[63, 150]]; episode 28 has null, [[64, 91]]; episode 38 has null, [[81, 125], [113, 120]], [[113, 120]], [[113, 120]]; episode 57 has null, [[84, 92]]; episode 98 has null, [[99, 104], [112, 146]], [[112, 146]], [[112, 146]].",
+      "modify_to": "Use [] only once all revealed targets have been successfully picked up."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "No unsupported smaller-x, color, episode-specific, or future-action-derived pickup priority is committed. Admitting any remaining highlighted cube removes the contradicted first-entry rule but does not settle exact recorded-object prediction: that still requires an independently supported priority or evaluation accepting any remaining target. No extra memory field, placement-time deletion, or requirement to recover an unseen exact pixel point is committed; the existing target list and grasp-and-lift removal criterion suffice for retaining and locating occluded unpicked targets."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "Before the button-reveal interval has been observed, use null rather than an empty list.",
+      "modify_to": "Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list."
+     },
+     {
+      "modify_from": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y.",
+      "modify_to": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority."
+     },
+     {
+      "modify_from": "At each decision following a successful pickup, remove the picked cube.",
+      "modify_to": "At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup."
+     },
+     {
+      "modify_from": "Thus episode 6 has null, [[89, 146], [63, 150]], [[63, 150]], [[63, 150]]; episode 28 has null, [[64, 91]]; episode 38 has null, [[81, 125], [113, 120]], [[113, 120]], [[113, 120]]; episode 57 has null, [[84, 92]]; episode 98 has null, [[99, 104], [112, 146]], [[112, 146]], [[112, 146]].",
+      "modify_to": "Use [] only once all revealed targets have been successfully picked up."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "remaining_targets",
+    "edits": [
+     {
+      "modify_from": "Initialize to null when the incoming memory is empty.",
+      "modify_to": "Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null."
+     },
+     {
+      "modify_from": "If the incoming value is null and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x].",
+      "modify_to": "If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x]."
+     },
+     {
+      "modify_from": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y.",
+      "modify_to": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority."
+     },
+     {
+      "modify_from": "An unsuccessful closure or temporary disappearance is not sufficient for removal. Placement does not add an entry back.",
+      "modify_to": "An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released."
+     },
+     {
+      "modify_from": "An empty list means all revealed targets have been picked up; null means the reveal has not yet been recorded.",
+      "modify_to": "Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Each episode starts with A, press button: the initial scene has no held cube and remaining_targets is null. If remaining_targets is still null and no completed reveal is available, choose A.",
+    "modify_to": "Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button."
+   },
+   {
+    "modify_from": "When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting the currently visible table cube corresponding to the first stored coordinate.",
+    "modify_to": "When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority."
+   },
+   {
+    "modify_from": "This selects the blue cube near [89, 146] in episode 6, the green cube near [64, 91] in episode 28, the red cube near [81, 125] in episode 38, the blue cube near [84, 92] in episode 57, and the green cube near [99, 104] in episode 98.",
+    "modify_to": ""
+   },
+   {
+    "modify_from": "After placement, an empty gripper and a nonempty remaining_targets list lead back to B for its first entry; never pick up an already removed cube again.",
+    "modify_to": "After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again."
+   },
+   {
+    "modify_from": "For other unmodeled situations, choose C if holding a cube, otherwise B at the first remaining target if one exists, otherwise A only when remaining_targets is null.",
+    "modify_to": "For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None."
+   }
+  ],
+  "refused": "No unsupported smaller-x, color, episode-specific, or future-action-derived pickup priority is committed. Admitting any remaining highlighted cube removes the contradicted first-entry rule but does not settle exact recorded-object prediction: that still requires an independently supported priority or evaluation accepting any remaining target. No extra memory field, placement-time deletion, or requirement to recover an unseen exact pixel point is committed; the existing target list and grasp-and-lift removal criterion suffice for retaining and locating occluded unpicked targets."
+ },
+ "not_applied": [],
+ "refused": "No unsupported smaller-x, color, episode-specific, or future-action-derived pickup priority is committed. Admitting any remaining highlighted cube removes the contradicted first-entry rule but does not settle exact recorded-object prediction: that still requires an independently supported priority or evaluation accepting any remaining target. No extra memory field, placement-time deletion, or requirement to recover an unseen exact pixel point is committed; the existing target list and grasp-and-lift removal criterion suffice for retaining and locating occluded unpicked targets.",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_targets\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Before the button-reveal interval has been observed, use null rather than an empty list.\",\n          \"modify_to\": \"Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list.\"\n        },\n        {\n          \"modify_from\": \"Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y.\",\n          \"modify_to\": \"Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority.\"\n        },\n        {\n          \"modify_from\": \"At each decision following a successful pickup, remove the picked cube.\",\n          \"modify_to\": \"At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup.\"\n        },\n        {\n          \"modify_from\": \"Thus episode 6 has null, [[89, 146], [63, 150]], [[63, 150]], [[63, 150]]; episode 28 has null, [[64, 91]]; episode 38 has null, [[81, 125], [113, 120]], [[113, 120]], [[113, 120]]; episode 57 has null, [[84, 92]]; episode 98 has null, [[99, 104], [112, 146]], [[112, 146]], [[112, 146]].\",\n          \"modify_to\": \"Use [] only once all revealed targets have been successfully picked up.\"\n        }\n      ]\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"remaining_targets\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Initialize to null when the incoming memory is empty.\",\n          \"modify_to\": \"Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null.\"\n        },\n        {\n          \"modify_from\": \"If the incoming value is null and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x].\",\n          \"modify_to\": \"If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x].\"\n        },\n        {\n          \"modify_from\": \"Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y.\",\n          \"modify_to\": \"Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority.\"\n        },\n        {\n          \"modify_from\": \"An unsuccessful closure or temporary disappearance is not sufficient for removal. Placement does not add an entry back.\",\n          \"modify_to\": \"An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released.\"\n        },\n        {\n          \"modify_from\": \"An empty list means all revealed targets have been picked up; null means the reveal has not yet been recorded.\",\n          \"modify_to\": \"Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"Each episode starts with A, press button: the initial scene has no held cube and remaining_targets is null. If remaining_targets is still null and no completed reveal is available, choose A.\",\n      \"modify_to\": \"Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button.\"\n    },\n    {\n      \"modify_from\": \"When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting the currently visible table cube corresponding to the first stored coordinate.\",\n      \"modify_to\": \"When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority.\"\n    },\n    {\n      \"modify_from\": \"This selects the blue cube near [89, 146] in episode 6, the green cube near [64, 91] in episode 28, the red cube near [81, 125] in episode 38, the blue cube near [84, 92] in episode 57, and the green cube near [99, 104] in episode 98.\",\n      \"modify_to\": \"\"\n    },\n    {\n      \"modify_from\": \"After placement, an empty gripper and a nonempty remaining_targets list lead back to B for its first entry; never pick up an already removed cube again.\",\n      \"modify_to\": \"After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again.\"\n    },\n    {\n      \"modify_from\": \"For other unmodeled situations, choose C if holding a cube, otherwise B at the first remaining target if one exists, otherwise A only when remaining_targets is null.\",\n      \"modify_to\": \"For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None.\"\n    }\n  ],\n  \"refused\": \"No unsupported smaller-x, color, episode-specific, or future-action-derived pickup priority is committed. Admitting any remaining highlighted cube removes the contradicted first-entry rule but does not settle exact recorded-object prediction: that still requires an independently supported priority or evaluation accepting any remaining target. No extra memory field, placement-time deletion, or requirement to recover an unseen exact pixel point is committed; the existing target list and grasp-and-lift removal criterion suffice for retaining and locating occluded unpicked targets.\"\n}"
+}

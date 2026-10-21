@@ -1,0 +1,25 @@
+{
+ "task": "ButtonUnmaskSwap",
+ "fields": [
+  {
+   "name": "buttons_pressed",
+   "description": "Count of button presses completed so far. A press is completed in the step whose execution frames show either a button 'is pressed down' or the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed. 0 at the first step (no execution frames), 1 at the step after the first such frame, 2 from the step after the second to the end. e.g. 1"
+  },
+  {
+   "name": "green_container",
+   "description": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed by chaining through every frame shown: starting from the previous step's last frame, each container is matched to the container of the previous frame with the smallest displacement (the gliding may already be under way in the first frame of a step). During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. Value is the tracked container's position in the last frame shown. Once the cube beneath it is visible (container lifted or held in the gripper), the field becomes the cube's position and from then on keeps the cube's last visible position, even after a container is lowered back over it. e.g. [109, 126]"
+  },
+  {
+   "name": "red_container",
+   "description": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), written at the last frame shown; once the red cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [82, 152]"
+  },
+  {
+   "name": "blue_container",
+   "description": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain), written at the last frame shown; once the blue cube is visible, the cube's last visible position, kept after the container is set back down. e.g. [102, 79]"
+  },
+  {
+   "name": "picked_colors",
+   "description": "Ordered list of cube colors whose hiding container has been lifted so far. Written as a JSON list with double-quoted strings, explicitly [] when empty, including at the first step. [] until the step whose execution frames show a cube visible beneath a lifted or 'held in the gripper' container; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+  }
+ ]
+}

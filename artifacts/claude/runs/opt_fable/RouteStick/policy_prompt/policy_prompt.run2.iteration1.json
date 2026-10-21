@@ -1,0 +1,14 @@
+{
+ "task": "RouteStick",
+ "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+ "fields": [
+  {
+   "name": "demo_moves",
+   "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]"
+  },
+  {
+   "name": "legs_done",
+   "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1"
+  }
+ ]
+}

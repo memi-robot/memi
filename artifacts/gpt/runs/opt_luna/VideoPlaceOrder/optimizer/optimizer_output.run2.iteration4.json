@@ -1,0 +1,68 @@
+{
+ "episodes": [
+  17,
+  31,
+  77,
+  78,
+  85
+ ],
+ "user_chars": 33256,
+ "usage": {
+  "prompt_tokens": 8606,
+  "completion_tokens": 580,
+  "total_tokens": 9186,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 6311,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B.",
+    "modify_to": "Determine the current grasp state from the entire currently shown execution interval, not the demonstration's final hand pose or the final execution observation alone. Apply this assessment before any empty-hand or retry-A rule. Descent onto the goal cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained establishes a completed pickup unless later execution observations show an actual release or clear grasp failure. An explicit held annotation anywhere in the interval also establishes possession unless subsequent observations show release or clear failure. A missing final held label, a cube center near its former tabletop position, or disagreement between the reported cube center and wrist position does not by itself establish failure or an empty hand. When pickup completion is established and not subsequently invalidated, choose B using selected_target as specified below; do not repeat A."
+   },
+   {
+    "modify_from": "If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube.",
+    "modify_to": "Choose retry A at the available goal cube only on positive evidence of grasp failure, such as visibly closing on nothing, and only if no later observation in the current execution interval establishes successful possession. Do not infer failure merely from an omitted held label or an inconsistent reported cube position."
+   },
+   {
+    "modify_from": "For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known.",
+    "modify_to": "For other uncovered situations, use B when holding the goal cube and selected_target is known. Use the empty-hand fallback A only when the hand is empty and the goal cube can be located, after checking the whole current execution interval: an established pickup blocks this fallback unless a subsequent actual release or clear grasp failure is observed. The cube's being locatable does not establish an empty hand. Retain the completed-correct-placement rule above when a release has completed the goal."
+   }
+  ],
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "No substantive proposed change is refused. No memory changes or persistent grasp-state field are needed because the current execution interval supplies the relevant evidence. All earlier release-counting and physical-target tracking edits remain unchanged."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B.",
+    "modify_to": "Determine the current grasp state from the entire currently shown execution interval, not the demonstration's final hand pose or the final execution observation alone. Apply this assessment before any empty-hand or retry-A rule. Descent onto the goal cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained establishes a completed pickup unless later execution observations show an actual release or clear grasp failure. An explicit held annotation anywhere in the interval also establishes possession unless subsequent observations show release or clear failure. A missing final held label, a cube center near its former tabletop position, or disagreement between the reported cube center and wrist position does not by itself establish failure or an empty hand. When pickup completion is established and not subsequently invalidated, choose B using selected_target as specified below; do not repeat A."
+   },
+   {
+    "modify_from": "If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube.",
+    "modify_to": "Choose retry A at the available goal cube only on positive evidence of grasp failure, such as visibly closing on nothing, and only if no later observation in the current execution interval establishes successful possession. Do not infer failure merely from an omitted held label or an inconsistent reported cube position."
+   },
+   {
+    "modify_from": "For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known.",
+    "modify_to": "For other uncovered situations, use B when holding the goal cube and selected_target is known. Use the empty-hand fallback A only when the hand is empty and the goal cube can be located, after checking the whole current execution interval: an established pickup blocks this fallback unless a subsequent actual release or clear grasp failure is observed. The cube's being locatable does not establish an empty hand. Retain the completed-correct-placement rule above when a release has completed the goal."
+   }
+  ],
+  "refused": "No substantive proposed change is refused. No memory changes or persistent grasp-state field are needed because the current execution interval supplies the relevant evidence. All earlier release-counting and physical-target tracking edits remain unchanged."
+ },
+ "not_applied": [],
+ "refused": "No substantive proposed change is refused. No memory changes or persistent grasp-state field are needed because the current execution interval supplies the relevant evidence. All earlier release-counting and physical-target tracking edits remain unchanged.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B.\",\n      \"modify_to\": \"Determine the current grasp state from the entire currently shown execution interval, not the demonstration's final hand pose or the final execution observation alone. Apply this assessment before any empty-hand or retry-A rule. Descent onto the goal cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained establishes a completed pickup unless later execution observations show an actual release or clear grasp failure. An explicit held annotation anywhere in the interval also establishes possession unless subsequent observations show release or clear failure. A missing final held label, a cube center near its former tabletop position, or disagreement between the reported cube center and wrist position does not by itself establish failure or an empty hand. When pickup completion is established and not subsequently invalidated, choose B using selected_target as specified below; do not repeat A.\"\n    },\n    {\n      \"modify_from\": \"If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube.\",\n      \"modify_to\": \"Choose retry A at the available goal cube only on positive evidence of grasp failure, such as visibly closing on nothing, and only if no later observation in the current execution interval establishes successful possession. Do not infer failure merely from an omitted held label or an inconsistent reported cube position.\"\n    },\n    {\n      \"modify_from\": \"For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known.\",\n      \"modify_to\": \"For other uncovered situations, use B when holding the goal cube and selected_target is known. Use the empty-hand fallback A only when the hand is empty and the goal cube can be located, after checking the whole current execution interval: an established pickup blocks this fallback unless a subsequent actual release or clear grasp failure is observed. The cube's being locatable does not establish an empty hand. Retain the completed-correct-placement rule above when a release has completed the goal.\"\n    }\n  ],\n  \"refused\": \"No substantive proposed change is refused. No memory changes or persistent grasp-state field are needed because the current execution interval supplies the relevant evidence. All earlier release-counting and physical-target tracking edits remain unchanged.\"\n}"
+}

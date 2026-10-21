@@ -1,0 +1,101 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "demo_placements",
+  "goal_target"
+ ],
+ "ablate": "necessity",
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  23,
+  40,
+  54,
+  59,
+  84
+ ],
+ "scored": 10,
+ "failed": 1,
+ "subgoal_wrong": 0,
+ "memory_wrong": 1,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9,
+ "reads": {
+  "demo_placements": 0,
+  "goal_target": 5
+ },
+ "field_errors": {
+  "demo_placements": {
+   "in": 1,
+   "sole": 1
+  },
+  "goal_target": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "demo_placements": "read at no step of 10"
+ },
+ "loss": 0.1,
+ "verified_of_all": 0.9,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field demo_placements, ANNOTATOR PROMPT\n  Situation: goal asked for the FIRST target the red cube was placed on; at the first decision step (demonstration shown, memory empty) the policy chose the correct pick-up subgoal but wrote a two-entry list where three placements had happened, and copied its second entry from an opening frame (one pixel off the stable value). The demonstration had three raised carries onto targets (the last ending with a release onto a target that the gripper then re-grasped for the final centre carry), and the policy dropped that last placement because the rule's clause about a 're-grasp that sets the cube back on the same target' made it read the release-then-re-grasp as a non-placement. PREDICTABILITY failure on demo_placements. Change: define the field by counting carries, not by excluding re-grasps. A PLACEMENT is any raised carry of the goal-named cube (cube labelled held with the gripper at height about 0.15, moving away from where it last rested) that ends with the gripper lowered to table height and the fingers opening to ~100% while a target lies within a few pixels of where the cube comes to rest, EXCEPT the one carry that ends near the image centre (cube left near [82, 127], no target there). Every such carry produces exactly one entry, in order, no matter what happens next: in particular, the cube being re-grasped off that same target afterwards (which always happens before the final centre carry, and may also happen before a carry to another target) never cancels the entry. The only things that produce no entry are: the cube's starting spot; button presses (fingers 0% open, nothing held); a partly-open (~39-46%) frame with no raised carry before it; and a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between. Sanity check: the number of entries equals the number of raised carries of the cube minus one, and is at least the ordinal the goal names. Values: every entry is copied, to the pixel, from the STABLE target list read in the frames where the cube is held raised and travelling toward the centre just before the centre release; never from opening, release or parked frames, even when they differ by one pixel. Written at the first step, copied unchanged afterwards. e.g. carries onto [139, 124], then [92, 166], then [127, 82] (the cube then re-grasped from [127, 82] and carried to the centre), stable list [92, 166], [104, 93], [127, 82], [139, 124]: [[139, 124], [92, 166], [127, 82]]\n\nfield demo_placements, POLICY PROMPT\n  Same situation and same PREDICTABILITY failure: at the first decision step the policy dropped the last of three placements and copied an opening-frame value. Rewrite the procedure as a count of carries. First read the STABLE target list: the four targets listed in the demo frames where the goal-named cube is 'held in the gripper' at height about 0.15 and the gripper is travelling toward [54, 128]/[82, 127] just before the final centre release; every entry you write is one of those four positions, to the pixel, and overrides any value seen in opening, release or parked frames. Then walk the demo in order and find every raised carry: a run of frames with the cube held at height about 0.15, moving away from where it last rested, followed by the gripper lowering to table height and the fingers going from ~46% to ~100% open. Each such carry whose end lies within a few pixels of a stable target is one placement, written in order of occurrence. The cube being picked up again from that same target afterwards never removes the entry; the last placement is ALWAYS followed by such a re-grasp, because the demo ends by lifting the cube off its last target and carrying it to the centre, and that centre carry (cube left near [82, 127], no target there) is the only carry you skip. Do not write entries for the starting spot, button presses (fingers 0%, nothing held), a partly-open (~39-46%) frame with no raised carry before it, or a grasp that opens again on the same target without raised travel elsewhere. Check before writing: entries = raised carries of the cube minus one, and at least the ordinal the goal names ('third' needs three entries). Later steps copy the carried-in value unchanged. e.g. carries onto [139, 124], then [92, 166], then [127, 82] with a re-grasp from [127, 82] into the centre carry, stable list [92, 166], [104, 93], [127, 82], [139, 124]: [[139, 124], [92, 166], [127, 82]]\n\nthe policy prompt for subgoal\n  No change. At the failed step the policy chose the correct pick-up subgoal and the correct point; the subgoal rules were sufficient, and the subgoal rules at the drop step read goal_target rather than demo_placements, which was also correct there.\n\nrefused\n  Nothing refused. The single report, that the memory instruction did not make clear a release onto a new target still counts when the cube is later re-grasped from that target, and that stable-list values override opening-frame values, holds across every episode of the minibatch: in each demonstration the last placement is followed by a re-grasp from that same target for the final centre carry, so the clause excluding same-target re-grasps was misread as excluding the placement itself.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No change. At the failed step the policy chose the correct pick-up subgoal and the correct point; the subgoal rules were sufficient, and the subgoal rules at the drop step read goal_target rather than demo_placements, which was also correct there.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "demo_placements",
+    "description": "Same situation and same PREDICTABILITY failure: at the first decision step the policy dropped the last of three placements and copied an opening-frame value. Rewrite the procedure as a count of carries. First read the STABLE target list: the four targets listed in the demo frames where the goal-named cube is 'held in the gripper' at height about 0.15 and the gripper is travelling toward [54, 128]/[82, 127] just before the final centre release; every entry you write is one of those four positions, to the pixel, and overrides any value seen in opening, release or parked frames. Then walk the demo in order and find every raised carry: a run of frames with the cube held at height about 0.15, moving away from where it last rested, followed by the gripper lowering to table height and the fingers going from ~46% to ~100% open. Each such carry whose end lies within a few pixels of a stable target is one placement, written in order of occurrence. The cube being picked up again from that same target afterwards never removes the entry; the last placement is ALWAYS followed by such a re-grasp, because the demo ends by lifting the cube off its last target and carrying it to the centre, and that centre carry (cube left near [82, 127], no target there) is the only carry you skip. Do not write entries for the starting spot, button presses (fingers 0%, nothing held), a partly-open (~39-46%) frame with no raised carry before it, or a grasp that opens again on the same target without raised travel elsewhere. Check before writing: entries = raised carries of the cube minus one, and at least the ordinal the goal names ('third' needs three entries). Later steps copy the carried-in value unchanged. e.g. carries onto [139, 124], then [92, 166], then [127, 82] with a re-grasp from [127, 82] into the centre carry, stable list [92, 166], [104, 93], [127, 82], [139, 124]: [[139, 124], [92, 166], [127, 82]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "demo_placements",
+    "description": "Situation: goal asked for the FIRST target the red cube was placed on; at the first decision step (demonstration shown, memory empty) the policy chose the correct pick-up subgoal but wrote a two-entry list where three placements had happened, and copied its second entry from an opening frame (one pixel off the stable value). The demonstration had three raised carries onto targets (the last ending with a release onto a target that the gripper then re-grasped for the final centre carry), and the policy dropped that last placement because the rule's clause about a 're-grasp that sets the cube back on the same target' made it read the release-then-re-grasp as a non-placement. PREDICTABILITY failure on demo_placements. Change: define the field by counting carries, not by excluding re-grasps. A PLACEMENT is any raised carry of the goal-named cube (cube labelled held with the gripper at height about 0.15, moving away from where it last rested) that ends with the gripper lowered to table height and the fingers opening to ~100% while a target lies within a few pixels of where the cube comes to rest, EXCEPT the one carry that ends near the image centre (cube left near [82, 127], no target there). Every such carry produces exactly one entry, in order, no matter what happens next: in particular, the cube being re-grasped off that same target afterwards (which always happens before the final centre carry, and may also happen before a carry to another target) never cancels the entry. The only things that produce no entry are: the cube's starting spot; button presses (fingers 0% open, nothing held); a partly-open (~39-46%) frame with no raised carry before it; and a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between. Sanity check: the number of entries equals the number of raised carries of the cube minus one, and is at least the ordinal the goal names. Values: every entry is copied, to the pixel, from the STABLE target list read in the frames where the cube is held raised and travelling toward the centre just before the centre release; never from opening, release or parked frames, even when they differ by one pixel. Written at the first step, copied unchanged afterwards. e.g. carries onto [139, 124], then [92, 166], then [127, 82] (the cube then re-grasped from [127, 82] and carried to the centre), stable list [92, 166], [104, 93], [127, 82], [139, 124]: [[139, 124], [92, 166], [127, 82]]"
+   }
+  ],
+  "refused": "Nothing refused. The single report, that the memory instruction did not make clear a release onto a new target still counts when the cube is later re-grasped from that target, and that stable-list values override opening-frame values, holds across every episode of the minibatch: in each demonstration the last placement is followed by a re-grasp from that same target for the final centre carry, so the clause excluding same-target re-grasps was misread as excluding the placement itself."
+ },
+ "critiques": [
+  {
+   "step": [
+    84,
+    "exec",
+    954
+   ],
+   "memory_in": "demo_placements=; goal_target=",
+   "answered": "A: pick up the cube at [82, 127]",
+   "recorded": "A: pick up the cube at [82, 128]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not make clear that a release which follows a raised carry to a NEW target counts as a placement even when the cube is afterwards re-grasped from that same target for the final centre carry: the release at t=656 (fingers 100% open after the held carry from [91,168] raised at ~0.146 to the target near [127,82], which was listed as [133,78] under the gripper) is the third placement [127,82]; the re-grasp at t=720 that lifts it off and carries it to the centre is the final centre carry, not a 'set back on the same target' re-grasp. It also did not say plainly that the stable set is read from the frames just before the centre release (t=768-800: [92,166],[104,93],[127,82],[139,124]) and that this value overrides the opening-frame value, so the second entry must be [92,166] not [92,167].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

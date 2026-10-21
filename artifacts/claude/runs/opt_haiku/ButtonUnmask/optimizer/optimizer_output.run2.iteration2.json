@@ -1,0 +1,93 @@
+{
+ "episodes": [
+  15,
+  20,
+  47,
+  86,
+  89
+ ],
+ "user_chars": 16941,
+ "usage": {
+  "prompt_tokens": 8825,
+  "completion_tokens": 1091,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 8821
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 308
+  }
+ },
+ "reasoning": "I'm checking that tying picks_done to the last frame of the decision step is consistent with how the scene shows the container held or released after pickup/putdown actions, and confirming this doesn't conflict with the earlier round's edit about the blank value.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "picks_done",
+    "edits": [
+     {
+      "modify_from": "Then, if any execution step shown at this decision step shows a container held in the gripper, write that number + 1; otherwise write that number unchanged. It does not change when the container is put down.",
+      "modify_to": "Then look only at the scene at this decision step, meaning the last frame shown, and ignore every earlier execution frame (in particular a frame at the start of the execution that still shows a container held from before). If that last frame shows a container held in the gripper, write that number + 1; otherwise, including when the gripper is empty and open with every container resting on the table, write that number unchanged. It does not change when the container is put down."
+     },
+     {
+      "modify_from": "e.g. 0 at the first decision step, 1 after one container has been lifted",
+      "modify_to": "e.g. 0 at the first decision step, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been set down"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "picks_done",
+    "edits": [
+     {
+      "modify_from": "Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1",
+      "modify_to": "Increases by one exactly at a decision step whose own scene (the last frame shown at that step) shows a container held in the gripper, which is the step right after a 'pick up the container' subgoal was executed. Earlier execution frames at a step do not count: at the step right after the container has been set down, the execution frames may open with the container still held from before, but the scene at the decision step shows the gripper empty and every container on the table, so the value is copied unchanged. e.g. 0 before any lift, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been put down"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing refused. The report's one request, that picks_done be read from the scene at the decision step rather than from any execution frame, is committed on both the rule and the policy side; the round-1 handling of an empty carried-in value is kept intact. The subgoal instruction is unchanged, as the report itself concludes that the two-pixel point difference is detection wobble already settled by Rule 2."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "picks_done",
+    "edits": [
+     {
+      "modify_from": "Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1",
+      "modify_to": "Increases by one exactly at a decision step whose own scene (the last frame shown at that step) shows a container held in the gripper, which is the step right after a 'pick up the container' subgoal was executed. Earlier execution frames at a step do not count: at the step right after the container has been set down, the execution frames may open with the container still held from before, but the scene at the decision step shows the gripper empty and every container on the table, so the value is copied unchanged. e.g. 0 before any lift, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been put down"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "picks_done",
+    "edits": [
+     {
+      "modify_from": "Then, if any execution step shown at this decision step shows a container held in the gripper, write that number + 1; otherwise write that number unchanged. It does not change when the container is put down.",
+      "modify_to": "Then look only at the scene at this decision step, meaning the last frame shown, and ignore every earlier execution frame (in particular a frame at the start of the execution that still shows a container held from before). If that last frame shows a container held in the gripper, write that number + 1; otherwise, including when the gripper is empty and open with every container resting on the table, write that number unchanged. It does not change when the container is put down."
+     },
+     {
+      "modify_from": "e.g. 0 at the first decision step, 1 after one container has been lifted",
+      "modify_to": "e.g. 0 at the first decision step, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been set down"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "Nothing refused. The report's one request, that picks_done be read from the scene at the decision step rather than from any execution frame, is committed on both the rule and the policy side; the round-1 handling of an empty carried-in value is kept intact. The subgoal instruction is unchanged, as the report itself concludes that the two-pixel point difference is detection wobble already settled by Rule 2."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. The report's one request, that picks_done be read from the scene at the decision step rather than from any execution frame, is committed on both the rule and the policy side; the round-1 handling of an empty carried-in value is kept intact. The subgoal instruction is unchanged, as the report itself concludes that the two-pixel point difference is detection wobble already settled by Rule 2.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"picks_done\", \"edits\": [{\"modify_from\": \"Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1\", \"modify_to\": \"Increases by one exactly at a decision step whose own scene (the last frame shown at that step) shows a container held in the gripper, which is the step right after a 'pick up the container' subgoal was executed. Earlier execution frames at a step do not count: at the step right after the container has been set down, the execution frames may open with the container still held from before, but the scene at the decision step shows the gripper empty and every container on the table, so the value is copied unchanged. e.g. 0 before any lift, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been put down\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"picks_done\", \"edits\": [{\"modify_from\": \"Then, if any execution step shown at this decision step shows a container held in the gripper, write that number + 1; otherwise write that number unchanged. It does not change when the container is put down.\", \"modify_to\": \"Then look only at the scene at this decision step, meaning the last frame shown, and ignore every earlier execution frame (in particular a frame at the start of the execution that still shows a container held from before). If that last frame shows a container held in the gripper, write that number + 1; otherwise, including when the gripper is empty and open with every container resting on the table, write that number unchanged. It does not change when the container is put down.\"}, {\"modify_from\": \"e.g. 0 at the first decision step, 1 after one container has been lifted\", \"modify_to\": \"e.g. 0 at the first decision step, 1 at the step where the first container hangs in the gripper, still 1 at the step after it has been set down\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"Nothing refused. The report's one request, that picks_done be read from the scene at the decision step rather than from any execution frame, is committed on both the rule and the policy side; the round-1 handling of an empty carried-in value is kept intact. The subgoal instruction is unchanged, as the report itself concludes that the two-pixel point difference is detection wobble already settled by Rule 2.\"}"
+}

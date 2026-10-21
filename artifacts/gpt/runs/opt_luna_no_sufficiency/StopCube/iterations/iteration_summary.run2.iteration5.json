@@ -1,0 +1,89 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "passage_count",
+  "last_side"
+ ],
+ "ablate": "sufficiency",
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  34,
+  36,
+  41,
+  60,
+  88
+ ],
+ "scored": 26,
+ "failed": 7,
+ "subgoal_wrong": 6,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.7692307692307693,
+ "memory_verified": 0.9615384615384616,
+ "reads": {
+  "passage_count": 22,
+  "last_side": 20
+ },
+ "field_errors": {
+  "passage_count": {
+   "in": 1,
+   "sole": 0
+  },
+  "last_side": {
+   "in": 1,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2692307692307692,
+ "verified_of_all": 0.7307692307692307,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 6,
+ "point_wrong": 0,
+ "decisions": 26,
+ "critique": "refused\n  The sole reported failure occurred while waiting to stop the cube on its fourth target passage. The incoming memory recorded two passages and the cube on the smaller-x side. The newly shown motion ended with the cube on the larger-x side of the target, so the required outgoing memory was passage_count=3 and last_side=1. The policy instead retained passage_count=2 and last_side=-1, but named no missing information or instruction. This does not establish a PREDICTABILITY defect: the existing memory instructions explicitly require processing the final decision observation, counting even a small nonzero sign change immediately, and updating both fields together without waiting for confirmation. The annotator prompt requires the same result. Nor is there a NECESSITY defect: the accumulated count and preceding side remain needed across observation boundaries. No document change is warranted for this failure. The correct subgoal remains B because the upcoming fourth passage is still outside the press lead window; the existing subgoal instruction already covers that condition.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "The sole reported failure occurred while waiting to stop the cube on its fourth target passage. The incoming memory recorded two passages and the cube on the smaller-x side. The newly shown motion ended with the cube on the larger-x side of the target, so the required outgoing memory was passage_count=3 and last_side=1. The policy instead retained passage_count=2 and last_side=-1, but named no missing information or instruction. This does not establish a PREDICTABILITY defect: the existing memory instructions explicitly require processing the final decision observation, counting even a small nonzero sign change immediately, and updating both fields together without waiting for confirmation. The annotator prompt requires the same result. Nor is there a NECESSITY defect: the accumulated count and preceding side remain needed across observation boundaries. No document change is warranted for this failure. The correct subgoal remains B because the upcoming fourth passage is still outside the press lead window; the existing subgoal instruction already covers that condition."
+ },
+ "critiques": [
+  {
+   "step": [
+    88,
+    "exec",
+    303
+   ],
+   "memory_in": "passage_count=2; last_side=-1",
+   "answered": "B: remain static",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

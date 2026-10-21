@@ -1,0 +1,153 @@
+{
+ "episodes": [
+  7,
+  8,
+  38,
+  87,
+  90
+ ],
+ "user_chars": 29688,
+ "usage": {
+  "prompt_tokens": 12870,
+  "completion_tokens": 2272,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 12866
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 861
+  }
+ },
+ "reasoning": "This round came out perfect, with zero wrong subgoals and zero wrong memory. The report suggests restructuring by replacing the three per-color fields with a single goal-ordered list, and I'm checking if that's sound under the necessity condition—since green_cube_pos was never actually read, folding all three into target_cube_positions seems like a reasonable refactor that enforces \"one field, one fact.\"\n\nDespite the perfect score, I decide the fold is defensible since unnamed cubes' positions are never used, and the ordered list format is allowed and simplifies indexing. I'll commit to the change across the annotator prompt, policy memory, and subgoal passages, deleting the blue/green/red fields and adding target_cube_positions while leaving picks_done untouched.\n\nI go through the specific subgoal passages that reference blue_cube_pos/green_cube_pos/red_cube_pos and rewrite them to instead index into target_cube_positions by picks_done, handling the \"last named cube\" and \"list length\" edge cases. Now I'm writing out the updated JSON.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "at the same time record each cube's position in the memory fields.",
+    "modify_to": "at the same time write target_cube_positions: the [y, x] of each cube the goal names, in the order the goal names them, leaving out cubes the goal does not name."
+   },
+   {
+    "modify_from": "The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube.",
+    "modify_to": "The target is the entry of target_cube_positions at index picks_done (the first entry when picks_done is 0, the second when picks_done is 1). Point at the center of the container nearest to that listed position, writing the point as [y, x]. Ignore containers that cover no listed position."
+   },
+   {
+    "modify_from": "If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube.",
+    "modify_to": "If every listed cube has already been picked (picks_done is not smaller than the length of target_cube_positions), choose C if holding, otherwise B at the container nearest the last entry of target_cube_positions."
+   },
+   {
+    "modify_from": "choose B at the container nearest the recorded position of the next goal cube;",
+    "modify_to": "choose B at the container nearest the entry of target_cube_positions at index picks_done (the last entry if picks_done is not smaller than the list length);"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "delete",
+    "field": "blue_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "delete",
+    "field": "green_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "delete",
+    "field": "red_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "add",
+    "field": "target_cube_positions",
+    "edits": [],
+    "description": "If the scene at this decision step (the last frame shown) shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal instruction, list the cubes it names in the order it names them, and write the [y, x] of each of those cubes as an ordered list in that same order; leave out any cube the goal does not name. Otherwise copy the carried-in list unchanged, never editing it from a cube briefly exposed under a lifted container. e.g. goal naming blue then red: [[78, 157], [106, 105]]; goal naming only red: [[73, 93]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "blue_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "delete",
+    "field": "green_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "delete",
+    "field": "red_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "add",
+    "field": "target_cube_positions",
+    "edits": [],
+    "description": "An ordered list of the [y, x] positions, read at step #1 (t=0) while the three cubes are still loose and no container is on the table, of exactly the cubes the goal instruction names, in the order the goal names them. Cubes the goal does not name are not recorded. Written at step #1 and held unchanged for the rest of the episode, even after a container comes down over a cube or a lifted container briefly re-exposes one; a re-exposed cube never overwrites an entry. The entry at index picks_done is the cube whose container is picked next. e.g. for a goal naming the blue cube then the red cube: [[78, 157], [106, 105]]; for a goal naming only the red cube: [[73, 93]]"
+   }
+  ],
+  "refused": "Nothing refused. The fold of the three per-color position fields into one goal-ordered list target_cube_positions is committed on all three documents: it removes positions that are carried but never read (NECESSITY), keeps a position for any cube a goal can name, and lets picks_done index the next target directly. The last-frame principle from rounds 2 and 3 is preserved: the new field is written only when the scene at the decision step shows loose cubes and no containers, and picks_done is untouched. The round-1 handling of an empty carried-in picks_done is intact."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "blue_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "delete",
+    "field": "green_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "delete",
+    "field": "red_cube_pos",
+    "edits": [],
+    "description": ""
+   },
+   {
+    "kind": "add",
+    "field": "target_cube_positions",
+    "edits": [],
+    "description": "An ordered list of the [y, x] positions, read at step #1 (t=0) while the three cubes are still loose and no container is on the table, of exactly the cubes the goal instruction names, in the order the goal names them. Cubes the goal does not name are not recorded. Written at step #1 and held unchanged for the rest of the episode, even after a container comes down over a cube or a lifted container briefly re-exposes one; a re-exposed cube never overwrites an entry. The entry at index picks_done is the cube whose container is picked next. e.g. for a goal naming the blue cube then the red cube: [[78, 157], [106, 105]]; for a goal naming only the red cube: [[73, 93]]"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "target_cube_positions",
+    "edits": [],
+    "description": "If the scene at this decision step (the last frame shown) shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal instruction, list the cubes it names in the order it names them, and write the [y, x] of each of those cubes as an ordered list in that same order; leave out any cube the goal does not name. Otherwise copy the carried-in list unchanged, never editing it from a cube briefly exposed under a lifted container. e.g. goal naming blue then red: [[78, 157], [106, 105]]; goal naming only red: [[73, 93]]"
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "at the same time record each cube's position in the memory fields.",
+    "modify_to": "at the same time write target_cube_positions: the [y, x] of each cube the goal names, in the order the goal names them, leaving out cubes the goal does not name."
+   },
+   {
+    "modify_from": "The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube.",
+    "modify_to": "The target is the entry of target_cube_positions at index picks_done (the first entry when picks_done is 0, the second when picks_done is 1). Point at the center of the container nearest to that listed position, writing the point as [y, x]. Ignore containers that cover no listed position."
+   },
+   {
+    "modify_from": "If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube.",
+    "modify_to": "If every listed cube has already been picked (picks_done is not smaller than the length of target_cube_positions), choose C if holding, otherwise B at the container nearest the last entry of target_cube_positions."
+   },
+   {
+    "modify_from": "choose B at the container nearest the recorded position of the next goal cube;",
+    "modify_to": "choose B at the container nearest the entry of target_cube_positions at index picks_done (the last entry if picks_done is not smaller than the list length);"
+   }
+  ],
+  "refused": "Nothing refused. The fold of the three per-color position fields into one goal-ordered list target_cube_positions is committed on all three documents: it removes positions that are carried but never read (NECESSITY), keeps a position for any cube a goal can name, and lets picks_done index the next target directly. The last-frame principle from rounds 2 and 3 is preserved: the new field is written only when the scene at the decision step shows loose cubes and no containers, and picks_done is untouched. The round-1 handling of an empty carried-in picks_done is intact."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. The fold of the three per-color position fields into one goal-ordered list target_cube_positions is committed on all three documents: it removes positions that are carried but never read (NECESSITY), keeps a position for any cube a goal can name, and lets picks_done index the next target directly. The last-frame principle from rounds 2 and 3 is preserved: the new field is written only when the scene at the decision step shows loose cubes and no containers, and picks_done is untouched. The round-1 handling of an empty carried-in picks_done is intact.",
+ "text": "{\"annotator_prompt\": [\n  {\"kind\": \"delete\", \"field\": \"blue_cube_pos\"},\n  {\"kind\": \"delete\", \"field\": \"green_cube_pos\"},\n  {\"kind\": \"delete\", \"field\": \"red_cube_pos\"},\n  {\"kind\": \"add\", \"field\": \"target_cube_positions\", \"description\": \"An ordered list of the [y, x] positions, read at step #1 (t=0) while the three cubes are still loose and no container is on the table, of exactly the cubes the goal instruction names, in the order the goal names them. Cubes the goal does not name are not recorded. Written at step #1 and held unchanged for the rest of the episode, even after a container comes down over a cube or a lifted container briefly re-exposes one; a re-exposed cube never overwrites an entry. The entry at index picks_done is the cube whose container is picked next. e.g. for a goal naming the blue cube then the red cube: [[78, 157], [106, 105]]; for a goal naming only the red cube: [[73, 93]]\"}\n],\n \"policy_prompt_for_memory\": [\n  {\"kind\": \"delete\", \"field\": \"blue_cube_pos\"},\n  {\"kind\": \"delete\", \"field\": \"green_cube_pos\"},\n  {\"kind\": \"delete\", \"field\": \"red_cube_pos\"},\n  {\"kind\": \"add\", \"field\": \"target_cube_positions\", \"description\": \"If the scene at this decision step (the last frame shown) shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal instruction, list the cubes it names in the order it names them, and write the [y, x] of each of those cubes as an ordered list in that same order; leave out any cube the goal does not name. Otherwise copy the carried-in list unchanged, never editing it from a cube briefly exposed under a lifted container. e.g. goal naming blue then red: [[78, 157], [106, 105]]; goal naming only red: [[73, 93]]\"}\n],\n \"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"at the same time record each cube's position in the memory fields.\", \"modify_to\": \"at the same time write target_cube_positions: the [y, x] of each cube the goal names, in the order the goal names them, leaving out cubes the goal does not name.\"},\n  {\"modify_from\": \"The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube.\", \"modify_to\": \"The target is the entry of target_cube_positions at index picks_done (the first entry when picks_done is 0, the second when picks_done is 1). Point at the center of the container nearest to that listed position, writing the point as [y, x]. Ignore containers that cover no listed position.\"},\n  {\"modify_from\": \"If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube.\", \"modify_to\": \"If every listed cube has already been picked (picks_done is not smaller than the length of target_cube_positions), choose C if holding, otherwise B at the container nearest the last entry of target_cube_positions.\"},\n  {\"modify_from\": \"choose B at the container nearest the recorded position of the next goal cube;\", \"modify_to\": \"choose B at the container nearest the entry of target_cube_positions at index picks_done (the last entry if picks_done is not smaller than the list length);\"}\n ],\n \"refused\": \"Nothing refused. The fold of the three per-color position fields into one goal-ordered list target_cube_positions is committed on all three documents: it removes positions that are carried but never read (NECESSITY), keeps a position for any cube a goal can name, and lets picks_done index the next target directly. The last-frame principle from rounds 2 and 3 is preserved: the new field is written only when the scene at the decision step shows loose cubes and no containers, and picks_done is untouched. The round-1 handling of an empty carried-in picks_done is intact.\"}"
+}

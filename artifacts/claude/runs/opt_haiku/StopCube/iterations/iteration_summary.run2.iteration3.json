@@ -1,0 +1,130 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "crossings",
+  "cube_side",
+  "peak_speed"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  14,
+  26,
+  39,
+  80,
+  95
+ ],
+ "scored": 23,
+ "failed": 2,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9565217391304348,
+ "memory_verified": 0.9565217391304348,
+ "reads": {
+  "crossings": 18,
+  "cube_side": 13,
+  "peak_speed": 15
+ },
+ "field_errors": {
+  "crossings": {
+   "in": 0,
+   "sole": 0
+  },
+  "cube_side": {
+   "in": 0,
+   "sole": 0
+  },
+  "peak_speed": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.08695652173913043,
+ "verified_of_all": 0.9130434782608695,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 23,
+ "critique": "field last_cube_x, ANNOTATOR PROMPT\n  Add this field. It holds the cube's x-coordinate in the scene at this decision step (the last frame shown), as a plain number, e.g. 206. It is overwritten at every step, including step #1 where it is read from the t=0 frame. Reason: a decision step can show a single frame (one execution step of a few timesteps, then the scene), and at such a step nothing shown recovers where the cube was a moment earlier, so the cube's direction of motion cannot be told without it. The failure was SUFFICIENCY: the goal asked for the press at the second arrival, one crossing had already been counted, the cube was far out near its turnaround and barely creeping outward, the correct choice was to press, but with only one frame the policy could not classify the motion and defaulted to remaining static.\n\nfield last_t, ANNOTATOR PROMPT\n  Add this field. It holds the timestep index t of the scene at this decision step, e.g. 54. Overwritten every step; at step #1 it is 0. It is needed together with last_cube_x so that at a step showing a single frame the policy can divide the x change by the number of timesteps elapsed (current t minus last_t) and get a rate in px per timestep, as every other motion judgement in these documents is made in px per timestep.\n\nfield last_cube_x, POLICY PROMPT\n  Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. Overwrite it every step; at the first step read it from the single frame shown. e.g. 206. It is read at the next step only when that step shows a single frame and so has no pair of frames of its own to compare.\n\nfield last_t, POLICY PROMPT\n  Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. e.g. 54.\n\nfield peak_speed, POLICY PROMPT\n  Keep the definition, but make the procedure explicit so the value is PREDICTABLE: at a step with two crossings and three or more frames the policy wrote a smaller peak than the frames contained (it missed the fastest pair, the first one shown). Say: list every consecutive pair of frames shown at this step, starting with the pair formed by the first and second frames shown (the first frame shown is an execution step, not the previous scene, so it is paired normally), write for each the x change, the timestep gap, and the quotient; round each quotient to one decimal with halves rounding up (3.875 -> 3.9); then write the largest of the carried-in value and these quotients. When only one frame is shown, write the carried-in value unchanged. e.g. 3.9\n\nthe policy prompt for subgoal\n  The rule that sent the policy wrong is the motion classification, which says to determine the cube's motion from the last two frames shown at this step. When the previous decision step ended just as the cube reached its far turnaround, the next decision step can show a single frame (one short execution step of a few timesteps whose scene is the decision scene), and then there are no two frames to compare; the policy had no rule for that case and defaulted to remaining static, which was wrong because the goal asked for the press at the second arrival, one crossing was already counted, and the cube was creeping outward at well under 1 px per timestep with a peak speed far above 2.5. Replace it with: use the last two frames shown at this step when two or more are shown; when exactly one frame is shown, form the pair from the carried-in memory and the shown frame, taking the earlier position as last_cube_x and the earlier time as last_t, so the outward rate is (|cube_x - target_x| at this frame minus |last_cube_x - target_x|) divided by (t of this frame minus last_t); for the side-flip test (1) compare the carried-in cube_side with the side in this frame. Then apply the existing classification thresholds unchanged (zero or negative rate: NOT MOVING AWAY; positive rate at most about 1 px per timestep with peak_speed at least about 2.5: NOT MOVING AWAY; otherwise MOVING AWAY). Keep the rest of the instruction as it is: press when crossings == N-1 and the cube is NOT MOVING AWAY, otherwise remain static, and never choose the preparation move after the first step. Also add one sentence: the single-frame case is common right after the step at which the cube was seen approaching its extreme, so when crossings == N-1 it should be expected that a single-frame step with a tiny outward rate is the press moment, not a reason to wait.\n\nrefused\n  One step proposed, as an alternative to keeping the last position, a distance heuristic: with crossings == N-1 and the cube roughly 80 px from the target treat it as at its turnaround and press. That is not passed on. The turnaround extreme is not a fixed distance across these episodes (it ranges from about 75 to about 90 px from the target, and on the fast cube the far extreme differs from the near one), so a fixed distance would press too early on some episodes and too late on others; keeping last_cube_x and last_t makes the single-frame rate computable and keeps one classification rule for every step. At the other reported step the policy chose the correct subgoal and named nothing missing; its only fault was writing a peak speed lower than the frames showed, which is answered by the tightened peak_speed procedure rather than by any new field.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The rule that sent the policy wrong is the motion classification, which says to determine the cube's motion from the last two frames shown at this step. When the previous decision step ended just as the cube reached its far turnaround, the next decision step can show a single frame (one short execution step of a few timesteps whose scene is the decision scene), and then there are no two frames to compare; the policy had no rule for that case and defaulted to remaining static, which was wrong because the goal asked for the press at the second arrival, one crossing was already counted, and the cube was creeping outward at well under 1 px per timestep with a peak speed far above 2.5. Replace it with: use the last two frames shown at this step when two or more are shown; when exactly one frame is shown, form the pair from the carried-in memory and the shown frame, taking the earlier position as last_cube_x and the earlier time as last_t, so the outward rate is (|cube_x - target_x| at this frame minus |last_cube_x - target_x|) divided by (t of this frame minus last_t); for the side-flip test (1) compare the carried-in cube_side with the side in this frame. Then apply the existing classification thresholds unchanged (zero or negative rate: NOT MOVING AWAY; positive rate at most about 1 px per timestep with peak_speed at least about 2.5: NOT MOVING AWAY; otherwise MOVING AWAY). Keep the rest of the instruction as it is: press when crossings == N-1 and the cube is NOT MOVING AWAY, otherwise remain static, and never choose the preparation move after the first step. Also add one sentence: the single-frame case is common right after the step at which the cube was seen approaching its extreme, so when crossings == N-1 it should be expected that a single-frame step with a tiny outward rate is the press moment, not a reason to wait.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "last_cube_x",
+    "description": "Write the cube's x-coordinate in the last frame shown at this step (the scene at this decision step), as a plain number. Overwrite it every step; at the first step read it from the single frame shown. e.g. 206. It is read at the next step only when that step shows a single frame and so has no pair of frames of its own to compare."
+   },
+   {
+    "field": "last_t",
+    "description": "Write the timestep index t of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step write 0. e.g. 54."
+   },
+   {
+    "field": "peak_speed",
+    "description": "Keep the definition, but make the procedure explicit so the value is PREDICTABLE: at a step with two crossings and three or more frames the policy wrote a smaller peak than the frames contained (it missed the fastest pair, the first one shown). Say: list every consecutive pair of frames shown at this step, starting with the pair formed by the first and second frames shown (the first frame shown is an execution step, not the previous scene, so it is paired normally), write for each the x change, the timestep gap, and the quotient; round each quotient to one decimal with halves rounding up (3.875 -> 3.9); then write the largest of the carried-in value and these quotients. When only one frame is shown, write the carried-in value unchanged. e.g. 3.9"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "last_cube_x",
+    "description": "Add this field. It holds the cube's x-coordinate in the scene at this decision step (the last frame shown), as a plain number, e.g. 206. It is overwritten at every step, including step #1 where it is read from the t=0 frame. Reason: a decision step can show a single frame (one execution step of a few timesteps, then the scene), and at such a step nothing shown recovers where the cube was a moment earlier, so the cube's direction of motion cannot be told without it. The failure was SUFFICIENCY: the goal asked for the press at the second arrival, one crossing had already been counted, the cube was far out near its turnaround and barely creeping outward, the correct choice was to press, but with only one frame the policy could not classify the motion and defaulted to remaining static."
+   },
+   {
+    "field": "last_t",
+    "description": "Add this field. It holds the timestep index t of the scene at this decision step, e.g. 54. Overwritten every step; at step #1 it is 0. It is needed together with last_cube_x so that at a step showing a single frame the policy can divide the x change by the number of timesteps elapsed (current t minus last_t) and get a rate in px per timestep, as every other motion judgement in these documents is made in px per timestep."
+   }
+  ],
+  "refused": "One step proposed, as an alternative to keeping the last position, a distance heuristic: with crossings == N-1 and the cube roughly 80 px from the target treat it as at its turnaround and press. That is not passed on. The turnaround extreme is not a fixed distance across these episodes (it ranges from about 75 to about 90 px from the target, and on the fast cube the far extreme differs from the near one), so a fixed distance would press too early on some episodes and too late on others; keeping last_cube_x and last_t makes the single-frame rate computable and keeps one classification rule for every step. At the other reported step the policy chose the correct subgoal and named nothing missing; its only fault was writing a peak speed lower than the frames showed, which is answered by the tightened peak_speed procedure rather than by any new field."
+ },
+ "critiques": [
+  {
+   "step": [
+    26,
+    "exec",
+    54
+   ],
+   "memory_in": "crossings=0; cube_side=smaller_x; peak_speed=0",
+   "answered": "B: remain static",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    26,
+    "exec",
+    60
+   ],
+   "memory_in": "crossings=1; cube_side=larger_x; peak_speed=3.9",
+   "answered": "B: remain static",
+   "recorded": "C: press button to stop the cube",
+   "missing_from_memory": "The cube's x position (or its distance from the target) at the previous decision step, e.g. last_cube_x, so that with only one frame shown at this step (t=60, cube at x=210) I could tell whether the cube at distance 81 from the target was still moving away or already returning/stopped at its turnaround.",
+   "missing_from_policy_prompt_for_memory": "No field keeps the cube's last position or last motion direction across steps; it should define a field like last_cube_x (cube x in the last frame shown, overwritten every step) or last_motion (away/toward) so a single-frame step can still classify motion.",
+   "missing_from_policy_prompt_for_subgoal": "It says to classify motion from the last two frames shown at this step, but this step showed only one frame (t=60), so no outward rate could be computed and I defaulted to B. It should say that when only one frame is shown, compare the cube's x against the carried-in last position (or, lacking that, that with crossings == N-1 and the cube far out near its turnaround extreme, roughly 80 px from the target, treat it as NOT MOVING AWAY and press C).",
+   "missing": "The cube's x position (or its distance from the target) at the previous decision step, e.g. last_cube_x, so that with only one frame shown at this step (t=60, cube at x=210) I could tell whether the cube at distance 81 from the target was still moving away or already returning/stopped at its turnaround."
+  }
+ ]
+}

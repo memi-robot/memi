@@ -1,0 +1,427 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "PatternLock",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   3,
+   10,
+   34,
+   97,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), first compute one number n = carried moves_done + 1. n is the count of planned moves finished so far, including the one the execution steps just showed, and it is also exactly the moves_done value written at this step; these are the same number, not two different ones, so never add one to n again. The execution steps just completed plan[n - 1]; the subgoal is plan[n] (0-based), the letter immediately after the one just completed. Self-check from what the step shows: the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule as the plan) must equal plan[n - 1]; the subgoal is the letter right after it in the plan, never plan[n - 1] again (unless the plan genuinely repeats it) and never plan[n + 1]. So the first step performs plan[0]; the second step (carried moves_done = 0, n = 1) performs plan[1]; the third step (carried moves_done = 1, n = 2) performs plan[2]; and so on: the k-th decision step of the episode performs plan[k - 1]. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If n (carried moves_done + 1) is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[n] with n = carried moves_done + 1 if it exists (plan[0] when memory is empty), else A.",
+  "fields": [
+   {
+    "name": "plan",
+    "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself); each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. A short demonstration with only one newly highlighted target gives a one-letter list, e.g. [\"B\"]; that is a complete, valid plan. Never write 'unknown' or an empty value; whenever a demonstration is shown the plan has at least one letter. If the step shows no demonstration, copy the carried-in plan character for character. Write the list exactly as a JSON array with double-quoted uppercase letters, square brackets, comma-space separated: [\"C\", \"E\", \"C\", \"G\"], never ['C', 'E', 'C', 'G'], never without brackets, never with spaces inside the quotes. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+    "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted cells: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself); each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. A demonstration may be only a few frames long with a single newly highlighted target; the plan is then a one-letter list such as [\"B\"], which is complete and valid. The plan is never written as 'unknown', empty, or anything other than the JSON array of letters. Always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+   },
+   {
+    "name": "moves_done",
+    "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+    "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+   }
+  ]
+ },
+ "initial": {
+  "task": "PatternLock",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   3,
+   10,
+   34,
+   97,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+  "fields": [
+   {
+    "name": "plan",
+    "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+    "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+   },
+   {
+    "name": "moves_done",
+    "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+    "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 16,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "plan": 0,
+     "moves_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "the policy prompt for subgoal\n  The failure happened on a retrace task at a decision step after the first: the carried memory held the full plan and moves_done=1, the observed execution steps showed the gripper completing the second planned move (the newly highlighted target lit at the end of that move), and the recorded subgoal was the third plan letter. The policy instead repeated the second letter. It broke SUFFICIENCY in form only: the rule 'subgoal is plan[moves_done], where moves_done is the value written at THIS step' asked the policy to index by a value it had not yet written and to perform the increment in its head, and it indexed by the carried value instead. Replace that rule with one stated purely in terms of what is handed in. New rule: at the first decision step (memory empty, demonstration shown) the subgoal is plan[0] of the plan just built. At every later decision step the subgoal is plan[carried moves_done + 1]; equivalently, the execution steps shown just completed plan[carried moves_done], and that letter is never chosen again at this step. Keep the fallback: if carried moves_done + 1 is at or beyond the plan length, repeat the last plan letter. Drop the sentence that defines the index through 'the value written at THIS step'; the indexing must be independent of the memory the policy is simultaneously writing. The rest (no subgoal needs a point, never repeat or skip regardless of where the gripper ended, the no-demonstration fallback) stays.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on.",
+      "modify_to": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step."
+     },
+     {
+      "modify_from": "If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter.",
+      "modify_to": "If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter."
+     },
+     {
+      "modify_from": "In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+      "modify_to": "In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A."
+     }
+    ],
+    "refused": "Nothing refused. The report's single change, indexing the subgoal by the carried-in moves_done plus one instead of by the value being written at this step, is committed as stated; the memory fields themselves are unchanged since they were filled and written correctly in both rounds."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 20,
+    "subgoal_wrong": 1,
+    "memory_wrong": 2,
+    "memory_only": 2,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "plan": 2,
+     "moves_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "field plan, ANNOTATOR PROMPT\n  Same content as before: the ordered list of menu letters the demonstration traces, built once at the first decision step from the sequence of newly highlighted targets (dy/dx rule, threshold 8, letters A-H) and copied unchanged at every later step. Add one rule of form so the written value is a single fixed string: the list is always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping, e.g. [\"G\", \"B\", \"D\"]. In two first-step cases the policy derived exactly the right letters but wrote them with single quotes, so the annotated value and the policy's value were two spellings of one answer (PREDICTABILITY broken on form alone).\n\nfield plan, POLICY PROMPT\n  Same content: when the step shows DEMONSTRATION STEPS and the carried memory is empty, build the list from the newly highlighted targets in demo order (first highlighted target at the first demo frame is the start; each later target that becomes highlighted gives one letter from dy/dx, |dy|>=8 and |dx|>=8 thresholds, A-H as before); on every later step copy the carried-in plan character for character. State the form explicitly: write the list exactly as a JSON array with double-quoted letters, e.g. [\"C\", \"E\", \"C\", \"G\"]. Never use single quotes, never omit the brackets, never add spaces inside the quotes. The policy at the first decision step twice computed the correct letters but wrote ['C', 'E', 'C', 'G'] instead of [\"C\", \"E\", \"C\", \"G\"], which breaks PREDICTABILITY of the field purely by format.\n\nthe policy prompt for subgoal\n  One mid-episode step went wrong where the instruction's indexing rule invited a slip. The robot had finished its second planned move (carried moves_done was 1, the plan was six letters long) and the correct subgoal was the third letter of the plan; the policy instead chose the fourth letter. Its memory output was right (moves_done 2), so it evidently applied the formula 'plan[moves_done + 1]' to the value it had just written rather than to the carried-in value, despite the sentence warning against that. The formula is stated in terms of the carried-in value plus one while the memory the policy is simultaneously writing is that same carried-in value plus one, so two different quantities both look like 'moves_done + 1'. This is a SUFFICIENCY failure caused by an ambiguous rule rather than by missing information. Replace the indexing rule with a single statement that has no off-by-one: first write this step's memory (moves_done = 0 at the demonstration step, carried moves_done + 1 at every later step); then the subgoal is plan[moves_done] using the value JUST WRITTEN at this step, 0-based. That gives plan[0] at the first step, plan[1] at the second, plan[2] at the third, and so on, identically to before but with one quantity instead of two. Drop the sentence 'Index by the carried-in memory only, never by the memory being written at this step' and the formula 'plan[carried moves_done + 1]', since they are what collided. Keep the end-of-plan rule in the same terms: if the just-written moves_done is at or beyond the plan length, repeat the last letter. Add a cheap self-check the policy can do from what the step shows: the move the execution steps just completed is the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule), and that direction must equal plan[carried moves_done]; if it does, the letter being chosen is the one right after it in the plan, and the letter just completed is never chosen again at this step unless the plan genuinely repeats it. Keep the fallback rules unchanged (derive from two highlighted targets when the plan is empty, otherwise A).\n\nrefused\n  Nothing is withheld. The two first-step reports (plan letters correct, single-quote formatting wrong) are passed on as one format rule in both memory documents. The mid-episode step that reported nothing missing but chose the plan letter one position too far is passed on as the rewrite of the indexing rule in the subgoal instruction.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+        "modify_to": "One letter per newly highlighted target, in demo order. Always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+        "modify_to": "If the step shows no demonstration, copy the carried-in plan character for character. Write the list exactly as a JSON array with double-quoted uppercase letters, square brackets, comma-space separated: [\"C\", \"E\", \"C\", \"G\"], never ['C', 'E', 'C', 'G'], never without brackets, never with spaces inside the quotes. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step.",
+      "modify_to": "At every later decision step (memory carried in, no demonstration shown), first compute one number n = carried moves_done + 1. n is the count of planned moves finished so far, including the one the execution steps just showed, and it is also exactly the moves_done value written at this step; these are the same number, not two different ones, so never add one to n again. The execution steps just completed plan[n - 1]; the subgoal is plan[n] (0-based), the letter immediately after the one just completed. Self-check from what the step shows: the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule as the plan) must equal plan[n - 1]; the subgoal is the letter right after it in the plan, never plan[n - 1] again (unless the plan genuinely repeats it) and never plan[n + 1]. So the first step performs plan[0]; the second step (carried moves_done = 0, n = 1) performs plan[1]; the third step (carried moves_done = 1, n = 2) performs plan[2]; and so on: the k-th decision step of the episode performs plan[k - 1]."
+     },
+     {
+      "modify_from": "If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter.",
+      "modify_to": "If n (carried moves_done + 1) is at or beyond the length of the plan (nothing remains), repeat the last plan letter."
+     },
+     {
+      "modify_from": "In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A.",
+      "modify_to": "In any other unforeseen situation, pick plan[n] with n = carried moves_done + 1 if it exists (plan[0] when memory is empty), else A."
+     }
+    ],
+    "refused": "The report asks to replace the indexing rule with 'subgoal is plan[moves_done] using the value just written at this step'. That is word for word the rule as initialized, which round 1 reported as the cause of its failure (the policy indexed by the carried value instead of the written one) and which round 1's edit replaced. Round 2's slip is the mirror of round 1's: each phrasing left two quantities that both read as 'moves_done + 1' or 'moves_done'. Reverting would undo round 1 and settle nothing. Instead the rule now names a single number n, states explicitly that n is both the carried value plus one and the value being written, forbids adding one to it again, anchors it to the observable just-completed move (the report's self-check, committed), and gives the position-based form plan[k - 1] at the k-th decision step. The format rule for plan is committed on both sides as asked."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 12,
+    "subgoal_wrong": 0,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "plan": 1,
+     "moves_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field plan, ANNOTATOR PROMPT\n  The failure: a demonstration that was only three frames long began with the start cell shown as a 'highlighted area' rather than a 'highlighted target', and only one new target became highlighted during it. The annotated plan at the first decision step was written as the literal 'unknown', while the rule as written yields a one-letter list (start [102, 154], new highlight [82, 151]: dy = -20 backward, dx = -3 under threshold, so [\"B\"]). The policy, following the rule, wrote [\"B\"] and chose the correct subgoal B. This breaks PREDICTABILITY: the annotated value and the value the instruction asks for are two different answers to one field at one step. Change: the start point of the plan is whatever cell is highlighted at demo t=0, whether it is labelled 'highlighted target' or 'highlighted area'; use its coordinates exactly as the start. A demonstration may show very few frames and only one newly highlighted target; the plan is then a list of one letter. The plan is never written as 'unknown', empty, or any value other than the JSON array of letters. Then copy unchanged at every later step. Example for that case: [\"B\"]. Example for a longer demo: [\"G\", \"D\", \"E\"].\n\nfield plan, POLICY PROMPT\n  Build the plan at the first decision step exactly as before, with these additions. The start point is whatever cell is highlighted at demo t=0; it may be labelled 'highlighted area' instead of 'highlighted target', and either label counts as the start. Count one letter for each target that newly becomes highlighted in a later demo frame (dy/dx from the previously highlighted cell, same thresholds). A short demonstration with only one newly highlighted target gives a one-letter list, e.g. [\"B\"]; that is a complete, valid plan. Never write 'unknown' or an empty value; the plan always has at least one letter when a demonstration is shown. Afterwards copy it character for character.\n\nthe policy prompt for subgoal\n  No rule sent the policy wrong at the failed step: with the one-letter plan it correctly chose plan[0]. Add one clarification so the short-demonstration case is explicit: the plan may contain a single letter; the first decision step performs that letter, and if a later decision step ever occurs with n at or beyond the plan length, repeat the last letter as already stated. The start cell of the demonstration may be shown as a 'highlighted area' rather than a 'highlighted target'; it is the start for the direction computation and does not itself add a letter.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start;",
+        "modify_to": "Derive it from the highlighted cells: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself);"
+       },
+       {
+        "modify_from": "One letter per newly highlighted target, in demo order. Always written as a JSON array",
+        "modify_to": "One letter per newly highlighted target, in demo order. A demonstration may be only a few frames long with a single newly highlighted target; the plan is then a one-letter list such as [\"B\"], which is complete and valid. The plan is never written as 'unknown', empty, or anything other than the JSON array of letters. Always written as a JSON array"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "build it now and never change it afterwards: the highlighted target at demo t=0 is the start;",
+        "modify_to": "build it now and never change it afterwards: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself);"
+       },
+       {
+        "modify_from": "One letter per newly highlighted target, in demo order. If the step shows no demonstration,",
+        "modify_to": "One letter per newly highlighted target, in demo order. A short demonstration with only one newly highlighted target gives a one-letter list, e.g. [\"B\"]; that is a complete, valid plan. Never write 'unknown' or an empty value; whenever a demonstration is shown the plan has at least one letter. If the step shows no demonstration,"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The report's subgoal clarification is not committed. The policy chose the correct subgoal at the failed step, and the instruction already handles a one-letter plan: the first step performs plan[0] and any later step with n at or beyond the plan length repeats the last letter. The 'highlighted area' start-cell note belongs to plan construction and is now stated in both memory documents, where the direction computation lives; repeating it in the subgoal instruction would add a clause the subgoal never reads. The indexing rule settled in rounds 1 and 2 is left untouched."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 3,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    33,
+    41,
+    54,
+    70,
+    86
+   ],
+   "verified_of_all": 0.9375,
+   "subgoal_verified": 0.9375,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    18,
+    41,
+    59,
+    63,
+    91
+   ],
+   "verified_of_all": 0.85,
+   "subgoal_verified": 0.95,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    8,
+    56,
+    70,
+    72,
+    93
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), first compute one number n = carried moves_done + 1. n is the count of planned moves finished so far, including the one the execution steps just showed, and it is also exactly the moves_done value written at this step; these are the same number, not two different ones, so never add one to n again. The execution steps just completed plan[n - 1]; the subgoal is plan[n] (0-based), the letter immediately after the one just completed. Self-check from what the step shows: the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule as the plan) must equal plan[n - 1]; the subgoal is the letter right after it in the plan, never plan[n - 1] again (unless the plan genuinely repeats it) and never plan[n + 1]. So the first step performs plan[0]; the second step (carried moves_done = 0, n = 1) performs plan[1]; the third step (carried moves_done = 1, n = 2) performs plan[2]; and so on: the k-th decision step of the episode performs plan[k - 1]. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If n (carried moves_done + 1) is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[n] with n = carried moves_done + 1 if it exists (plan[0] when memory is empty), else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan character for character. Write the list exactly as a JSON array with double-quoted uppercase letters, square brackets, comma-space separated: [\"C\", \"E\", \"C\", \"G\"], never ['C', 'E', 'C', 'G'], never without brackets, never with spaces inside the quotes. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. Always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    7,
+    30,
+    35,
+    59,
+    60
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), first compute one number n = carried moves_done + 1. n is the count of planned moves finished so far, including the one the execution steps just showed, and it is also exactly the moves_done value written at this step; these are the same number, not two different ones, so never add one to n again. The execution steps just completed plan[n - 1]; the subgoal is plan[n] (0-based), the letter immediately after the one just completed. Self-check from what the step shows: the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule as the plan) must equal plan[n - 1]; the subgoal is the letter right after it in the plan, never plan[n - 1] again (unless the plan genuinely repeats it) and never plan[n + 1]. So the first step performs plan[0]; the second step (carried moves_done = 0, n = 1) performs plan[1]; the third step (carried moves_done = 1, n = 2) performs plan[2]; and so on: the k-th decision step of the episode performs plan[k - 1]. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If n (carried moves_done + 1) is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[n] with n = carried moves_done + 1 if it exists (plan[0] when memory is empty), else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan character for character. Write the list exactly as a JSON array with double-quoted uppercase letters, square brackets, comma-space separated: [\"C\", \"E\", \"C\", \"G\"], never ['C', 'E', 'C', 'G'], never without brackets, never with spaces inside the quotes. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. Always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    21,
+    24,
+    60,
+    82,
+    88
+   ],
+   "verified_of_all": 0.9166666666666666,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), first compute one number n = carried moves_done + 1. n is the count of planned moves finished so far, including the one the execution steps just showed, and it is also exactly the moves_done value written at this step; these are the same number, not two different ones, so never add one to n again. The execution steps just completed plan[n - 1]; the subgoal is plan[n] (0-based), the letter immediately after the one just completed. Self-check from what the step shows: the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule as the plan) must equal plan[n - 1]; the subgoal is the letter right after it in the plan, never plan[n - 1] again (unless the plan genuinely repeats it) and never plan[n + 1]. So the first step performs plan[0]; the second step (carried moves_done = 0, n = 1) performs plan[1]; the third step (carried moves_done = 1, n = 2) performs plan[2]; and so on: the k-th decision step of the episode performs plan[k - 1]. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If n (carried moves_done + 1) is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[n] with n = carried moves_done + 1 if it exists (plan[0] when memory is empty), else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan character for character. Write the list exactly as a JSON array with double-quoted uppercase letters, square brackets, comma-space separated: [\"C\", \"E\", \"C\", \"G\"], never ['C', 'E', 'C', 'G'], never without brackets, never with spaces inside the quotes. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. Always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,179 @@
+{
+ "episodes": [
+  23,
+  39,
+  51,
+  66,
+  87
+ ],
+ "user_chars": 20236,
+ "usage": {
+  "prompt_tokens": 9870,
+  "completion_tokens": 3584,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 3214
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 1093
+  }
+ },
+ "reasoning": "Given the four subgoal failures in round one, I'm thinking the fix is to track goal_target through the shuffle so it reflects the execution-time position rather than the pre-shuffle one, while demo_placements still reads from the stable pre-shuffle set. I'd also update the subgoal rule to verify success via finger opening and point toward the scene target nearest the tracked goal_target, dropping the ordinal fallback entirely—this still respects the one-field-one-fact principle since goal_target just becomes a tracked position.\n\nI need to propagate similar edits throughout: swapping ordinal-lookup language and \"last demo frame\" references for the tracked, stable-set version across the annotator prompt, policy memory, goal_target policy, and subgoal rules. I'm going through each rule one by one, quoting the exact original text so I can replace it precisely, including the fingers-open condition in rule 1.\n\nFor rule 2, I'm updating it so that when the cube is held, it still prefers goal_target from memory but falls back to the ordinal-selected demo_placements entry if goal_target is unknown. Rule 4's exception example can stay as-is, and I'm rejecting the reorder and distrust-goal_target proposals before writing out the final JSON.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "1. If the cube named in the goal instruction is NOT held (fingers ~100% open, gripper raised or empty, cube resting on the table): choose A,",
+    "modify_to": "The held/not-held test is the finger opening in the scene at this decision step, not the cube line (the cube line may still report its old table position without a 'held' label while the cube is in fact held). 1. If the fingers are ~100% open (nothing held): choose A,"
+   },
+   {
+    "modify_from": "2. If the goal-named cube IS held (fingers ~46% open, gripper raised to height ~0.15, cube listed as held or at the gripper position): choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4).",
+    "modify_to": "2. If the fingers are ~46% open with the gripper raised (height around 0.15), the goal-named cube is held, regardless of whether the cube line carries a 'held' label or reports a stale table position (the execution steps just shown will show the fingers closing from 100% to ~46% at table height on the cube and not reopening): choose B, drop onto, pointing at goal_target from memory, which is already the target's execution-time position; confirm by taking the target in the current scene nearest to goal_target (within a few pixels) and point at that listed position. If goal_target is unknown but demo_placements is non-empty, use the entry the goal ordinal selects (first=1, second=2, third=3, fourth=4) only if a target currently stands within a few pixels of it; otherwise fall to rule 4."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "record the target whose position (read from a demo frame listing all four targets, such as the last demo frame) is closest to where the cube now rests.",
+      "modify_to": "record the target of the STABLE demo target set (the four positions that stay the same through the demo, as listed in the frames just before the final centre release) that is closest to where the cube now rests, even if that target is missing from the release frame itself because the gripper hides it. Do NOT read target positions from the last demo frames: near the end of the demo, while the gripper is parked raised at about [54, 128], height 0.200, two targets may slide to new positions over a few frames (positions appear that match no earlier target) and the final frames show the shuffled layout."
+     },
+     {
+      "modify_from": "e.g. [[116, 163], [75, 163]]",
+      "modify_to": "e.g. [[137, 103], [115, 85]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point.",
+      "modify_to": "take the entry of demo_placements the goal ordinal selects ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4). Then look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If across those frames the target list changes, that target may have moved: follow it frame by frame, each time taking the newly listed position nearest to where it was, ignoring positions that belong to targets that did not move, until the list stops changing; write its settled position as a [y, x] point, which must equal one of the four target positions in the first execution frame. If the target list never changes in the parked frames, write the demo_placements entry itself. This is the point to drop onto later."
+     },
+     {
+      "modify_from": "e.g. [116, 163]",
+      "modify_to": "e.g. entry 1 is [137, 103]; in the parked frames a target goes [137, 104] -> [115, 110] -> [98, 135] -> [100, 164] -> [101, 166] while the target from [101, 169] goes to [137, 103]; goal_target = [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "taken from a demo frame where all four targets are visible (e.g. the last demo frame)",
+      "modify_to": "taken from the STABLE pre-shuffle target set: the four target positions that hold throughout the demonstration, as listed in the frames just before the final centre release and in the first parked frames after it. Do NOT read positions from the last demo frames: while the gripper is parked raised at about [54, 128], height 0.200, at the end of the demonstration, two targets may slide to new positions over a few frames (positions appear that match no earlier target), usually swapping places, and the final frames show the shuffled layout. Match the cube's resting spot after the release against the stable set even if the target under the cube is missing from the release frame because the gripper hides it"
+     },
+     {
+      "modify_from": "e.g. [[116, 163], [75, 163]]",
+      "modify_to": "e.g. [[137, 103], [115, 85]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4.",
+      "modify_to": "The position, in [y, x], AT THE START OF EXECUTION of the target that the goal instruction's ordinal picks out of demo_placements ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4), followed through the end-of-demonstration shuffle. Procedure: take the ordinal entry (its pre-shuffle position). In the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open), if the target list changes, track that target frame by frame: in each next frame it is the listed position nearest to its previous position among the positions not still occupied by an unmoved target; follow it until the list is stable again and write its settled position, which equals one of the four target positions in the first execution frame. If no target moves in the parked frames, goal_target equals the demo_placements entry."
+     },
+     {
+      "modify_from": "e.g. [116, 163]",
+      "modify_to": "e.g. entry 1 is [137, 103]; in the parked frames that target moved through [115, 110] and [98, 135] and settled at [101, 166], while the target from [101, 169] moved to [137, 103]; goal_target = [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The proposals that demo_placements was written in reverse order, mixed in other cubes' releases, counted the starting spot, or that the ordinal maps differently, and that the first placement was missing, stay out: the lists were chronologically correct, and the wrong drop points came from the end-of-demonstration target shuffle, which the tracked goal_target now settles. The proposal to distrust goal_target when it conflicts with the ordinal applied to demo_placements stays out: demo_placements holds pre-shuffle positions, so after tracking it is goal_target that is current and the raw entry that is stale. No new field is added; the shuffle is absorbed into goal_target's definition so it remains one fact, the execution-time drop position."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "taken from a demo frame where all four targets are visible (e.g. the last demo frame)",
+      "modify_to": "taken from the STABLE pre-shuffle target set: the four target positions that hold throughout the demonstration, as listed in the frames just before the final centre release and in the first parked frames after it. Do NOT read positions from the last demo frames: while the gripper is parked raised at about [54, 128], height 0.200, at the end of the demonstration, two targets may slide to new positions over a few frames (positions appear that match no earlier target), usually swapping places, and the final frames show the shuffled layout. Match the cube's resting spot after the release against the stable set even if the target under the cube is missing from the release frame because the gripper hides it"
+     },
+     {
+      "modify_from": "e.g. [[116, 163], [75, 163]]",
+      "modify_to": "e.g. [[137, 103], [115, 85]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4.",
+      "modify_to": "The position, in [y, x], AT THE START OF EXECUTION of the target that the goal instruction's ordinal picks out of demo_placements ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4), followed through the end-of-demonstration shuffle. Procedure: take the ordinal entry (its pre-shuffle position). In the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open), if the target list changes, track that target frame by frame: in each next frame it is the listed position nearest to its previous position among the positions not still occupied by an unmoved target; follow it until the list is stable again and write its settled position, which equals one of the four target positions in the first execution frame. If no target moves in the parked frames, goal_target equals the demo_placements entry."
+     },
+     {
+      "modify_from": "e.g. [116, 163]",
+      "modify_to": "e.g. entry 1 is [137, 103]; in the parked frames that target moved through [115, 110] and [98, 135] and settled at [101, 166], while the target from [101, 169] moved to [137, 103]; goal_target = [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "record the target whose position (read from a demo frame listing all four targets, such as the last demo frame) is closest to where the cube now rests.",
+      "modify_to": "record the target of the STABLE demo target set (the four positions that stay the same through the demo, as listed in the frames just before the final centre release) that is closest to where the cube now rests, even if that target is missing from the release frame itself because the gripper hides it. Do NOT read target positions from the last demo frames: near the end of the demo, while the gripper is parked raised at about [54, 128], height 0.200, two targets may slide to new positions over a few frames (positions appear that match no earlier target) and the final frames show the shuffled layout."
+     },
+     {
+      "modify_from": "e.g. [[116, 163], [75, 163]]",
+      "modify_to": "e.g. [[137, 103], [115, 85]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point.",
+      "modify_to": "take the entry of demo_placements the goal ordinal selects ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4). Then look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If across those frames the target list changes, that target may have moved: follow it frame by frame, each time taking the newly listed position nearest to where it was, ignoring positions that belong to targets that did not move, until the list stops changing; write its settled position as a [y, x] point, which must equal one of the four target positions in the first execution frame. If the target list never changes in the parked frames, write the demo_placements entry itself. This is the point to drop onto later."
+     },
+     {
+      "modify_from": "e.g. [116, 163]",
+      "modify_to": "e.g. entry 1 is [137, 103]; in the parked frames a target goes [137, 104] -> [115, 110] -> [98, 135] -> [100, 164] -> [101, 166] while the target from [101, 169] goes to [137, 103]; goal_target = [101, 166]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "1. If the cube named in the goal instruction is NOT held (fingers ~100% open, gripper raised or empty, cube resting on the table): choose A,",
+    "modify_to": "The held/not-held test is the finger opening in the scene at this decision step, not the cube line (the cube line may still report its old table position without a 'held' label while the cube is in fact held). 1. If the fingers are ~100% open (nothing held): choose A,"
+   },
+   {
+    "modify_from": "2. If the goal-named cube IS held (fingers ~46% open, gripper raised to height ~0.15, cube listed as held or at the gripper position): choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4).",
+    "modify_to": "2. If the fingers are ~46% open with the gripper raised (height around 0.15), the goal-named cube is held, regardless of whether the cube line carries a 'held' label or reports a stale table position (the execution steps just shown will show the fingers closing from 100% to ~46% at table height on the cube and not reopening): choose B, drop onto, pointing at goal_target from memory, which is already the target's execution-time position; confirm by taking the target in the current scene nearest to goal_target (within a few pixels) and point at that listed position. If goal_target is unknown but demo_placements is non-empty, use the entry the goal ordinal selects (first=1, second=2, third=3, fourth=4) only if a target currently stands within a few pixels of it; otherwise fall to rule 4."
+   }
+  ],
+  "refused": "The proposals that demo_placements was written in reverse order, mixed in other cubes' releases, counted the starting spot, or that the ordinal maps differently, and that the first placement was missing, stay out: the lists were chronologically correct, and the wrong drop points came from the end-of-demonstration target shuffle, which the tracked goal_target now settles. The proposal to distrust goal_target when it conflicts with the ordinal applied to demo_placements stays out: demo_placements holds pre-shuffle positions, so after tracking it is goal_target that is current and the raw entry that is stale. No new field is added; the shuffle is absorbed into goal_target's definition so it remains one fact, the execution-time drop position."
+ },
+ "not_applied": [],
+ "refused": "The proposals that demo_placements was written in reverse order, mixed in other cubes' releases, counted the starting spot, or that the ordinal maps differently, and that the first placement was missing, stay out: the lists were chronologically correct, and the wrong drop points came from the end-of-demonstration target shuffle, which the tracked goal_target now settles. The proposal to distrust goal_target when it conflicts with the ordinal applied to demo_placements stays out: demo_placements holds pre-shuffle positions, so after tracking it is goal_target that is current and the raw entry that is stale. No new field is added; the shuffle is absorbed into goal_target's definition so it remains one fact, the execution-time drop position.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"demo_placements\", \"edits\": [{\"modify_from\": \"taken from a demo frame where all four targets are visible (e.g. the last demo frame)\", \"modify_to\": \"taken from the STABLE pre-shuffle target set: the four target positions that hold throughout the demonstration, as listed in the frames just before the final centre release and in the first parked frames after it. Do NOT read positions from the last demo frames: while the gripper is parked raised at about [54, 128], height 0.200, at the end of the demonstration, two targets may slide to new positions over a few frames (positions appear that match no earlier target), usually swapping places, and the final frames show the shuffled layout. Match the cube's resting spot after the release against the stable set even if the target under the cube is missing from the release frame because the gripper hides it\"}, {\"modify_from\": \"e.g. [[116, 163], [75, 163]]\", \"modify_to\": \"e.g. [[137, 103], [115, 85]]\"}]}, {\"kind\": \"modify\", \"field\": \"goal_target\", \"edits\": [{\"modify_from\": \"The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4.\", \"modify_to\": \"The position, in [y, x], AT THE START OF EXECUTION of the target that the goal instruction's ordinal picks out of demo_placements ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4), followed through the end-of-demonstration shuffle. Procedure: take the ordinal entry (its pre-shuffle position). In the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open), if the target list changes, track that target frame by frame: in each next frame it is the listed position nearest to its previous position among the positions not still occupied by an unmoved target; follow it until the list is stable again and write its settled position, which equals one of the four target positions in the first execution frame. If no target moves in the parked frames, goal_target equals the demo_placements entry.\"}, {\"modify_from\": \"e.g. [116, 163]\", \"modify_to\": \"e.g. entry 1 is [137, 103]; in the parked frames that target moved through [115, 110] and [98, 135] and settled at [101, 166], while the target from [101, 169] moved to [137, 103]; goal_target = [101, 166]\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"demo_placements\", \"edits\": [{\"modify_from\": \"record the target whose position (read from a demo frame listing all four targets, such as the last demo frame) is closest to where the cube now rests.\", \"modify_to\": \"record the target of the STABLE demo target set (the four positions that stay the same through the demo, as listed in the frames just before the final centre release) that is closest to where the cube now rests, even if that target is missing from the release frame itself because the gripper hides it. Do NOT read target positions from the last demo frames: near the end of the demo, while the gripper is parked raised at about [54, 128], height 0.200, two targets may slide to new positions over a few frames (positions appear that match no earlier target) and the final frames show the shuffled layout.\"}, {\"modify_from\": \"e.g. [[116, 163], [75, 163]]\", \"modify_to\": \"e.g. [[137, 103], [115, 85]]\"}]}, {\"kind\": \"modify\", \"field\": \"goal_target\", \"edits\": [{\"modify_from\": \"take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point.\", \"modify_to\": \"take the entry of demo_placements the goal ordinal selects ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4). Then look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). If across those frames the target list changes, that target may have moved: follow it frame by frame, each time taking the newly listed position nearest to where it was, ignoring positions that belong to targets that did not move, until the list stops changing; write its settled position as a [y, x] point, which must equal one of the four target positions in the first execution frame. If the target list never changes in the parked frames, write the demo_placements entry itself. This is the point to drop onto later.\"}, {\"modify_from\": \"e.g. [116, 163]\", \"modify_to\": \"e.g. entry 1 is [137, 103]; in the parked frames a target goes [137, 104] -> [115, 110] -> [98, 135] -> [100, 164] -> [101, 166] while the target from [101, 169] goes to [137, 103]; goal_target = [101, 166]\"}]}], \"policy_prompt_for_subgoal\": [{\"modify_from\": \"1. If the cube named in the goal instruction is NOT held (fingers ~100% open, gripper raised or empty, cube resting on the table): choose A,\", \"modify_to\": \"The held/not-held test is the finger opening in the scene at this decision step, not the cube line (the cube line may still report its old table position without a 'held' label while the cube is in fact held). 1. If the fingers are ~100% open (nothing held): choose A,\"}, {\"modify_from\": \"2. If the goal-named cube IS held (fingers ~46% open, gripper raised to height ~0.15, cube listed as held or at the gripper position): choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4).\", \"modify_to\": \"2. If the fingers are ~46% open with the gripper raised (height around 0.15), the goal-named cube is held, regardless of whether the cube line carries a 'held' label or reports a stale table position (the execution steps just shown will show the fingers closing from 100% to ~46% at table height on the cube and not reopening): choose B, drop onto, pointing at goal_target from memory, which is already the target's execution-time position; confirm by taking the target in the current scene nearest to goal_target (within a few pixels) and point at that listed position. If goal_target is unknown but demo_placements is non-empty, use the entry the goal ordinal selects (first=1, second=2, third=3, fourth=4) only if a target currently stands within a few pixels of it; otherwise fall to rule 4.\"}], \"refused\": \"The proposals that demo_placements was written in reverse order, mixed in other cubes' releases, counted the starting spot, or that the ordinal maps differently, and that the first placement was missing, stay out: the lists were chronologically correct, and the wrong drop points came from the end-of-demonstration target shuffle, which the tracked goal_target now settles. The proposal to distrust goal_target when it conflicts with the ordinal applied to demo_placements stays out: demo_placements holds pre-shuffle positions, so after tracking it is goal_target that is current and the raw entry that is stale. No new field is added; the shuffle is absorbed into goal_target's definition so it remains one fact, the execution-time drop position.\"}"
+}

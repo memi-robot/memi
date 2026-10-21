@@ -1,0 +1,176 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "button_pressed",
+  "pending_cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  22,
+  53,
+  63,
+  65,
+  66
+ ],
+ "scored": 18,
+ "failed": 6,
+ "subgoal_wrong": 3,
+ "memory_wrong": 4,
+ "subgoal_verified": 0.8333333333333334,
+ "memory_verified": 0.7777777777777778,
+ "reads": {
+  "button_pressed": 11,
+  "pending_cubes": 13
+ },
+ "field_errors": {
+  "button_pressed": {
+   "in": 1,
+   "sole": 0
+  },
+  "pending_cubes": {
+   "in": 4,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3333333333333333,
+ "verified_of_all": 0.6666666666666666,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 2,
+ "decisions": 18,
+ "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Two things were wrong with how this list is filled. First, its order: the recorded pick order does not follow the order in which the highlighted areas are listed (in one episode the area listed second was picked first; in another the three areas were picked first, third, second). The order that best matches the recorded episodes is by x descending, i.e. the cube farthest to the robot's LEFT (largest x) first, then the next-largest x, and so on. So at the button-press step (the step whose execution steps list the highlighted areas), write one entry per highlighted area, the [y, x] of the cube nearest that area, sorted by x from largest to smallest. Second, which entry is dropped: not the first entry, but the entry nearest to the cube that the execution steps show being picked up (gripper descends onto it, it is then marked 'is held in the gripper'). Drop it at the pick-up step only; a step that starts with the cube already held and ends with it released on the table (the place step) leaves the list unchanged. The list must keep an entry even when that cube is no longer listed among observed objects (it can be hidden by the arm); it is dropped only by a pick-up. Example: [[118, 147], [70, 152]] after the button step; [[70, 152]] after the first pick-up; still [[70, 152]] after the place.\n\nfield button_pressed, ANNOTATOR PROMPT\n  At the first decision step (memory carried in empty, nothing yet executed) the field is written explicitly as `no`, not left blank; likewise pending_cubes is written explicitly as `[]` there. Every field gets an explicit starting value at the first step.\n\nfield pending_cubes, POLICY PROMPT\n  Replace the ordering and the removal rule. Ordering: when the execution steps in front of you list highlighted areas, write one entry per area, the [y, x] of the cube nearest each area, and sort the entries by x from largest to smallest (robot's leftmost cube first). Removal: when the execution steps show a pick-up, i.e. the gripper descends to a cube with open fingers, closes to about 46%, and that cube is then marked 'is held in the gripper', remove the ONE entry whose stored [y, x] is nearest to the position where the gripper closed (or to that held cube's position just before it was lifted), whatever its place in the list; keep all other entries. Do not remove anything on a step whose first execution frame already shows a cube held and whose later frames show the fingers opening to ~88-100% and the cube resting on the table again (that is a placing step; copy the list unchanged). Never remove an entry just because no cube is currently observed at its position; cubes can be hidden by the arm and still remain pending. Example: carried [[118, 147], [70, 152]], execution steps show the gripper closing at [118, 147] and a blue cube held -> write [[70, 152]].\n\nfield button_pressed, POLICY PROMPT\n  Add: at the first decision step, when the memory carried in is empty, write both fields explicitly as their starting values, button_pressed=`no` and pending_cubes=`[]`. An empty field counts as needing to be written; never leave it blank.\n\nthe policy prompt for subgoal\n  Rule 3 sent the policy wrong by pointing at the first entry of a list that was not in pick order; with the list now sorted by x descending (robot's leftmost first) rule 3 should read: when the gripper is empty, the button has been pressed (memory says yes, or this step's execution steps showed it pressed down) and pending_cubes after this step's update is non-empty, choose B pointing at the first entry of pending_cubes. Add to rule 3: point at that stored [y, x] (or the cube visible within a few pixels of it); if no cube is currently listed at that position it is merely hidden by the arm, still choose B at the stored point, never skip to a later entry and never treat the list as empty. Rule 2 stays: a cube marked held in the scene at the decision step means C. Rule 4 should be rewritten as: only when pending_cubes carried in was already empty and nothing was picked up this step is the task finished, and then C is the harmless no-op; a step that merely shows a placing (fingers reopened, cube back on the table) with a non-empty carried list goes to rule 3, i.e. B at the first carried entry. Rule 5's catch-all can stay but must say the same thing: cube held -> C; any pending entry -> B at its first entry; else A. Also state plainly that the first decision step, with empty memory and no execution steps, is always A.\n\nrefused\n  One step proposed that the pick order be 'farthest forward (largest y) first'. Across the minibatch that ordering contradicts two other episodes, where a cube with smaller y was picked first; the recorded order is not consistent with largest-y-first, with the listing order of the highlighted areas, nor with nearest-to-gripper. Largest-x-first fits two of the three multi-cube episodes and is what is passed on; the one remaining mismatch (two cubes only five pixels apart in x) cannot be resolved by any ordering visible at the button step, so it is accepted as a residual rather than adding an ad hoc clause. One step proposed removing an entry when the cube 'is no longer on a highlighted area'; highlighted areas vanish before the first pick, so that condition is never observable and is dropped.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 3 sent the policy wrong by pointing at the first entry of a list that was not in pick order; with the list now sorted by x descending (robot's leftmost first) rule 3 should read: when the gripper is empty, the button has been pressed (memory says yes, or this step's execution steps showed it pressed down) and pending_cubes after this step's update is non-empty, choose B pointing at the first entry of pending_cubes. Add to rule 3: point at that stored [y, x] (or the cube visible within a few pixels of it); if no cube is currently listed at that position it is merely hidden by the arm, still choose B at the stored point, never skip to a later entry and never treat the list as empty. Rule 2 stays: a cube marked held in the scene at the decision step means C. Rule 4 should be rewritten as: only when pending_cubes carried in was already empty and nothing was picked up this step is the task finished, and then C is the harmless no-op; a step that merely shows a placing (fingers reopened, cube back on the table) with a non-empty carried list goes to rule 3, i.e. B at the first carried entry. Rule 5's catch-all can stay but must say the same thing: cube held -> C; any pending entry -> B at its first entry; else A. Also state plainly that the first decision step, with empty memory and no execution steps, is always A.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pending_cubes",
+    "description": "Replace the ordering and the removal rule. Ordering: when the execution steps in front of you list highlighted areas, write one entry per area, the [y, x] of the cube nearest each area, and sort the entries by x from largest to smallest (robot's leftmost cube first). Removal: when the execution steps show a pick-up, i.e. the gripper descends to a cube with open fingers, closes to about 46%, and that cube is then marked 'is held in the gripper', remove the ONE entry whose stored [y, x] is nearest to the position where the gripper closed (or to that held cube's position just before it was lifted), whatever its place in the list; keep all other entries. Do not remove anything on a step whose first execution frame already shows a cube held and whose later frames show the fingers opening to ~88-100% and the cube resting on the table again (that is a placing step; copy the list unchanged). Never remove an entry just because no cube is currently observed at its position; cubes can be hidden by the arm and still remain pending. Example: carried [[118, 147], [70, 152]], execution steps show the gripper closing at [118, 147] and a blue cube held -> write [[70, 152]]."
+   },
+   {
+    "field": "button_pressed",
+    "description": "Add: at the first decision step, when the memory carried in is empty, write both fields explicitly as their starting values, button_pressed=`no` and pending_cubes=`[]`. An empty field counts as needing to be written; never leave it blank."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pending_cubes",
+    "description": "Two things were wrong with how this list is filled. First, its order: the recorded pick order does not follow the order in which the highlighted areas are listed (in one episode the area listed second was picked first; in another the three areas were picked first, third, second). The order that best matches the recorded episodes is by x descending, i.e. the cube farthest to the robot's LEFT (largest x) first, then the next-largest x, and so on. So at the button-press step (the step whose execution steps list the highlighted areas), write one entry per highlighted area, the [y, x] of the cube nearest that area, sorted by x from largest to smallest. Second, which entry is dropped: not the first entry, but the entry nearest to the cube that the execution steps show being picked up (gripper descends onto it, it is then marked 'is held in the gripper'). Drop it at the pick-up step only; a step that starts with the cube already held and ends with it released on the table (the place step) leaves the list unchanged. The list must keep an entry even when that cube is no longer listed among observed objects (it can be hidden by the arm); it is dropped only by a pick-up. Example: [[118, 147], [70, 152]] after the button step; [[70, 152]] after the first pick-up; still [[70, 152]] after the place."
+   },
+   {
+    "field": "button_pressed",
+    "description": "At the first decision step (memory carried in empty, nothing yet executed) the field is written explicitly as `no`, not left blank; likewise pending_cubes is written explicitly as `[]` there. Every field gets an explicit starting value at the first step."
+   }
+  ],
+  "refused": "One step proposed that the pick order be 'farthest forward (largest y) first'. Across the minibatch that ordering contradicts two other episodes, where a cube with smaller y was picked first; the recorded order is not consistent with largest-y-first, with the listing order of the highlighted areas, nor with nearest-to-gripper. Largest-x-first fits two of the three multi-cube episodes and is what is passed on; the one remaining mismatch (two cubes only five pixels apart in x) cannot be resolved by any ordering visible at the button step, so it is accepted as a residual rather than adding an ad hoc clause. One step proposed removing an entry when the cube 'is no longer on a highlighted area'; highlighted areas vanish before the first pick, so that condition is never observable and is dropped."
+ },
+ "critiques": [
+  {
+   "step": [
+    22,
+    "exec",
+    109
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [70, 152]",
+   "recorded": "B: pick up the highlighted cube at [119, 148]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing (the recorded memory pending_cubes=[[70, 152], [118, 147]] matches what I wrote), though if the pick order is meant to be read off the list, the list should be written in pick order (farthest-forward cube first) rather than in the order the highlighted areas are listed",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3 says to point at the FIRST entry of pending_cubes, which here is [70, 152]; the recorded answer picks the other pending cube at [119, 148] (the blue cube near highlighted area [121, 146]). The instruction did not say which pending cube to pick first when several are pending: evidently the one farthest forward (largest y), not the first-listed entry nor the one nearest the gripper. It should state that ordering explicitly (or state that pending_cubes is kept in pick order and the memory rule should sort it that way).",
+   "missing": ""
+  },
+  {
+   "step": [
+    22,
+    "exec",
+    216
+   ],
+   "memory_in": "button_pressed=yes; pending_cubes=[[70, 152], [118, 147]]",
+   "answered": "C: place the cube onto the table",
+   "recorded": "C: place the cube onto the table",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to remove the FIRST entry of pending_cubes when a pick-up is shown, but the execution steps showed the blue cube at [118, 147] (the SECOND entry) being gripped, not the red cube at [70, 152]. It should have said: remove the entry whose stored [y, x] is nearest to where the gripper closed on the cube (the cube marked 'is held in the gripper' / the pick-up location), keeping all other entries including earlier ones, regardless of list order.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    22,
+    "exec",
+    267
+   ],
+   "memory_in": "button_pressed=yes; pending_cubes=[[70, 152]]",
+   "answered": "C: place the cube onto the table",
+   "recorded": "B: pick up the highlighted cube at [72, 153]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to drop the first pending_cubes entry whenever any execution step shows a cube held in the gripper. Here the only 'held' step (t=224) is the start of a placing sequence (held, then fingers open at 88%/100% with the blue cube left on the table), and that pick-up had already been removed at the previous decision step. It should say: remove the first entry only when the execution steps show the pick-up itself (gripper empty before, cube held after, pending_cubes shrinking once per picked cube); a step whose first frame already shows the cube held and whose later frames show it released is a placing step and the list stays unchanged ([[70, 152]] stays).",
+   "missing_from_policy_prompt_for_subgoal": "It should say that after a placing (last execution steps show fingers open and the just-placed cube on the table), with button_pressed=yes and pending_cubes carried in non-empty, choose B pointing at the first carried entry (here [70, 152], i.e. ~[72, 153]) even though no cube at that position is listed among the observed objects; do not fall into rule 4's C no-op unless the carried list was already empty.",
+   "missing": ""
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    278
+   ],
+   "memory_in": "button_pressed=yes; pending_cubes=[[97, 98], [113, 118]]",
+   "answered": "B: pick up the highlighted cube at [97, 98]",
+   "recorded": "B: pick up the highlighted cube at [115, 119]",
+   "missing_from_memory": "The list carried in did not tell me the cube at [113, 118] was the one to pick next: it was in second position behind [97, 98], yet the recorded answer picks [113, 118]. Either [97, 98] should no longer have been pending (removed when it was dealt with at an earlier step) or the list should have been ordered with [113, 118] first; as carried, the first entry pointed at the wrong cube.",
+   "missing_from_policy_prompt_for_memory": "It does not say how pending_cubes is ordered in a way that matches the pick order actually recorded (it says 'in the order the areas are listed', which here put [97, 98] ahead of [113, 118]), nor when an entry is dropped if a cube that was held at the START of the shown execution steps (already picked before this decision step) was the one corresponding to an entry. It should state the exact ordering rule (e.g. which highlighted area is first) and that an entry is removed at the step where the pick-up happened, so the list carried in here would already have had [113, 118] as its first entry.",
+   "missing_from_policy_prompt_for_subgoal": "It says to point at the FIRST entry of pending_cubes; it gave no rule by which [113, 118] (the second entry) would be chosen over [97, 98] when both remain in the list, e.g. a tie-break by position (farthest-forward / largest y first) or an instruction to skip an entry whose cube is not on a highlighted area any more.",
+   "missing": "The list carried in did not tell me the cube at [113, 118] was the one to pick next: it was in second position behind [97, 98], yet the recorded answer picks [113, 118]. Either [97, 98] should no longer have been pending (removed when it was dealt with at an earlier step) or the list should have been ordered with [113, 118] first; as carried, the first entry pointed at the wrong cube."
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    380
+   ],
+   "memory_in": "button_pressed=yes; pending_cubes=[[97, 98], [113, 118]]",
+   "answered": "C: place the cube onto the table",
+   "recorded": "C: place the cube onto the table",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to remove the FIRST entry of pending_cubes whenever a pick-up is shown, but here the cube actually picked was the red one at [113, 118] (the gripper descended to [114, 119], that cube vanished from the table list, and a red cube is then marked held), which was the SECOND entry. The rule should say: when a pick-up is shown, remove the entry nearest to where the gripper closed / the cube that disappeared from the table and is now held, not the first entry by position in the list.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    65,
+    "exec",
+    0
+   ],
+   "memory_in": "button_pressed=; pending_cubes=",
+   "answered": "A: press button",
+   "recorded": "A: press button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say that at the first decision step, when the memory carried in is empty, both fields must be explicitly written (button_pressed=`no`, pending_cubes=`[]`) as memory_updates rather than left blank; it should state that an empty/absent field counts as a change and must be initialized with its starting value at this step.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

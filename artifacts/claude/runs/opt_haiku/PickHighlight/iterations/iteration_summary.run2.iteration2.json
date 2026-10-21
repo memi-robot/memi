@@ -1,0 +1,162 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "button_pressed",
+  "pending_cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  27,
+  45,
+  64,
+  79,
+  83
+ ],
+ "scored": 22,
+ "failed": 5,
+ "subgoal_wrong": 5,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.7727272727272727,
+ "memory_verified": 1.0,
+ "reads": {
+  "button_pressed": 13,
+  "pending_cubes": 17
+ },
+ "field_errors": {
+  "button_pressed": {
+   "in": 0,
+   "sole": 0
+  },
+  "pending_cubes": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.22727272727272727,
+ "verified_of_all": 0.7727272727272727,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 4,
+ "decisions": 22,
+ "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Situation: at the step whose execution steps show the highlighted white areas, the list was filled and sorted by x largest-first, and the subgoal instruction told the policy to pick the first entry. In two episodes the recorded first pick was the last entry, and in a third it was the middle entry; the sort order never matched the pick order, so the list ordering carried no usable fact (SUFFICIENCY failed at the pick steps because the order encoded in the list contradicted the recorded choice). Change: pending_cubes becomes an UNORDERED set written as a list, holding the [y, x] of every cube that sits on a highlighted area and has not yet been picked up. It is `[]` at the first step, filled at the step whose execution steps list highlighted areas (one entry per area: the cube nearest that area, in any order, e.g. the order the areas were listed), and loses the single entry nearest the position where the gripper closed on a cube at each pick-up step; a placing step leaves it unchanged; an entry is never dropped because its cube is momentarily hidden. The selection among the entries is made by the subgoal rule at decision time from the gripper position, not from list order. e.g. [[59, 144], [62, 163], [76, 126]]\n\nfield button_pressed, ANNOTATOR PROMPT\n  Situation: in one episode the execution steps never carried the words 'is pressed down' although the gripper descended with closed fingers to the button's position at low height and the highlighted areas vanished afterwards; the rule named only the label, so the value was not determined from what was shown (PREDICTABILITY). Change: button_pressed becomes `yes` from the step whose execution steps show EITHER the button labelled pressed down OR the gripper at the button's [y, x] (within a few pixels) at a height near 0.03 with fingers closed (0-2% open); both signs mean the press. Still `no` at the first step, never reverts. e.g. yes\n\nfield button_pressed, POLICY PROMPT\n  Write `yes` as soon as any execution step shown at this step either says the button is pressed down, or shows the gripper within a few pixels of the button's position at a height of about 0.02-0.04 with fingers nearly closed (0-2% open); the highlighted areas then vanish from the listing before the decision step, which confirms it. Write `yes` also whenever the memory carried in already says `yes`. Otherwise write `no`; at the first decision step with empty memory write `no` explicitly. Never revert to `no`. e.g. yes\n\nfield pending_cubes, POLICY PROMPT\n  An unordered set, written as a list, of the [y, x] positions of cubes on highlighted white areas not yet picked up. At the first decision step write `[]`. When the execution steps shown at this step list highlighted area positions (they appear right after the button press and vanish before the decision step), write one entry per area: the [y, x] of the cube nearest that area, in the order the areas were listed; the order carries no meaning and is never used to choose. Otherwise copy the carried list, except that when the execution steps show a pick-up (gripper descends on a cube with open fingers, closes to ~46%, that cube is then marked held), remove the ONE entry nearest the position where the fingers closed, keeping all others. On a placing step (first frame already shows a cube held, later frames show fingers reopening to ~88-100% and the cube on the table) copy the list unchanged. Never drop an entry because no cube is currently observed near it. e.g. [[59, 144], [62, 163], [76, 126]]\n\nthe policy prompt for subgoal\n  Two rules sent the policy wrong. First, rule 1 conditioned on an execution step literally saying the button is pressed down and on the carried memory; in one episode no step carried that label and the carried memory still said `no`, so the policy chose A again after the press had already happened (SUFFICIENCY). Rule 1 should read: choose A only when the button_pressed value written at THIS step is `no`, i.e. the carried memory says `no` or is empty AND no execution step shown here shows either the pressed-down label or the gripper at the button's position at low height with closed fingers. Every other rule must likewise use the button_pressed and pending_cubes values written at this step, not the carried ones. Second, rule 3 told the policy to point at the FIRST entry of pending_cubes (largest x); the recorded picks were the last entry in two episodes and a middle entry in another, so list position does not choose the cube (SUFFICIENCY). Rule 3 should instead say: when the gripper is empty, button_pressed is `yes` and pending_cubes (after this step's update) is non-empty, choose B pointing at the pending entry that is FARTHEST from the gripper's [y, x] at this decision step (largest straight-line distance in image pixels), or at the cube visible within a few pixels of that entry; if that entry's cube is hidden by the arm still point at the stored [y, x]. This farthest-from-gripper choice matched every multi-cube decision in two of the three multi-cube episodes shown. Rules 2, 4 and 5 stay, with rule 5's fallback also pointing at the farthest pending entry rather than the first.\n\nrefused\n  One multi-cube episode is not covered by the farthest-from-gripper rule: there the recorded picks were, at each decision, the pending cube nearest the gripper (and also in increasing x). The other two multi-cube episodes contradict both 'nearest' and 'smallest x first', and no ordering by x, by y, by distance from the button, by listing order of the highlighted areas, or by colour fits all three; the true pick order appears to be a hidden spawn order that nothing shown reveals. Several steps proposed 'smallest x / robot's rightmost first', 'largest y first' or 'the last entry of the list'; these each fit only the single step that reported them and fail elsewhere, so they are not passed on. The farthest-from-gripper rule is passed on as the criterion that fits the most decisions, with that one episode knowingly left unexplained.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Two rules sent the policy wrong. First, rule 1 conditioned on an execution step literally saying the button is pressed down and on the carried memory; in one episode no step carried that label and the carried memory still said `no`, so the policy chose A again after the press had already happened (SUFFICIENCY). Rule 1 should read: choose A only when the button_pressed value written at THIS step is `no`, i.e. the carried memory says `no` or is empty AND no execution step shown here shows either the pressed-down label or the gripper at the button's position at low height with closed fingers. Every other rule must likewise use the button_pressed and pending_cubes values written at this step, not the carried ones. Second, rule 3 told the policy to point at the FIRST entry of pending_cubes (largest x); the recorded picks were the last entry in two episodes and a middle entry in another, so list position does not choose the cube (SUFFICIENCY). Rule 3 should instead say: when the gripper is empty, button_pressed is `yes` and pending_cubes (after this step's update) is non-empty, choose B pointing at the pending entry that is FARTHEST from the gripper's [y, x] at this decision step (largest straight-line distance in image pixels), or at the cube visible within a few pixels of that entry; if that entry's cube is hidden by the arm still point at the stored [y, x]. This farthest-from-gripper choice matched every multi-cube decision in two of the three multi-cube episodes shown. Rules 2, 4 and 5 stay, with rule 5's fallback also pointing at the farthest pending entry rather than the first.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "button_pressed",
+    "description": "Write `yes` as soon as any execution step shown at this step either says the button is pressed down, or shows the gripper within a few pixels of the button's position at a height of about 0.02-0.04 with fingers nearly closed (0-2% open); the highlighted areas then vanish from the listing before the decision step, which confirms it. Write `yes` also whenever the memory carried in already says `yes`. Otherwise write `no`; at the first decision step with empty memory write `no` explicitly. Never revert to `no`. e.g. yes"
+   },
+   {
+    "field": "pending_cubes",
+    "description": "An unordered set, written as a list, of the [y, x] positions of cubes on highlighted white areas not yet picked up. At the first decision step write `[]`. When the execution steps shown at this step list highlighted area positions (they appear right after the button press and vanish before the decision step), write one entry per area: the [y, x] of the cube nearest that area, in the order the areas were listed; the order carries no meaning and is never used to choose. Otherwise copy the carried list, except that when the execution steps show a pick-up (gripper descends on a cube with open fingers, closes to ~46%, that cube is then marked held), remove the ONE entry nearest the position where the fingers closed, keeping all others. On a placing step (first frame already shows a cube held, later frames show fingers reopening to ~88-100% and the cube on the table) copy the list unchanged. Never drop an entry because no cube is currently observed near it. e.g. [[59, 144], [62, 163], [76, 126]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pending_cubes",
+    "description": "Situation: at the step whose execution steps show the highlighted white areas, the list was filled and sorted by x largest-first, and the subgoal instruction told the policy to pick the first entry. In two episodes the recorded first pick was the last entry, and in a third it was the middle entry; the sort order never matched the pick order, so the list ordering carried no usable fact (SUFFICIENCY failed at the pick steps because the order encoded in the list contradicted the recorded choice). Change: pending_cubes becomes an UNORDERED set written as a list, holding the [y, x] of every cube that sits on a highlighted area and has not yet been picked up. It is `[]` at the first step, filled at the step whose execution steps list highlighted areas (one entry per area: the cube nearest that area, in any order, e.g. the order the areas were listed), and loses the single entry nearest the position where the gripper closed on a cube at each pick-up step; a placing step leaves it unchanged; an entry is never dropped because its cube is momentarily hidden. The selection among the entries is made by the subgoal rule at decision time from the gripper position, not from list order. e.g. [[59, 144], [62, 163], [76, 126]]"
+   },
+   {
+    "field": "button_pressed",
+    "description": "Situation: in one episode the execution steps never carried the words 'is pressed down' although the gripper descended with closed fingers to the button's position at low height and the highlighted areas vanished afterwards; the rule named only the label, so the value was not determined from what was shown (PREDICTABILITY). Change: button_pressed becomes `yes` from the step whose execution steps show EITHER the button labelled pressed down OR the gripper at the button's [y, x] (within a few pixels) at a height near 0.03 with fingers closed (0-2% open); both signs mean the press. Still `no` at the first step, never reverts. e.g. yes"
+   }
+  ],
+  "refused": "One multi-cube episode is not covered by the farthest-from-gripper rule: there the recorded picks were, at each decision, the pending cube nearest the gripper (and also in increasing x). The other two multi-cube episodes contradict both 'nearest' and 'smallest x first', and no ordering by x, by y, by distance from the button, by listing order of the highlighted areas, or by colour fits all three; the true pick order appears to be a hidden spawn order that nothing shown reveals. Several steps proposed 'smallest x / robot's rightmost first', 'largest y first' or 'the last entry of the list'; these each fit only the single step that reported them and fail elsewhere, so they are not passed on. The farthest-from-gripper rule is passed on as the criterion that fits the most decisions, with that one episode knowingly left unexplained."
+ },
+ "critiques": [
+  {
+   "step": [
+    27,
+    "exec",
+    110
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [58, 163]",
+   "recorded": "B: pick up the highlighted cube at [73, 127]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It told me to point at the FIRST entry of pending_cubes (largest x, robot's leftmost: [58, 163]), but the recorded pick is the green cube at [72, 126]/[73, 127], the entry with the smallest x (robot's rightmost) and largest y (closest to the gripper's approach / most forward), i.e. the LAST entry of the list as sorted. The instruction needs to state which end of pending_cubes (or which ordering criterion: smallest x / largest y first) is picked first, consistently with how the memory list is sorted.",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    282
+   ],
+   "memory_in": "button_pressed=yes; pending_cubes=[[58, 163], [55, 145]]",
+   "answered": "B: pick up the highlighted cube at [58, 163]",
+   "recorded": "B: pick up the highlighted cube at [56, 146]",
+   "missing_from_memory": "nothing — both candidates [58, 163] and [55, 145] were carried; what was missing is which of them is to be picked next, i.e. the list is not ordered in pick order (the recorded pick is the second entry, [55, 145]/visible at [56, 146], not the first).",
+   "missing_from_policy_prompt_for_memory": "It says to sort pending_cubes by x largest-first (robot's leftmost first) and that the first entry is the next pick, but the recorded next pick is the entry with the SMALLER x / smaller y ([55, 145]), so either the sort order is wrong (should be smallest x first, or nearest the robot / smallest y first, or the order the highlighted areas were listed) or the list order is not the pick order at all; the instruction needs to state the ordering that actually matches the pick sequence.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3 says point at the FIRST entry of pending_cubes ([58, 163]), but the recorded subgoal points at the other remaining entry ([56, 146], the cube at smaller x / smaller y, i.e. the robot's right-side / nearer cube). The instruction needs to state the correct selection among remaining pending cubes (e.g. the entry with the smallest x, or nearest the robot), consistent with however pending_cubes is ordered.",
+   "missing": "nothing — both candidates [58, 163] and [55, 145] were carried; what was missing is which of them is to be picked next, i.e. the list is not ordered in pick order (the recorded pick is the second entry, [55, 145]/visible at [56, 146], not the first)."
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    119
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "A: press button",
+   "recorded": "B: pick up the highlighted cube at [116, 110]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The execution steps never literally say 'button is pressed down'; the instruction should say that the press is recognised from the gripper reaching the button position ([63,157] vs button [64,157]) at low height (~0.03) with closed fingers, followed by the highlighted areas disappearing from the listing (present at t=96, gone at t=112). I inferred this to write yes, but the condition as written did not match anything shown.",
+   "missing_from_policy_prompt_for_subgoal": "Two gaps. (1) Rule 1 and rule 3 condition on 'an execution step shows the button pressed down', but no step is labelled that way; it should say that the button counts as pressed at this step when the gripper descended to the button's position with closed fingers and the highlighted areas vanished afterwards, and that then rule 1 does not apply even though the carried memory still says no — use the button_pressed value written at this step (yes), not the carried one. (2) Rule 3 says to point at the FIRST entry of the x-sorted list ([54,128]), but the recorded point is [116,110], i.e. the entry [115,109] with the largest y (the farthest cube). The instruction must state which entry is actually picked first (apparently the one with largest y / farthest from the robot), consistent with how the list is ordered.",
+   "missing": ""
+  },
+  {
+   "step": [
+    83,
+    "exec",
+    122
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [80, 145]",
+   "recorded": "B: pick up the highlighted cube at [108, 99]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The pick order is wrong. It told me to point at the FIRST entry of pending_cubes (largest x, robot's leftmost cube, here [80, 145]), but the recorded answer picks the cube with the SMALLEST x (the robot's rightmost cube, [107, 97] near the highlighted area at [111, 99], pointed at [108, 99]). Since pending_cubes is sorted largest x first, the instruction should say: choose B pointing at the LAST entry of pending_cubes (smallest x, the robot's rightmost remaining cube), or at the cube visible within a few pixels of it.",
+   "missing": ""
+  },
+  {
+   "step": [
+    83,
+    "exec",
+    279
+   ],
+   "memory_in": "button_pressed=yes; pending_cubes=[[80, 145], [116, 135]]",
+   "answered": "B: pick up the highlighted cube at [80, 145]",
+   "recorded": "B: pick up the highlighted cube at [118, 136]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The sort rule for pending_cubes (largest x first) put [80, 145] ahead of [116, 135], but the recorded pick order takes [116, 135] (the blue cube, larger y / further forward) before [80, 145]; the list should be ordered by whatever order the cubes are actually picked, which here is not largest-x-first.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3 says point at the FIRST entry of pending_cubes (largest x), which is [80, 145], but the recorded subgoal points at the blue cube [116, 135], the second entry. The instruction needs the real selection criterion among pending cubes (e.g. the forward-most cube, largest y, or the cube on the highlighted area in some task-defined order), not 'first entry / largest x'.",
+   "missing": ""
+  }
+ ]
+}

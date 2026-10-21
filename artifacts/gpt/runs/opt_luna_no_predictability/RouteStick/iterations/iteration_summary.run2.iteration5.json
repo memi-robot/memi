@@ -1,0 +1,125 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "remaining_path"
+ ],
+ "ablate": "predictability",
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  10,
+  22,
+  38,
+  73
+ ],
+ "scored": 19,
+ "failed": 5,
+ "subgoal_wrong": 4,
+ "memory_wrong": 5,
+ "subgoal_verified": 0.7894736842105263,
+ "memory_verified": 0.7368421052631579,
+ "reads": {
+  "remaining_path": 15
+ },
+ "field_errors": {
+  "remaining_path": {
+   "in": 5,
+   "sole": 5
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2631578947368421,
+ "verified_of_all": 0.7368421052631579,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 4,
+ "point_wrong": 0,
+ "decisions": 19,
+ "critique": "refused\n  The reported failures all occurred at the initial execution decision, when the goal required reproducing a visible demonstration and no memory had yet been carried in. The policy chose a larger-x clockwise move where the first demonstrated traversal actually went toward smaller x along the upper arc, or chose a clockwise move where the first traversal went toward larger x along the lower arc. None of the reports identified missing information or a missing rule. The complete demonstrations supported routes such as [\"D\",\"A\",\"A\"], [\"C\",\"A\",\"C\",\"C\"], [\"C\",\"B\",\"D\",\"B\"], and [\"D\",\"A\",\"C\",\"C\",\"A\"], and the annotated memories carried those routes into the subsequent decisions correctly. These failures do not establish a SUFFICIENCY or NECESSITY defect: the current observation supplied the initial traversal, and the existing instructions explicitly map smaller-x upper arcs to D and larger-x lower arcs to C, require selecting the first decoded letter, and forbid substituting a location-based fallback for a supported demonstration move. The later decisions also support the existing one-completed-command, one-leading-letter removal convention. No annotation changes, extra memory fields, or new transition rules are warranted by these reports; the incorrect initial choices are failures to apply rules already present.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "The reported failures all occurred at the initial execution decision, when the goal required reproducing a visible demonstration and no memory had yet been carried in. The policy chose a larger-x clockwise move where the first demonstrated traversal actually went toward smaller x along the upper arc, or chose a clockwise move where the first traversal went toward larger x along the lower arc. None of the reports identified missing information or a missing rule. The complete demonstrations supported routes such as [\"D\",\"A\",\"A\"], [\"C\",\"A\",\"C\",\"C\"], [\"C\",\"B\",\"D\",\"B\"], and [\"D\",\"A\",\"C\",\"C\",\"A\"], and the annotated memories carried those routes into the subsequent decisions correctly. These failures do not establish a SUFFICIENCY or NECESSITY defect: the current observation supplied the initial traversal, and the existing instructions explicitly map smaller-x upper arcs to D and larger-x lower arcs to C, require selecting the first decoded letter, and forbid substituting a location-based fallback for a supported demonstration move. The later decisions also support the existing one-completed-command, one-leading-letter removal convention. No annotation changes, extra memory fields, or new transition rules are warranted by these reports; the incorrect initial choices are failures to apply rules already present."
+ },
+ "critiques": [
+  {
+   "step": [
+    5,
+    "exec",
+    150
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    10,
+    "exec",
+    200
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    22,
+    "exec",
+    200
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    250
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

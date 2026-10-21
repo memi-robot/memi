@@ -1,0 +1,93 @@
+{
+ "task": "ButtonUnmaskSwap",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    1,
+    22,
+    25,
+    39,
+    85
+   ],
+   "verified_of_all": 0.9047619047619048,
+   "subgoal_verified": 0.9523809523809523
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    10,
+    15,
+    36,
+    39,
+    47
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    1,
+    2,
+    28,
+    34,
+    53
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    17,
+    27,
+    78,
+    79
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    14,
+    25,
+    38,
+    87,
+    93
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Start every episode in A (press the first button). First update memory for this step (in particular buttons_pressed, using the press signs named in the memory instruction: the phrase 'is pressed down', or the gripper on a button at height 0.035 or lower with fingers closed, usually with two containers swapping). Then apply the first matching rule: 1. If buttons_pressed is 0: A. 2. If buttons_pressed is 1: B. 3. If the scene at this decision step shows a container 'held in the gripper': D (put down the container). 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container nearest that cube's last known position; if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+ "fields": [
+  {
+   "name": "buttons_pressed",
+   "description": "Carried-in count plus 1 if any execution frame shown at this step either reports a button 'is pressed down' or shows the gripper within a few pixels of a button's listed position at height 0.035 or lower with fingers closed (two containers gliding and swapping in neighbouring frames confirms the same press); otherwise the carried-in count. Count at most one press per step. Start at 0. e.g. 1"
+  },
+  {
+   "name": "green_container",
+   "description": "[y, x] of the container hiding the green cube. If a frame shows the green cube uncovered and no containers, write the cube's position. In the step where containers appear, the field becomes the position of the container standing on the carried-in green position, even if that container never moves. Then follow that container through the frames shown: match each container to the nearest container in the previous frame; during a button press two containers glide around each other and finish swapped, so after the press the green container sits where the other moving container started. Write its position in the last frame shown. Once a frame shows the green cube exposed beneath a container held in the gripper, write the cube's last visible position and freeze the field; a container later set down over the cube does not update it. Start with the cube position seen at the first step. e.g. [136, 108]"
+  },
+  {
+   "name": "red_container",
+   "description": "[y, x] of the container hiding the red cube, kept exactly as green_container: cube position before containers exist; from the step where containers appear, the container standing on the carried-in position (even one that never moves), followed frame to frame (two movers during a press swap places), written at the last frame shown; once the red cube is seen exposed beneath a container held in the gripper, the cube's last visible position, frozen regardless of any container later set down over it. e.g. [100, 166]"
+  },
+  {
+   "name": "blue_container",
+   "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container: cube position before containers exist; from the step where containers appear, the container standing on the carried-in position (even one that never moves), followed frame to frame (two movers during a press swap places), written at the last frame shown; once the blue cube is seen exposed beneath a container held in the gripper, the cube's last visible position, frozen regardless of any container later set down over it. e.g. [120, 181]"
+  },
+  {
+   "name": "picked_colors",
+   "description": "Carried-in list; append the color of the cube that appears beneath a container shown 'held in the gripper' among this step's frames, if that color is not already in the list. Start empty. e.g. [\"green\"]"
+  }
+ ],
+ "stage": "optimized"
+}

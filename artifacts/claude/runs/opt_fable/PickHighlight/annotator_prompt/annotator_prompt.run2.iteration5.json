@@ -1,0 +1,13 @@
+{
+ "task": "PickHighlight",
+ "fields": [
+  {
+   "name": "button_pressed",
+   "description": "`no` at step #1 (nothing has happened yet). `yes` at every step from the one whose execution steps show the button pressed down (gripper descended onto the button) onward, i.e. from step #2 to the end of the episode. e.g. yes"
+  },
+  {
+   "name": "pending_cubes",
+   "description": "Ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up. `[]` at step #1. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area. Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry. The order is read from the episode, not computed from the scene: no coordinate sort and no colour priority reproduces it in every episode (increasing x, decreasing x, increasing y, decreasing y, printed-area order and blue-first have each been contradicted by at least one episode). The policy writes its list at the button-press step by increasing x as a fixed default; where the episode's pick order differs, annotate the true pick order anyway. At each later step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry nearest the table position that cube had in the execution step just before it was lifted, keeping the remaining entries in their order; the list is unchanged at a place step. e.g. [[118, 147], [70, 152]]"
+  }
+ ]
+}

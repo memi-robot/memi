@@ -1,0 +1,101 @@
+{
+ "episodes": [
+  21,
+  24,
+  60,
+  82,
+  88
+ ],
+ "user_chars": 27340,
+ "usage": {
+  "prompt_tokens": 12518,
+  "completion_tokens": 1078,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 12514
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 224
+  }
+ },
+ "reasoning": "I see the annotator marked \"unknown\" when the policy correctly output [\"B\"], so the annotator prompt needs clarifying that a highlighted area at t=0 counts as a valid start and single-letter plans are acceptable—never \"unknown.\" I'll apply the same clarification to the memory policy prompt, and note that the subgoal instruction's end-of-plan rule already covers single-letter plans, so only a minor addition is needed there.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "plan",
+    "edits": [
+     {
+      "modify_from": "build it now and never change it afterwards: the highlighted target at demo t=0 is the start;",
+      "modify_to": "build it now and never change it afterwards: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself);"
+     },
+     {
+      "modify_from": "One letter per newly highlighted target, in demo order. If the step shows no demonstration,",
+      "modify_to": "One letter per newly highlighted target, in demo order. A short demonstration with only one newly highlighted target gives a one-letter list, e.g. [\"B\"]; that is a complete, valid plan. Never write 'unknown' or an empty value; whenever a demonstration is shown the plan has at least one letter. If the step shows no demonstration,"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "plan",
+    "edits": [
+     {
+      "modify_from": "Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start;",
+      "modify_to": "Derive it from the highlighted cells: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself);"
+     },
+     {
+      "modify_from": "One letter per newly highlighted target, in demo order. Always written as a JSON array",
+      "modify_to": "One letter per newly highlighted target, in demo order. A demonstration may be only a few frames long with a single newly highlighted target; the plan is then a one-letter list such as [\"B\"], which is complete and valid. The plan is never written as 'unknown', empty, or anything other than the JSON array of letters. Always written as a JSON array"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The report's subgoal clarification is not committed. The policy chose the correct subgoal at the failed step, and the instruction already handles a one-letter plan: the first step performs plan[0] and any later step with n at or beyond the plan length repeats the last letter. The 'highlighted area' start-cell note belongs to plan construction and is now stated in both memory documents, where the direction computation lives; repeating it in the subgoal instruction would add a clause the subgoal never reads. The indexing rule settled in rounds 1 and 2 is left untouched."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "plan",
+    "edits": [
+     {
+      "modify_from": "Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start;",
+      "modify_to": "Derive it from the highlighted cells: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself);"
+     },
+     {
+      "modify_from": "One letter per newly highlighted target, in demo order. Always written as a JSON array",
+      "modify_to": "One letter per newly highlighted target, in demo order. A demonstration may be only a few frames long with a single newly highlighted target; the plan is then a one-letter list such as [\"B\"], which is complete and valid. The plan is never written as 'unknown', empty, or anything other than the JSON array of letters. Always written as a JSON array"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "plan",
+    "edits": [
+     {
+      "modify_from": "build it now and never change it afterwards: the highlighted target at demo t=0 is the start;",
+      "modify_to": "build it now and never change it afterwards: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself);"
+     },
+     {
+      "modify_from": "One letter per newly highlighted target, in demo order. If the step shows no demonstration,",
+      "modify_to": "One letter per newly highlighted target, in demo order. A short demonstration with only one newly highlighted target gives a one-letter list, e.g. [\"B\"]; that is a complete, valid plan. Never write 'unknown' or an empty value; whenever a demonstration is shown the plan has at least one letter. If the step shows no demonstration,"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "The report's subgoal clarification is not committed. The policy chose the correct subgoal at the failed step, and the instruction already handles a one-letter plan: the first step performs plan[0] and any later step with n at or beyond the plan length repeats the last letter. The 'highlighted area' start-cell note belongs to plan construction and is now stated in both memory documents, where the direction computation lives; repeating it in the subgoal instruction would add a clause the subgoal never reads. The indexing rule settled in rounds 1 and 2 is left untouched."
+ },
+ "not_applied": [],
+ "refused": "The report's subgoal clarification is not committed. The policy chose the correct subgoal at the failed step, and the instruction already handles a one-letter plan: the first step performs plan[0] and any later step with n at or beyond the plan length repeats the last letter. The 'highlighted area' start-cell note belongs to plan construction and is now stated in both memory documents, where the direction computation lives; repeating it in the subgoal instruction would add a clause the subgoal never reads. The indexing rule settled in rounds 1 and 2 is left untouched.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"plan\", \"edits\": [{\"modify_from\": \"Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start;\", \"modify_to\": \"Derive it from the highlighted cells: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself);\"}, {\"modify_from\": \"One letter per newly highlighted target, in demo order. Always written as a JSON array\", \"modify_to\": \"One letter per newly highlighted target, in demo order. A demonstration may be only a few frames long with a single newly highlighted target; the plan is then a one-letter list such as [\\\"B\\\"], which is complete and valid. The plan is never written as 'unknown', empty, or anything other than the JSON array of letters. Always written as a JSON array\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"plan\", \"edits\": [{\"modify_from\": \"build it now and never change it afterwards: the highlighted target at demo t=0 is the start;\", \"modify_to\": \"build it now and never change it afterwards: the cell highlighted at demo t=0 is the start, whether it is labelled 'highlighted target' or 'highlighted area' (either label counts, its coordinates are used exactly as the start, and it adds no letter itself);\"}, {\"modify_from\": \"One letter per newly highlighted target, in demo order. If the step shows no demonstration,\", \"modify_to\": \"One letter per newly highlighted target, in demo order. A short demonstration with only one newly highlighted target gives a one-letter list, e.g. [\\\"B\\\"]; that is a complete, valid plan. Never write 'unknown' or an empty value; whenever a demonstration is shown the plan has at least one letter. If the step shows no demonstration,\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"The report's subgoal clarification is not committed. The policy chose the correct subgoal at the failed step, and the instruction already handles a one-letter plan: the first step performs plan[0] and any later step with n at or beyond the plan length repeats the last letter. The 'highlighted area' start-cell note belongs to plan construction and is now stated in both memory documents, where the direction computation lives; repeating it in the subgoal instruction would add a clause the subgoal never reads. The indexing rule settled in rounds 1 and 2 is left untouched.\"}"
+}

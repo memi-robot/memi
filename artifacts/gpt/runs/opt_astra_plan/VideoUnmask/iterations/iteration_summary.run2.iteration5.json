@@ -1,0 +1,79 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "remaining_targets"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  16,
+  62,
+  66,
+  89
+ ],
+ "scored": 5,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "remaining_targets": 0
+ },
+ "field_errors": {
+  "remaining_targets": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "remaining_targets": "read at no step of 5"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 5,
+ "critique": "field remaining_targets, ANNOTATOR PROMPT\n  Delete this field for the supplied single-pickup episodes. Each goal requests one cube color, and the only decision shows both the demonstration locating that cube and the containers covering the cubes. Incoming memory is empty, and no later decision reads the target list. The unused-field report therefore identifies a NECESSITY failure, not a demonstrated subgoal error: the target can be determined entirely from the current observation and goal. No persistent value or update event is needed; write no memory fields rather than a list such as [[92, 87]].\n\nfield remaining_targets, POLICY PROMPT\n  Delete this field for the supplied single-pickup episodes. At the sole decision, the policy sees the requested color in the goal, its location in the demonstration, and the container that subsequently covers it. No carried target list is read, so persisting that locally available association violates NECESSITY. Do not initialize or update remaining_targets; use the demonstration association directly to select the pickup and output empty memory. There is no replacement field, stored value, or memory transition.\n\nthe policy prompt for subgoal\n  The supplied episodes request a single pickup and end after the initial command. That decision includes the full demonstration and the starting execution scene; there is no reported incorrect policy subgoal. The existing requirement to initialize and then consult remaining_targets unnecessarily routes a directly observable choice through persistent memory, violating NECESSITY. Replace it, for these single-pickup episodes, with this rule: read the requested cube color from the goal, locate that cube before it is covered in the demonstration, track which container covers that location, and choose A pointing inside that container in the current execution scene. Allow small visible-centroid shifts and ignore containers covering other colors or empty locations. Do not infer hidden colors from container appearance. Remove the remaining_targets-based completion, removal, put-down, and fallback rules from this single-pickup path; no subsequent command is needed in the supplied trajectories. This change does not establish that target memory is unnecessary for longer episodes with later decisions that no longer show the demonstration.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The supplied episodes request a single pickup and end after the initial command. That decision includes the full demonstration and the starting execution scene; there is no reported incorrect policy subgoal. The existing requirement to initialize and then consult remaining_targets unnecessarily routes a directly observable choice through persistent memory, violating NECESSITY. Replace it, for these single-pickup episodes, with this rule: read the requested cube color from the goal, locate that cube before it is covered in the demonstration, track which container covers that location, and choose A pointing inside that container in the current execution scene. Allow small visible-centroid shifts and ignore containers covering other colors or empty locations. Do not infer hidden colors from container appearance. Remove the remaining_targets-based completion, removal, put-down, and fallback rules from this single-pickup path; no subsequent command is needed in the supplied trajectories. This change does not establish that target memory is unnecessary for longer episodes with later decisions that no longer show the demonstration.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_targets",
+    "description": "Delete this field for the supplied single-pickup episodes. At the sole decision, the policy sees the requested color in the goal, its location in the demonstration, and the container that subsequently covers it. No carried target list is read, so persisting that locally available association violates NECESSITY. Do not initialize or update remaining_targets; use the demonstration association directly to select the pickup and output empty memory. There is no replacement field, stored value, or memory transition."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "remaining_targets",
+    "description": "Delete this field for the supplied single-pickup episodes. Each goal requests one cube color, and the only decision shows both the demonstration locating that cube and the containers covering the cubes. Incoming memory is empty, and no later decision reads the target list. The unused-field report therefore identifies a NECESSITY failure, not a demonstrated subgoal error: the target can be determined entirely from the current observation and goal. No persistent value or update event is needed; write no memory fields rather than a list such as [[92, 87]]."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": []
+}

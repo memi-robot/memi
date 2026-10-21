@@ -1,0 +1,538 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "StopCube",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   23,
+   32,
+   66,
+   94,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The cube slides back and forth along a line that passes through the target; every time it crosses the target line counts as one arrival at the target. The goal instruction names the ordinal N (second, third, fifth...). The button must be pressed one arrival early: when N-1 arrivals have happened and the predicted Nth arrival is at most 30 timesteps away, so the press, which takes roughly 25-30 timesteps to land, lands as the cube reaches the target for the Nth time. An episode starts in A: at the first step (empty memory, gripper raised out of the frame and not yet above the button) choose A 'move to the top of the button to prepare'. No point is needed. At every later step (gripper is already positioned above the button, fingers closed), first update memory as instructed (crossings, scene_frame, first_cross_t; the crossing that brings crossings to N-1 often happens inside the frames of the very step where the decision is made), then decide using the updated crossings and first_cross_t values alone: - Predict the timing. The cube starts at rest at one extreme of its swing at t=0, so first_cross_t is a quarter period and the Nth arrival at the target is predicted at T_N = (2N-1)*first_cross_t. Compute remaining = T_N - (timestep of the scene at this decision step). While first_cross_t is empty, crossings is 0 and no timing is needed. - Do not read the cube's direction or speed from the frames to make the decision: cube speed varies threefold across episodes and changes around the turnaround, and the predicted arrival time computed from first_cross_t decides on its own. - Choose C 'press button to stop the cube' if and only if crossings == N-1 AND remaining <= 30 timesteps (the press takes roughly 25-30 timesteps to land, so it is started once the predicted Nth arrival is at most 30 timesteps away). Whether the cube is still running out, stopped at its turnaround, or already heading back toward the target makes no difference: being past the turnaround or moving back is not enough while remaining > 30. No point is needed. - Otherwise choose B 'remain static'. This covers: crossings < N-1 (even if the cube is heading toward the target, let it pass), and crossings == N-1 while remaining > 30, whatever the cube is doing (the step right after the (N-1)th crossing, however slowly the cube is gliding; the cube on its way out to the far end; the cube stopped at the turnaround; and the cube already past the turnaround and heading back toward the target, as long as more than 30 timesteps remain). If crossings somehow exceeds N-1, or the situation matches no rule above, choose C immediately. Never choose A after the first step.",
+  "fields": [
+   {
+    "name": "crossings",
+    "description": "Take the crossings count carried in (0 at the first step, since memory is empty). Build the sequence: the side of the carried-in scene_frame (smaller_x if its cube_x < its target_x, else larger_x; skip if memory is empty), then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown at this step in time order, ending with the scene at this step. Add 1 for every consecutive pair in that sequence whose side differs. Write the result. e.g. 2",
+    "annotation": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+   },
+   {
+    "name": "first_cross_t",
+    "description": "Carry it unchanged if it is already set. If it is empty and the crossings count you just computed at this step is 1 or more, find the first consecutive pair in this step's side sequence whose side differs; the earlier member is either the carried-in scene_frame or a frame of this step, the later member is a frame of this step. With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (its own target_x) and d2 likewise at the later frame, write t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. Never extrapolate; the carried-in scene_frame always supplies the frame before a flip that precedes this step's first frame. Otherwise leave it empty. e.g. 30",
+    "annotation": "The timestep at which the cube first crossed the target line, computed from the last observed frame on the starting side and the first observed frame on the other side (if the flip lies between the scene of one decision step and the first frame of the next, the earlier frame is that scene, as recorded in the carried-in scene_frame). With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (that frame's own target_x) and d2 likewise at the later frame: t_cross = t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. No extrapolation is ever used. Empty at every step before the one whose shown frames contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30"
+   },
+   {
+    "name": "scene_frame",
+    "description": "Write the ordered list [timestep, cube_x, target_x] of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step it is the t=0 frame. The side of the target line for any frame is smaller_x if cube_x < target_x, else larger_x; the carried-in scene_frame gives the side, timestep and positions of the last frame of the previous step, and is the frame before the flip whenever a crossing lies between the previous scene and this step's first frame. e.g. [56, 104, 117]",
+    "annotation": "The scene at this decision step (the last frame shown), as the ordered list [t, cube_x, target_x]: its timestep, the cube's x-coordinate and the target's x-coordinate in that frame. Overwritten at every step; at step #1 it is read from the t=0 frame. The cube's side of the target line in that frame is the sign of cube_x minus target_x (smaller_x if negative, larger_x if positive), and the frame it records is the earlier member of the pair whenever the first crossing falls between the scene of one decision step and the first frame of the next. e.g. [56, 104, 117]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "StopCube",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   23,
+   32,
+   66,
+   94,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The cube slides back and forth along a line that passes through the target; every time it crosses the target line counts as one arrival at the target. The goal instruction names the ordinal N (second, third, fifth...). The button must be pressed one arrival early: when N-1 arrivals have happened and the cube is on its way back toward the target, so the press lands as the cube reaches the target for the Nth time. An episode starts in A: at the first step (empty memory, gripper raised out of the frame and not yet above the button) choose A 'move to the top of the button to prepare'. No point is needed. At every later step (gripper is already positioned above the button, fingers closed), first update memory as instructed, then decide using the updated crossings value and the cube motion in this step's frames: - Determine the cube's motion from the last two frames shown at this step: compute |cube_x - target_x| at each; if it is decreasing, the cube is moving toward the target; if it is equal (cube stopped at the far end of its swing, same position in both frames), treat it as at the turnaround, which also counts as 'not moving away'; if it is increasing, it is moving away. - Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is not moving away (moving toward the target, or stationary at the turnaround). No point is needed. - Otherwise choose B 'remain static'. This covers: crossings < N-1 (even if the cube is heading toward the target, let it pass), and crossings == N-1 while the cube is still moving away from the target. If crossings somehow exceeds N-1, or the situation matches no rule above, choose C immediately if the cube is heading toward the target, otherwise B. Never choose A after the first step.",
+  "fields": [
+   {
+    "name": "crossings",
+    "description": "Take the crossings count carried in (0 at the first step, since memory is empty). Build the sequence: the carried-in cube_side (skip if memory is empty), then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown at this step in time order, ending with the scene at this step. Add 1 for every consecutive pair in that sequence whose side differs. Write the result. e.g. 2",
+    "annotation": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+   },
+   {
+    "name": "cube_side",
+    "description": "The side of the target line the cube is on in the last frame shown at this step (the scene at this decision step): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. Overwrite it every step. e.g. larger_x",
+    "annotation": "Which side of the target line the cube is on in the scene at this decision step (the last frame shown): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. At step #1 it is read from the t=0 frame. e.g. larger_x"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 23,
+    "subgoal_wrong": 2,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "crossings": 0,
+     "cube_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 2,
+    "point_wrong": 0
+   },
+   "critique": "the policy prompt for subgoal\n  Two failures, both in the motion test that decides between B and C once crossings equals N-1; the memory was written correctly in both (SUFFICIENCY breaks, not PREDICTABILITY). First situation: the goal asked for the fourth arrival, the (N-1)th crossing happened inside the step's frames and by the scene at the decision step the cube had coasted out to the far end of its swing, the last two frames being only a few timesteps apart and the cube displaced by about 2 px (half a pixel per timestep, against a cruising speed of 3-4 px per timestep). The rule 'distance equal in the last two frames means turnaround, distance increasing means moving away' read this as moving away and chose B; the recorded subgoal is C. The cube was effectively stopped at the turnaround and the press, which takes long, lands as it swings back. Second situation: the goal asked for the fourth arrival, and the (N-1)th crossing happened between the last two frames of the step: the cube went from one side of the target to the other, so |cube_x - target_x| shrank even though the cube had passed the target and was now moving away on the other side. The rule 'distance decreasing means moving toward' chose C; the recorded subgoal is B. The episode shows the press came one step later, when the cube had turned around and was heading back. Replace the distance-based motion test with a velocity-and-side test. Take the last two frames shown at the step, with their timesteps. Compute v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep), in pixels per timestep; the last pair of frames is often only a few timesteps apart, so always divide by the time gap, never use raw displacement. Take the cube's side at the last frame (smaller_x or larger_x relative to target_x). The cube is MOVING AWAY if it is on the larger_x side and v > +1, or on the smaller_x side and v < -1. In every other case (|v| at most 1 px per timestep, which is the turnaround at the far end of the swing; or v pointing back toward the target line from the side the cube is on) the cube is NOT moving away. Note the crossing itself: if the two frames lie on different sides, the cube has just passed the target and is moving away on its new side, which this test gives correctly because the velocity sign and the new side agree. Decision rule, unchanged in shape: after updating memory, choose C 'press button to stop the cube' if crossings == N-1 and the cube is NOT moving away (heading toward the target, or stopped/slowing at the turnaround with |v| at most 1 px per timestep). Otherwise choose B 'remain static': when crossings < N-1 whatever the motion, and when crossings == N-1 but the cube is moving away faster than 1 px per timestep (including right after the (N-1)th crossing, and while it is still running out toward the far end). Drop the clauses 'if |cube_x - target_x| is decreasing the cube is moving toward the target' and 'if it is equal treat it as the turnaround'; they should no longer exist. Keep the first-step rule (A with empty memory) and the fallback for crossings exceeding N-1, but phrase the fallback with the same velocity-and-side test.\n\nrefused\n  One step proposed, as its first alternative, that once crossings reaches N-1 the press should be chosen immediately regardless of the cube's direction. This is dropped: in two other episodes the cube had just made its (N-1)th crossing or was still running out toward the far end with crossings == N-1, and the recorded subgoal there was B, with C recorded only a step later once the cube had turned around. Only that step's second alternative (a near-zero displacement rate at the far end counts as the turnaround) is passed on, folded into the velocity-and-side test above. No memory change is passed on: at both failed steps the policy's crossings and cube_side matched the annotation.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "- Determine the cube's motion from the last two frames shown at this step: compute |cube_x - target_x| at each; if it is decreasing, the cube is moving toward the target; if it is equal (cube stopped at the far end of its swing, same position in both frames), treat it as at the turnaround, which also counts as 'not moving away'; if it is increasing, it is moving away.",
+      "modify_to": "- Determine the cube's motion with a velocity-and-side test on the last two frames shown at this step, using their timesteps: v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep), in pixels per timestep. Always divide by the time gap; the last pair of frames is often only a few timesteps apart, so never use the raw displacement. Take the cube's side at the last frame (smaller_x if cube_x < target_x, larger_x if cube_x > target_x). The cube is MOVING AWAY if it is on the larger_x side and v > +1, or on the smaller_x side and v < -1. In every other case the cube is NOT moving away: either |v| is at most 1 px per timestep (the cube is stopped or slowing at the turnaround at the far end of its swing, where the press, which takes long, lands as it swings back), or v points back toward the target line from the side the cube is on. If the two frames lie on different sides of the target, the cube has just crossed and is moving away on its new side; the test already says so, since the velocity sign and the new side agree. Do not use |cube_x - target_x| shrinking or growing as the test: it shrinks across a crossing even though the cube is then moving away."
+     },
+     {
+      "modify_from": "- Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is not moving away (moving toward the target, or stationary at the turnaround). No point is needed.",
+      "modify_to": "- Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is NOT moving away by the test above (heading toward the target, or stopped/slowing at the turnaround with |v| at most 1 px per timestep). No point is needed."
+     },
+     {
+      "modify_from": "and crossings == N-1 while the cube is still moving away from the target.",
+      "modify_to": "and crossings == N-1 while the cube is MOVING AWAY by the test above, faster than 1 px per timestep (including the step right after the (N-1)th crossing, and while it is still running out toward the far end)."
+     },
+     {
+      "modify_from": "choose C immediately if the cube is heading toward the target, otherwise B.",
+      "modify_to": "choose C immediately if the cube is NOT moving away by the velocity-and-side test above, otherwise B."
+     }
+    ],
+    "refused": "The alternative that C be chosen as soon as crossings reaches N-1 regardless of the cube's motion is not committed: the report itself shows episodes where crossings == N-1 and the cube had just crossed or was still running out, with B recorded and C only a step later after the turnaround. No memory change is committed: crossings and cube_side matched the annotation at both failed steps, so the failure is in the subgoal motion test alone, which is replaced by the velocity-and-side test."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 17,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "crossings": 0,
+     "cube_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "field first_cross_t, ANNOTATOR PROMPT\n  The timestep at which the cube first crossed the target line, interpolated linearly between the last observed frame on the starting side and the first observed frame on the other side (interpolate on cube_x against target_x and round to the nearest timestep). Empty until the step whose observed frames (or the carried-in side versus this step's first frame) contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30\n\nfield first_cross_t, POLICY PROMPT\n  Carry it unchanged if it is already set. If it is empty and the crossings count you just computed at this step went from 0 to 1 or more, find the first pair of consecutive frames in this step's sequence whose cube side differs (if the flip is between the carried-in cube_side and this step's first frame, use the last frame of the previous step as the earlier frame; its timestep is the previous decision step's timestep, which is the memory's step time; if that is not known, take the first frame of this step minus 8) and write the timestep where cube_x would equal target_x by linear interpolation between those two frames, rounded to the nearest whole timestep. Otherwise leave it empty. e.g. 30\n\nthe policy prompt for subgoal\n  The failure: the goal asked for the second arrival, the cube had just made its first crossing during the step and was gliding out toward the far end of its swing at roughly 0.8 pixels per timestep over a short final frame gap. The carried memory said crossings=0 on the near side, and the updated memory correctly said crossings=1 (N-1). The velocity-and-side rule said the cube was 'NOT moving away' because |v| was at most 1 px per timestep, so the policy chose C; the correct subgoal was B, because that cube was slow and still some eighty timesteps from reaching the target again, and a press then would have landed far too early. This breaks SUFFICIENCY: the |v| <= 1 threshold cannot distinguish a slow cube still running out (wait) from a fast cube near or at its turnaround (press), since across episodes the cube's speed varies by a factor of three, and in other episodes a cube moving away at 0.7 to 1.0 px per timestep was correctly pressed on. Remove the rule 'the cube is NOT moving away if |v| is at most 1 px per timestep, so press'. Replace the whole decision at steps after the first with a timing rule based on the predicted arrival: the cube starts at rest at one end of its swing at t=0, so the time of the first crossing, first_cross_t, is a quarter period and the Nth arrival at the target is predicted at T_N = (2N-1)*first_cross_t. Compute remaining = T_N - (timestep of this decision step). Choose C 'press button to stop the cube' when crossings == N-1 and any of: (a) remaining <= 35 timesteps (the press takes roughly 25-30 timesteps to land); (b) the cube is heading back toward the target by the velocity sign (on the larger_x side with v < 0, or on the smaller_x side with v > 0, using the last two frames and dividing by their time gap); (c) the cube's x is identical in the last two frames (fully stopped at the turnaround). Otherwise choose B 'remain static': crossings < N-1 regardless of motion, or crossings == N-1 with the cube still moving away from the target and remaining > 35. Keep the first-step rule (empty memory: choose A, no point) and keep 'never choose A after the first step'. Keep the fallback: if crossings exceeds N-1, choose C if the cube is heading toward the target or stopped, otherwise B. Note that the policy must update memory (crossings, cube_side, first_cross_t) before applying these rules, since the crossing that makes crossings reach N-1 often happens inside the frames of the very step where the decision is made.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "add",
+      "field": "first_cross_t",
+      "edits": [],
+      "description": "The timestep at which the cube first crossed the target line, estimated by linear interpolation of cube_x against target_x between the last observed frame on the starting side and the first observed frame on the other side, rounded to the nearest whole timestep. If the flip lies between the scene of one decision step and the first frame of the next step, extrapolate backwards linearly from that next step's first two frames instead (the policy cannot see the earlier scene). Empty at every step before the one whose shown frames contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30"
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "add",
+      "field": "first_cross_t",
+      "edits": [],
+      "description": "Carry it unchanged if it is already set. If it is empty and the crossings count you just computed at this step is 1 or more, find the first consecutive pair in this step's side sequence whose side differs. If both are frames of this step, write the timestep at which cube_x would equal target_x by linear interpolation between those two frames, rounded to the nearest whole timestep. If the flip is between the carried-in cube_side and this step's first frame, extrapolate backwards linearly from this step's first two frames (cube_x and timestep) to the timestep at which cube_x would equal target_x, and round. Otherwise leave it empty. e.g. 30"
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "first update memory as instructed, then decide using the updated crossings value and the cube motion in this step's frames:",
+      "modify_to": "first update memory as instructed (crossings, cube_side, first_cross_t; the crossing that brings crossings to N-1 often happens inside the frames of the very step where the decision is made), then decide using the updated crossings and first_cross_t values and the cube motion in this step's frames:"
+     },
+     {
+      "modify_from": "- Determine the cube's motion with a velocity-and-side test on the last two frames shown at this step, using their timesteps: v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep), in pixels per timestep. Always divide by the time gap; the last pair of frames is often only a few timesteps apart, so never use the raw displacement. Take the cube's side at the last frame (smaller_x if cube_x < target_x, larger_x if cube_x > target_x). The cube is MOVING AWAY if it is on the larger_x side and v > +1, or on the smaller_x side and v < -1. In every other case the cube is NOT moving away: either |v| is at most 1 px per timestep (the cube is stopped or slowing at the turnaround at the far end of its swing, where the press, which takes long, lands as it swings back), or v points back toward the target line from the side the cube is on. If the two frames lie on different sides of the target, the cube has just crossed and is moving away on its new side; the test already says so, since the velocity sign and the new side agree. Do not use |cube_x - target_x| shrinking or growing as the test: it shrinks across a crossing even though the cube is then moving away.",
+      "modify_to": "- Predict the timing. The cube starts at rest at one extreme of its swing at t=0, so first_cross_t is a quarter period and the Nth arrival at the target is predicted at T_N = (2N-1)*first_cross_t. Compute remaining = T_N - (timestep of the scene at this decision step). While first_cross_t is empty, crossings is 0 and no timing is needed. - Determine the cube's direction from the last two frames shown at this step, using their timesteps: v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep). Always divide by the time gap. Take the cube's side at the last frame (smaller_x if cube_x < target_x, larger_x if cube_x > target_x). The cube is HEADING BACK toward the target if it is on the larger_x side and v < 0, or on the smaller_x side and v > 0, or its cube_x is identical in the last two frames (fully stopped at the turnaround). Otherwise it is RUNNING OUT (moving away from the target on its current side); this includes the case where the two frames lie on different sides, since the cube has just crossed. Do not treat a small |v| as the turnaround: cube speed varies by a factor of three across episodes, and a slow cube that has just crossed is still far from returning. Do not use |cube_x - target_x| shrinking or growing as the test: it shrinks across a crossing even though the cube is then moving away."
+     },
+     {
+      "modify_from": "- Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is NOT moving away by the test above (heading toward the target, or stopped/slowing at the turnaround with |v| at most 1 px per timestep). No point is needed.",
+      "modify_to": "- Choose C 'press button to stop the cube' if crossings == N-1 AND any of: (a) remaining <= 35 timesteps (the press takes roughly 25-30 timesteps to land); (b) remaining <= first_cross_t + 4 (the cube is at or past its predicted turnaround, which comes a quarter period before T_N); (c) the cube is HEADING BACK by the test above. No point is needed."
+     },
+     {
+      "modify_from": "and crossings == N-1 while the cube is MOVING AWAY by the test above, faster than 1 px per timestep (including the step right after the (N-1)th crossing, and while it is still running out toward the far end).",
+      "modify_to": "and crossings == N-1 while the cube is RUNNING OUT by the test above with remaining > 35 and remaining > first_cross_t + 4 (including the step right after the (N-1)th crossing, however slowly the cube is gliding, and while it is still on its way out to the far end)."
+     },
+     {
+      "modify_from": "choose C immediately if the cube is NOT moving away by the velocity-and-side test above, otherwise B.",
+      "modify_to": "choose C immediately if the cube is HEADING BACK by the test above or remaining <= 35, otherwise B."
+     }
+    ],
+    "refused": "The report's clause for the flip that falls between the previous step's scene and this step's first frame ('use the last frame of the previous step; its timestep is the memory's step time; if not known, take the first frame minus 8') is not committed as written: the policy cannot see the previous step's scene and the memory carries no step time, so that moment would not be tellable from what the step shows. Both sides instead extrapolate backwards from this step's first two frames, so annotator and policy write the same value. The |v| <= 1 turnaround clause from round 1 is removed as the report asks, but the round-1 case it served (cube coasted to the far end, displaced about half a pixel per timestep, recorded C) is kept covered by the added condition (b), press once remaining <= first_cross_t + 4, i.e. the cube is at or past its predicted turnaround; the report's fixed 35-timestep window alone would miss that case in a slow episode whose quarter period exceeds 35. The round-1 refusal stands: C is still not chosen merely because crossings reached N-1."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 23,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "crossings": 0,
+     "cube_side": 0,
+     "first_cross_t": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "field scene_frame, ANNOTATOR PROMPT\n  New field. Holds the timestep, cube x and target x of the scene at this decision step (the last frame shown), as an ordered list [t, cube_x, target_x], e.g. [56, 104, 117]. Overwritten at every step, starting from the t=0 frame at the first step. It exists so that when the first crossing of the target line falls between the scene of one decision step and the first frame of the next, the crossing time can be interpolated between two actual frames instead of extrapolated. Since the side of the target line is the sign of cube_x minus target_x in this list, the cube_side field becomes redundant and should be dropped; the crossings count at a step is then built from the side of the carried-in scene_frame followed by the side of each frame shown.\n\nfield first_cross_t, ANNOTATOR PROMPT\n  Same meaning as before (timestep of the first crossing, written once at the step whose frames contain the first flip, never changed), but the computation is fixed exactly so annotator and policy produce the same number: take the last frame on the starting side (if the flip is before this step's first frame, that frame is the carried-in scene_frame) and the first frame on the other side; let d1 = cube_x - target_x at the earlier frame using that frame's own target_x, d2 likewise at the later frame; t_cross = t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. e.g. 29. No extrapolation is ever used.\n\nfield scene_frame, POLICY PROMPT\n  Write the ordered list [timestep, cube_x, target_x] of the scene at this decision step (the last frame shown), e.g. [56, 104, 117]. Overwrite it every step; at the first step it is the t=0 frame. The side of the target line for any frame is smaller_x if cube_x < target_x, else larger_x; the carried-in scene_frame gives the side of the last frame of the previous step. The cube_side field is removed: wherever crossings or first_cross_t referred to the carried-in cube_side, use the side computed from the carried-in scene_frame instead.\n\nfield first_cross_t, POLICY PROMPT\n  Carry it unchanged if set. If empty and the crossings count just computed is 1 or more, take the first consecutive pair in this step's side sequence whose sides differ; the earlier member is either the carried-in scene_frame or a frame of this step, the later one is a frame of this step. With d1 = cube_x - target_x at the earlier frame (its own target_x) and d2 at the later frame, write t1 + (t2 - t1) * |d1| / (|d1| + |d2|) rounded half up, e.g. 29. Never extrapolate; the carried-in scene_frame always supplies the frame before the flip.\n\nthe policy prompt for subgoal\n  The failure was in the press conditions for a fast cube on its first long outward run. The goal asked for the second arrival; the cube had crossed once at about timestep 29 and at the decision step (timestep 54) was still gliding away from the target on the larger_x side with positive velocity, so it was RUNNING OUT, about four timesteps short of its predicted turnaround at 2*first_cross_t = 58. Remaining time to the second arrival was 33. Rule (a) 'remaining <= 35' and rule (b) 'remaining <= first_cross_t + 4' both fired and the policy pressed, but the recorded choice was to remain static; the press was correct only at the following step (timestep 60, remaining 27, past the turnaround). This breaks SUFFICIENCY: the instruction's thresholds choose C where the trajectory chooses B. Replace rule (a) with 'remaining <= 30' and replace rule (b) with 'the timestep of the scene at this decision step is at or past the predicted turnaround (2N-2)*first_cross_t, with no slack'. Keep rule (c) (HEADING BACK by the velocity test) unchanged. Everything else stays: choose C only when crossings == N-1 and one of (a), (b), (c) holds; otherwise B. With these cutoffs every recorded step in the minibatch is reproduced: the running-out step at remaining 33 before the turnaround is B, the step at remaining 27 past the turnaround is C, a slower cube at remaining 46 well before its turnaround is B, and all heading-back steps at remaining 14-19 are C. Also replace references to cube_side with the side derived from the scene_frame field, since cube_side is removed.\n\nrefused\n  Nothing is withheld. Both reports are passed on: the timing-threshold report leads to the tightened press conditions, and the first-crossing-time report (policy extrapolated 59 where the annotation interpolated 58, because only the annotator saw the frame before the flip) leads to the new scene_frame field and an identical interpolation formula in both documents, so the policy and the annotator compute the same number from the same two frames.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "add",
+      "field": "scene_frame",
+      "edits": [],
+      "description": "The scene at this decision step (the last frame shown), as the ordered list [t, cube_x, target_x]: its timestep, the cube's x-coordinate and the target's x-coordinate in that frame. Overwritten at every step; at step #1 it is read from the t=0 frame. The cube's side of the target line in that frame is the sign of cube_x minus target_x (smaller_x if negative, larger_x if positive), and the frame it records is the earlier member of the pair whenever the first crossing falls between the scene of one decision step and the first frame of the next. e.g. [56, 104, 117]"
+     },
+     {
+      "kind": "delete",
+      "field": "cube_side",
+      "edits": [],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "first_cross_t",
+      "edits": [
+       {
+        "modify_from": "estimated by linear interpolation of cube_x against target_x between the last observed frame on the starting side and the first observed frame on the other side, rounded to the nearest whole timestep. If the flip lies between the scene of one decision step and the first frame of the next step, extrapolate backwards linearly from that next step's first two frames instead (the policy cannot see the earlier scene).",
+        "modify_to": "computed from the last observed frame on the starting side and the first observed frame on the other side (if the flip lies between the scene of one decision step and the first frame of the next, the earlier frame is that scene, as recorded in the carried-in scene_frame). With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (that frame's own target_x) and d2 likewise at the later frame: t_cross = t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. No extrapolation is ever used."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "add",
+      "field": "scene_frame",
+      "edits": [],
+      "description": "Write the ordered list [timestep, cube_x, target_x] of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step it is the t=0 frame. The side of the target line for any frame is smaller_x if cube_x < target_x, else larger_x; the carried-in scene_frame gives the side, timestep and positions of the last frame of the previous step, and is the frame before the flip whenever a crossing lies between the previous scene and this step's first frame. e.g. [56, 104, 117]"
+     },
+     {
+      "kind": "modify",
+      "field": "crossings",
+      "edits": [
+       {
+        "modify_from": "Build the sequence: the carried-in cube_side (skip if memory is empty),",
+        "modify_to": "Build the sequence: the side of the carried-in scene_frame (smaller_x if its cube_x < its target_x, else larger_x; skip if memory is empty),"
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "first_cross_t",
+      "edits": [
+       {
+        "modify_from": "find the first consecutive pair in this step's side sequence whose side differs. If both are frames of this step, write the timestep at which cube_x would equal target_x by linear interpolation between those two frames, rounded to the nearest whole timestep. If the flip is between the carried-in cube_side and this step's first frame, extrapolate backwards linearly from this step's first two frames (cube_x and timestep) to the timestep at which cube_x would equal target_x, and round.",
+        "modify_to": "find the first consecutive pair in this step's side sequence whose side differs; the earlier member is either the carried-in scene_frame or a frame of this step, the later member is a frame of this step. With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (its own target_x) and d2 likewise at the later frame, write t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. Never extrapolate; the carried-in scene_frame always supplies the frame before a flip that precedes this step's first frame."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "first update memory as instructed (crossings, cube_side, first_cross_t; the crossing that brings crossings to N-1 often happens inside the frames of the very step where the decision is made)",
+      "modify_to": "first update memory as instructed (crossings, scene_frame, first_cross_t; the crossing that brings crossings to N-1 often happens inside the frames of the very step where the decision is made)"
+     },
+     {
+      "modify_from": "- Choose C 'press button to stop the cube' if crossings == N-1 AND any of: (a) remaining <= 35 timesteps (the press takes roughly 25-30 timesteps to land); (b) remaining <= first_cross_t + 4 (the cube is at or past its predicted turnaround, which comes a quarter period before T_N); (c) the cube is HEADING BACK by the test above.",
+      "modify_to": "- Choose C 'press button to stop the cube' if crossings == N-1 AND any of: (a) remaining <= 30 timesteps (the press takes roughly 25-30 timesteps to land); (b) the timestep of the scene at this decision step is at or past the predicted turnaround (2N-2)*first_cross_t, with no slack (equivalently remaining <= first_cross_t); (c) the cube is HEADING BACK by the test above."
+     },
+     {
+      "modify_from": "with remaining > 35 and remaining > first_cross_t + 4 (including the step right after the (N-1)th crossing, however slowly the cube is gliding, and while it is still on its way out to the far end)",
+      "modify_to": "with remaining > 30 and the scene timestep still before the predicted turnaround (2N-2)*first_cross_t (including the step right after the (N-1)th crossing, however slowly the cube is gliding, and while it is still on its way out to the far end, even when only a few timesteps short of the turnaround)"
+     },
+     {
+      "modify_from": "choose C immediately if the cube is HEADING BACK by the test above or remaining <= 35, otherwise B.",
+      "modify_to": "choose C immediately if the cube is HEADING BACK by the test above or remaining <= 30, otherwise B."
+     }
+    ],
+    "refused": "Nothing in the report is withheld. The scene_frame field replaces the round-2 backward extrapolation, which was chosen only because the policy could not see the previous scene; now it carries that frame, so annotator and policy interpolate between the same two frames with the same formula, which does not undo the round-2 reasoning but removes its cause. cube_side is deleted because its value is recoverable from scene_frame at the same step, so it fails NECESSITY. The tightened press cutoffs (remaining <= 30, turnaround with no slack) are committed as reported; the round-1 case of a cube coasted to its far end and recorded C remains covered by (b) once the scene timestep reaches the predicted turnaround, by (c) if its x is identical in the last two frames, and by (a) in episodes with a quarter period of 30 or less, while the round-1 and round-2 refusals (no press merely because crossings reached N-1, no small-|v| turnaround test) stand."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 26,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "crossings": 0,
+     "first_cross_t": 0,
+     "scene_frame": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "the policy prompt for subgoal\n  The failure: the goal asked for the fifth arrival. Across the step's frames the cube made its fourth crossing, went out to the small-x extreme, and had just turned back toward the target, so the updated memory read crossings = N-1 with the first-crossing timestep set. The predicted fifth arrival was 37 timesteps away. The instruction's rule (b) (scene timestep at or past the predicted turnaround) and rule (c) (cube HEADING BACK by the two-frame velocity test) both fired, so the policy chose C; the recorded choice was B, and the press was recorded at the following short step, 25 timesteps before the predicted arrival. This is a SUFFICIENCY failure caused by the instruction, not the memory: the press needs roughly 25-30 timesteps to land, so pressing at 37 lands early. Rules (b) and (c) are over-eager: with the first-crossing timestep known, the predicted arrival time alone decides, and being past the turnaround or just having turned back is not enough while more than 30 timesteps remain. In every episode of the minibatch the recorded press occurs at the first decision step where crossings == N-1 and remaining <= 30 (observed values 21, 25, 27, 28), and B is recorded at every step with crossings == N-1 and remaining > 30 (observed 37 and larger), including steps where the cube is already heading back. What should stand in place of the C rule: choose C 'press button to stop the cube' if and only if crossings == N-1 (after updating memory at this step) AND remaining = (2N-1)*first_cross_t - (timestep of this decision step's scene) <= 30. Otherwise choose B, which now explicitly includes: crossings == N-1 with the cube past the turnaround and already moving back toward the target while remaining > 30. Remove rule (b) and rule (c) entirely, and remove the HEADING BACK / RUNNING OUT velocity test and its surrounding caveats, since no rule reads them any more. Keep the fallback: if crossings somehow exceeds N-1, choose C immediately. Keep: A only at the first step; while first_cross_t is empty crossings is 0 and the answer is B after the first step.\n\nrefused\n  The reporting step also suggested replacing the timing rules with a distance-over-expected-speed estimate of time-to-target. That is not passed on: the predicted-arrival time computed from the first-crossing timestep already separates every recorded press from every recorded wait in the minibatch with a single threshold, while cube speed varies threefold across episodes and changes sign and magnitude around the turnaround, so a per-step speed estimate would be less reliable than the period-based prediction the memory already supports.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "The button must be pressed one arrival early: when N-1 arrivals have happened and the cube is on its way back toward the target, so the press lands as the cube reaches the target for the Nth time.",
+      "modify_to": "The button must be pressed one arrival early: when N-1 arrivals have happened and the predicted Nth arrival is at most 30 timesteps away, so the press, which takes roughly 25-30 timesteps to land, lands as the cube reaches the target for the Nth time."
+     },
+     {
+      "modify_from": "then decide using the updated crossings and first_cross_t values and the cube motion in this step's frames:",
+      "modify_to": "then decide using the updated crossings and first_cross_t values alone:"
+     },
+     {
+      "modify_from": "- Determine the cube's direction from the last two frames shown at this step, using their timesteps: v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep). Always divide by the time gap. Take the cube's side at the last frame (smaller_x if cube_x < target_x, larger_x if cube_x > target_x). The cube is HEADING BACK toward the target if it is on the larger_x side and v < 0, or on the smaller_x side and v > 0, or its cube_x is identical in the last two frames (fully stopped at the turnaround). Otherwise it is RUNNING OUT (moving away from the target on its current side); this includes the case where the two frames lie on different sides, since the cube has just crossed. Do not treat a small |v| as the turnaround: cube speed varies by a factor of three across episodes, and a slow cube that has just crossed is still far from returning. Do not use |cube_x - target_x| shrinking or growing as the test: it shrinks across a crossing even though the cube is then moving away.",
+      "modify_to": "- Do not read the cube's direction or speed from the frames to make the decision: cube speed varies threefold across episodes and changes around the turnaround, and the predicted arrival time computed from first_cross_t decides on its own."
+     },
+     {
+      "modify_from": "- Choose C 'press button to stop the cube' if crossings == N-1 AND any of: (a) remaining <= 30 timesteps (the press takes roughly 25-30 timesteps to land); (b) the timestep of the scene at this decision step is at or past the predicted turnaround (2N-2)*first_cross_t, with no slack (equivalently remaining <= first_cross_t); (c) the cube is HEADING BACK by the test above. No point is needed.",
+      "modify_to": "- Choose C 'press button to stop the cube' if and only if crossings == N-1 AND remaining <= 30 timesteps (the press takes roughly 25-30 timesteps to land, so it is started once the predicted Nth arrival is at most 30 timesteps away). Whether the cube is still running out, stopped at its turnaround, or already heading back toward the target makes no difference: being past the turnaround or moving back is not enough while remaining > 30. No point is needed."
+     },
+     {
+      "modify_from": "and crossings == N-1 while the cube is RUNNING OUT by the test above with remaining > 30 and the scene timestep still before the predicted turnaround (2N-2)*first_cross_t (including the step right after the (N-1)th crossing, however slowly the cube is gliding, and while it is still on its way out to the far end, even when only a few timesteps short of the turnaround).",
+      "modify_to": "and crossings == N-1 while remaining > 30, whatever the cube is doing (the step right after the (N-1)th crossing, however slowly the cube is gliding; the cube on its way out to the far end; the cube stopped at the turnaround; and the cube already past the turnaround and heading back toward the target, as long as more than 30 timesteps remain)."
+     },
+     {
+      "modify_from": "choose C immediately if the cube is HEADING BACK by the test above or remaining <= 30, otherwise B.",
+      "modify_to": "choose C immediately."
+     }
+    ],
+    "refused": "The suggestion to replace the timing rules with a distance-over-expected-speed estimate of time-to-target stays out: the period-based prediction from first_cross_t already separates every recorded press (remaining 14-28) from every recorded wait (remaining 33 and above) across rounds 2, 3 and 4 with the single threshold remaining <= 30, while per-step speed is unreliable near the turnaround and varies threefold across episodes. No memory change is committed: crossings, first_cross_t and scene_frame were written correctly at the failed step. Removing rules (b) and (c) does not undo the round-2 concern that a fixed window would miss the turnaround press in a slow episode: this round's episode shows a cube at its turnaround with 37 timesteps remaining recorded as B, so the turnaround and heading-back clauses were the over-eager ones, and the round-1 coasting case (a fast cube, quarter period under 30) is still pressed by the timing rule. The round-1 refusal stands: C is never chosen merely because crossings reached N-1."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 4,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    14,
+    20,
+    25,
+    43,
+    99
+   ],
+   "verified_of_all": 0.9130434782608695,
+   "subgoal_verified": 0.9130434782608695,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The cube slides back and forth along a line that passes through the target; every time it crosses the target line counts as one arrival at the target. The goal instruction names the ordinal N (second, third, fifth...). The button must be pressed one arrival early: when N-1 arrivals have happened and the cube is on its way back toward the target, so the press lands as the cube reaches the target for the Nth time. An episode starts in A: at the first step (empty memory, gripper raised out of the frame and not yet above the button) choose A 'move to the top of the button to prepare'. No point is needed. At every later step (gripper is already positioned above the button, fingers closed), first update memory as instructed, then decide using the updated crossings value and the cube motion in this step's frames: - Determine the cube's motion from the last two frames shown at this step: compute |cube_x - target_x| at each; if it is decreasing, the cube is moving toward the target; if it is equal (cube stopped at the far end of its swing, same position in both frames), treat it as at the turnaround, which also counts as 'not moving away'; if it is increasing, it is moving away. - Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is not moving away (moving toward the target, or stationary at the turnaround). No point is needed. - Otherwise choose B 'remain static'. This covers: crossings < N-1 (even if the cube is heading toward the target, let it pass), and crossings == N-1 while the cube is still moving away from the target. If crossings somehow exceeds N-1, or the situation matches no rule above, choose C immediately if the cube is heading toward the target, otherwise B. Never choose A after the first step.",
+    "fields": [
+     {
+      "name": "crossings",
+      "description": "Take the crossings count carried in (0 at the first step, since memory is empty). Build the sequence: the carried-in cube_side (skip if memory is empty), then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown at this step in time order, ending with the scene at this step. Add 1 for every consecutive pair in that sequence whose side differs. Write the result. e.g. 2",
+      "annotation": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+     },
+     {
+      "name": "cube_side",
+      "description": "The side of the target line the cube is on in the last frame shown at this step (the scene at this decision step): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. Overwrite it every step. e.g. larger_x",
+      "annotation": "Which side of the target line the cube is on in the scene at this decision step (the last frame shown): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. At step #1 it is read from the t=0 frame. e.g. larger_x"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    2,
+    38,
+    66,
+    93
+   ],
+   "verified_of_all": 0.9411764705882353,
+   "subgoal_verified": 0.9411764705882353,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The cube slides back and forth along a line that passes through the target; every time it crosses the target line counts as one arrival at the target. The goal instruction names the ordinal N (second, third, fifth...). The button must be pressed one arrival early: when N-1 arrivals have happened and the cube is on its way back toward the target, so the press lands as the cube reaches the target for the Nth time. An episode starts in A: at the first step (empty memory, gripper raised out of the frame and not yet above the button) choose A 'move to the top of the button to prepare'. No point is needed. At every later step (gripper is already positioned above the button, fingers closed), first update memory as instructed, then decide using the updated crossings value and the cube motion in this step's frames: - Determine the cube's motion with a velocity-and-side test on the last two frames shown at this step, using their timesteps: v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep), in pixels per timestep. Always divide by the time gap; the last pair of frames is often only a few timesteps apart, so never use the raw displacement. Take the cube's side at the last frame (smaller_x if cube_x < target_x, larger_x if cube_x > target_x). The cube is MOVING AWAY if it is on the larger_x side and v > +1, or on the smaller_x side and v < -1. In every other case the cube is NOT moving away: either |v| is at most 1 px per timestep (the cube is stopped or slowing at the turnaround at the far end of its swing, where the press, which takes long, lands as it swings back), or v points back toward the target line from the side the cube is on. If the two frames lie on different sides of the target, the cube has just crossed and is moving away on its new side; the test already says so, since the velocity sign and the new side agree. Do not use |cube_x - target_x| shrinking or growing as the test: it shrinks across a crossing even though the cube is then moving away. - Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is NOT moving away by the test above (heading toward the target, or stopped/slowing at the turnaround with |v| at most 1 px per timestep). No point is needed. - Otherwise choose B 'remain static'. This covers: crossings < N-1 (even if the cube is heading toward the target, let it pass), and crossings == N-1 while the cube is MOVING AWAY by the test above, faster than 1 px per timestep (including the step right after the (N-1)th crossing, and while it is still running out toward the far end). If crossings somehow exceeds N-1, or the situation matches no rule above, choose C immediately if the cube is NOT moving away by the velocity-and-side test above, otherwise B. Never choose A after the first step.",
+    "fields": [
+     {
+      "name": "crossings",
+      "description": "Take the crossings count carried in (0 at the first step, since memory is empty). Build the sequence: the carried-in cube_side (skip if memory is empty), then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown at this step in time order, ending with the scene at this step. Add 1 for every consecutive pair in that sequence whose side differs. Write the result. e.g. 2",
+      "annotation": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+     },
+     {
+      "name": "cube_side",
+      "description": "The side of the target line the cube is on in the last frame shown at this step (the scene at this decision step): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. Overwrite it every step. e.g. larger_x",
+      "annotation": "Which side of the target line the cube is on in the scene at this decision step (the last frame shown): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. At step #1 it is read from the t=0 frame. e.g. larger_x"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    14,
+    26,
+    39,
+    80,
+    95
+   ],
+   "verified_of_all": 0.9130434782608695,
+   "subgoal_verified": 0.9565217391304348,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The cube slides back and forth along a line that passes through the target; every time it crosses the target line counts as one arrival at the target. The goal instruction names the ordinal N (second, third, fifth...). The button must be pressed one arrival early: when N-1 arrivals have happened and the cube is on its way back toward the target, so the press lands as the cube reaches the target for the Nth time. An episode starts in A: at the first step (empty memory, gripper raised out of the frame and not yet above the button) choose A 'move to the top of the button to prepare'. No point is needed. At every later step (gripper is already positioned above the button, fingers closed), first update memory as instructed (crossings, cube_side, first_cross_t; the crossing that brings crossings to N-1 often happens inside the frames of the very step where the decision is made), then decide using the updated crossings and first_cross_t values and the cube motion in this step's frames: - Predict the timing. The cube starts at rest at one extreme of its swing at t=0, so first_cross_t is a quarter period and the Nth arrival at the target is predicted at T_N = (2N-1)*first_cross_t. Compute remaining = T_N - (timestep of the scene at this decision step). While first_cross_t is empty, crossings is 0 and no timing is needed. - Determine the cube's direction from the last two frames shown at this step, using their timesteps: v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep). Always divide by the time gap. Take the cube's side at the last frame (smaller_x if cube_x < target_x, larger_x if cube_x > target_x). The cube is HEADING BACK toward the target if it is on the larger_x side and v < 0, or on the smaller_x side and v > 0, or its cube_x is identical in the last two frames (fully stopped at the turnaround). Otherwise it is RUNNING OUT (moving away from the target on its current side); this includes the case where the two frames lie on different sides, since the cube has just crossed. Do not treat a small |v| as the turnaround: cube speed varies by a factor of three across episodes, and a slow cube that has just crossed is still far from returning. Do not use |cube_x - target_x| shrinking or growing as the test: it shrinks across a crossing even though the cube is then moving away. - Choose C 'press button to stop the cube' if crossings == N-1 AND any of: (a) remaining <= 35 timesteps (the press takes roughly 25-30 timesteps to land); (b) remaining <= first_cross_t + 4 (the cube is at or past its predicted turnaround, which comes a quarter period before T_N); (c) the cube is HEADING BACK by the test above. No point is needed. - Otherwise choose B 'remain static'. This covers: crossings < N-1 (even if the cube is heading toward the target, let it pass), and crossings == N-1 while the cube is RUNNING OUT by the test above with remaining > 35 and remaining > first_cross_t + 4 (including the step right after the (N-1)th crossing, however slowly the cube is gliding, and while it is still on its way out to the far end). If crossings somehow exceeds N-1, or the situation matches no rule above, choose C immediately if the cube is HEADING BACK by the test above or remaining <= 35, otherwise B. Never choose A after the first step.",
+    "fields": [
+     {
+      "name": "crossings",
+      "description": "Take the crossings count carried in (0 at the first step, since memory is empty). Build the sequence: the carried-in cube_side (skip if memory is empty), then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown at this step in time order, ending with the scene at this step. Add 1 for every consecutive pair in that sequence whose side differs. Write the result. e.g. 2",
+      "annotation": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+     },
+     {
+      "name": "cube_side",
+      "description": "The side of the target line the cube is on in the last frame shown at this step (the scene at this decision step): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. Overwrite it every step. e.g. larger_x",
+      "annotation": "Which side of the target line the cube is on in the scene at this decision step (the last frame shown): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. At step #1 it is read from the t=0 frame. e.g. larger_x"
+     },
+     {
+      "name": "first_cross_t",
+      "description": "Carry it unchanged if it is already set. If it is empty and the crossings count you just computed at this step is 1 or more, find the first consecutive pair in this step's side sequence whose side differs. If both are frames of this step, write the timestep at which cube_x would equal target_x by linear interpolation between those two frames, rounded to the nearest whole timestep. If the flip is between the carried-in cube_side and this step's first frame, extrapolate backwards linearly from this step's first two frames (cube_x and timestep) to the timestep at which cube_x would equal target_x, and round. Otherwise leave it empty. e.g. 30",
+      "annotation": "The timestep at which the cube first crossed the target line, estimated by linear interpolation of cube_x against target_x between the last observed frame on the starting side and the first observed frame on the other side, rounded to the nearest whole timestep. If the flip lies between the scene of one decision step and the first frame of the next step, extrapolate backwards linearly from that next step's first two frames instead (the policy cannot see the earlier scene). Empty at every step before the one whose shown frames contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    66,
+    68,
+    72,
+    77,
+    83
+   ],
+   "verified_of_all": 0.9615384615384616,
+   "subgoal_verified": 0.9615384615384616,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The cube slides back and forth along a line that passes through the target; every time it crosses the target line counts as one arrival at the target. The goal instruction names the ordinal N (second, third, fifth...). The button must be pressed one arrival early: when N-1 arrivals have happened and the cube is on its way back toward the target, so the press lands as the cube reaches the target for the Nth time. An episode starts in A: at the first step (empty memory, gripper raised out of the frame and not yet above the button) choose A 'move to the top of the button to prepare'. No point is needed. At every later step (gripper is already positioned above the button, fingers closed), first update memory as instructed (crossings, scene_frame, first_cross_t; the crossing that brings crossings to N-1 often happens inside the frames of the very step where the decision is made), then decide using the updated crossings and first_cross_t values and the cube motion in this step's frames: - Predict the timing. The cube starts at rest at one extreme of its swing at t=0, so first_cross_t is a quarter period and the Nth arrival at the target is predicted at T_N = (2N-1)*first_cross_t. Compute remaining = T_N - (timestep of the scene at this decision step). While first_cross_t is empty, crossings is 0 and no timing is needed. - Determine the cube's direction from the last two frames shown at this step, using their timesteps: v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep). Always divide by the time gap. Take the cube's side at the last frame (smaller_x if cube_x < target_x, larger_x if cube_x > target_x). The cube is HEADING BACK toward the target if it is on the larger_x side and v < 0, or on the smaller_x side and v > 0, or its cube_x is identical in the last two frames (fully stopped at the turnaround). Otherwise it is RUNNING OUT (moving away from the target on its current side); this includes the case where the two frames lie on different sides, since the cube has just crossed. Do not treat a small |v| as the turnaround: cube speed varies by a factor of three across episodes, and a slow cube that has just crossed is still far from returning. Do not use |cube_x - target_x| shrinking or growing as the test: it shrinks across a crossing even though the cube is then moving away. - Choose C 'press button to stop the cube' if crossings == N-1 AND any of: (a) remaining <= 30 timesteps (the press takes roughly 25-30 timesteps to land); (b) the timestep of the scene at this decision step is at or past the predicted turnaround (2N-2)*first_cross_t, with no slack (equivalently remaining <= first_cross_t); (c) the cube is HEADING BACK by the test above. No point is needed. - Otherwise choose B 'remain static'. This covers: crossings < N-1 (even if the cube is heading toward the target, let it pass), and crossings == N-1 while the cube is RUNNING OUT by the test above with remaining > 30 and the scene timestep still before the predicted turnaround (2N-2)*first_cross_t (including the step right after the (N-1)th crossing, however slowly the cube is gliding, and while it is still on its way out to the far end, even when only a few timesteps short of the turnaround). If crossings somehow exceeds N-1, or the situation matches no rule above, choose C immediately if the cube is HEADING BACK by the test above or remaining <= 30, otherwise B. Never choose A after the first step.",
+    "fields": [
+     {
+      "name": "crossings",
+      "description": "Take the crossings count carried in (0 at the first step, since memory is empty). Build the sequence: the side of the carried-in scene_frame (smaller_x if its cube_x < its target_x, else larger_x; skip if memory is empty), then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown at this step in time order, ending with the scene at this step. Add 1 for every consecutive pair in that sequence whose side differs. Write the result. e.g. 2",
+      "annotation": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+     },
+     {
+      "name": "first_cross_t",
+      "description": "Carry it unchanged if it is already set. If it is empty and the crossings count you just computed at this step is 1 or more, find the first consecutive pair in this step's side sequence whose side differs; the earlier member is either the carried-in scene_frame or a frame of this step, the later member is a frame of this step. With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (its own target_x) and d2 likewise at the later frame, write t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. Never extrapolate; the carried-in scene_frame always supplies the frame before a flip that precedes this step's first frame. Otherwise leave it empty. e.g. 30",
+      "annotation": "The timestep at which the cube first crossed the target line, computed from the last observed frame on the starting side and the first observed frame on the other side (if the flip lies between the scene of one decision step and the first frame of the next, the earlier frame is that scene, as recorded in the carried-in scene_frame). With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (that frame's own target_x) and d2 likewise at the later frame: t_cross = t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. No extrapolation is ever used. Empty at every step before the one whose shown frames contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30"
+     },
+     {
+      "name": "scene_frame",
+      "description": "Write the ordered list [timestep, cube_x, target_x] of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step it is the t=0 frame. The side of the target line for any frame is smaller_x if cube_x < target_x, else larger_x; the carried-in scene_frame gives the side, timestep and positions of the last frame of the previous step, and is the frame before the flip whenever a crossing lies between the previous scene and this step's first frame. e.g. [56, 104, 117]",
+      "annotation": "The scene at this decision step (the last frame shown), as the ordered list [t, cube_x, target_x]: its timestep, the cube's x-coordinate and the target's x-coordinate in that frame. Overwritten at every step; at step #1 it is read from the t=0 frame. The cube's side of the target line in that frame is the sign of cube_x minus target_x (smaller_x if negative, larger_x if positive), and the frame it records is the earlier member of the pair whenever the first crossing falls between the scene of one decision step and the first frame of the next. e.g. [56, 104, 117]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    34,
+    36,
+    41,
+    60,
+    88
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The cube slides back and forth along a line that passes through the target; every time it crosses the target line counts as one arrival at the target. The goal instruction names the ordinal N (second, third, fifth...). The button must be pressed one arrival early: when N-1 arrivals have happened and the predicted Nth arrival is at most 30 timesteps away, so the press, which takes roughly 25-30 timesteps to land, lands as the cube reaches the target for the Nth time. An episode starts in A: at the first step (empty memory, gripper raised out of the frame and not yet above the button) choose A 'move to the top of the button to prepare'. No point is needed. At every later step (gripper is already positioned above the button, fingers closed), first update memory as instructed (crossings, scene_frame, first_cross_t; the crossing that brings crossings to N-1 often happens inside the frames of the very step where the decision is made), then decide using the updated crossings and first_cross_t values alone: - Predict the timing. The cube starts at rest at one extreme of its swing at t=0, so first_cross_t is a quarter period and the Nth arrival at the target is predicted at T_N = (2N-1)*first_cross_t. Compute remaining = T_N - (timestep of the scene at this decision step). While first_cross_t is empty, crossings is 0 and no timing is needed. - Do not read the cube's direction or speed from the frames to make the decision: cube speed varies threefold across episodes and changes around the turnaround, and the predicted arrival time computed from first_cross_t decides on its own. - Choose C 'press button to stop the cube' if and only if crossings == N-1 AND remaining <= 30 timesteps (the press takes roughly 25-30 timesteps to land, so it is started once the predicted Nth arrival is at most 30 timesteps away). Whether the cube is still running out, stopped at its turnaround, or already heading back toward the target makes no difference: being past the turnaround or moving back is not enough while remaining > 30. No point is needed. - Otherwise choose B 'remain static'. This covers: crossings < N-1 (even if the cube is heading toward the target, let it pass), and crossings == N-1 while remaining > 30, whatever the cube is doing (the step right after the (N-1)th crossing, however slowly the cube is gliding; the cube on its way out to the far end; the cube stopped at the turnaround; and the cube already past the turnaround and heading back toward the target, as long as more than 30 timesteps remain). If crossings somehow exceeds N-1, or the situation matches no rule above, choose C immediately. Never choose A after the first step.",
+    "fields": [
+     {
+      "name": "crossings",
+      "description": "Take the crossings count carried in (0 at the first step, since memory is empty). Build the sequence: the side of the carried-in scene_frame (smaller_x if its cube_x < its target_x, else larger_x; skip if memory is empty), then the side (cube_x < target_x -> smaller_x, cube_x > target_x -> larger_x) of each frame shown at this step in time order, ending with the scene at this step. Add 1 for every consecutive pair in that sequence whose side differs. Write the result. e.g. 2",
+      "annotation": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+     },
+     {
+      "name": "first_cross_t",
+      "description": "Carry it unchanged if it is already set. If it is empty and the crossings count you just computed at this step is 1 or more, find the first consecutive pair in this step's side sequence whose side differs; the earlier member is either the carried-in scene_frame or a frame of this step, the later member is a frame of this step. With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (its own target_x) and d2 likewise at the later frame, write t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. Never extrapolate; the carried-in scene_frame always supplies the frame before a flip that precedes this step's first frame. Otherwise leave it empty. e.g. 30",
+      "annotation": "The timestep at which the cube first crossed the target line, computed from the last observed frame on the starting side and the first observed frame on the other side (if the flip lies between the scene of one decision step and the first frame of the next, the earlier frame is that scene, as recorded in the carried-in scene_frame). With t1, t2 their timesteps, d1 = cube_x - target_x at the earlier frame (that frame's own target_x) and d2 likewise at the later frame: t_cross = t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. No extrapolation is ever used. Empty at every step before the one whose shown frames contain the first flip; written at that step and never changed afterwards. The cube starts at rest at one extreme of its swing at t=0, so this value is one quarter of the swing period: the cube reaches the target for the k-th time at about (2k-1)*first_cross_t. e.g. 30"
+     },
+     {
+      "name": "scene_frame",
+      "description": "Write the ordered list [timestep, cube_x, target_x] of the scene at this decision step (the last frame shown). Overwrite it every step; at the first step it is the t=0 frame. The side of the target line for any frame is smaller_x if cube_x < target_x, else larger_x; the carried-in scene_frame gives the side, timestep and positions of the last frame of the previous step, and is the frame before the flip whenever a crossing lies between the previous scene and this step's first frame. e.g. [56, 104, 117]",
+      "annotation": "The scene at this decision step (the last frame shown), as the ordered list [t, cube_x, target_x]: its timestep, the cube's x-coordinate and the target's x-coordinate in that frame. Overwritten at every step; at step #1 it is read from the t=0 frame. The cube's side of the target line in that frame is the sign of cube_x minus target_x (smaller_x if negative, larger_x if positive), and the frame it records is the earlier member of the pair whenever the first crossing falls between the scene of one decision step and the first frame of the next. e.g. [56, 104, 117]"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,246 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "target_cube",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  0,
+  12,
+  36,
+  94,
+  95
+ ],
+ "scored": 25,
+ "failed": 11,
+ "subgoal_wrong": 8,
+ "memory_wrong": 5,
+ "subgoal_verified": 0.68,
+ "memory_verified": 0.8,
+ "reads": {
+  "target_cube": 15,
+  "picks_done": 18
+ },
+ "field_errors": {
+  "target_cube": {
+   "in": 2,
+   "sole": 2
+  },
+  "picks_done": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.44,
+ "verified_of_all": 0.56,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 6,
+ "decisions": 25,
+ "critique": "field target_cube, ANNOTATOR PROMPT\n  SITUATION: At the first decision step the demonstration shows the gripper descend onto one cube, close to about 46%, lift it, set it back down, and then a shuffle phase in which pairs of cubes slide along arcs and EXCHANGE places (one shuffle swaps the picked cube with a neighbour; a second shuffle may swap it again with a third cube, or swap the same pair back). The old rule located the cube by 'nearest to where it was set down', so when the shuffle swapped cubes the annotated value named the wrong cube while the recorded subgoal pointed at the cube that had actually been picked. On a scene with many cubes and no shuffle, 'vanishes from the table list' also misled, because a different cube under the gripper's shadow drops out of the list while the picked one stays listed until it is lifted. FAILURE: the annotated target_cube disagreed with the recorded pick point, so the memory could not predict the subgoal (SUFFICIENCY) and the value the rule asks for was not what the step warranted (PREDICTABILITY). CHANGE: target_cube holds the [y, x] of the demonstration's picked cube at its current table position. At the first decision step identify the picked cube by the gripper's own [y, x] at the frame where it is lowest (height about 0.02) and the fingers first read about 46%: the cube listed nearest that spot (confirm with the 'held in the gripper' line and the cube that reappears beside the gripper at put-down). Then follow that cube's identity frame by frame through every shuffle frame by nearest-position matching between consecutive frames (when two cubes move at once they are exchanging places: the one leaving via the smaller-y / inner arc and the one via the larger-y / outer arc keep their own identities; two consecutive swaps of the same pair return the cube to its original spot). Write its position in the scene at the start of execution. At every later decision step: if the execution steps since the previous decision step show a cube 'held in the gripper' and then released (fingers reopen to 100% near height 0.02), write that cube's table position in the scene at this decision step; otherwise write the position of the listed cube nearest the previous value (within about 10 px), or the previous value unchanged if none is listed. Ignore 'lifted off the table' lines. e.g. [85, 109]\n\nfield picks_done, ANNOTATOR PROMPT\n  SITUATION: After a grasp the robot rises with fingers about 46% open, but the scene at the decision step often still lists the held cube at its old table position and says nothing about it being held. The old rule required 'held in the gripper or missing from the table list' at the last frame, so these pick-ups were not counted (annotation did count them, but by a test the policy could not reproduce). FAILURE: PREDICTABILITY, the stated event could not be recognised from the step. CHANGE: picks_done holds the count of completed grasps. It is 0 at the first decision step. It goes up by one at a decision step whose execution steps show the gripper descend to about height 0.02 over the target cube with fingers closing from 100% to about 46% (or any frame saying a cube 'is held in the gripper'), and whose scene at the decision step shows the gripper raised (height about 0.14 or more) with fingers still about 46% open. The table list at that scene is irrelevant. It never changes at a decision step whose scene shows fingers 100% open, even if a cube is listed as 'lifted off the table' there. e.g. 2\n\nfield target_cube, POLICY PROMPT\n  SITUATION: The demonstration's shuffle swaps cubes' places, and on crowded scenes a non-picked cube drops out of the list under the gripper; the old instruction ('cube closest to the set-down spot', 'cube that disappears from the list') therefore named the wrong cube, and the policy then locked onto it through the 10 px matching for the rest of the episode. FAILURE: SUFFICIENCY at the first step and every later pick. CHANGE: target_cube is the [y, x] of the cube the demonstration picked, at its current table position. First decision step (memory empty): find the demonstration frame where the gripper is lowest (height about 0.02) and the fingers first read about 46%; the picked cube is the cube listed nearest the gripper's own [y, x] there (the 'held in the gripper' line in the following frames confirms it; a cube merely vanishing from the list while the gripper hovers over it is occlusion, not a pick). Then follow that cube's identity through every later demonstration frame by matching each cube to its nearest position in the previous frame; when two cubes move at once they are exchanging places, so the picked cube ends where its arc ends, not where it started (two swaps of the same pair put it back). Write its position in the scene at the start of execution. Later decision steps: if the execution steps shown contain a cube 'held in the gripper' that is then released (fingers reopen to 100% at height about 0.02), write that cube's position in the scene at this decision step; otherwise write the position of the listed cube within about 10 px of the carried value, or copy the carried value if none is listed. Ignore 'lifted off the table' lines. e.g. [85, 109]\n\nfield picks_done, POLICY PROMPT\n  SITUATION: After a grasp the gripper rises with fingers about 46% open but the scene at the decision step still lists the held cube at its table position with no 'held' line, so the stated condition failed and the policy did not count the pick. FAILURE: PREDICTABILITY. CHANGE: picks_done counts completed grasps. Write 0 when memory is empty. At a later step, write carried value plus one if the execution steps shown include a frame with the gripper at about height 0.02 and fingers going from 100% to about 46% (or any 'is held in the gripper' line) AND the scene at this decision step shows the gripper raised (height about 0.14 or more) with fingers about 46% open (not 100%). Do not require the cube to be missing from the table list. Otherwise, and always when the final fingers are 100% open (even if a cube is listed 'lifted off the table'), copy the carried value. e.g. 2\n\nthe policy prompt for subgoal\n  The required count: 'again' means 1 pick-up; 'for N times' means N pick-ups (two, three, ...). Start in A: pick up the cube, pointing at target_cube as derived at the first step (the cube the demonstration picked, tracked through the shuffle swaps). The holding rule sent the policy wrong: it demanded that the cube be 'held in the gripper or missing from the table list', but after a grasp the scene usually still lists the cube at its old table position. Replace it with: if the scene at this decision step shows the gripper raised with fingers partly closed (about 46%, not 100%), the robot is holding the cube -> B: put it down, regardless of the table list. If the fingers are 100% open the robot holds nothing, even when a cube is listed as 'lifted off the table' (that is a cube just released and settling): then if picks_done is below the required count choose A, pointing at the updated target_cube (which, after a put-down, is the cube the execution steps showed released); if picks_done equals or exceeds the required count choose C: press the button to finish. Add: when the execution steps shown contain a cube held and released, A points at that released cube's current position, which is the same as target_cube after the memory update. Drop the clause 'never point at any cube other than the one nearest target_cube' as a bare prohibition; keep it only as 'point at target_cube as updated at this step'.\n\nrefused\n  Two steps asked that target_cube never be replaced by the cube seen released in the execution steps, so as to keep the annotated (carried) value. That carried value was wrong only because the first-step derivation ignored the shuffle swaps; in every episode the cube released is the demonstration's cube, so refreshing target_cube from the released cube is consistent with the recorded picks and is kept. One step asked that the point be copied exactly from the scene list; the recorded points differ from the listed positions by a pixel or two, so no exactness rule is added.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The required count: 'again' means 1 pick-up; 'for N times' means N pick-ups (two, three, ...). Start in A: pick up the cube, pointing at target_cube as derived at the first step (the cube the demonstration picked, tracked through the shuffle swaps). The holding rule sent the policy wrong: it demanded that the cube be 'held in the gripper or missing from the table list', but after a grasp the scene usually still lists the cube at its old table position. Replace it with: if the scene at this decision step shows the gripper raised with fingers partly closed (about 46%, not 100%), the robot is holding the cube -> B: put it down, regardless of the table list. If the fingers are 100% open the robot holds nothing, even when a cube is listed as 'lifted off the table' (that is a cube just released and settling): then if picks_done is below the required count choose A, pointing at the updated target_cube (which, after a put-down, is the cube the execution steps showed released); if picks_done equals or exceeds the required count choose C: press the button to finish. Add: when the execution steps shown contain a cube held and released, A points at that released cube's current position, which is the same as target_cube after the memory update. Drop the clause 'never point at any cube other than the one nearest target_cube' as a bare prohibition; keep it only as 'point at target_cube as updated at this step'.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_cube",
+    "description": "SITUATION: The demonstration's shuffle swaps cubes' places, and on crowded scenes a non-picked cube drops out of the list under the gripper; the old instruction ('cube closest to the set-down spot', 'cube that disappears from the list') therefore named the wrong cube, and the policy then locked onto it through the 10 px matching for the rest of the episode. FAILURE: SUFFICIENCY at the first step and every later pick. CHANGE: target_cube is the [y, x] of the cube the demonstration picked, at its current table position. First decision step (memory empty): find the demonstration frame where the gripper is lowest (height about 0.02) and the fingers first read about 46%; the picked cube is the cube listed nearest the gripper's own [y, x] there (the 'held in the gripper' line in the following frames confirms it; a cube merely vanishing from the list while the gripper hovers over it is occlusion, not a pick). Then follow that cube's identity through every later demonstration frame by matching each cube to its nearest position in the previous frame; when two cubes move at once they are exchanging places, so the picked cube ends where its arc ends, not where it started (two swaps of the same pair put it back). Write its position in the scene at the start of execution. Later decision steps: if the execution steps shown contain a cube 'held in the gripper' that is then released (fingers reopen to 100% at height about 0.02), write that cube's position in the scene at this decision step; otherwise write the position of the listed cube within about 10 px of the carried value, or copy the carried value if none is listed. Ignore 'lifted off the table' lines. e.g. [85, 109]"
+   },
+   {
+    "field": "picks_done",
+    "description": "SITUATION: After a grasp the gripper rises with fingers about 46% open but the scene at the decision step still lists the held cube at its table position with no 'held' line, so the stated condition failed and the policy did not count the pick. FAILURE: PREDICTABILITY. CHANGE: picks_done counts completed grasps. Write 0 when memory is empty. At a later step, write carried value plus one if the execution steps shown include a frame with the gripper at about height 0.02 and fingers going from 100% to about 46% (or any 'is held in the gripper' line) AND the scene at this decision step shows the gripper raised (height about 0.14 or more) with fingers about 46% open (not 100%). Do not require the cube to be missing from the table list. Otherwise, and always when the final fingers are 100% open (even if a cube is listed 'lifted off the table'), copy the carried value. e.g. 2"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_cube",
+    "description": "SITUATION: At the first decision step the demonstration shows the gripper descend onto one cube, close to about 46%, lift it, set it back down, and then a shuffle phase in which pairs of cubes slide along arcs and EXCHANGE places (one shuffle swaps the picked cube with a neighbour; a second shuffle may swap it again with a third cube, or swap the same pair back). The old rule located the cube by 'nearest to where it was set down', so when the shuffle swapped cubes the annotated value named the wrong cube while the recorded subgoal pointed at the cube that had actually been picked. On a scene with many cubes and no shuffle, 'vanishes from the table list' also misled, because a different cube under the gripper's shadow drops out of the list while the picked one stays listed until it is lifted. FAILURE: the annotated target_cube disagreed with the recorded pick point, so the memory could not predict the subgoal (SUFFICIENCY) and the value the rule asks for was not what the step warranted (PREDICTABILITY). CHANGE: target_cube holds the [y, x] of the demonstration's picked cube at its current table position. At the first decision step identify the picked cube by the gripper's own [y, x] at the frame where it is lowest (height about 0.02) and the fingers first read about 46%: the cube listed nearest that spot (confirm with the 'held in the gripper' line and the cube that reappears beside the gripper at put-down). Then follow that cube's identity frame by frame through every shuffle frame by nearest-position matching between consecutive frames (when two cubes move at once they are exchanging places: the one leaving via the smaller-y / inner arc and the one via the larger-y / outer arc keep their own identities; two consecutive swaps of the same pair return the cube to its original spot). Write its position in the scene at the start of execution. At every later decision step: if the execution steps since the previous decision step show a cube 'held in the gripper' and then released (fingers reopen to 100% near height 0.02), write that cube's table position in the scene at this decision step; otherwise write the position of the listed cube nearest the previous value (within about 10 px), or the previous value unchanged if none is listed. Ignore 'lifted off the table' lines. e.g. [85, 109]"
+   },
+   {
+    "field": "picks_done",
+    "description": "SITUATION: After a grasp the robot rises with fingers about 46% open, but the scene at the decision step often still lists the held cube at its old table position and says nothing about it being held. The old rule required 'held in the gripper or missing from the table list' at the last frame, so these pick-ups were not counted (annotation did count them, but by a test the policy could not reproduce). FAILURE: PREDICTABILITY, the stated event could not be recognised from the step. CHANGE: picks_done holds the count of completed grasps. It is 0 at the first decision step. It goes up by one at a decision step whose execution steps show the gripper descend to about height 0.02 over the target cube with fingers closing from 100% to about 46% (or any frame saying a cube 'is held in the gripper'), and whose scene at the decision step shows the gripper raised (height about 0.14 or more) with fingers still about 46% open. The table list at that scene is irrelevant. It never changes at a decision step whose scene shows fingers 100% open, even if a cube is listed as 'lifted off the table' there. e.g. 2"
+   }
+  ],
+  "refused": "Two steps asked that target_cube never be replaced by the cube seen released in the execution steps, so as to keep the annotated (carried) value. That carried value was wrong only because the first-step derivation ignored the shuffle swaps; in every episode the cube released is the demonstration's cube, so refreshing target_cube from the released cube is consistent with the recorded picks and is kept. One step asked that the point be copied exactly from the scene list; the recorded points differ from the listed positions by a pixel or two, so no exactness rule is added."
+ },
+ "critiques": [
+  {
+   "step": [
+    12,
+    "exec",
+    312
+   ],
+   "memory_in": "target_cube=; picks_done=",
+   "answered": "A: pick up the cube at [101, 147]",
+   "recorded": "A: pick up the cube at [85, 111]",
+   "missing_from_memory": "nothing (memory was empty at the first step; the fault is in how target_cube is derived)",
+   "missing_from_policy_prompt_for_memory": "It told me to pick the cube closest to the spot where the demonstration cube was picked ([101,146]), giving [100,147]. But the demonstration's shuffle frames (t=208..288) move the cubes along continuous paths that SWAP their places: the picked cube goes [101,147]->[95,122]->[95,137]->[100,147]? no — tracking each cube frame to frame, the picked cube ends at [112,119] after the first shuffle and at [85,109] after the second, while another cube takes its old spot. The instruction should say to track the picked cube's identity frame by frame through every shuffle frame (nearest-position matching between consecutive frames, not matching to the original spot) and write its final position, here [85,109], as target_cube.",
+   "missing_from_policy_prompt_for_subgoal": "It says to point at target_cube as derived by nearest-to-original-spot; it should say to point at the cube whose identity was tracked through the shuffle frames of the demonstration (here [85,109]), not the cube now occupying the original pick spot, and that the point must be copied exactly from the current scene list.",
+   "missing": "nothing (memory was empty at the first step; the fault is in how target_cube is derived)"
+  },
+  {
+   "step": [
+    12,
+    "exec",
+    431
+   ],
+   "memory_in": "target_cube=[100, 147]; picks_done=0",
+   "answered": "B: put it down",
+   "recorded": "B: put it down",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to increment picks_done only from the last frame, requiring the cube to be 'held in the gripper or missing from the table list' there. At t=431 the last frame lists all three cubes on the table ([85, 109], [100, 148], [112, 119]) with fingers 46% open at height 0.148, so by the stated test no cube was held and I kept 0. It should have said: increment picks_done when any execution step since the previous decision step shows a cube held in the gripper (here t=400 and t=416 show the cube at [85, 109] held) and the last frame shows the gripper raised with fingers about 46% open, even if the last frame's table list happens to include the cube's position.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    12,
+    "exec",
+    486
+   ],
+   "memory_in": "target_cube=[100, 148]; picks_done=1",
+   "answered": "A: pick up the cube at [101, 146]",
+   "recorded": "A: pick up the cube at [85, 110]",
+   "missing_from_memory": "target_cube carried in as [100, 148] was the wrong cube; the cube the robot actually picked and put down (shown held at t=448, set down at [85, 109]) is the one the demonstration picked, so target_cube should have been [85, 109]",
+   "missing_from_policy_prompt_for_memory": "it never says that when the observed execution steps show a cube 'held in the gripper' and then released, target_cube must be overwritten with that cube's position on the table at the last frame (here [85, 109]), since that is the block previously picked; instead it told me to track whichever listed cube is within 10 px of the carried value, which locked in a wrong cube",
+   "missing_from_policy_prompt_for_subgoal": "it never says that if the execution steps since the last decision show a cube being held and put down, A must point at that same cube (its current position, [85, 109]/[85, 110]) even when the carried target_cube disagrees; it only said never point at any cube other than the one nearest target_cube",
+   "missing": "target_cube carried in as [100, 148] was the wrong cube; the cube the robot actually picked and put down (shown held at t=448, set down at [85, 109]) is the one the demonstration picked, so target_cube should have been [85, 109]"
+  },
+  {
+   "step": [
+    12,
+    "exec",
+    565
+   ],
+   "memory_in": "target_cube=[101, 146]; picks_done=1",
+   "answered": "B: put it down",
+   "recorded": "B: put it down",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At the scene at this decision step (t=565) the gripper is raised at 0.150 with fingers 46% open, but the cube list still shows all three cubes on the table ([85, 109], [101, 146], [112, 119]) and no line says a cube is held, so the stated condition 'a cube is held in the gripper or missing from the table list' was not met and I kept picks_done=1. The instruction should say that a cube list may keep reporting the held cube at its last table position after a grasp, and that picks_done increments when the execution steps since the previous decision step show a grasp event (any frame with 'cube ... is held in the gripper', or fingers going from 100% to about 46% while the gripper was down on a cube) followed by the gripper rising with fingers still about 46% open, regardless of whether the final frame's cube list still includes that cube.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    12,
+    "exec",
+    620
+   ],
+   "memory_in": "target_cube=[101, 146]; picks_done=2",
+   "answered": "A: pick up the cube at [85, 109]",
+   "recorded": "A: pick up the cube at [85, 109]",
+   "missing_from_memory": "The carried target_cube=[101, 146] does not match the cube the robot just released at [85, 109] (seen held at t=576/t=592 and placed at t=608); if the repeatedly-picked cube is the one at [85, 109], the memory carried the wrong cube position, and nothing in the memory said which of the two to trust.",
+   "missing_from_policy_prompt_for_memory": "It did not say what to write for target_cube when the observed steps show a cube being held and set down at a position that is not within 10 px of the carried value: whether to keep the carried value (as the recorded answer does, [101, 146]) or to switch to the cube just released ([85, 109]). I switched to the released cube; the recorded rule keeps the carried value, so the instruction should state explicitly that target_cube is only ever updated by matching a listed cube within 10 px of the carried value and is never replaced by the cube seen released in the execution steps.",
+   "missing_from_policy_prompt_for_subgoal": "It says never point at any cube other than the one nearest target_cube, yet the recorded subgoal points at [85, 109] while target_cube stays [101, 146]. It should say that after an execution segment showing a cube held and then released, the next pick points at the cube that was just released (visible in the observed steps), not at target_cube, so that the pointing rule and the memory rule are consistent.",
+   "missing": "The carried target_cube=[101, 146] does not match the cube the robot just released at [85, 109] (seen held at t=576/t=592 and placed at t=608); if the repeatedly-picked cube is the one at [85, 109], the memory carried the wrong cube position, and nothing in the memory said which of the two to trust."
+  },
+  {
+   "step": [
+    12,
+    "exec",
+    753
+   ],
+   "memory_in": "target_cube=[101, 146]; picks_done=3",
+   "answered": "B: put it down",
+   "recorded": "C: press the button to finish",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It did not say how to treat the scene at this step, where the gripper is raised (height 0.149) with fingers 100% open while a cube at [64, 104] is still listed as 'lifted off the table'. I read the lifted cube as still held and chose B. The instruction should state that fully open fingers (100%) always mean the robot is NOT holding anything, even if a cube is listed as lifted off the table (it has just been released and is dropping after a put-down), so the 'not holding' branch applies: picks_done=3 equals the required 3 ('for three times' = 3 pick-ups) -> choose C. It should also explicitly list 'for three times' as 3 pick-ups, since only 'again' and 'for two times' were given.",
+   "missing": ""
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    316
+   ],
+   "memory_in": "target_cube=; picks_done=",
+   "answered": "A: pick up the cube at [116, 103]",
+   "recorded": "A: pick up the cube at [84, 168]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to write the cube sitting closest to the spot where the demonstration set the cube down, but the demonstration's shuffle (t=192 to t=304) swaps cubes' positions, not just jitters them: the put-down cube at [115,102] swaps with the cube at [104,121] (t=208-t=240, ending at [103,120]), and that cube then swaps with the cube at [83,167] (t=256-t=288), so the picked cube ends at [83,167] / [84,168] at the start of execution. The instruction should say to follow the identity of the picked cube frame by frame through the shuffle (when two cubes move at once and exchange places, treat the positions as swapped) and write where that cube ends, not the nearest cube to the original spot. Note the recorded memory value [116,103] contradicts the recorded subgoal point [84,168]; it should also be [84,168].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    482
+   ],
+   "memory_in": "target_cube=[116, 103]; picks_done=1",
+   "answered": "A: pick up the cube at [115, 101]",
+   "recorded": "A: pick up the cube at [84, 167]",
+   "missing_from_memory": "target_cube=[116, 103] did not correspond to the cube the robot actually carried in this cycle; the execution steps show the picked cube was lifted at [96, 96] and released at [83, 167], so the carried target was stale and matched a different cube ([115, 101]) within the 10 px rule.",
+   "missing_from_policy_prompt_for_memory": "It did not say that when the execution steps since the last decision show a cube 'held in the gripper' being put down (fingers go from 46% to 100% open at low height), target_cube must be rewritten to the position where that cube was released (here [83, 167]), and that this overrides the 'nearest cube within 10 px of the carried value' matching. The recorded memory target_cube=[115, 101] is itself inconsistent with the recorded subgoal at [84, 167].",
+   "missing_from_policy_prompt_for_subgoal": "It did not say that after a put-down, subgoal A must point at the cube that was just released in the execution steps (the one listed as held in the gripper, now on the table at [83, 167]), rather than at the cube nearest the carried target_cube; the rule 'never point at any cube other than the one nearest target_cube' forced the wrong choice.",
+   "missing": "target_cube=[116, 103] did not correspond to the cube the robot actually carried in this cycle; the execution steps show the picked cube was lifted at [96, 96] and released at [83, 167], so the carried target was stale and matched a different cube ([115, 101]) within the 10 px rule."
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    560
+   ],
+   "memory_in": "target_cube=[115, 101]; picks_done=1",
+   "answered": "A: pick up the cube at [115, 101]",
+   "recorded": "B: put it down",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At t=560 the gripper is raised (0.149) with fingers 46% open but the scene lists all three cubes on the table, including [83, 167], so the stated test 'cube held in the gripper or missing from the table list' failed and I left picks_done at 1. The instruction should say that a pick-up counts when any execution step since the previous decision step showed a cube 'held in the gripper' and the fingers in the final scene are still about 46% open (not reopened to 100%), regardless of whether the table list at the final scene still names that cube's position; raise picks_done by one on that evidence (here 1 -> 2).",
+   "missing_from_policy_prompt_for_subgoal": "The holding test has the same gap: with fingers 46% open and gripper raised after execution steps showed 'cube at [83, 167] is held in the gripper', the robot is holding the cube even though the final scene lists that cube's position on the table, so choose B: put it down. The instruction should treat fingers about 46% open at a raised height (after a held-cube frame in the execution steps) as holding, and not require the cube to be absent from the table list. It also only maps 'again' and 'for two times' to a count; it should state that 'for three times' means 3 required pick-ups.",
+   "missing": ""
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    614
+   ],
+   "memory_in": "target_cube=[115, 101]; picks_done=2",
+   "answered": "A: pick up the cube at [115, 101]",
+   "recorded": "A: pick up the cube at [84, 167]",
+   "missing_from_memory": "target_cube carried [115, 101], but the cube the task is repeatedly picking is the one the execution steps show being set down from the gripper at [83, 167] (t=576 held, t=592 released). The field should have held [83, 167]; the carried value pointed at a different cube.",
+   "missing_from_policy_prompt_for_memory": "It should say that whenever the execution steps shown at this decision step contain a cube 'held in the gripper' that is then released onto the table, target_cube must be overwritten with that released cube's table position (here [83, 167]), overriding the 'within 10 px of the carried value' matching rule; the just-put-down cube is by definition the one being repeatedly picked.",
+   "missing_from_policy_prompt_for_subgoal": "It should say that when choosing A after a put-down, the point is the cube that the execution steps show was just released from the gripper (here [83, 167]), not the carried target_cube when the two disagree; the rule 'never point at any cube other than the one nearest target_cube' forced the wrong cube.",
+   "missing": "target_cube carried [115, 101], but the cube the task is repeatedly picking is the one the execution steps show being set down from the gripper at [83, 167] (t=576 held, t=592 released). The field should have held [83, 167]; the carried value pointed at a different cube."
+  },
+  {
+   "step": [
+    95,
+    "exec",
+    149
+   ],
+   "memory_in": "target_cube=; picks_done=",
+   "answered": "A: pick up the cube at [106, 73]",
+   "recorded": "A: pick up the cube at [114, 93]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to find the cube that 'disappears from the table list' when fingers go to 46%, but at t=80 the red cube at [106,74] vanished from the list (occluded by the gripper) while the picked cube [114,91] was still listed at [120,91], so I chose [106,73]. It should have said: identify the picked cube by the gripper's own [y, x] at the moment the fingers close (lowest height, 46% open) — here gripper at [114, 93], nearest red cube [114, 91] — and confirm it by the cube that is absent from the table list throughout the held frames (t=96, t=112, where [107,72] is still listed) and reappears beside the gripper at put-down (t=128 at [117,90]). Temporary disappearance of a cube under the gripper's shadow does not mean it was picked. Then write the cube at execution start nearest that spot: [113, 91].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

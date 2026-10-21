@@ -1,0 +1,77 @@
+{
+ "task": "VideoPlaceOrder",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    23,
+    39,
+    51,
+    66,
+    87
+   ],
+   "verified_of_all": 0.7,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    63,
+    84,
+    85,
+    93
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    39,
+    57,
+    73,
+    92
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    17,
+    31,
+    77,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    23,
+    40,
+    54,
+    59,
+    84
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Start in A: with the hand empty in the initial execution scene, pick up the cube whose color is specified by the goal, pointing at its current visible center. Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B. For B, point at the target matching selected_target, using its current visible center when available and the stored point if occluded. Do not select another target based on proximity to the held cube. If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube. After a successful release onto the selected target, the goal is complete; no button press is required. C is not used for these goals: button presses in the demonstration neither reset the placement count nor require imitation. If an unexpected decision follows a completed correct placement and a menu command is mandatory, choose A on the goal cube and subsequently B onto the same selected target, rather than pressing the button. For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known. If selected_target is unknown and a drop is mandatory, use the nearest visible target as a deterministic fallback, without claiming it is the demonstrated target.",
+ "fields": [
+  {
+   "name": "selected_target",
+   "description": "When the incoming memory is empty and the current step includes the demonstration, read the cube color and placement ordinal from the goal. Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical marked target that received the requested placement, then scan every remaining demonstration frame and track that target into the first execution scene. Track through all subsequent motion, including large shuffles, temporary occlusion, and small visible-center shifts. Establish consistent one-to-one correspondences between successive target sets using continuous motion, considering moving targets jointly and keeping stationary targets separate. Neither coordinate-list order nor occupation of a previously occupied location establishes identity. Write the tracked target's center in the first execution scene as [y, x], not its placement-time location. On subsequent steps copy the incoming selected_target unchanged, regardless of the current grasp or target-center wobble. If the demonstration does not establish the requested placement or the visible sequence genuinely cannot establish the receiving target's identity through to the first execution scene, write \"unknown\" rather than inventing a placement or correspondence. e.g. [116, 163]"
+  }
+ ],
+ "stage": "optimized"
+}

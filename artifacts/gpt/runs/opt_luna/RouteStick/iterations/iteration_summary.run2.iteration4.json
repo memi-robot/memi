@@ -1,0 +1,120 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "remaining_path"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  8,
+  17,
+  18,
+  40,
+  70
+ ],
+ "scored": 16,
+ "failed": 3,
+ "subgoal_wrong": 1,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.9375,
+ "memory_verified": 0.8125,
+ "reads": {
+  "remaining_path": 14
+ },
+ "field_errors": {
+  "remaining_path": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1875,
+ "verified_of_all": 0.8125,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 16,
+ "critique": "field remaining_path, ANNOTATOR PROMPT\n  At initial decisions for demonstrated stick-navigation routes, the policy sometimes produced the correct ordered moves but wrote a double-quoted list without spaces, whereas the annotations used single quotes with spaces. This is a representation-level PREDICTABILITY mismatch, not missing route information. Specify one canonical textual format: square brackets, single-quoted uppercase letters, and a comma followed by one space between entries, for example ['C', 'A']; the exhausted value is []. Apply this format to every annotation and example. The field remains the ordered list of demonstrated traversals not yet completed, including the traversal to command now. Write the entire route at the first execution decision; remove exactly one leading entry after each completed oracle traversal, never when merely selecting that traversal.\n\nfield remaining_path, POLICY PROMPT\n  When the demonstration showed two successive larger-x crossings, first below the endpoint-wrist baseline and then above it, the policy selected A and retained only ['A'], instead of selecting C and retaining ['C', 'A']. This omitted the first demonstrated crossing, breaking SUFFICIENCY for the initial command and PREDICTABILITY for the stored route. Strengthen the existing ledger check by explicitly anchoring its first row at the initial demonstrated highlighted site and initial wrist position, before any arrival change. The first changed arrival closes that row; it does not begin the route. Before writing memory, verify that the first row covers the motion from the demonstration's initial scene to its first distinct arrival, and that its letter remains the first entry even though it is also the command being selected now. Classify this row independently, just like subsequent rows: larger destination x and a positive interior wrist deviation from the endpoint-wrist baseline means C, not A. Retain the existing full-ledger and repeated-crossing checks. Separately, correct the representation-level PREDICTABILITY mismatch seen when correct routes were emitted with double quotes and no spaces: write the list canonically using single-quoted uppercase letters separated by comma-space, for example ['C', 'A'], or [] when exhausted. The field still holds all uncompleted demonstrated traversals. Initialize from the demonstration visible at the first decision, excluding the execution reset; at a later decision showing completion of the preceding oracle command, remove exactly one leading entry from carried memory before selecting the next command. Do not remove the command selected at the current decision.\n\nrefused\n  No additional memory field or subgoal-rule change is justified. The incorrect initial A arose with an incorrectly shortened route; the existing rule selecting the updated list's first letter would select C from the correct route. The other flagged initial decisions selected the correct subgoals and preserved the correct move sequences; their differing list typography supports only the canonical-format correction above, not a change to route decoding, traversal completion, or target selection.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_path",
+    "description": "When the demonstration showed two successive larger-x crossings, first below the endpoint-wrist baseline and then above it, the policy selected A and retained only ['A'], instead of selecting C and retaining ['C', 'A']. This omitted the first demonstrated crossing, breaking SUFFICIENCY for the initial command and PREDICTABILITY for the stored route. Strengthen the existing ledger check by explicitly anchoring its first row at the initial demonstrated highlighted site and initial wrist position, before any arrival change. The first changed arrival closes that row; it does not begin the route. Before writing memory, verify that the first row covers the motion from the demonstration's initial scene to its first distinct arrival, and that its letter remains the first entry even though it is also the command being selected now. Classify this row independently, just like subsequent rows: larger destination x and a positive interior wrist deviation from the endpoint-wrist baseline means C, not A. Retain the existing full-ledger and repeated-crossing checks. Separately, correct the representation-level PREDICTABILITY mismatch seen when correct routes were emitted with double quotes and no spaces: write the list canonically using single-quoted uppercase letters separated by comma-space, for example ['C', 'A'], or [] when exhausted. The field still holds all uncompleted demonstrated traversals. Initialize from the demonstration visible at the first decision, excluding the execution reset; at a later decision showing completion of the preceding oracle command, remove exactly one leading entry from carried memory before selecting the next command. Do not remove the command selected at the current decision."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "remaining_path",
+    "description": "At initial decisions for demonstrated stick-navigation routes, the policy sometimes produced the correct ordered moves but wrote a double-quoted list without spaces, whereas the annotations used single quotes with spaces. This is a representation-level PREDICTABILITY mismatch, not missing route information. Specify one canonical textual format: square brackets, single-quoted uppercase letters, and a comma followed by one space between entries, for example ['C', 'A']; the exhausted value is []. Apply this format to every annotation and example. The field remains the ordered list of demonstrated traversals not yet completed, including the traversal to command now. Write the entire route at the first execution decision; remove exactly one leading entry after each completed oracle traversal, never when merely selecting that traversal."
+   }
+  ],
+  "refused": "No additional memory field or subgoal-rule change is justified. The incorrect initial A arose with an incorrectly shortened route; the existing rule selecting the updated list's first letter would select C from the correct route. The other flagged initial decisions selected the correct subgoals and preserved the correct move sequences; their differing list typography supports only the canonical-format correction above, not a change to route decoding, traversal completion, or target selection."
+ },
+ "critiques": [
+  {
+   "step": [
+    17,
+    "exec",
+    100
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    18,
+    "exec",
+    200
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "recorded": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "No task fact was missing: both lists contain the same four letters in the same order. The disagreement is only serialization: the policy prompt illustrates double-quoted lists without spaces, while the recorded value uses single quotes and spaces. If literal string matching is required, specify one canonical list format shared with the annotator prompt; otherwise compare the parsed lists.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    40,
+    "exec",
+    100
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

@@ -1,0 +1,85 @@
+{
+ "task": "VideoRepick",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 5,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    0,
+    12,
+    36,
+    94,
+    95
+   ],
+   "verified_of_all": 0.56,
+   "subgoal_verified": 0.68
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    43,
+    50,
+    53,
+    73,
+    74
+   ],
+   "verified_of_all": 0.9565217391304348,
+   "subgoal_verified": 0.9565217391304348
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    5,
+    8,
+    16,
+    57,
+    93
+   ],
+   "verified_of_all": 0.9310344827586207,
+   "subgoal_verified": 0.9310344827586207
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    7,
+    12,
+    23,
+    49,
+    95
+   ],
+   "verified_of_all": 0.896551724137931,
+   "subgoal_verified": 0.9310344827586207
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    10,
+    19,
+    41,
+    87
+   ],
+   "verified_of_all": 0.96,
+   "subgoal_verified": 0.96
+  }
+ ],
+ "policy_prompt_for_subgoal": "The number of required pick-ups comes from the goal instruction: 'pick up ... again' means 1 pick-up; 'for N times' (two, three, ...) means N pick-ups. An episode starts in subgoal A: pick up the cube, pointing at target_cube (the position of the cube that the demonstration picked up, derived from the demonstration steps at the first decision step and tracked through the shuffle swaps). Rules, applied at every decision step after updating memory: - If the scene at this decision step shows the gripper raised with fingers partly closed (about 46% open, not 100%), the robot is holding the cube, regardless of the table list (the held cube is usually still listed at its old position): choose B: put it down. - Otherwise (fingers 100% open; the robot holds nothing even if a cube is listed as 'lifted off the table', which is a cube just released and settling): if picks_done is less than the required number of pick-ups, choose A: pick up the cube, pointing at target_cube as updated at this step (after a put-down this is the current position of the cube the execution steps showed released); if picks_done equals or exceeds the required number, choose C: press the button to finish. If a situation matches no rule (for example the gripper state is ambiguous or target_cube cannot be matched to any listed cube), prefer: holding something -> B; not holding and picks_done below the requirement -> A at the cube nearest target_cube; else -> C. Always point at target_cube as updated at this step. When target_cube is absent from the resting list at this step (held or still settling), still point at target_cube itself, never at any other listed cube.",
+ "fields": [
+  {
+   "name": "target_cube",
+   "description": "Position [y, x] of the cube the demonstration picked, at its current table position. At the first decision step (memory empty), read the DEMONSTRATION STEPS: find the frame where the gripper is lowest (height about 0.02) and the fingers first read about 46%; the picked cube is the cube listed nearest the gripper's own [y, x] there (the 'held in the gripper' line in the following frames confirms it; a cube merely vanishing from the list while the gripper hovers over it is occlusion, not a pick). Then track the picked cube through the shuffle as a written ledger; do not read it off the final list. Step 1: write the pick spot P (the listed cube nearest the gripper at that lowest frame) and the spot where the cube is put back down (the listed cube reappearing beside the gripper when the fingers reopen); call that spot L. Step 2: from that frame onward, write out every STILL FRAME: a frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot, while the gripper is parked raised. Mid-crossing frames (cubes listed off every resting spot) are skipped and never used to decide where L lands. Step 2b: compare each still configuration to the NEXT still configuration, one pair at a time, writing one line for every pair until the pair that ends at the last demonstration frame. Where the two configurations are identical write 'no swap'. Where they differ, exactly two spots changed occupants: write 'swap k: spot X <-> spot Y; L now = ...' (if L is within about 10 px of X write Y, if of Y write X, otherwise unchanged). After the line for the last demonstration frame write 'swaps found: n' and only then stop. Expect commonly three swaps and sometimes one or two; never stop when L happens to be back on P, because a later swap can move it again, including a swap with a cube the gripper never touched. Two consecutive swaps of the same pair return L to its original spot; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started. Step 3: after the last frame, write the listed position in the scene at the start of execution nearest L (within about 10 px). Never write the cube resting on P when P appeared in any swap line: once any swap touched that spot, the cube resting there is a different cube. At every later decision step: the robot always puts the cube back where it picked it, so write the position of the resting listed cube of target_colour within about 8 px of the carried value. If there is none (the target is held in the gripper, occluded under the gripper, or listed only as 'lifted off the table' while it settles), copy the carried value unchanged. Do not locate it from the gripper position at the reopen frame, nor from 'held in the gripper' or 'lifted off the table' coordinates, which drift in mid-air. Never relocate to a cube of another colour or to a different resting cube nearby. e.g. [85, 109]"
+  },
+  {
+   "name": "picks_done",
+   "description": "Count of completed grasps. Write 0 at the first decision step (memory empty). At any later step, write the carried value plus one if the execution steps shown include a frame with the gripper at about height 0.02 and fingers going from 100% to about 46% (or any 'is held in the gripper' line) AND the scene at this decision step shows the gripper raised (height about 0.14 or more) with fingers about 46% open (not 100%). Do not require the cube to be missing from the table list; it is usually still listed at its old position. Otherwise, and always when the fingers at the scene are 100% open (even if a cube is listed 'lifted off the table'), copy the carried value unchanged. e.g. 2"
+  },
+  {
+   "name": "target_colour",
+   "description": "At the first decision step (memory empty) write the colour word of the cube identified as the picked cube in the demonstration (the listed cube nearest the gripper at the lowest frame where the fingers first read about 46%): 'red', 'blue', 'green', or 'cube' when the list has no colours. At every later step copy the carried value unchanged. e.g. blue"
+  }
+ ],
+ "stage": "optimized"
+}

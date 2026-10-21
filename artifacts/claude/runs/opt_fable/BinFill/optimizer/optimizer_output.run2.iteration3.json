@@ -1,0 +1,103 @@
+{
+ "episodes": [
+  0,
+  59,
+  62,
+  81,
+  98
+ ],
+ "user_chars": 40035,
+ "usage": {
+  "prompt_tokens": 15978,
+  "completion_tokens": 2576,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 15974
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 921
+  }
+ },
+ "reasoning": "I'm pulling the exact wording of the annotator prompt for the cubes field so I can reference it precisely when drafting the JSON edits.\n\nFor part (a), I'm refining the removal condition to specify the grip detection signal (opening dropping to about 46%) and the \"held in gripper\" report, while noting that if a cube is already held at step start, no new removal happens since that occurred at the prior step.\n\nFor part (b), I'm defining the bin-exclusion distance threshold versus table-cube detection distance, and clarifying how detections near a held cube should be treated.\n\nFor part (c), I'm specifying that matching uses the 10 px proximity rule so entries keep their slot order and are never dropped or reordered.\n\nNow I'm shifting to the separate \"policy prompt for memory\" section's cubes text, quoting its current wording to prepare parallel edits there.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position.",
+    "modify_to": "The age order in `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step #1 tie-break among start cubes, below), or the one with the smallest y. The target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step; a detection that has drifted a few pixels is still the same cube, so do not discard it, and never point at a detection lying within about 10 px of the bin center."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "cubes",
+    "edits": [
+     {
+      "modify_from": "Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it.",
+      "modify_to": "Otherwise copy the carried-in list and: remove an entry only if the execution steps shown at THIS step include the fingers closing (about 100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and is entered even if it showed up just after a release; a cube that vanishes for a frame or two because the arm covers it keeps its entry and is not re-added. Never reorder entries, never drop-and-re-append: the list order is the age order and nothing seen later changes it. Example of a refresh: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]] with a green reported at [68, 160] becomes [[\"blue\", [117, 71]], [\"green\", [68, 160]]]."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "cubes",
+    "edits": [
+     {
+      "modify_from": "(a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper,",
+      "modify_to": "(a) remove the entry of the cube that this step's own execution steps show the fingers closing on (opening dropping from about 100% to about 46%) and then reported 'held in the gripper'; when the execution steps open with a cube already held, remove nothing for it, since that removal was made at the previous step,"
+     },
+     {
+      "modify_from": "(two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube)",
+      "modify_to": "(any goal-color detection within about 10 px of an existing entry's position is that entry: it keeps its slot and only its position is refreshed, and an entry is never dropped and re-appended; a cube briefly not reported because the arm covers it keeps its entry; a detection within about 10 px of the reported bin center is at the bin's position and is not a cube, whereas a detection 20 px or more from the bin center is a table cube and is appended even if it appeared right after a release; a detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one)"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The per-step proposals from the episode where five cubes of each goal color were present from the start (smallest y, nearest the gripper, nearest the button, or a memory field carrying the oracle's intended order) are refused, as in rounds 1 and 2: each fits one step and contradicts others in the same episode, and the oracle's order among start cubes is recoverable from nothing the scene or the memory could hold, so the step #1 default (nearest the bin's center) stays as a fixed tie-break only. No field is added for it. The age-order criterion committed in round 2 is kept, not replaced; this round only pins down the removal moment, the 10 px matching, and the bin-center exclusion so the policy's `cubes` matches the annotator's. The `placed` field and Rules 1 and 2 are untouched, as no report has found them at fault."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "cubes",
+    "edits": [
+     {
+      "modify_from": "(a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper,",
+      "modify_to": "(a) remove the entry of the cube that this step's own execution steps show the fingers closing on (opening dropping from about 100% to about 46%) and then reported 'held in the gripper'; when the execution steps open with a cube already held, remove nothing for it, since that removal was made at the previous step,"
+     },
+     {
+      "modify_from": "(two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube)",
+      "modify_to": "(any goal-color detection within about 10 px of an existing entry's position is that entry: it keeps its slot and only its position is refreshed, and an entry is never dropped and re-appended; a cube briefly not reported because the arm covers it keeps its entry; a detection within about 10 px of the reported bin center is at the bin's position and is not a cube, whereas a detection 20 px or more from the bin center is a table cube and is appended even if it appeared right after a release; a detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one)"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "cubes",
+    "edits": [
+     {
+      "modify_from": "Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it.",
+      "modify_to": "Otherwise copy the carried-in list and: remove an entry only if the execution steps shown at THIS step include the fingers closing (about 100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and is entered even if it showed up just after a release; a cube that vanishes for a frame or two because the arm covers it keeps its entry and is not re-added. Never reorder entries, never drop-and-re-append: the list order is the age order and nothing seen later changes it. Example of a refresh: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]] with a green reported at [68, 160] becomes [[\"blue\", [117, 71]], [\"green\", [68, 160]]]."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position.",
+    "modify_to": "The age order in `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step #1 tie-break among start cubes, below), or the one with the smallest y. The target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step; a detection that has drifted a few pixels is still the same cube, so do not discard it, and never point at a detection lying within about 10 px of the bin center."
+   }
+  ],
+  "refused": "The per-step proposals from the episode where five cubes of each goal color were present from the start (smallest y, nearest the gripper, nearest the button, or a memory field carrying the oracle's intended order) are refused, as in rounds 1 and 2: each fits one step and contradicts others in the same episode, and the oracle's order among start cubes is recoverable from nothing the scene or the memory could hold, so the step #1 default (nearest the bin's center) stays as a fixed tie-break only. No field is added for it. The age-order criterion committed in round 2 is kept, not replaced; this round only pins down the removal moment, the 10 px matching, and the bin-center exclusion so the policy's `cubes` matches the annotator's. The `placed` field and Rules 1 and 2 are untouched, as no report has found them at fault."
+ },
+ "not_applied": [],
+ "refused": "The per-step proposals from the episode where five cubes of each goal color were present from the start (smallest y, nearest the gripper, nearest the button, or a memory field carrying the oracle's intended order) are refused, as in rounds 1 and 2: each fits one step and contradicts others in the same episode, and the oracle's order among start cubes is recoverable from nothing the scene or the memory could hold, so the step #1 default (nearest the bin's center) stays as a fixed tie-break only. No field is added for it. The age-order criterion committed in round 2 is kept, not replaced; this round only pins down the removal moment, the 10 px matching, and the bin-center exclusion so the policy's `cubes` matches the annotator's. The `placed` field and Rules 1 and 2 are untouched, as no report has found them at fault.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"cubes\", \"edits\": [{\"modify_from\": \"(a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper,\", \"modify_to\": \"(a) remove the entry of the cube that this step's own execution steps show the fingers closing on (opening dropping from about 100% to about 46%) and then reported 'held in the gripper'; when the execution steps open with a cube already held, remove nothing for it, since that removal was made at the previous step,\"}, {\"modify_from\": \"(two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube)\", \"modify_to\": \"(any goal-color detection within about 10 px of an existing entry's position is that entry: it keeps its slot and only its position is refreshed, and an entry is never dropped and re-appended; a cube briefly not reported because the arm covers it keeps its entry; a detection within about 10 px of the reported bin center is at the bin's position and is not a cube, whereas a detection 20 px or more from the bin center is a table cube and is appended even if it appeared right after a release; a detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one)\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"cubes\", \"edits\": [{\"modify_from\": \"Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it.\", \"modify_to\": \"Otherwise copy the carried-in list and: remove an entry only if the execution steps shown at THIS step include the fingers closing (about 100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and is entered even if it showed up just after a release; a cube that vanishes for a frame or two because the arm covers it keeps its entry and is not re-added. Never reorder entries, never drop-and-re-append: the list order is the age order and nothing seen later changes it. Example of a refresh: carried [[\\\"blue\\\", [117, 71]], [\\\"green\\\", [71, 154]]] with a green reported at [68, 160] becomes [[\\\"blue\\\", [117, 71]], [\\\"green\\\", [68, 160]]].\"}]}], \"policy_prompt_for_subgoal\": [{\"modify_from\": \"Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position.\", \"modify_to\": \"The age order in `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step #1 tie-break among start cubes, below), or the one with the smallest y. The target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step; a detection that has drifted a few pixels is still the same cube, so do not discard it, and never point at a detection lying within about 10 px of the bin center.\"}], \"refused\": \"The per-step proposals from the episode where five cubes of each goal color were present from the start (smallest y, nearest the gripper, nearest the button, or a memory field carrying the oracle's intended order) are refused, as in rounds 1 and 2: each fits one step and contradicts others in the same episode, and the oracle's order among start cubes is recoverable from nothing the scene or the memory could hold, so the step #1 default (nearest the bin's center) stays as a fixed tie-break only. No field is added for it. The age-order criterion committed in round 2 is kept, not replaced; this round only pins down the removal moment, the 10 px matching, and the bin-center exclusion so the policy's `cubes` matches the annotator's. The `placed` field and Rules 1 and 2 are untouched, as no report has found them at fault.\"}"
+}

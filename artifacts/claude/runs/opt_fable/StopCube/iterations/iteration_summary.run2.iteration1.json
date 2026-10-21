@@ -1,0 +1,102 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "crossings",
+  "cube_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  14,
+  20,
+  25,
+  43,
+  99
+ ],
+ "scored": 23,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9130434782608695,
+ "memory_verified": 1.0,
+ "reads": {
+  "crossings": 18,
+  "cube_side": 18
+ },
+ "field_errors": {
+  "crossings": {
+   "in": 0,
+   "sole": 0
+  },
+  "cube_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.08695652173913043,
+ "verified_of_all": 0.9130434782608695,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 0,
+ "decisions": 23,
+ "critique": "the policy prompt for subgoal\n  Two failures, both in the motion test that decides between B and C once crossings equals N-1; the memory was written correctly in both (SUFFICIENCY breaks, not PREDICTABILITY). First situation: the goal asked for the fourth arrival, the (N-1)th crossing happened inside the step's frames and by the scene at the decision step the cube had coasted out to the far end of its swing, the last two frames being only a few timesteps apart and the cube displaced by about 2 px (half a pixel per timestep, against a cruising speed of 3-4 px per timestep). The rule 'distance equal in the last two frames means turnaround, distance increasing means moving away' read this as moving away and chose B; the recorded subgoal is C. The cube was effectively stopped at the turnaround and the press, which takes long, lands as it swings back. Second situation: the goal asked for the fourth arrival, and the (N-1)th crossing happened between the last two frames of the step: the cube went from one side of the target to the other, so |cube_x - target_x| shrank even though the cube had passed the target and was now moving away on the other side. The rule 'distance decreasing means moving toward' chose C; the recorded subgoal is B. The episode shows the press came one step later, when the cube had turned around and was heading back. Replace the distance-based motion test with a velocity-and-side test. Take the last two frames shown at the step, with their timesteps. Compute v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep), in pixels per timestep; the last pair of frames is often only a few timesteps apart, so always divide by the time gap, never use raw displacement. Take the cube's side at the last frame (smaller_x or larger_x relative to target_x). The cube is MOVING AWAY if it is on the larger_x side and v > +1, or on the smaller_x side and v < -1. In every other case (|v| at most 1 px per timestep, which is the turnaround at the far end of the swing; or v pointing back toward the target line from the side the cube is on) the cube is NOT moving away. Note the crossing itself: if the two frames lie on different sides, the cube has just passed the target and is moving away on its new side, which this test gives correctly because the velocity sign and the new side agree. Decision rule, unchanged in shape: after updating memory, choose C 'press button to stop the cube' if crossings == N-1 and the cube is NOT moving away (heading toward the target, or stopped/slowing at the turnaround with |v| at most 1 px per timestep). Otherwise choose B 'remain static': when crossings < N-1 whatever the motion, and when crossings == N-1 but the cube is moving away faster than 1 px per timestep (including right after the (N-1)th crossing, and while it is still running out toward the far end). Drop the clauses 'if |cube_x - target_x| is decreasing the cube is moving toward the target' and 'if it is equal treat it as the turnaround'; they should no longer exist. Keep the first-step rule (A with empty memory) and the fallback for crossings exceeding N-1, but phrase the fallback with the same velocity-and-side test.\n\nrefused\n  One step proposed, as its first alternative, that once crossings reaches N-1 the press should be chosen immediately regardless of the cube's direction. This is dropped: in two other episodes the cube had just made its (N-1)th crossing or was still running out toward the far end with crossings == N-1, and the recorded subgoal there was B, with C recorded only a step later once the cube had turned around. Only that step's second alternative (a near-zero displacement rate at the far end counts as the turnaround) is passed on, folded into the velocity-and-side test above. No memory change is passed on: at both failed steps the policy's crossings and cube_side matched the annotation.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Two failures, both in the motion test that decides between B and C once crossings equals N-1; the memory was written correctly in both (SUFFICIENCY breaks, not PREDICTABILITY). First situation: the goal asked for the fourth arrival, the (N-1)th crossing happened inside the step's frames and by the scene at the decision step the cube had coasted out to the far end of its swing, the last two frames being only a few timesteps apart and the cube displaced by about 2 px (half a pixel per timestep, against a cruising speed of 3-4 px per timestep). The rule 'distance equal in the last two frames means turnaround, distance increasing means moving away' read this as moving away and chose B; the recorded subgoal is C. The cube was effectively stopped at the turnaround and the press, which takes long, lands as it swings back. Second situation: the goal asked for the fourth arrival, and the (N-1)th crossing happened between the last two frames of the step: the cube went from one side of the target to the other, so |cube_x - target_x| shrank even though the cube had passed the target and was now moving away on the other side. The rule 'distance decreasing means moving toward' chose C; the recorded subgoal is B. The episode shows the press came one step later, when the cube had turned around and was heading back. Replace the distance-based motion test with a velocity-and-side test. Take the last two frames shown at the step, with their timesteps. Compute v = (cube_x at the last frame - cube_x at the previous frame) / (last timestep - previous timestep), in pixels per timestep; the last pair of frames is often only a few timesteps apart, so always divide by the time gap, never use raw displacement. Take the cube's side at the last frame (smaller_x or larger_x relative to target_x). The cube is MOVING AWAY if it is on the larger_x side and v > +1, or on the smaller_x side and v < -1. In every other case (|v| at most 1 px per timestep, which is the turnaround at the far end of the swing; or v pointing back toward the target line from the side the cube is on) the cube is NOT moving away. Note the crossing itself: if the two frames lie on different sides, the cube has just passed the target and is moving away on its new side, which this test gives correctly because the velocity sign and the new side agree. Decision rule, unchanged in shape: after updating memory, choose C 'press button to stop the cube' if crossings == N-1 and the cube is NOT moving away (heading toward the target, or stopped/slowing at the turnaround with |v| at most 1 px per timestep). Otherwise choose B 'remain static': when crossings < N-1 whatever the motion, and when crossings == N-1 but the cube is moving away faster than 1 px per timestep (including right after the (N-1)th crossing, and while it is still running out toward the far end). Drop the clauses 'if |cube_x - target_x| is decreasing the cube is moving toward the target' and 'if it is equal treat it as the turnaround'; they should no longer exist. Keep the first-step rule (A with empty memory) and the fallback for crossings exceeding N-1, but phrase the fallback with the same velocity-and-side test.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "One step proposed, as its first alternative, that once crossings reaches N-1 the press should be chosen immediately regardless of the cube's direction. This is dropped: in two other episodes the cube had just made its (N-1)th crossing or was still running out toward the far end with crossings == N-1, and the recorded subgoal there was B, with C recorded only a step later once the cube had turned around. Only that step's second alternative (a near-zero displacement rate at the far end counts as the turnaround) is passed on, folded into the velocity-and-side test above. No memory change is passed on: at both failed steps the policy's crossings and cube_side matched the annotation."
+ },
+ "critiques": [
+  {
+   "step": [
+    20,
+    "exec",
+    180
+   ],
+   "memory_in": "crossings=2; cube_side=smaller_x",
+   "answered": "B: remain static",
+   "recorded": "C: press button to stop the cube",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It told me to choose B when crossings == N-1 but the cube is still moving away, and here the cube moved from x=203 to x=205 (|cube_x - target_x| 69 -> 71, increasing) so I chose B. The recorded answer is C. The instruction should say that once crossings reaches N-1 (the third crossing happened within this step's frames, at t=160) the press is chosen immediately regardless of the cube's direction, because the press takes long enough that it lands as the cube swings back; or at least that a near-zero displacement at the end of the step (2 px over the last frames, cube decelerating near the far end of its swing) counts as the turnaround and not as 'moving away'.",
+   "missing": ""
+  },
+  {
+   "step": [
+    43,
+    "exec",
+    300
+   ],
+   "memory_in": "crossings=2; cube_side=smaller_x",
+   "answered": "C: press button to stop the cube",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The motion test is wrong when the crossing happens inside this step's frames. Here the cube went from x=133 (smaller_x side) to x=155 (larger_x side) between the last two frames: |cube_x - target_x| dropped from 21 to 2, so the rule read it as 'moving toward the target', but the cube has just passed the target and is now moving AWAY on the larger_x side. The instruction should say: if the last frame's side differs from the previous frame's side (the crossing that raised crossings to N-1 occurred in this step), the cube is moving away and the answer is B; equivalently, decide 'toward/away' by direction of travel (sign of cube_x change) versus which side the cube is now on, not by the shrinking distance. Press C only when crossings == N-1 and the cube is coming back toward the target from its turnaround after that (N-1)th crossing.",
+   "missing": ""
+  }
+ ]
+}

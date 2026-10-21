@@ -1,0 +1,84 @@
+{
+ "task": "VideoRepick",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 5,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    0,
+    12,
+    36,
+    94,
+    95
+   ],
+   "verified_of_all": 0.56,
+   "subgoal_verified": 0.68
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    43,
+    50,
+    53,
+    73,
+    74
+   ],
+   "verified_of_all": 0.9565217391304348,
+   "subgoal_verified": 0.9565217391304348
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    5,
+    8,
+    16,
+    57,
+    93
+   ],
+   "verified_of_all": 0.9310344827586207,
+   "subgoal_verified": 0.9310344827586207
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    7,
+    12,
+    23,
+    49,
+    95
+   ],
+   "verified_of_all": 0.896551724137931,
+   "subgoal_verified": 0.9310344827586207
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    10,
+    19,
+    41,
+    87
+   ],
+   "verified_of_all": 0.96,
+   "subgoal_verified": 0.96
+  }
+ ],
+ "stage": "optimized",
+ "fields": [
+  {
+   "name": "target_cube",
+   "description": "Position [y, x] of the cube the demonstration picked up, at its current table position. At the first decision step the picked cube is identified in the DEMONSTRATION STEPS by the gripper's own [y, x] at the frame where it is lowest (height about 0.02) and the fingers first read about 46%: the cube listed nearest that spot (the 'held in the gripper' line in the following frames and the cube that reappears beside the gripper at put-down confirm it; a cube merely vanishing from the list while the gripper hovers over it is occlusion, not a pick). The 'picked' label is then carried through the shuffle one swap at a time, the shuffle being read as a sequence of STILL CONFIGURATIONS. A still configuration is a demonstration frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot and the gripper parked raised. Each still configuration is compared with the NEXT still configuration, pair by pair, up to and including the pair that ends at the last demonstration frame. Two consecutive still configurations that are identical are 'no swap'. Two that differ are exactly one swap: the two spots whose occupants changed have EXCHANGED occupants (the frames between them with cubes off every resting spot are mid-crossing frames). If the labelled cube was one of the two movers, it now rests on the OTHER mover's starting spot, never on its own; if it was not a mover, it stays where it is. Mid-crossing frames only show that a swap is happening and are never used to decide where the label lands; arc continuity may confirm which mover is which but never sends a mover back to its own spot. This is applied swap by swap to the last demonstration frame however many swaps occur and whoever the partners are (commonly three, sometimes one or two): two consecutive swaps of the same pair return the labelled cube to its original spot, and a later swap, possibly with a cube the gripper never touched, may move it away again; a swap of a different pair moves it again or leaves it alone, so it can end two or more spots from where it started. The label is never settled before the last demonstration frame, even when it is back on the pick spot. The cube resting on the original pick position after the shuffle is never chosen by that fact alone: once any swap touched that spot, the cube there is a different cube swapped in. The value is the labelled spot as listed in the scene at the start of execution. At every later decision step the robot puts the cube back where it picked it, so the value is the position of the resting listed cube of target_colour within about 8 px of the previous value; if no such cube is listed (the target is held in the gripper, occluded under the gripper, or shown only as a 'lifted off the table' line while it settles), the value is the previous value unchanged. The gripper's position at the reopen frame, 'held in the gripper' coordinates and 'lifted off the table' coordinates are never used to locate it, and the value never moves to a resting cube of another colour or to a different resting cube nearby. e.g. [85, 109]"
+  },
+  {
+   "name": "picks_done",
+   "description": "Count of completed grasps in the execution so far. It is 0 at the first decision step. It goes up by one at a decision step whose execution steps show the gripper descend to about height 0.02 over the target cube with fingers closing from 100% to about 46% (or any frame saying a cube 'is held in the gripper'), and whose scene at the decision step shows the gripper raised (height about 0.14 or more) with fingers still about 46% open. The table list at that scene is irrelevant: the held cube may still be listed at its old table position. It never changes at a decision step whose scene shows fingers 100% open, even if a cube is listed as 'lifted off the table' there. e.g. 2"
+  },
+  {
+   "name": "target_colour",
+   "description": "The colour word of the cube the demonstration picked up: 'red', 'blue', 'green', or 'cube' when the scene lists cubes without colour. It is fixed at the first decision step as the colour of the listed cube identified as the picked cube in the demonstration (the cube nearest the gripper at the lowest frame where the fingers first read about 46%), and it never changes at any later step. e.g. blue"
+  }
+ ]
+}

@@ -1,0 +1,77 @@
+{
+ "task": "VideoUnmask",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    7,
+    23,
+    27,
+    38,
+    63
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    28,
+    29,
+    44,
+    51
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    22,
+    39,
+    44,
+    63
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    2,
+    14,
+    26,
+    27
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    1,
+    16,
+    62,
+    66,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "If the goal requests only one pickup and the current step shows the demonstration, locate the requested cube color before it is covered, track which container covers its location, and choose A pointing inside that container in the current execution scene. Allow small visible-centroid shifts and ignore containers covering other colors or empty locations. Output empty memory. Do not infer hidden colors from container appearance. This single-pickup path requires no further command after successful pickup; if an extra decision shows the completed pickup with the container held, choose B as the release action. For goals requesting multiple pickups, apply the following rules, starting with the memory update from the observations before selecting the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container corresponding to the first point in remaining_targets. Select the current visible container at that remembered location, allowing small centroid shifts, and point inside it; the point need not equal the demonstrated center exactly. When a completed pickup leaves a container held and another target remains, choose B to put down the container. A raised hand with fingers maintaining a nonzero grasp opening after closure and lift is evidence of holding, even if object detections still report the old container center. When put-down execution shows release and the hand is empty, choose A on the first remaining target; do not select the previously picked container again merely because it is still visible. Completion of the last requested pickup satisfies the goal, so no further command is needed unless another decision is requested. For an unexpected extra decision with no targets remaining, choose B as the available release action. For ambiguous or otherwise uncovered situations, choose B if the observations indicate a held container; otherwise choose A on the visible container nearest the first remaining point. If that container is temporarily occluded, use its remembered point. Do not infer hidden cube colors from current container appearance.",
+ "fields": [
+  {
+   "name": "remaining_targets",
+   "description": "If the goal requests only one pickup, omit this field and output empty memory; use the demonstration association directly for the initial command. Otherwise, initialize this field at the first decision, when the demonstration is shown: read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location. Write the ordered list of those containers' centers as [y, x] points, excluding distractors. With existing memory, inspect the execution frames for a completed pickup of the first listed container: the hand approaches its location, closes to a nonzero grasp opening, and rises with the grasp maintained. On that observed completed pickup, remove the first entry exactly once. A static container detection at the old location does not negate the observed grasp-and-lift sequence. Do not remove an entry merely because you are now selecting A, because a container is already held without a new pickup, or because the hand releases a container. Preserve all other entries and their coordinates, including across put-down execution. e.g. [[81, 95], [66, 143]]"
+  }
+ ],
+ "stage": "optimized"
+}

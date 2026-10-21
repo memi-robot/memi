@@ -1,0 +1,129 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "insertion_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  51,
+  63,
+  85,
+  89
+ ],
+ "scored": 10,
+ "failed": 4,
+ "subgoal_wrong": 2,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.8,
+ "memory_verified": 0.8,
+ "reads": {
+  "insertion_side": 5
+ },
+ "field_errors": {
+  "insertion_side": {
+   "in": 2,
+   "sole": 2
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.4,
+ "verified_of_all": 0.6,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 10,
+ "critique": "field insertion_side, POLICY PROMPT\n  At the initial decision, the instruction required reproducing the demonstrated insertion side. In demonstrations where the carried peg approached the box from larger x while moving toward smaller x, the policy wrote \"right\", although the annotated value was \"left\". The selected pickup endpoint was otherwise correct. This is a PREDICTABILITY failure in applying the robot-relative mapping, not a missing memory fact. Strengthen the existing rule with an explicit two-case check: during the final low-height insertion approach, carried peg/gripper x greater than box x means \"left\"; carried peg/gripper x less than box x means \"right\". Motion toward smaller x does not mean insertion from the right: it means approaching from the larger-x, robot-left side. Establish the carried object's identity by closure and sustained co-motion, ignoring conflicting labels on stationary pegs. Use the last unoccluded approach if necessary, excluding pickup and high transport. Write the resulting value when the demonstration is visible with empty incoming memory, for example \"left\", and copy it unchanged at subsequent decisions. Do not change the field or its annotation values.\n\nthe policy prompt for subgoal\n  When the instruction required picking the same end of the same demonstrated peg, the gripper closed on a head and that peg subsequently moved with the raised hand. Near insertion, an unrelated stationary tail was labeled held. The policy selected that stationary tail in the reset scene instead of the demonstrated head, even though insertion_side was correctly recorded as either \"left\" or \"right\". This exposes a SUFFICIENCY failure in the policy prompt's evidence precedence for identifying the pickup target, not a need for additional memory. Amend the demonstrated-pickup rule to identify the peg from closure followed by sustained co-motion during the initial lift, determine the grasped endpoint from that closure and lift, and trace that endpoint back to its unobscured pre-contact position. Match that peg and endpoint to the reset scene and select its current endpoint. Explicitly state that continuous motion evidence overrides a conflicting late held-object label on an endpoint that stayed stationary; such a label must not switch the demonstrated target or grasp end. Replace the unconditional claim that an explicit held-object label establishes a successful grasp with a rule accepting that label when consistent with the observed motion, while retaining closure followed by co-motion as sufficient evidence even when the wrist later leaves the frame. Keep the held-peg insertion rules: B for remembered \"right\", C for remembered \"left\", with no point. Remove episode-specific pickup examples as decision rules; use the general closure, co-motion, and reset-matching procedure instead.\n\nrefused\n  The two incorrect-side outputs also used pickup points slightly different from the recorded points, but both selected the correct demonstrated tail in the reset scene. These differences do not justify coordinate-specific corrections: sufficiency requires selecting the correct object and endpoint, not reproducing an identical pixel. No annotation-field change or additional retained peg/end field is warranted. The insertion-side annotations agree with the visible final approach, the demonstration is available when pickup is chosen, and the successful grasp is visible when insertion is chosen.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "When the instruction required picking the same end of the same demonstrated peg, the gripper closed on a head and that peg subsequently moved with the raised hand. Near insertion, an unrelated stationary tail was labeled held. The policy selected that stationary tail in the reset scene instead of the demonstrated head, even though insertion_side was correctly recorded as either \"left\" or \"right\". This exposes a SUFFICIENCY failure in the policy prompt's evidence precedence for identifying the pickup target, not a need for additional memory. Amend the demonstrated-pickup rule to identify the peg from closure followed by sustained co-motion during the initial lift, determine the grasped endpoint from that closure and lift, and trace that endpoint back to its unobscured pre-contact position. Match that peg and endpoint to the reset scene and select its current endpoint. Explicitly state that continuous motion evidence overrides a conflicting late held-object label on an endpoint that stayed stationary; such a label must not switch the demonstrated target or grasp end. Replace the unconditional claim that an explicit held-object label establishes a successful grasp with a rule accepting that label when consistent with the observed motion, while retaining closure followed by co-motion as sufficient evidence even when the wrist later leaves the frame. Keep the held-peg insertion rules: B for remembered \"right\", C for remembered \"left\", with no point. Remove episode-specific pickup examples as decision rules; use the general closure, co-motion, and reset-matching procedure instead.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "insertion_side",
+    "description": "At the initial decision, the instruction required reproducing the demonstrated insertion side. In demonstrations where the carried peg approached the box from larger x while moving toward smaller x, the policy wrote \"right\", although the annotated value was \"left\". The selected pickup endpoint was otherwise correct. This is a PREDICTABILITY failure in applying the robot-relative mapping, not a missing memory fact. Strengthen the existing rule with an explicit two-case check: during the final low-height insertion approach, carried peg/gripper x greater than box x means \"left\"; carried peg/gripper x less than box x means \"right\". Motion toward smaller x does not mean insertion from the right: it means approaching from the larger-x, robot-left side. Establish the carried object's identity by closure and sustained co-motion, ignoring conflicting labels on stationary pegs. Use the last unoccluded approach if necessary, excluding pickup and high transport. Write the resulting value when the demonstration is visible with empty incoming memory, for example \"left\", and copy it unchanged at subsequent decisions. Do not change the field or its annotation values."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "The two incorrect-side outputs also used pickup points slightly different from the recorded points, but both selected the correct demonstrated tail in the reset scene. These differences do not justify coordinate-specific corrections: sufficiency requires selecting the correct object and endpoint, not reproducing an identical pixel. No annotation-field change or additional retained peg/end field is warranted. The insertion-side annotations agree with the visible final approach, the demonstration is available when pickup is chosen, and the successful grasp is visible when insertion is chosen."
+ },
+ "critiques": [
+  {
+   "step": [
+    2,
+    "exec",
+    240
+   ],
+   "memory_in": "insertion_side=",
+   "answered": "A: pick up the peg by grasping one end at [82, 187]",
+   "recorded": "A: pick up the peg by grasping one end at [84, 188]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    51,
+    "exec",
+    232
+   ],
+   "memory_in": "insertion_side=",
+   "answered": "A: pick up the peg by grasping one end at [115, 150]",
+   "recorded": "A: pick up the peg by grasping one end at [117, 207]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Clarify that continuous motion after grasp overrides conflicting late held-object labels: the head initially at [116, 206] moves with the gripper at t=80–208, while the tail at [115, 150] belongs to a stationary peg despite being labeled held at t=224–231. The gripper closes at the moving peg's head, so target that head in the reset scene, approximately [117, 207], not the stationary tail at [115, 150].",
+   "missing": ""
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    248
+   ],
+   "memory_in": "insertion_side=",
+   "answered": "A: pick up the peg by grasping one end at [89, 108]",
+   "recorded": "A: pick up the peg by grasping one end at [91, 110]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    85,
+    "exec",
+    210
+   ],
+   "memory_in": "insertion_side=",
+   "answered": "A: pick up the peg by grasping one end at [101, 105]",
+   "recorded": "A: pick up the peg by grasping one end at [91, 199]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Clarify that demonstrated pickup identity is determined by closure and subsequent co-motion, overriding a conflicting later held-object label. At t=80 the gripper closes on the head originally at [90, 198], and that head follows it at t=96–112; the tail at [101, 105] remains stationary despite being labeled held at t=192. Select the former peg's head in the reset scene, near the recorded target [91, 199], not the stationary tail.",
+   "missing": ""
+  }
+ ]
+}

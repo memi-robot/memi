@@ -1,0 +1,206 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "buttons_pressed",
+  "green_container",
+  "red_container",
+  "blue_container",
+  "picked_colors"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  14,
+  25,
+  38,
+  87,
+  93
+ ],
+ "scored": 19,
+ "failed": 6,
+ "subgoal_wrong": 3,
+ "memory_wrong": 6,
+ "subgoal_verified": 0.8421052631578947,
+ "memory_verified": 0.6842105263157895,
+ "reads": {
+  "buttons_pressed": 13,
+  "green_container": 9,
+  "red_container": 8,
+  "blue_container": 8,
+  "picked_colors": 3
+ },
+ "field_errors": {
+  "buttons_pressed": {
+   "in": 1,
+   "sole": 1
+  },
+  "green_container": {
+   "in": 3,
+   "sole": 0
+  },
+  "red_container": {
+   "in": 4,
+   "sole": 0
+  },
+  "blue_container": {
+   "in": 4,
+   "sole": 0
+  },
+  "picked_colors": {
+   "in": 1,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3157894736842105,
+ "verified_of_all": 0.6842105263157895,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 2,
+ "decisions": 19,
+ "critique": "field green_container, ANNOTATOR PROMPT\n  No change to what the field holds or when it changes. Two clarifications of wording, so the annotator prompt and the policy prompt read the same way. (1) Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is to be judged at that scale, and the phrases 'a few pixels' and 'jitter' refer only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame; in a moved step the joint one-to-one chain is run through every frame for all three colors, and the result is written even when the last-frame layout coincides with the previous step's last-frame layout. (2) The first step with empty memory writes the green cube's own [y, x]; this is stated as the first sentence. Also, where the precedence clause applies (cube visible in some frame), the value is the cube's position in the last frame where the cube is visible, so a step in which the cube is listed at [135, 131] in its last frames is annotated [135, 131], not the position the container had before it was lifted. e.g. [128, 122]\n\nfield red_container, ANNOTATOR PROMPT\n  Same two clarifications as green_container: sparse frames mean 15-35 px per-frame displacements are normal gliding, a moved step is one where any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide; first-step value is the red cube's own position, stated first; precedence writes the cube's last visible position, not the container's pre-lift position. e.g. [104, 94]\n\nfield blue_container, ANNOTATOR PROMPT\n  Same two clarifications as green_container and red_container: sparse-frame displacement scale, moved-step trigger, chain always written in a moved step, first-step cube position stated first, precedence writes the cube's last visible position. e.g. [105, 168]\n\nfield buttons_pressed, POLICY PROMPT\n  Keep the content; add that the count is rewritten BEFORE the subgoal is chosen, and give the four concrete outcomes in order: empty carried memory -> 0; carried 0 and a press in this step's frames -> 1; carried 1 and a press in this step's frames -> 2; carried 2 or any container held/grasped in this step -> 2. A frame saying a button 'is pressed down' in this step is a press of this step even if that button is the one the robot is already heading for. e.g. 2\n\nfield green_container, POLICY PROMPT\n  Restructure so the first sentence is the first-step rule: with empty carried-in memory and no execution frames, write the green cube's own [y, x] from the scene (and likewise red_container, blue_container, buttons_pressed=0, picked_colors=[]); no field is left blank at the first step. Second sentence: the exposure precedence (green in carried picked_colors, or the green cube visible in any frame -> write the cube's last visible position, ignore all containers at this and later steps). Then the chain, rewritten around three plain facts the policy failed on: (a) frames are sparse, about 16 ticks apart, so a gliding container is normally 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' means only a container that did not move; (b) MOVED-STEP TRIGGER: if any frame of this step lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first), the step is a moved step and the joint one-to-one chain MUST be run for all three colors through every frame and its result written, no exception; this includes the case where the first frame already shows containers 10-15 px off the carried values, and the case where the last frame shows containers exactly on the carried values; (c) SWAP TRAP stated as a rule: in a moved step, a last-frame container standing within 5 px of the carried value is not a match; matching a carried value straight to a last-frame container is forbidden, the only legal path is carried value -> nearest first-frame container -> frame by frame -> last frame. Keep the joint assignment: per frame transition choose the one-to-one assignment with the smallest total displacement (e.g. 23+29 beats 28+29). Sanity check after a moved step: two containers that circled around each other while the third stood still almost always end swapped; if the chain says nothing swapped, recompute before writing. Keep one worked example of the swap (carried [100, 166] passing [104, 181], [119, 182], [121, 162] to [121, 159] while the other color goes [112, 152], [97, 151], [95, 169] to [95, 172]). Unmoved step: every frame's containers stand within about 6 px of the previous frame's, write the same container's last-frame position. e.g. [128, 122]\n\nfield red_container, POLICY PROMPT\n  Same restructuring as green_container: first-step cube position as the first sentence, exposure precedence second, then the chain with the sparse-frame scale, the moved-step trigger, the forbidden straight match to a coinciding last-frame container, the joint smallest-total-displacement assignment, and the post-chain swap sanity check. e.g. [104, 94]\n\nfield blue_container, POLICY PROMPT\n  Same restructuring as green_container and red_container: first-step cube position first, precedence second, then the chain with the sparse-frame scale, the moved-step trigger, the forbidden straight match, the joint assignment, and the swap sanity check. e.g. [105, 168]\n\nthe policy prompt for subgoal\n  The situation: both buttons had been pressed, the second press being shown in this step's own frames with the count carried in as 1; the policy applied rule 3 to the carried-in count and answered B again, while the recorded subgoal was C pointing at the container the chain assigns to the goal color. This breaks SUFFICIENCY only through ordering: the instruction says 'after updating memory' once at the top, but rule 3 reads as if it tests the carried count. Replace rule 3 with an explicit guard: 'Rewrite buttons_pressed from this step's frames first. If any frame of this step says a button is pressed down or shows the gripper on a button (height below about 0.06, fingers closed) and the carried count was 1, the count is now 2 and rule 3 cannot fire; go to rule 4. Rule 3 (B) fires only when the updated count is exactly 1, which happens only at the step whose frames show the first press.' Add to rule 4 and rule 5 the same chain-first wording tied to the memory instruction's moved-step trigger: the C point is the goal color's container value written at this step after running the chain; if this step is a moved step and the point you are about to give equals the carried-in value, the chain has not been run, run it before pointing. The rule that identifies the first step (empty memory, no execution frames -> A) stays. No rule needs removing.\n\nrefused\n  One report said the memory instruction lacked nothing and only the subgoal ordering was at fault; another said the subgoal instruction lacked nothing and only its own failure to run the chain was at fault; both are answered by the changes above and nothing further is passed on. The proposal to add a standalone rule of thumb that two circling containers always finish swapped (blue takes the old red spot, red the old blue spot) is not passed on as a rule: every moved step in this minibatch does end swapped, but the annotator prompt and the recorded values come from the chain, and a rule that bypasses it would write the wrong container on a double pass; it is kept only as a sanity check that triggers a recompute. The suggested per-field restatement of the first-step values for a particular scene is passed on as the generic first-sentence rule, not with that scene's coordinates.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The situation: both buttons had been pressed, the second press being shown in this step's own frames with the count carried in as 1; the policy applied rule 3 to the carried-in count and answered B again, while the recorded subgoal was C pointing at the container the chain assigns to the goal color. This breaks SUFFICIENCY only through ordering: the instruction says 'after updating memory' once at the top, but rule 3 reads as if it tests the carried count. Replace rule 3 with an explicit guard: 'Rewrite buttons_pressed from this step's frames first. If any frame of this step says a button is pressed down or shows the gripper on a button (height below about 0.06, fingers closed) and the carried count was 1, the count is now 2 and rule 3 cannot fire; go to rule 4. Rule 3 (B) fires only when the updated count is exactly 1, which happens only at the step whose frames show the first press.' Add to rule 4 and rule 5 the same chain-first wording tied to the memory instruction's moved-step trigger: the C point is the goal color's container value written at this step after running the chain; if this step is a moved step and the point you are about to give equals the carried-in value, the chain has not been run, run it before pointing. The rule that identifies the first step (empty memory, no execution frames -> A) stays. No rule needs removing.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "buttons_pressed",
+    "description": "Keep the content; add that the count is rewritten BEFORE the subgoal is chosen, and give the four concrete outcomes in order: empty carried memory -> 0; carried 0 and a press in this step's frames -> 1; carried 1 and a press in this step's frames -> 2; carried 2 or any container held/grasped in this step -> 2. A frame saying a button 'is pressed down' in this step is a press of this step even if that button is the one the robot is already heading for. e.g. 2"
+   },
+   {
+    "field": "green_container",
+    "description": "Restructure so the first sentence is the first-step rule: with empty carried-in memory and no execution frames, write the green cube's own [y, x] from the scene (and likewise red_container, blue_container, buttons_pressed=0, picked_colors=[]); no field is left blank at the first step. Second sentence: the exposure precedence (green in carried picked_colors, or the green cube visible in any frame -> write the cube's last visible position, ignore all containers at this and later steps). Then the chain, rewritten around three plain facts the policy failed on: (a) frames are sparse, about 16 ticks apart, so a gliding container is normally 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' means only a container that did not move; (b) MOVED-STEP TRIGGER: if any frame of this step lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first), the step is a moved step and the joint one-to-one chain MUST be run for all three colors through every frame and its result written, no exception; this includes the case where the first frame already shows containers 10-15 px off the carried values, and the case where the last frame shows containers exactly on the carried values; (c) SWAP TRAP stated as a rule: in a moved step, a last-frame container standing within 5 px of the carried value is not a match; matching a carried value straight to a last-frame container is forbidden, the only legal path is carried value -> nearest first-frame container -> frame by frame -> last frame. Keep the joint assignment: per frame transition choose the one-to-one assignment with the smallest total displacement (e.g. 23+29 beats 28+29). Sanity check after a moved step: two containers that circled around each other while the third stood still almost always end swapped; if the chain says nothing swapped, recompute before writing. Keep one worked example of the swap (carried [100, 166] passing [104, 181], [119, 182], [121, 162] to [121, 159] while the other color goes [112, 152], [97, 151], [95, 169] to [95, 172]). Unmoved step: every frame's containers stand within about 6 px of the previous frame's, write the same container's last-frame position. e.g. [128, 122]"
+   },
+   {
+    "field": "red_container",
+    "description": "Same restructuring as green_container: first-step cube position as the first sentence, exposure precedence second, then the chain with the sparse-frame scale, the moved-step trigger, the forbidden straight match to a coinciding last-frame container, the joint smallest-total-displacement assignment, and the post-chain swap sanity check. e.g. [104, 94]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same restructuring as green_container and red_container: first-step cube position first, precedence second, then the chain with the sparse-frame scale, the moved-step trigger, the forbidden straight match, the joint assignment, and the swap sanity check. e.g. [105, 168]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "green_container",
+    "description": "No change to what the field holds or when it changes. Two clarifications of wording, so the annotator prompt and the policy prompt read the same way. (1) Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is to be judged at that scale, and the phrases 'a few pixels' and 'jitter' refer only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame; in a moved step the joint one-to-one chain is run through every frame for all three colors, and the result is written even when the last-frame layout coincides with the previous step's last-frame layout. (2) The first step with empty memory writes the green cube's own [y, x]; this is stated as the first sentence. Also, where the precedence clause applies (cube visible in some frame), the value is the cube's position in the last frame where the cube is visible, so a step in which the cube is listed at [135, 131] in its last frames is annotated [135, 131], not the position the container had before it was lifted. e.g. [128, 122]"
+   },
+   {
+    "field": "red_container",
+    "description": "Same two clarifications as green_container: sparse frames mean 15-35 px per-frame displacements are normal gliding, a moved step is one where any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide; first-step value is the red cube's own position, stated first; precedence writes the cube's last visible position, not the container's pre-lift position. e.g. [104, 94]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same two clarifications as green_container and red_container: sparse-frame displacement scale, moved-step trigger, chain always written in a moved step, first-step cube position stated first, precedence writes the cube's last visible position. e.g. [105, 168]"
+   }
+  ],
+  "refused": "One report said the memory instruction lacked nothing and only the subgoal ordering was at fault; another said the subgoal instruction lacked nothing and only its own failure to run the chain was at fault; both are answered by the changes above and nothing further is passed on. The proposal to add a standalone rule of thumb that two circling containers always finish swapped (blue takes the old red spot, red the old blue spot) is not passed on as a rule: every moved step in this minibatch does end swapped, but the annotator prompt and the recorded values come from the chain, and a rule that bypasses it would write the wrong container on a double pass; it is kept only as a sanity check that triggers a recompute. The suggested per-field restatement of the first-step values for a particular scene is passed on as the generic first-sentence rule, not with that scene's coordinates."
+ },
+ "critiques": [
+  {
+   "step": [
+    25,
+    "exec",
+    206
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[104, 94]; red_container=[128, 122]; blue_container=[105, 168]; picked_colors=[]",
+   "answered": "C: pick up the container at [104, 94]",
+   "recorded": "C: pick up the container at [126, 123]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The chain was in the instruction and gives green=[128,122], red=[104,94] (carried green [104,94] -> first frame [101,106] -> [107,125] -> [126,123] -> [128,122]; carried red [128,122] -> [131,108] -> [125,89] -> [107,93] -> [104,94]). What let me go wrong was that the first frame already shows both containers 12-14 px from the carried values and the last frame shows containers exactly at the carried values; the instruction could state plainly that a step whose last-frame layout coincides with the carried values while every middle frame differs is the swap case, and that the carried value must be matched to the first frame even when the displacement is 12-15 px, never skipped to a coinciding last-frame container.",
+   "missing_from_policy_prompt_for_subgoal": "nothing (the point should be the green_container value chained at this step, [128,122]/[126,123], which rule 4 already says; my failure was not running the chain)",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    0
+   ],
+   "memory_in": "buttons_pressed=; green_container=; red_container=; blue_container=; picked_colors=",
+   "answered": "A: press the first button",
+   "recorded": "A: press the first button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The first-step rule is buried mid-paragraph behind 'FIRST, before any chaining...' and container-chain text, and for red_container/blue_container it sits after an 'otherwise' clause, so at this step (empty memory, no execution frames, only cubes visible) I did not take it as applying. It should state up front, as the first sentence of each field: at the very first decision step with empty carried-in memory, write green_container=[127, 163] (the green cube's own [y, x] from the scene), red_container=[105, 103], blue_container=[94, 167], picked_colors=[], buttons_pressed=0 -- every field gets a non-empty value at the first step, none is left blank.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    207
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[131, 123]; red_container=[103, 102]; blue_container=[91, 168]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "C: pick up the container at [100, 103]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing; the frame at t=176 reads 'button at [62, 102] is pressed down' and the carried count was 1, so the instruction already said to write 2",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3 was applied to the carried-in count (1) instead of the updated count (2). A one-line guard would have prevented it: before choosing between B and C, rewrite buttons_pressed from this step's frames; if any frame of this step says a button 'is pressed down' and the carried count is 1, the count is 2 and rule 3 cannot fire, so go straight to rule 4 and point C at red_container (here [103, 102], the container standing on the red cube's spot).",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    214
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[95, 172]; red_container=[92, 116]; blue_container=[121, 159]; picked_colors=[]",
+   "answered": "C: pick up the container at [92, 116]",
+   "recorded": "C: pick up the container at [89, 117]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing substantive; the chain was described and gives green=[121,159], blue=[95,172] here (first frame: green [95,172]->[104,181], blue [121,159]->[112,152]; then [104,181]->[119,182]->[121,162]->[121,159] and [112,152]->[97,151]->[95,169]->[95,172]). The failure was not running the chain because the last-frame containers stood exactly on the carried values; a short mandatory check could help: whenever the first frame's containers do not stand on the carried positions, the chain MUST be computed and the result written even if the last frame looks identical to the carried memory.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    93,
+    "exec",
+    116
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[103, 162]; red_container=[134, 131]; blue_container=[95, 98]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The chain at this step actually yields the recorded swap (blue [92,97] -> [94,115] -> [109,133] -> [132,131]; red [132,131] -> [129,110] -> [111,92] -> [94,97] -> [92,98]), but I did not run it because the frames are 16 ticks apart and consecutive-frame displacements are 18-30 px, which the instruction's wording ('a few pixels', 'within a pixel or two') made me read as 'no container moved' and so I matched the carried values straight to the identical-looking last layout. The instruction should state plainly: frames are sparse, so a container that moved can be 20-40 px from its previous-frame position; a frame where the container set differs at all from the previous frame (here t=80 and t=96, during the gripper's descent to the button, where [92,97] and [132,131] are gone and new positions appear) is a moved frame and the joint minimum-total-displacement chain MUST be run through it; and the concrete rule of thumb that when two containers circle around the still one and the first/last layouts coincide, the two moving colors end swapped (blue takes the old red spot, red takes the old blue spot) unless the chain shows two passes.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    93,
+    "exec",
+    213
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[101, 164]; red_container=[92, 98]; blue_container=[132, 131]; picked_colors=[]",
+   "answered": "C: pick up the container at [94, 97]",
+   "recorded": "C: pick up the container at [130, 132]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The chain here has every per-frame displacement at 20-30 px (red [94,112]->[106,132]->[129,131]; blue [130,116]->[114,92]->[94,97]), far beyond the 'few pixels' the instruction uses for its near-tie and jitter language, and I fell back to matching the carried red value [92, 98] straight to the last-frame container at [94, 97]. The instruction should say explicitly that frames are sparse so a gliding container moves 20-30 px between consecutive frames; that at such magnitudes the step-by-step joint assignment with the smallest TOTAL displacement per frame transition (here red->[106,132] 23 px + blue->[114,92] 29 px beats the alternative 28+29) still decides; and that a last-frame container within 5 px of the carried value while others moved 20+ px is almost always the swap trap, so red must follow [94,112]->[106,132]->[129,131]->[132,131] and blue [130,116]->[114,92]->[94,97].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

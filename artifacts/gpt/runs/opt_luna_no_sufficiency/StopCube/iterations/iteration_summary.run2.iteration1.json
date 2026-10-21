@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "passage_count",
+  "last_side"
+ ],
+ "ablate": "sufficiency",
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  14,
+  20,
+  25,
+  43,
+  99
+ ],
+ "scored": 23,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9130434782608695,
+ "memory_verified": 0.9565217391304348,
+ "reads": {
+  "passage_count": 16,
+  "last_side": 18
+ },
+ "field_errors": {
+  "passage_count": {
+   "in": 1,
+   "sole": 0
+  },
+  "last_side": {
+   "in": 1,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.08695652173913043,
+ "verified_of_all": 0.9130434782608695,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 0,
+ "decisions": 23,
+ "critique": "field passage_count, POLICY PROMPT\n  When the goal requested the fourth arrival, the incoming count was 2 and the cube was last on the smaller-x side. The newly shown motion ended just beyond the target center on the larger-x side, so the outgoing annotated count was 3. The policy instead retained 2. This is a PREDICTABILITY failure in applying the update to the final observation, not a need for additional history. Explicitly require processing the final decision observation as well as all preceding execution observations before writing memory. A small but strictly positive cube-x-minus-target-x value is positive: do not introduce a proximity deadband, require a later confirmation frame, or postpone counting until the cube has moved well clear of the target. Increment on each observed change between nonzero sides, including a change first visible in the final frame. Exact equality alone retains the preceding side and does not increment. Write the completed count, for example 3, without counting the command about to be selected.\n\nfield last_side, POLICY PROMPT\n  In the same fourth-arrival situation, the final observation placed the cube just beyond the target center, but the policy retained the incoming smaller-x side instead of the annotated larger-x side. This breaks PREDICTABILITY by omitting the final observation from the effective update. Explicitly state that last_side must be the working side after processing every shown observation, including the final decision frame. Set it to -1 for a strictly smaller cube x and 1 for a strictly larger cube x, even when the separation is small; retain the previous nonzero side only at exact equality. Initialize to 0 only when no nonzero side has yet been observed. In this situation the outgoing example value is 1. Compute this field and passage_count from the same chronological scan so that a newly counted passage and its new side are written together.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "passage_count",
+    "description": "When the goal requested the fourth arrival, the incoming count was 2 and the cube was last on the smaller-x side. The newly shown motion ended just beyond the target center on the larger-x side, so the outgoing annotated count was 3. The policy instead retained 2. This is a PREDICTABILITY failure in applying the update to the final observation, not a need for additional history. Explicitly require processing the final decision observation as well as all preceding execution observations before writing memory. A small but strictly positive cube-x-minus-target-x value is positive: do not introduce a proximity deadband, require a later confirmation frame, or postpone counting until the cube has moved well clear of the target. Increment on each observed change between nonzero sides, including a change first visible in the final frame. Exact equality alone retains the preceding side and does not increment. Write the completed count, for example 3, without counting the command about to be selected."
+   },
+   {
+    "field": "last_side",
+    "description": "In the same fourth-arrival situation, the final observation placed the cube just beyond the target center, but the policy retained the incoming smaller-x side instead of the annotated larger-x side. This breaks PREDICTABILITY by omitting the final observation from the effective update. Explicitly state that last_side must be the working side after processing every shown observation, including the final decision frame. Set it to -1 for a strictly smaller cube x and 1 for a strictly larger cube x, even when the separation is small; retain the previous nonzero side only at exact equality. Initialize to 0 only when no nonzero side has yet been observed. In this situation the outgoing example value is 1. Compute this field and passage_count from the same chronological scan so that a newly counted passage and its new side are written together."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    43,
+    "exec",
+    300
+   ],
+   "memory_in": "passage_count=2; last_side=-1",
+   "answered": "C: press button to stop the cube",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

@@ -1,0 +1,97 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "remaining_path"
+ ],
+ "ablate": "predictability",
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  48,
+  75,
+  79,
+  80
+ ],
+ "scored": 21,
+ "failed": 5,
+ "subgoal_wrong": 2,
+ "memory_wrong": 5,
+ "subgoal_verified": 0.9047619047619048,
+ "memory_verified": 0.7619047619047619,
+ "reads": {
+  "remaining_path": 16
+ },
+ "field_errors": {
+  "remaining_path": {
+   "in": 5,
+   "sole": 5
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.23809523809523808,
+ "verified_of_all": 0.7619047619047619,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 0,
+ "decisions": 21,
+ "critique": "the policy prompt for subgoal\n  At initial decisions for the path-imitation task, memory was empty and the demonstration showed a first traversal toward smaller x on an image-upper arc. The policy chose B although the demonstrated route, and hence the first letter of the full remaining_path to be written, began with D. This is a SUFFICIENCY failure in applying the initial-choice instructions, not missing historical information. Remove all episode-specific initial-subgoal examples: the deployed policy has no episode identifier with which to match them. State explicitly that the visible demonstration determines the initial command. When demonstration frames are present and memory is initially empty, decode the complete route using the memory instruction, select its first letter, and write the complete route without removing that letter. In particular, smaller destination x with intermediate wrist positions above the line joining the departure and arrival wrist positions means D, not B; B requires the lower arc. Do not use the location-based fallback when the demonstration supplies this evidence. Retain the existing rule for later decisions: remove the one completed leading traversal from carried remaining_path and select the new leading letter, irrespective of the preceding command.\n\nrefused\n  The other initial-decision failure likewise selected B for a demonstrated smaller-x, upper-arc traversal, but reported no missing information or rule. It does not justify adding a memory field or changing annotation values or memory-update timing. The existing single ordered remaining_path already preserves the full route, including repeated visits and reversals, and the existing decoding instruction already maps this arc to D. The general initial-choice clarification addresses both failures; no separate case-specific rule is warranted.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "At initial decisions for the path-imitation task, memory was empty and the demonstration showed a first traversal toward smaller x on an image-upper arc. The policy chose B although the demonstrated route, and hence the first letter of the full remaining_path to be written, began with D. This is a SUFFICIENCY failure in applying the initial-choice instructions, not missing historical information. Remove all episode-specific initial-subgoal examples: the deployed policy has no episode identifier with which to match them. State explicitly that the visible demonstration determines the initial command. When demonstration frames are present and memory is initially empty, decode the complete route using the memory instruction, select its first letter, and write the complete route without removing that letter. In particular, smaller destination x with intermediate wrist positions above the line joining the departure and arrival wrist positions means D, not B; B requires the lower arc. Do not use the location-based fallback when the demonstration supplies this evidence. Retain the existing rule for later decisions: remove the one completed leading traversal from carried remaining_path and select the new leading letter, irrespective of the preceding command.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "The other initial-decision failure likewise selected B for a demonstrated smaller-x, upper-arc traversal, but reported no missing information or rule. It does not justify adding a memory field or changing annotation values or memory-update timing. The existing single ordered remaining_path already preserves the full route, including repeated visits and reversals, and the existing decoding instruction already maps this arc to D. The general initial-choice clarification addresses both failures; no separate case-specific rule is warranted."
+ },
+ "critiques": [
+  {
+   "step": [
+    75,
+    "exec",
+    200
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Make explicit that the observed demonstration takes precedence over the episode-specific initial-subgoal examples, which cannot be matched without an episode ID. Here the first traversal goes from wrist [86, 214] to [79, 173] via [67, 200] and [66, 187]: decreasing x on an image-upper arc means D, not B. Select D from that decoded first letter.",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    350
+   ],
+   "memory_in": "remaining_path=",
+   "answered": "B: move to the nearest right target by circling around the stick clockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

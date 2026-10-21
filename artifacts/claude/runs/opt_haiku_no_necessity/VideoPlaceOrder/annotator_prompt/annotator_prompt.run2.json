@@ -1,0 +1,81 @@
+{
+ "task": "VideoPlaceOrder",
+ "run": 2,
+ "ablate": "necessity",
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    23,
+    39,
+    51,
+    66,
+    87
+   ],
+   "verified_of_all": 0.6,
+   "subgoal_verified": 0.6
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    63,
+    84,
+    85,
+    93
+   ],
+   "verified_of_all": 0.7,
+   "subgoal_verified": 0.9
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    39,
+    57,
+    73,
+    92
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    17,
+    31,
+    77,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    23,
+    40,
+    54,
+    59,
+    84
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "stage": "optimized",
+ "fields": [
+  {
+   "name": "demo_placements",
+   "description": "Ordered list of target positions, in [y, x], on which the goal-named cube (the colour named in the goal instruction) was released during the DEMONSTRATION, in the order the releases happened. A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before, and it produces an entry only when it ends a real carry: a run of frames in which the cube is labelled held with the gripper raised (height about 0.15) and the cube's position moves away from the spot where it last rested, followed by the gripper lowering to table height and the fingers opening. A frame with the fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (typically right after a button press where the fingers were 0% open) and produces no entry; a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between produces no entry either. Every raised carry that ends with the cube resting within a few pixels of a target produces exactly one entry, no matter what happens afterwards: the cube being re-grasped off that target later (which always happens before the final centre carry, and may also happen before a carry to another target) never cancels the entry. Sanity check: the number of entries equals the number of raised carries of the cube minus one (the centre carry), and is at least the ordinal the goal names. The entry is the position of the target closest to the cube's resting spot right after the release, copied to the pixel from the STABLE pre-shuffle target set: the four target positions exactly as listed in the demonstration frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]). Every entry is one of those four positions, to the pixel, never a position read from a release frame, an opening frame or a parked frame, even if it differs by only a pixel or two. The opening frames, the release frames themselves and the final parked frames serve only to tell, by nearest match within a few pixels, which of the four stable targets received the cube; the value written is always the position from that pre-release list. Do NOT read positions from the last demo frames: while the gripper is parked raised at about [54, 128], height 0.200, at the end of the demonstration, two targets may slide to new positions over a few frames (positions appear that match no earlier target), usually swapping places, and the final frames show the shuffled layout. Match the cube's resting spot after the release against the stable set even if the target under the cube is missing from the release frame because the gripper hides it. Do NOT include the demo's final release near the image centre (cube left around [82, 127], no target there), do not include the cube's starting spot, do not include button presses, and do not include a release that is onto the same target the cube was just lifted from if no target lies under the cube. Written at step #1 (the only step that shows the demonstration) and copied unchanged at every later step. Empty list only if no demonstration was shown. e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then a re-grasp from [97, 88] into the centre carry: [[107, 166], [125, 119], [97, 88]]"
+  },
+  {
+   "name": "goal_target",
+   "description": "The position, in [y, x], AT THE START OF EXECUTION of the target that the goal instruction's ordinal picks out of demo_placements ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4), followed through the end-of-demonstration shuffle. Procedure: take the ordinal entry (its pre-shuffle position). Look at the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open). Take the parked frames one at a time. Only if EVERY parked frame lists the same four positions as the stable set (within a few pixels) did no target move: goal_target is then the target listed in the first execution frame nearest the ordinal entry. If ANY single parked frame lists a position that matches no stable target within a few pixels, the two stable targets absent from that frame are the movers and they exchange places, each ending where the other began. This holds even when the last parked frames and the first execution frame again list four positions within a few pixels of the stable set: a swap ends with the movers standing on each other's original spots, so an unchanged-looking final layout is not evidence that nothing moved. If the ordinal entry is one of the movers, goal_target is the target listed in the first execution frame nearest the OTHER mover's stable position; if it is not a mover, goal_target is the first execution frame's target nearest the ordinal entry. Do not track targets frame by frame through the parked frames; their paths cross and nearest-position tracking swaps the tracks. The value written is the position as listed in the first execution frame, to the pixel. Written at step #1 from the demonstration and copied unchanged afterwards. unknown before the demonstration has been seen. e.g. entry 3 is [143, 116]; one parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116], though the final frames list [116, 100] and [141, 117] again; the movers are [116, 101] and [143, 116]; the first execution frame lists [116, 100] nearest the other mover's stable spot; goal_target = [116, 100]"
+  }
+ ]
+}

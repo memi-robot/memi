@@ -1,0 +1,82 @@
+{
+ "task": "VideoPlaceOrder",
+ "run": 2,
+ "ablate": "necessity",
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    23,
+    39,
+    51,
+    66,
+    87
+   ],
+   "verified_of_all": 0.6,
+   "subgoal_verified": 0.6
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    63,
+    84,
+    85,
+    93
+   ],
+   "verified_of_all": 0.7,
+   "subgoal_verified": 0.9
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    39,
+    57,
+    73,
+    92
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    17,
+    31,
+    77,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    23,
+    40,
+    54,
+    59,
+    84
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: The held/not-held test is the finger opening in the scene at this decision step, not the cube line (the cube line may still report its old table position without a 'held' label while the cube is in fact held). 1. If the fingers are ~100% open (nothing held): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the fingers are ~46% open with the gripper raised (height around 0.15), the goal-named cube is held, regardless of whether the cube line carries a 'held' label or reports a stale table position (the execution steps just shown will show the fingers closing from 100% to ~46% at table height on the cube and not reopening): choose B, drop onto, pointing at goal_target from memory, which is already the target's execution-time position; the drop point is goal_target: look only for a target listed within a few pixels of goal_target in the scene at this decision step and point at that listed position, or at goal_target itself if no target is listed there at the moment (the list jitters under the passing gripper); every other target in the scene, however it shifts, vanishes or reappears between execution frames, is irrelevant and must never be chosen. If goal_target is unknown but demo_placements is non-empty, use the entry the goal ordinal selects (first=1, second=2, third=3, fourth=4) only if a target currently stands within a few pixels of it; otherwise fall to rule 4. 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but memory is empty and no list can be derived, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+ "fields": [
+  {
+   "name": "demo_placements",
+   "description": "At the first decision step (the one that shows DEMONSTRATION STEPS and the memory is empty), scan the demo frames for the cube whose colour the goal instruction names, and write the ordered list of target positions, in [y, x], where it was released: first find the STABLE target set: the four target positions listed in the demo frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]); every entry you write is one of those four positions, to the pixel. A release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper', and it counts only if it ends a real carry: frames labelled held with the gripper raised (height about 0.15) and the cube moving away from where it last rested, then the gripper lowered to table height and the fingers opening. A frame with fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (it happens right after a button press, where the fingers were 0% open) and is NOT a placement; a grasp that lifts the cube and opens again on the very same target with no raised travel elsewhere in between is NOT a placement either. Every raised carry that ends with the cube resting within a few pixels of a stable target IS one placement, written in order, no matter what happens next: the cube being picked up again from that target later never removes the entry; the last placement is ALWAYS followed by such a re-grasp, because the demo ends by lifting the cube off its last target and carrying it to the centre, and that centre carry is the only carry you skip. Check before writing: entries = raised carries of the cube minus one, and at least the ordinal the goal names ('third' needs three entries). For each counted release decide by nearest match within a few pixels which stable target the cube now rests on, even if that target is missing from the release frame itself because the gripper hides it, and WRITE that target's position exactly as it is listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens). Never write values from the opening frames, from release frames, or from the final parked frames, even if they differ from the stable position by only a pixel or two; a target never gets two entries for one carry. Do NOT read target positions from the last demo frames: near the end of the demo, while the gripper is parked raised at about [54, 128], height 0.200, two targets may slide to new positions over a few frames (positions appear that match no earlier target) and the final frames show the shuffled layout. Skip the demo's final release near the image centre (cube left around [82, 127] with no target there), skip the cube's starting spot, and skip button presses (fingers 0% open, no cube held). At every later step, copy the carried-in value unchanged. Empty list if no demonstration frames are shown and nothing is carried in. e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then a re-grasp from [97, 88] into the centre carry: [[107, 166], [125, 119], [97, 88]]"
+  },
+  {
+   "name": "goal_target",
+   "description": "At the first decision step, after writing demo_placements, take the entry of demo_placements the goal ordinal selects ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4). Then scan the parked frames at the end of the demonstration (gripper at about [54, 128], height 0.200, fingers 100% open, lasting many frames). Check each parked frame one at a time. Only if EVERY parked frame lists the same four positions as the stable set within a few pixels did nothing move: then write the target listed in the scene at the start of execution nearest the ordinal entry. If ANY single parked frame lists a position matching no stable target within a few pixels, the two stable targets absent from that frame are the movers, and they have swapped places, each ending at the other's original spot. Apply this even if the last parked frames and the scene at the start of execution again list four positions within a few pixels of the stable set: a swap ends with the movers on each other's old spots, so an unchanged-looking final layout is NOT evidence that nothing moved. If the ordinal entry is one of the movers, write the target listed in the scene at the start of execution nearest the OTHER mover's stable position; otherwise write the target nearest the ordinal entry. Do not track targets frame by frame through the parked frames. Write the position as listed in the execution scene, as a [y, x] point. This is the point to drop onto later. At every later step copy the carried-in value unchanged, to the pixel: a target drifting, disappearing or reappearing a few pixels away in execution frames because the gripper passes over it is never a reason to rewrite goal_target. unknown if demo_placements is empty. e.g. entry 3 is [143, 116]; one middle parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116], though the final frames look like the stable set again; the other mover is [116, 101]; the execution scene lists [116, 100]; goal_target = [116, 100]"
+  }
+ ],
+ "stage": "optimized"
+}

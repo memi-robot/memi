@@ -1,0 +1,315 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "buttons_pressed",
+  "green_container",
+  "red_container",
+  "blue_container",
+  "picked_colors"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  17,
+  27,
+  78,
+  79
+ ],
+ "scored": 21,
+ "failed": 14,
+ "subgoal_wrong": 8,
+ "memory_wrong": 9,
+ "subgoal_verified": 0.6190476190476191,
+ "memory_verified": 0.5714285714285714,
+ "reads": {
+  "buttons_pressed": 16,
+  "green_container": 7,
+  "red_container": 8,
+  "blue_container": 8,
+  "picked_colors": 4
+ },
+ "field_errors": {
+  "buttons_pressed": {
+   "in": 8,
+   "sole": 5
+  },
+  "green_container": {
+   "in": 0,
+   "sole": 0
+  },
+  "red_container": {
+   "in": 4,
+   "sole": 1
+  },
+  "blue_container": {
+   "in": 0,
+   "sole": 0
+  },
+  "picked_colors": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.6666666666666666,
+ "verified_of_all": 0.3333333333333333,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 8,
+ "point_wrong": 0,
+ "decisions": 21,
+ "critique": "field buttons_pressed, ANNOTATOR PROMPT\n  Situation: in every episode the goal asks for both buttons first, then container pick-ups. The step after A shows the gripper descending onto the first button (either a frame saying the button 'is pressed down', or the gripper within a few pixels of the button's [y, x] at height below about 0.06 with fingers closed); the step after B shows the same on the other button. The recorded subgoal at the step showing the second press is already C at the first named color's container. But the annotated count was filled one step late: 0 at the step that shows the first press, 1 at the step that shows the second press, 2 only at the step after that. So the policy, following its instruction, wrote 1 at the step showing the first press and the record said 0 (PREDICTABILITY), and at the step showing the second press the annotated 1 could not justify C under the subgoal rules that need 2 (SUFFICIENCY). The phrase 'at the step after the first such frame' was read as 'the step after the step containing that frame'. Change: buttons_pressed holds the number of button presses whose execution frames have been shown at or before this step. It changes value at the step whose own execution frames show a press, not at the next step. 0 at the first step (no execution frames); 1 at the step whose frames show the first press (normally the step right after A); 2 at the step whose frames show the second press (normally the step right after B), and 2 at every later step. A press is a frame saying a button 'is pressed down', or the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; the gripper lowering onto a container (height around 0.1, 20 px or more from any button, button merely missing from the list because it is occluded) is not a press. Safety net: at any step whose frames show a container 'held in the gripper' or the gripper lowered onto a container, the value is 2 whatever the earlier count. e.g. 2\n\nfield red_container, ANNOTATOR PROMPT\n  Situation: after the red container had been lifted and the red cube seen beneath it, the next step showed the held container being lowered back onto the cube, with the cube visible in an early frame and only containers in the last frames; the policy chained containers and wrote the set-down container's position, or at the lifting step wrote the held container's own position, instead of the cube's last visible position. The record kept the cube position. PREDICTABILITY. Change: no new content, but precedence must be stated first for every color field: if the color is already in picked_colors, or any frame of this step shows that cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible and the container chain is not run for that color at this step or any later step; the held container's position and the position of a container set back down on the cube are never written. e.g. [101, 165]\n\nfield buttons_pressed, POLICY PROMPT\n  The policy's count was right and the record was late; now the record counts at the step whose frames show the press, so the instruction stays as a per-step increment but must be stated plainly with the press test and the exclusion: write 0 at the first step (empty memory, no execution frames). Otherwise write the carried count plus 1 if any execution frame of this step says a button 'is pressed down' OR shows the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; a frame with the gripper over a container (height around 0.1, 20 px or more from the nearest button) is not a press even if a button is missing from the list in that frame. Each step shows at most one press, so the count never rises by more than 1. If any frame of this step shows a container 'held in the gripper' or the gripper lowered onto a container with fingers closing, write 2 regardless of the carried count, because both presses precede any pick-up. e.g. 2\n\nfield green_container, POLICY PROMPT\n  Put the cube rule first, before the chain procedure, for all three color fields: if green is already in the carried picked_colors, or any frame of this step shows the green cube itself (its container lifted or 'held in the gripper'), do not chain containers for green; write the cube's position from the last frame in which the cube is visible, and keep that position at every later step even when a container is set down over it and only containers are listed in the last frames. Never write the position of a container 'held in the gripper'. Only then, for colors not yet exposed, run the chain exactly as described. e.g. [105, 161]\n\nfield red_container, POLICY PROMPT\n  Same reordering as green_container: the exposed-cube rule comes first and freezes the field. If red is in the carried picked_colors or the red cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube; otherwise chain as before. e.g. [101, 165]\n\nfield blue_container, POLICY PROMPT\n  Same reordering as green_container: the exposed-cube rule comes first and freezes the field. If blue is in the carried picked_colors or the blue cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube; otherwise chain as before. e.g. [102, 79]\n\nthe policy prompt for subgoal\n  The ordering of rules sent the policy wrong twice over. First, rule 2 (buttons_pressed is 1 → B) stood before rule 3 (container held → D), so at the step where the container had just been lifted with the cube visible beneath it, a count of 1 produced B instead of D. The held-container rule must be the first rule after the first-step rule: if the scene at this decision step shows a container 'held in the gripper', answer D whatever buttons_pressed reads. Second, with the count now written at the step whose frames show the press, the button rules read: if buttons_pressed after this step's update is 1, answer B; if it is 2 and nothing is held, go to the pick-up rules (C at the first named color's container when picked_colors is empty, C at the second named color's container when picked_colors has one entry and the goal names a second cube, D when every named cube is picked). Remove the sentence saying that at any step with execution frames a count of 0 or 1 means B; a count of 0 at a step with execution frames can no longer occur, and 1 means exactly one press shown so far. The point for C stays the color's container value written at this step. The fallback stays as it is.\n\nrefused\n  Several steps asked for new machinery to repair a 'stale' carried count: a list of pressed button positions, a rule that any step with execution frames implies A's press even if unseen, and a rule that a press on a button different from the first one means both are done. All of these were reactions to the one-step lag in how the count was annotated; once the count is written at the step whose frames show the press, the carried value is 1 after the first press and 2 after the second, and the plain count settles every step in the minibatch. A list of button positions would duplicate the count and is not needed. One step claimed a press should be detected when a button disappears from the list while the gripper is lowered about 20 px away at height around 0.1 with fingers closed; in that episode the gripper was closing on a container next to the button, which was merely occluded, and the real second press had been shown in the previous step. That heuristic would count false presses and is not passed on; the opposite exclusion is added instead. Suggestions that buttons_pressed should be incremented one step later or only at the second press are dropped: the record, not the policy, was late, and the rule is changed to match the policy's reading.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The ordering of rules sent the policy wrong twice over. First, rule 2 (buttons_pressed is 1 → B) stood before rule 3 (container held → D), so at the step where the container had just been lifted with the cube visible beneath it, a count of 1 produced B instead of D. The held-container rule must be the first rule after the first-step rule: if the scene at this decision step shows a container 'held in the gripper', answer D whatever buttons_pressed reads. Second, with the count now written at the step whose frames show the press, the button rules read: if buttons_pressed after this step's update is 1, answer B; if it is 2 and nothing is held, go to the pick-up rules (C at the first named color's container when picked_colors is empty, C at the second named color's container when picked_colors has one entry and the goal names a second cube, D when every named cube is picked). Remove the sentence saying that at any step with execution frames a count of 0 or 1 means B; a count of 0 at a step with execution frames can no longer occur, and 1 means exactly one press shown so far. The point for C stays the color's container value written at this step. The fallback stays as it is.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "buttons_pressed",
+    "description": "The policy's count was right and the record was late; now the record counts at the step whose frames show the press, so the instruction stays as a per-step increment but must be stated plainly with the press test and the exclusion: write 0 at the first step (empty memory, no execution frames). Otherwise write the carried count plus 1 if any execution frame of this step says a button 'is pressed down' OR shows the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; a frame with the gripper over a container (height around 0.1, 20 px or more from the nearest button) is not a press even if a button is missing from the list in that frame. Each step shows at most one press, so the count never rises by more than 1. If any frame of this step shows a container 'held in the gripper' or the gripper lowered onto a container with fingers closing, write 2 regardless of the carried count, because both presses precede any pick-up. e.g. 2"
+   },
+   {
+    "field": "green_container",
+    "description": "Put the cube rule first, before the chain procedure, for all three color fields: if green is already in the carried picked_colors, or any frame of this step shows the green cube itself (its container lifted or 'held in the gripper'), do not chain containers for green; write the cube's position from the last frame in which the cube is visible, and keep that position at every later step even when a container is set down over it and only containers are listed in the last frames. Never write the position of a container 'held in the gripper'. Only then, for colors not yet exposed, run the chain exactly as described. e.g. [105, 161]"
+   },
+   {
+    "field": "red_container",
+    "description": "Same reordering as green_container: the exposed-cube rule comes first and freezes the field. If red is in the carried picked_colors or the red cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube; otherwise chain as before. e.g. [101, 165]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same reordering as green_container: the exposed-cube rule comes first and freezes the field. If blue is in the carried picked_colors or the blue cube is visible in any frame of this step, write the cube's last visible position and ignore every container, including the held one and the one lowered back onto the cube; otherwise chain as before. e.g. [102, 79]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "buttons_pressed",
+    "description": "Situation: in every episode the goal asks for both buttons first, then container pick-ups. The step after A shows the gripper descending onto the first button (either a frame saying the button 'is pressed down', or the gripper within a few pixels of the button's [y, x] at height below about 0.06 with fingers closed); the step after B shows the same on the other button. The recorded subgoal at the step showing the second press is already C at the first named color's container. But the annotated count was filled one step late: 0 at the step that shows the first press, 1 at the step that shows the second press, 2 only at the step after that. So the policy, following its instruction, wrote 1 at the step showing the first press and the record said 0 (PREDICTABILITY), and at the step showing the second press the annotated 1 could not justify C under the subgoal rules that need 2 (SUFFICIENCY). The phrase 'at the step after the first such frame' was read as 'the step after the step containing that frame'. Change: buttons_pressed holds the number of button presses whose execution frames have been shown at or before this step. It changes value at the step whose own execution frames show a press, not at the next step. 0 at the first step (no execution frames); 1 at the step whose frames show the first press (normally the step right after A); 2 at the step whose frames show the second press (normally the step right after B), and 2 at every later step. A press is a frame saying a button 'is pressed down', or the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed; the gripper lowering onto a container (height around 0.1, 20 px or more from any button, button merely missing from the list because it is occluded) is not a press. Safety net: at any step whose frames show a container 'held in the gripper' or the gripper lowered onto a container, the value is 2 whatever the earlier count. e.g. 2"
+   },
+   {
+    "field": "red_container",
+    "description": "Situation: after the red container had been lifted and the red cube seen beneath it, the next step showed the held container being lowered back onto the cube, with the cube visible in an early frame and only containers in the last frames; the policy chained containers and wrote the set-down container's position, or at the lifting step wrote the held container's own position, instead of the cube's last visible position. The record kept the cube position. PREDICTABILITY. Change: no new content, but precedence must be stated first for every color field: if the color is already in picked_colors, or any frame of this step shows that cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible and the container chain is not run for that color at this step or any later step; the held container's position and the position of a container set back down on the cube are never written. e.g. [101, 165]"
+   }
+  ],
+  "refused": "Several steps asked for new machinery to repair a 'stale' carried count: a list of pressed button positions, a rule that any step with execution frames implies A's press even if unseen, and a rule that a press on a button different from the first one means both are done. All of these were reactions to the one-step lag in how the count was annotated; once the count is written at the step whose frames show the press, the carried value is 1 after the first press and 2 after the second, and the plain count settles every step in the minibatch. A list of button positions would duplicate the count and is not needed. One step claimed a press should be detected when a button disappears from the list while the gripper is lowered about 20 px away at height around 0.1 with fingers closed; in that episode the gripper was closing on a container next to the button, which was merely occluded, and the real second press had been shown in the previous step. That heuristic would count false presses and is not passed on; the opposite exclusion is added instead. Suggestions that buttons_pressed should be incremented one step later or only at the second press are dropped: the record, not the policy, was late, and the rule is changed to match the policy's reading.",
+  "untraced": "the policy prompt edit answers 29% of what the policy reported (147 of 206 reported words appear nowhere in it): it may be an account of the episodes rather than of the failures"
+ },
+ "critiques": [
+  {
+   "step": [
+    1,
+    "exec",
+    119
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[93, 93]; red_container=[146, 132]; blue_container=[105, 161]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to add 1 when any execution frame shows the gripper at a button's [y, x] at height below 0.06 with fingers closed; t=80 shows exactly that (gripper [62, 148], height 0.027, fingers 0% open, button at [65, 147]), so I wrote 1, yet the recorded value is 0. The instruction needs to say what actually counts as a press for buttons_pressed at this step: either that the gripper-lowered-on-button frames do NOT count and only an explicit 'is pressed down' label (or a button changing state) increments the field, or that the increment is deferred to the next decision step; as written it contradicts the recorded value.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    1,
+    "exec",
+    218
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[90, 92]; red_container=[102, 160]; blue_container=[145, 133]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "C: pick up the container at [99, 164]",
+   "missing_from_memory": "buttons_pressed carried in as 0 although the first button (the one at [63, 147], near which the gripper starts at t=128) had already been pressed in the previous step; it should have carried 1, so that this step's press of the button at [66, 99] made the count 2. The recorded memory of 1 at this step is likewise one short of the two presses the recorded subgoal C presupposes.",
+   "missing_from_policy_prompt_for_memory": "It did not say how to recover a wrong carried count: when the frames of a step show a press on one button while the gripper enters the step hovering over or retreating from the OTHER button (first frame at height ~0.15 within a few px in x of it), both buttons have been pressed and buttons_pressed must be written 2 regardless of the carried value; and the first step must write 1 if its frames already show the first press.",
+   "missing_from_policy_prompt_for_subgoal": "It did not say that a step whose frames show a button press while the gripper started the step at the other button is the completion of the second press, so the next subgoal is C at the remembered container of the first color named in the goal (red_container), even if buttons_pressed after the update reads only 1; rule 2 sent me to B on a count that was stale.",
+   "missing": "buttons_pressed carried in as 0 although the first button (the one at [63, 147], near which the gripper starts at t=128) had already been pressed in the previous step; it should have carried 1, so that this step's press of the button at [66, 99] made the count 2. The recorded memory of 1 at this step is likewise one short of the two presses the recorded subgoal C presupposes."
+  },
+  {
+   "step": [
+    1,
+    "exec",
+    384
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[90, 92]; red_container=[102, 160]; blue_container=[145, 133]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "D: put down the container",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The press-detection criterion did not fit this step: the press at t=304 shows the gripper at [87, 168], height 0.106, fingers 0% open, roughly 20 px from the button at [63, 147], and the button itself VANISHES from the button list at that frame (and again at t=352 while the gripper stays low beside it). The instruction should say that a button dropping out of the listed buttons while the gripper is lowered near it (within ~25 px, height below ~0.12) with fingers closing counts as a press, and that a step can contain both a press and a later pick-up, so count the press even when the step ends with a container held.",
+   "missing_from_policy_prompt_for_subgoal": "Rule order is wrong for this step: rule 2 (buttons_pressed is 1 -> B) fired before rule 3 (container held -> D). It should state that a container 'held in the gripper' at the final scene always takes precedence and means D, regardless of the button count, and that execution frames showing the gripper descending onto a container with a cube exposed beneath it prove the button phase is finished (set buttons_pressed=2 if still 1 before applying the rules).",
+   "missing": ""
+  },
+  {
+   "step": [
+    17,
+    "exec",
+    113
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[97, 172]; red_container=[117, 73]; blue_container=[90, 137]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to write carried-in count plus 1 because t=80 shows 'button at [63, 153] is pressed down' (and the gripper at the button at height 0.024 with fingers closed), so I wrote buttons_pressed=1, but the recorded value is 0. Either the annotator prompt counts a press at a different moment (e.g. only after the button stays shown as pressed at the decision-step scene, or only when the second button is pressed, or the count is incremented one step later) or the recorded 0 is wrong; the instruction and the rule disagree on when the first press is counted, and the instruction must state the same moment as the rule.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    17,
+    "exec",
+    215
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[87, 137]; red_container=[114, 72]; blue_container=[95, 173]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "C: pick up the container at [83, 138]",
+   "missing_from_memory": "That the first button ([61, 154]) had already been pressed before this step: the carried-in buttons_pressed=0 although step A had already executed, so the press shown in these frames (gripper at [63, 100], height 0.027, fingers closed) could not be recognized as the second press.",
+   "missing_from_policy_prompt_for_memory": "Whether buttons_pressed counts the press shown in this step's frames or only presses completed before this step; the recorded value stays 1 after a visible second press, so the counting convention (and why the carried value after A was 0 rather than 1) is unclear.",
+   "missing_from_policy_prompt_for_subgoal": "A rule stating that when the step's execution frames show a button press and the carried memory already implies A was done (any step with execution frames) and this press is on a different button than the first, both buttons are done and the answer is C pointing at the green_container memory position; rule 2 sends every buttons_pressed=1 step to B, which repeats B after the second press has just been shown.",
+   "missing": "That the first button ([61, 154]) had already been pressed before this step: the carried-in buttons_pressed=0 although step A had already executed, so the press shown in these frames (gripper at [63, 100], height 0.027, fingers closed) could not be recognized as the second press."
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    115
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[132, 171]; red_container=[96, 169]; blue_container=[98, 120]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The buttons_pressed rule told me to add 1 when any frame shows the gripper at a button's [y, x] at height below about 0.06 with fingers closed; t=80 shows gripper at [62, 147], height 0.033, fingers 0% open, on the button at [64, 146], so I wrote 1. The recorded value is 0, so the rule as written contradicts the record: it should state whether the gripper-lowered-onto-a-button heuristic counts at all, or whether only a frame that literally says a button 'is pressed down' increments the count (these frames never say that), or whether the count stays 0 at the step right after A regardless of what the execution frames show.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    205
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[94, 169]; red_container=[130, 173]; blue_container=[95, 120]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "C: pick up the container at [93, 167]",
+   "missing_from_memory": "The carried-in count buttons_pressed=0 was stale: the first button (the one at [64, 146]) had already been pressed by subgoal A before this step, so the carried value should have been 1, and this step's frames showing the gripper pressing the other button at [67, 104] make it 2, which is what rule 4 needs to answer C at the red container. Nothing in the memory said which button had already been pressed, so the press at [67, 104] shown here could not be told apart from the first press.",
+   "missing_from_policy_prompt_for_memory": "buttons_pressed should not depend on a frame literally saying 'is pressed down' or on a closed-finger low gripper having been visible in the previous step; it should say that A's press is counted the moment any execution frames exist (the carried 0 at a step with execution frames means the first press was simply not shown and must be counted as 1), and then add this step's press, so the value written here is 2, not 1. A field listing the [y, x] of buttons already pressed (e.g. [[64,146]] then [[64,146],[67,104]]) would make the count unambiguous.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 2 sends me to B whenever buttons_pressed is 1 after the update, but at this step the frames show the gripper descending to [67, 104] height 0.025 and the button there 'pressed down', i.e. a full press executed by B, while the first press was done by A earlier. The instruction should say: a step whose frames show a press at a button other than the one A pressed (or any press when the carried-in memory already came from a prior execution step) completes the second press, so treat both buttons as pressed and apply rule 4 (C at red_container=[96, 165]) instead of answering B again.",
+   "missing": "The carried-in count buttons_pressed=0 was stale: the first button (the one at [64, 146]) had already been pressed by subgoal A before this step, so the carried value should have been 1, and this step's frames showing the gripper pressing the other button at [67, 104] make it 2, which is what rule 4 needs to answer C at the red container. Nothing in the memory said which button had already been pressed, so the press at [67, 104] shown here could not be told apart from the first press."
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    300
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[127, 179]; red_container=[96, 165]; blue_container=[119, 113]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "D: put down the container",
+   "missing_from_memory": "buttons_pressed carried in as 1 although both presses had already been executed before this step's frames (the second press ended the previous step and the robot has since gone on to pick a container); it should have carried 2.",
+   "missing_from_policy_prompt_for_memory": "The increment rule only fires on a frame showing a button 'is pressed down' or the gripper lowered onto a button; here no frame shows the press (frames start with the gripper rising away from the button at [67,104] and then show a container pick). It should say: if the carried count is 1 and this step's frames show the robot executing something after a button press (gripper moving away from the second button, lowering onto a container, or a container 'held in the gripper'), write 2, since a press that ended the previous command may not appear in the frames shown.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 2 (buttons_pressed is 1 -> B) is applied before rule 3 (container held -> D), so with a stale count of 1 and a container visibly held in the gripper it sent me to B. It should state that a container 'held in the gripper' at the decision step always means D regardless of buttons_pressed, and that frames showing a container pick imply both buttons are already pressed.",
+   "missing": "buttons_pressed carried in as 1 although both presses had already been executed before this step's frames (the second press ended the previous step and the robot has since gone on to pick a container); it should have carried 2."
+  },
+  {
+   "step": [
+    27,
+    "exec",
+    348
+   ],
+   "memory_in": "buttons_pressed=2; green_container=[130, 173]; red_container=[96, 169]; blue_container=[119, 113]; picked_colors=[\"red\"]",
+   "answered": "C: pick up the container at [130, 173]",
+   "recorded": "C: pick up the container at [128, 176]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction did state that once a cube is visible its last visible position is written and kept even after a container is lowered back over it, but that sentence sits at the end of a long chain procedure and is only stated for green; for red it is stated only as a trailing clause. It should say up front, as the first rule with precedence over the container chain: if this step's frames show the red cube itself (here at t=304 [96, 169] and t=320 [101, 165], with the carried-in container 'held in the gripper'), do NOT chain containers for red; write the cube's position from the last frame it appears in, [101, 165], and ignore the container that is set down on it in later frames ([91, 173], [93, 172], [92, 170]). Once a color is in picked_colors its field is frozen at the cube position and never rewritten from containers again.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    78,
+    "exec",
+    115
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[108, 159]; red_container=[93, 113]; blue_container=[130, 196]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The buttons_pressed instruction told me to add 1 whenever a frame in this step says a button 'is pressed down' or shows the gripper at a button at low height with closed fingers; the frame at t=80 ('button at [64, 150] is pressed down', gripper at [62, 152], height 0.025, fingers 2% open) satisfied that exactly, so I wrote 1, yet the recorded value stays 0. The instruction does not say at which moment the count actually increments in the annotation: evidently not at the step whose execution frames show the first press, but at some later moment (e.g. only when a later step shows the second press, or only when the count is read for choosing C). It must state the exact increment moment the annotation uses, and the subgoal instruction's rule 2 ('if buttons_pressed is 1: B') must be made consistent with it.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    78,
+    "exec",
+    208
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[105, 160]; red_container=[122, 123]; blue_container=[128, 199]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "C: pick up the container at [103, 162]",
+   "missing_from_memory": "Which buttons have already been pressed. The carried-in count was 0 although button A had already been executed (the carried container fields were already rewritten, proving a prior execution step). The memory should have said the first button ([61, 150]) was already pressed, so that this step's press of [65, 106] made it the second and final one. A list of pressed button positions, e.g. [[61, 150]], would have settled it.",
+   "missing_from_policy_prompt_for_memory": "It never says how to count a press when no frame prints 'is pressed down' and the gripper only descends toward the button, so the first press (step before this one) was left uncounted and the count arrived at 0 after A had run. It should say: any execution step that follows A (first step with frames) counts as one press regardless of what frames show, or better keep a list of the button positions pressed, appending the button the gripper descended on this step.",
+   "missing_from_policy_prompt_for_subgoal": "It routes buttons_pressed=1 to B even when this step's own frames show the press of a button, and gives no rule for 'this step shows a press and the carried memory already came from an earlier execution step'. It should say: if this step's frames show a button being pressed (gripper at a button at low height / 'is pressed down') and the carried-in memory already holds rewritten container positions (so A ran at an earlier step), both buttons are done: answer C pointing at the goal color's container value written at this step ([105, 160] for blue here), not B.",
+   "missing": "Which buttons have already been pressed. The carried-in count was 0 although button A had already been executed (the carried container fields were already rewritten, proving a prior execution step). The memory should have said the first button ([61, 150]) was already pressed, so that this step's press of [65, 106] made it the second and final one. A list of pressed button positions, e.g. [[61, 150]], would have settled it."
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    110
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[98, 97]; red_container=[135, 181]; blue_container=[108, 153]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction told me to add 1 to buttons_pressed when any execution frame says a button 'is pressed down' (t=80 shows 'button at [69, 148] is pressed down' with the gripper at [67, 150], height 0.025, fingers closed), so it yields 1 here, yet the recorded value is 0. The instruction and the annotator prompt count presses at different moments: it needs to state the moment the annotation actually uses -- e.g. that buttons_pressed stays 0 at the step that shows the first press being executed and only counts presses visible as 'pressed down' in the scene at the decision step itself, or is incremented one step later -- so that the value written here is 0 as recorded. As written, following it exactly produces the mismatch.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    209
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[96, 96]; red_container=[108, 153]; blue_container=[130, 183]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "C: pick up the container at [131, 186]",
+   "missing_from_memory": "The carried buttons_pressed=0 did not record that the first button (the one at [66, 149]) had already been pressed at the previous step; this step's frames show the press of the button at [63, 100], which was the second press, so both buttons were done and the next subgoal was C, not B.",
+   "missing_from_policy_prompt_for_memory": "It did not say that buttons_pressed can be stale at 0 when the carried container fields have already been snapped to container positions (a non-first step), nor how the count should be reconciled: a step whose frames show a press and whose carried memory is clearly past the first step should count as reaching the press after the first, i.e. the recorded value 1 here stands for 'one press shown this step' while the subgoal treats both buttons as done.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 2 ('if buttons_pressed is 1: B') sent me to B, but the recorded answer is C with buttons_pressed=1. The instruction should say that when the step shows execution frames with a button being pressed down and the carried memory is not the empty first-step memory (containers already snapped to positions), the shown press is the second button, both buttons are done, and the answer is C pointing at the first named color's container (red_container=[133, 183] after this step's chain), regardless of the buttons_pressed count reading 1.",
+   "missing": "The carried buttons_pressed=0 did not record that the first button (the one at [66, 149]) had already been pressed at the previous step; this step's frames show the press of the button at [63, 100], which was the second press, so both buttons were done and the next subgoal was C, not B."
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    332
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[96, 96]; red_container=[133, 183]; blue_container=[106, 154]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "D: put down the container",
+   "missing_from_memory": "buttons_pressed carried in as 1 although both buttons had already been pressed before this step; none of this step's frames show a press (the gripper starts at [30, 98] height 0.151 away from either button and goes straight to lift the container), so the second press could not be recovered from what this step shows and the count should have been carried in as 2.",
+   "missing_from_policy_prompt_for_memory": "It should say that frames showing the robot lowering onto and lifting a container (a container 'held in the gripper') imply both buttons are done, so buttons_pressed must be written 2 regardless of the carried count. It should also state plainly that when a container is 'held in the gripper' and the cube is visible, <color>_container takes the cube's last visible position ([136, 180]), never the held container's position ([109, 205]).",
+   "missing_from_policy_prompt_for_subgoal": "The held-container rule (answer D) must come before the buttons_pressed rules: a scene showing a container 'held in the gripper' means D regardless of what buttons_pressed reads, since rule 2 (buttons_pressed is 1 -> B) fired first and produced B here.",
+   "missing": "buttons_pressed carried in as 1 although both buttons had already been pressed before this step; none of this step's frames show a press (the gripper starts at [30, 98] height 0.151 away from either button and goes straight to lift the container), so the second press could not be recovered from what this step shows and the count should have been carried in as 2."
+  }
+ ]
+}

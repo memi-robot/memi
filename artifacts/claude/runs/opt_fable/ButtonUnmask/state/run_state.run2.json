@@ -1,0 +1,462 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "ButtonUnmask",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   24,
+   45,
+   71,
+   80,
+   85
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record goal_cube_positions: the [y, x] of each cube the goal names, in the goal's order. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target position is the entry of goal_cube_positions at index picks_done (first entry when picks_done is 0, second entry when picks_done is 1). Point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded position. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last entry of goal_cube_positions. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the entry of goal_cube_positions at index picks_done (the last entry if picks_done is beyond the list); if no containers are visible, choose A.",
+  "fields": [
+   {
+    "name": "picks_done",
+    "description": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1",
+    "annotation": "Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1"
+   },
+   {
+    "name": "goal_cube_positions",
+    "description": "Ordered list of the [y, x] positions of the cubes the goal instruction names, in the goal's order. If this step shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal, take each cube it names in order, and write that cube's [y, x] as shown; skip cubes the goal does not name. Otherwise copy the carried-in list unchanged; never overwrite an entry from a cube briefly exposed under a lifted container. e.g. [[78, 157], [106, 105]] when the goal names blue then red.",
+    "annotation": "Ordered list of the [y, x] positions of the cubes named in the goal instruction, in the order the goal names them, as those cubes were seen at step #1 (t=0) while loose and before any container has come down. One entry per cube the goal names (one entry for a one-container goal, two for a two-container goal); cubes the goal does not name are not recorded. Written at step #1 and held unchanged for the rest of the episode, even after a cube is hidden by a container or briefly re-exposed when a container is lifted. e.g. [[78, 157], [106, 105]] for a goal that names the blue cube then the red cube."
+   }
+  ]
+ },
+ "initial": {
+  "task": "ButtonUnmask",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   24,
+   45,
+   71,
+   80,
+   85
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record each cube's position in the memory fields. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the recorded position of the next goal cube; if no containers are visible, choose A.",
+  "fields": [
+   {
+    "name": "blue_cube_pos",
+    "description": "If this step shows a loose blue cube and no containers (the scene before the button is pressed), write the blue cube's [y, x] as shown. Otherwise copy the carried-in value unchanged; never overwrite it from a cube briefly exposed under a lifted container. e.g. [128, 141]",
+    "annotation": "The [y, x] position of the blue cube as it was seen before the containers came down, i.e. the position shown at step #1 (t=0) while the cubes are still visible. Written at step #1 and held unchanged for the rest of the episode, even after the cube is hidden by a container or briefly re-exposed when a container is lifted. e.g. [128, 141]"
+   },
+   {
+    "name": "green_cube_pos",
+    "description": "If this step shows a loose green cube and no containers (the scene before the button is pressed), write the green cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [88, 106]",
+    "annotation": "The [y, x] position of the green cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [88, 106]"
+   },
+   {
+    "name": "red_cube_pos",
+    "description": "If this step shows a loose red cube and no containers (the scene before the button is pressed), write the red cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [130, 79]",
+    "annotation": "The [y, x] position of the red cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [130, 79]"
+   },
+   {
+    "name": "picks_done",
+    "description": "Number of container pick-ups completed. Start at 0. If any execution step shown at this decision step says a container is held in the gripper, write carried-in value + 1; otherwise copy the carried-in value. e.g. 1",
+    "annotation": "Count of container pick-ups completed so far. 0 at step #1. Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 12,
+    "subgoal_wrong": 0,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "blue_cube_pos": 0,
+     "green_cube_pos": 0,
+     "red_cube_pos": 0,
+     "picks_done": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field picks_done, ANNOTATOR PROMPT\n  Situation: the goal named two cubes; the first container had already been lifted and counted, and the decision step after the put-down showed execution steps where the container was still held at the start, then released, with the final scene showing nothing held and all containers on the table. The annotated value stayed at 1, but the rule's wording ('the decision step whose execution steps show a container held in the gripper') also matches this put-down step, since its early execution steps show the container held. This breaks PREDICTABILITY: the written value and the literal rule give two different answers to one field at one step. Change the field to: count of container pick-ups completed, 0 at the first step; it increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, including the step reached right after a put-down where earlier execution steps still showed the container held, the value is carried unchanged. e.g. 1\n\nfield picks_done, POLICY PROMPT\n  Situation: the decision step reached right after a put-down shows, among its execution steps, the container still held at first and then released, and the scene at the decision step itself shows the gripper empty with every container on the table. The current instruction says to add 1 if ANY execution step shown says a container is held, so the policy wrote 2 while the correct value was 1 (the pick had already been counted at the previous decision step, when the container was held at the decision scene). This breaks PREDICTABILITY. Change to: number of container pick-ups completed, start at 0. Look only at the scene at this decision step itself (the last observed step). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise, even if earlier execution steps at this decision step showed a container held before it was released, copy the carried-in value unchanged. e.g. 1\n\nrefused\n  The single reported step failed only on the memory: the subgoal it wrote (pick up the container nearest the recorded red cube position) matched the recorded one within the usual wobble, and the policy itself said nothing was missing from the subgoal instruction. So no change to the policy prompt for subgoal is passed on; the subgoal rules already settle every step in these episodes once picks_done is kept correctly.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "picks_done",
+      "edits": [
+       {
+        "modify_from": "Count of container pick-ups completed so far. 0 at step #1. Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1",
+        "modify_to": "Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "picks_done",
+      "edits": [
+       {
+        "modify_from": "Number of container pick-ups completed. Start at 0. If any execution step shown at this decision step says a container is held in the gripper, write carried-in value + 1; otherwise copy the carried-in value. e.g. 1",
+        "modify_to": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No change to the policy prompt for subgoal: the report itself found the subgoal rules settle every step once picks_done is kept correctly, and the only failure was the memory count. Both picks_done edits are committed as proposed; they refine the earlier wording rather than undo it, keeping the count tied to the final scene of the decision step so a put-down step is not double-counted."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 14,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "blue_cube_pos": 0,
+     "green_cube_pos": 0,
+     "red_cube_pos": 0,
+     "picks_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field green_cube_pos, ANNOTATOR PROMPT\n  DELETE. The goal instruction, repeated at every step, names which cubes matter; the green cube was never named in any goal here and its position was carried through every episode and read at no step. Its fact folds into the new ordered field goal_cube_positions below, which records positions only for cubes the goal names.\n\nfield blue_cube_pos, ANNOTATOR PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield red_cube_pos, ANNOTATOR PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield goal_cube_positions, ANNOTATOR PROMPT\n  Ordered list of the [y, x] positions of the cubes named in the goal instruction, in the order the goal names them, as those cubes were seen at the first step (t=0) while loose and before any container has come down. One entry per cube the goal names (one entry for a one-container goal, two for a two-container goal); cubes the goal does not name are not recorded. Written at the first step and held unchanged for the rest of the episode, never overwritten from a cube briefly re-exposed under a lifted container. e.g. [[78, 157], [106, 105]] for a goal that names the blue cube then the red cube.\n\nfield green_cube_pos, POLICY PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield blue_cube_pos, POLICY PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield red_cube_pos, POLICY PROMPT\n  DELETE. Folded into goal_cube_positions.\n\nfield goal_cube_positions, POLICY PROMPT\n  Ordered list of [y, x] positions of the cubes the goal instruction names, in the goal's order. If this step shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal, take each cube it names in order, and write that cube's [y, x] as shown; skip cubes the goal does not name. Otherwise copy the carried-in list unchanged; never overwrite an entry from a cube briefly exposed under a lifted container. e.g. [[78, 157], [106, 105]] when the goal names blue then red.\n\nthe policy prompt for subgoal\n  Rule 1 should now say: when the step shows loose cubes and no containers and nothing held, choose A (press the button) and at the same time record goal_cube_positions from the goal's named cubes in goal order. Rule 2 should no longer look up blue_cube_pos / green_cube_pos / red_cube_pos; instead, when containers are on the table and nothing is held, take the entry of goal_cube_positions at index picks_done (first entry when picks_done is 0, second when 1) and point at the center of the container nearest that recorded position, written [y, x], ignoring containers that cover no recorded position. Rule 3 (choose C whenever a container is held) stays. The fallback for all named cubes already picked and the unforeseen-situation clause stay, with 'the last entry of goal_cube_positions' replacing 'the recorded position of the last named cube'. Nothing else changes; every step in this minibatch was answered correctly under the existing rules, so the only edit is the field substitution.\n\nrefused\n  No step was reported as failed, so nothing from the policy is being dropped. The only action taken is on the field block: green_cube_pos was carried through all fourteen steps and read at none, because no goal in these episodes named the green cube; rather than drop it alone and leave two per-colour fields that each also go unread whenever their colour is absent from the goal, all three per-colour fields are folded into one goal-ordered list, which keeps exactly the positions the goal makes necessary.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "delete",
+      "field": "blue_cube_pos",
+      "edits": [],
+      "description": ""
+     },
+     {
+      "kind": "delete",
+      "field": "green_cube_pos",
+      "edits": [],
+      "description": ""
+     },
+     {
+      "kind": "delete",
+      "field": "red_cube_pos",
+      "edits": [],
+      "description": ""
+     },
+     {
+      "kind": "add",
+      "field": "goal_cube_positions",
+      "edits": [],
+      "description": "Ordered list of the [y, x] positions of the cubes named in the goal instruction, in the order the goal names them, as those cubes were seen at step #1 (t=0) while loose and before any container has come down. One entry per cube the goal names (one entry for a one-container goal, two for a two-container goal); cubes the goal does not name are not recorded. Written at step #1 and held unchanged for the rest of the episode, even after a cube is hidden by a container or briefly re-exposed when a container is lifted. e.g. [[78, 157], [106, 105]] for a goal that names the blue cube then the red cube."
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "add",
+      "field": "goal_cube_positions",
+      "edits": [],
+      "description": "Ordered list of the [y, x] positions of the cubes the goal instruction names, in the goal's order. If this step shows loose cubes and no containers anywhere (the scene before the button is pressed), read the goal, take each cube it names in order, and write that cube's [y, x] as shown; skip cubes the goal does not name. Otherwise copy the carried-in list unchanged; never overwrite an entry from a cube briefly exposed under a lifted container. e.g. [[78, 157], [106, 105]] when the goal names blue then red."
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "choose A (press the button); at the same time record each cube's position in the memory fields.",
+      "modify_to": "choose A (press the button); at the same time record goal_cube_positions: the [y, x] of each cube the goal names, in the goal's order."
+     },
+     {
+      "modify_from": "The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position",
+      "modify_to": "The target position is the entry of goal_cube_positions at index picks_done (first entry when picks_done is 0, second entry when picks_done is 1). Point at the center of the container nearest to that recorded position"
+     },
+     {
+      "modify_from": "Ignore containers that cover no recorded cube.",
+      "modify_to": "Ignore containers that cover no recorded position."
+     },
+     {
+      "modify_from": "otherwise B at the container nearest the last named cube.",
+      "modify_to": "otherwise B at the container nearest the last entry of goal_cube_positions."
+     },
+     {
+      "modify_from": "choose B at the container nearest the recorded position of the next goal cube",
+      "modify_to": "choose B at the container nearest the entry of goal_cube_positions at index picks_done (the last entry if picks_done is beyond the list)"
+     }
+    ],
+    "refused": "Nothing in the report is refused. The round scored perfectly, so the field substitution is committed as a necessity cleanup only: the three per-colour fields each go unread whenever their colour is absent from the goal, and the goal is repeated at every step, so a goal-ordered list indexed by picks_done carries exactly what Rule 2 reads. The picks_done wording from round 1 is untouched, and the subgoal rules keep the same transitions with only the lookup replaced, so no earlier edit is undone."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 2,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    9,
+    43,
+    48,
+    60,
+    80
+   ],
+   "verified_of_all": 0.9166666666666666,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record each cube's position in the memory fields. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the recorded position of the next goal cube; if no containers are visible, choose A.",
+    "fields": [
+     {
+      "name": "blue_cube_pos",
+      "description": "If this step shows a loose blue cube and no containers (the scene before the button is pressed), write the blue cube's [y, x] as shown. Otherwise copy the carried-in value unchanged; never overwrite it from a cube briefly exposed under a lifted container. e.g. [128, 141]",
+      "annotation": "The [y, x] position of the blue cube as it was seen before the containers came down, i.e. the position shown at step #1 (t=0) while the cubes are still visible. Written at step #1 and held unchanged for the rest of the episode, even after the cube is hidden by a container or briefly re-exposed when a container is lifted. e.g. [128, 141]"
+     },
+     {
+      "name": "green_cube_pos",
+      "description": "If this step shows a loose green cube and no containers (the scene before the button is pressed), write the green cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [88, 106]",
+      "annotation": "The [y, x] position of the green cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [88, 106]"
+     },
+     {
+      "name": "red_cube_pos",
+      "description": "If this step shows a loose red cube and no containers (the scene before the button is pressed), write the red cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [130, 79]",
+      "annotation": "The [y, x] position of the red cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [130, 79]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Number of container pick-ups completed. Start at 0. If any execution step shown at this decision step says a container is held in the gripper, write carried-in value + 1; otherwise copy the carried-in value. e.g. 1",
+      "annotation": "Count of container pick-ups completed so far. 0 at step #1. Increases by one at the decision step whose execution steps show a container held in the gripper (the step right after a 'pick up the container' subgoal was executed). It does not change when the container is put down. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    15,
+    20,
+    47,
+    86,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record each cube's position in the memory fields. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the recorded position of the next goal cube; if no containers are visible, choose A.",
+    "fields": [
+     {
+      "name": "blue_cube_pos",
+      "description": "If this step shows a loose blue cube and no containers (the scene before the button is pressed), write the blue cube's [y, x] as shown. Otherwise copy the carried-in value unchanged; never overwrite it from a cube briefly exposed under a lifted container. e.g. [128, 141]",
+      "annotation": "The [y, x] position of the blue cube as it was seen before the containers came down, i.e. the position shown at step #1 (t=0) while the cubes are still visible. Written at step #1 and held unchanged for the rest of the episode, even after the cube is hidden by a container or briefly re-exposed when a container is lifted. e.g. [128, 141]"
+     },
+     {
+      "name": "green_cube_pos",
+      "description": "If this step shows a loose green cube and no containers (the scene before the button is pressed), write the green cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [88, 106]",
+      "annotation": "The [y, x] position of the green cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [88, 106]"
+     },
+     {
+      "name": "red_cube_pos",
+      "description": "If this step shows a loose red cube and no containers (the scene before the button is pressed), write the red cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [130, 79]",
+      "annotation": "The [y, x] position of the red cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [130, 79]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1",
+      "annotation": "Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    5,
+    21,
+    34,
+    38,
+    69
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record each cube's position in the memory fields. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the recorded position of the next goal cube; if no containers are visible, choose A.",
+    "fields": [
+     {
+      "name": "blue_cube_pos",
+      "description": "If this step shows a loose blue cube and no containers (the scene before the button is pressed), write the blue cube's [y, x] as shown. Otherwise copy the carried-in value unchanged; never overwrite it from a cube briefly exposed under a lifted container. e.g. [128, 141]",
+      "annotation": "The [y, x] position of the blue cube as it was seen before the containers came down, i.e. the position shown at step #1 (t=0) while the cubes are still visible. Written at step #1 and held unchanged for the rest of the episode, even after the cube is hidden by a container or briefly re-exposed when a container is lifted. e.g. [128, 141]"
+     },
+     {
+      "name": "green_cube_pos",
+      "description": "If this step shows a loose green cube and no containers (the scene before the button is pressed), write the green cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [88, 106]",
+      "annotation": "The [y, x] position of the green cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [88, 106]"
+     },
+     {
+      "name": "red_cube_pos",
+      "description": "If this step shows a loose red cube and no containers (the scene before the button is pressed), write the red cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [130, 79]",
+      "annotation": "The [y, x] position of the red cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [130, 79]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1",
+      "annotation": "Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    26,
+    46,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record each cube's position in the memory fields. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the recorded position of the next goal cube; if no containers are visible, choose A.",
+    "fields": [
+     {
+      "name": "blue_cube_pos",
+      "description": "If this step shows a loose blue cube and no containers (the scene before the button is pressed), write the blue cube's [y, x] as shown. Otherwise copy the carried-in value unchanged; never overwrite it from a cube briefly exposed under a lifted container. e.g. [128, 141]",
+      "annotation": "The [y, x] position of the blue cube as it was seen before the containers came down, i.e. the position shown at step #1 (t=0) while the cubes are still visible. Written at step #1 and held unchanged for the rest of the episode, even after the cube is hidden by a container or briefly re-exposed when a container is lifted. e.g. [128, 141]"
+     },
+     {
+      "name": "green_cube_pos",
+      "description": "If this step shows a loose green cube and no containers (the scene before the button is pressed), write the green cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [88, 106]",
+      "annotation": "The [y, x] position of the green cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [88, 106]"
+     },
+     {
+      "name": "red_cube_pos",
+      "description": "If this step shows a loose red cube and no containers (the scene before the button is pressed), write the red cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [130, 79]",
+      "annotation": "The [y, x] position of the red cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [130, 79]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1",
+      "annotation": "Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    7,
+    8,
+    38,
+    87,
+    90
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     24,
+     45,
+     71,
+     80,
+     85
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in A (press the button): the first step shows the three loose cubes and no containers. Rule 1: if the step shows loose cubes and no containers anywhere and nothing held, choose A (press the button); at the same time record each cube's position in the memory fields. Rule 2: if the step shows containers on the table and the gripper is NOT holding a container, choose B (pick up the container). The target is the cube named in the goal at position picks_done+1 in the goal's order (first named cube when picks_done is 0, second named cube when picks_done is 1). Look up that cube's recorded position (blue_cube_pos / green_cube_pos / red_cube_pos) and point at the center of the container nearest to that recorded position, writing the point as [y, x]. Ignore containers that cover no recorded cube. Rule 3: if the step shows a container held in the gripper, choose C (put down the container). After that, Rule 2 applies again with the next cube in the goal. If all cubes named in the goal have already been picked (picks_done equals the number of cubes named), choose C if holding, otherwise B at the container nearest the last named cube. Unforeseen situation: if a container is held, choose C; if containers are visible and nothing is held, choose B at the container nearest the recorded position of the next goal cube; if no containers are visible, choose A.",
+    "fields": [
+     {
+      "name": "blue_cube_pos",
+      "description": "If this step shows a loose blue cube and no containers (the scene before the button is pressed), write the blue cube's [y, x] as shown. Otherwise copy the carried-in value unchanged; never overwrite it from a cube briefly exposed under a lifted container. e.g. [128, 141]",
+      "annotation": "The [y, x] position of the blue cube as it was seen before the containers came down, i.e. the position shown at step #1 (t=0) while the cubes are still visible. Written at step #1 and held unchanged for the rest of the episode, even after the cube is hidden by a container or briefly re-exposed when a container is lifted. e.g. [128, 141]"
+     },
+     {
+      "name": "green_cube_pos",
+      "description": "If this step shows a loose green cube and no containers (the scene before the button is pressed), write the green cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [88, 106]",
+      "annotation": "The [y, x] position of the green cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [88, 106]"
+     },
+     {
+      "name": "red_cube_pos",
+      "description": "If this step shows a loose red cube and no containers (the scene before the button is pressed), write the red cube's [y, x] as shown. Otherwise copy the carried-in value unchanged. e.g. [130, 79]",
+      "annotation": "The [y, x] position of the red cube as it was seen at step #1 (t=0) before the containers came down. Written at step #1 and held unchanged for the rest of the episode. e.g. [130, 79]"
+     },
+     {
+      "name": "picks_done",
+      "description": "Number of container pick-ups completed. Start at 0. Look only at the scene at this decision step itself (the last observed step, after all execution steps). If that scene shows a container held in the gripper, write carried-in value + 1. Otherwise copy the carried-in value unchanged, even if earlier execution steps at this decision step showed a container held before it was released. e.g. 1",
+      "annotation": "Count of container pick-ups completed so far. 0 at step #1. Increases by one only at a decision step whose own final scene (the observation at the decision step itself, after the last execution step) shows a container held in the gripper, i.e. the step reached right after a 'pick up the container' subgoal finished. At a decision step whose final scene shows nothing held, the value is carried unchanged, even if earlier execution steps at that decision step still showed the container held before it was released (the step reached right after a put-down). e.g. 1"
+     }
+    ]
+   }
+  }
+ ]
+}

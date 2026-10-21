@@ -1,0 +1,126 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "crossings",
+  "cube_side",
+  "first_cross_t"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  14,
+  26,
+  39,
+  80,
+  95
+ ],
+ "scored": 23,
+ "failed": 2,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9565217391304348,
+ "memory_verified": 0.9565217391304348,
+ "reads": {
+  "crossings": 18,
+  "cube_side": 17,
+  "first_cross_t": 12
+ },
+ "field_errors": {
+  "crossings": {
+   "in": 0,
+   "sole": 0
+  },
+  "cube_side": {
+   "in": 0,
+   "sole": 0
+  },
+  "first_cross_t": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.08695652173913043,
+ "verified_of_all": 0.9130434782608695,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 23,
+ "critique": "field scene_frame, ANNOTATOR PROMPT\n  New field. Holds the timestep, cube x and target x of the scene at this decision step (the last frame shown), as an ordered list [t, cube_x, target_x], e.g. [56, 104, 117]. Overwritten at every step, starting from the t=0 frame at the first step. It exists so that when the first crossing of the target line falls between the scene of one decision step and the first frame of the next, the crossing time can be interpolated between two actual frames instead of extrapolated. Since the side of the target line is the sign of cube_x minus target_x in this list, the cube_side field becomes redundant and should be dropped; the crossings count at a step is then built from the side of the carried-in scene_frame followed by the side of each frame shown.\n\nfield first_cross_t, ANNOTATOR PROMPT\n  Same meaning as before (timestep of the first crossing, written once at the step whose frames contain the first flip, never changed), but the computation is fixed exactly so annotator and policy produce the same number: take the last frame on the starting side (if the flip is before this step's first frame, that frame is the carried-in scene_frame) and the first frame on the other side; let d1 = cube_x - target_x at the earlier frame using that frame's own target_x, d2 likewise at the later frame; t_cross = t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. e.g. 29. No extrapolation is ever used.\n\nfield scene_frame, POLICY PROMPT\n  Write the ordered list [timestep, cube_x, target_x] of the scene at this decision step (the last frame shown), e.g. [56, 104, 117]. Overwrite it every step; at the first step it is the t=0 frame. The side of the target line for any frame is smaller_x if cube_x < target_x, else larger_x; the carried-in scene_frame gives the side of the last frame of the previous step. The cube_side field is removed: wherever crossings or first_cross_t referred to the carried-in cube_side, use the side computed from the carried-in scene_frame instead.\n\nfield first_cross_t, POLICY PROMPT\n  Carry it unchanged if set. If empty and the crossings count just computed is 1 or more, take the first consecutive pair in this step's side sequence whose sides differ; the earlier member is either the carried-in scene_frame or a frame of this step, the later one is a frame of this step. With d1 = cube_x - target_x at the earlier frame (its own target_x) and d2 at the later frame, write t1 + (t2 - t1) * |d1| / (|d1| + |d2|) rounded half up, e.g. 29. Never extrapolate; the carried-in scene_frame always supplies the frame before the flip.\n\nthe policy prompt for subgoal\n  The failure was in the press conditions for a fast cube on its first long outward run. The goal asked for the second arrival; the cube had crossed once at about timestep 29 and at the decision step (timestep 54) was still gliding away from the target on the larger_x side with positive velocity, so it was RUNNING OUT, about four timesteps short of its predicted turnaround at 2*first_cross_t = 58. Remaining time to the second arrival was 33. Rule (a) 'remaining <= 35' and rule (b) 'remaining <= first_cross_t + 4' both fired and the policy pressed, but the recorded choice was to remain static; the press was correct only at the following step (timestep 60, remaining 27, past the turnaround). This breaks SUFFICIENCY: the instruction's thresholds choose C where the trajectory chooses B. Replace rule (a) with 'remaining <= 30' and replace rule (b) with 'the timestep of the scene at this decision step is at or past the predicted turnaround (2N-2)*first_cross_t, with no slack'. Keep rule (c) (HEADING BACK by the velocity test) unchanged. Everything else stays: choose C only when crossings == N-1 and one of (a), (b), (c) holds; otherwise B. With these cutoffs every recorded step in the minibatch is reproduced: the running-out step at remaining 33 before the turnaround is B, the step at remaining 27 past the turnaround is C, a slower cube at remaining 46 well before its turnaround is B, and all heading-back steps at remaining 14-19 are C. Also replace references to cube_side with the side derived from the scene_frame field, since cube_side is removed.\n\nrefused\n  Nothing is withheld. Both reports are passed on: the timing-threshold report leads to the tightened press conditions, and the first-crossing-time report (policy extrapolated 59 where the annotation interpolated 58, because only the annotator saw the frame before the flip) leads to the new scene_frame field and an identical interpolation formula in both documents, so the policy and the annotator compute the same number from the same two frames.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The failure was in the press conditions for a fast cube on its first long outward run. The goal asked for the second arrival; the cube had crossed once at about timestep 29 and at the decision step (timestep 54) was still gliding away from the target on the larger_x side with positive velocity, so it was RUNNING OUT, about four timesteps short of its predicted turnaround at 2*first_cross_t = 58. Remaining time to the second arrival was 33. Rule (a) 'remaining <= 35' and rule (b) 'remaining <= first_cross_t + 4' both fired and the policy pressed, but the recorded choice was to remain static; the press was correct only at the following step (timestep 60, remaining 27, past the turnaround). This breaks SUFFICIENCY: the instruction's thresholds choose C where the trajectory chooses B. Replace rule (a) with 'remaining <= 30' and replace rule (b) with 'the timestep of the scene at this decision step is at or past the predicted turnaround (2N-2)*first_cross_t, with no slack'. Keep rule (c) (HEADING BACK by the velocity test) unchanged. Everything else stays: choose C only when crossings == N-1 and one of (a), (b), (c) holds; otherwise B. With these cutoffs every recorded step in the minibatch is reproduced: the running-out step at remaining 33 before the turnaround is B, the step at remaining 27 past the turnaround is C, a slower cube at remaining 46 well before its turnaround is B, and all heading-back steps at remaining 14-19 are C. Also replace references to cube_side with the side derived from the scene_frame field, since cube_side is removed.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "scene_frame",
+    "description": "Write the ordered list [timestep, cube_x, target_x] of the scene at this decision step (the last frame shown), e.g. [56, 104, 117]. Overwrite it every step; at the first step it is the t=0 frame. The side of the target line for any frame is smaller_x if cube_x < target_x, else larger_x; the carried-in scene_frame gives the side of the last frame of the previous step. The cube_side field is removed: wherever crossings or first_cross_t referred to the carried-in cube_side, use the side computed from the carried-in scene_frame instead."
+   },
+   {
+    "field": "first_cross_t",
+    "description": "Carry it unchanged if set. If empty and the crossings count just computed is 1 or more, take the first consecutive pair in this step's side sequence whose sides differ; the earlier member is either the carried-in scene_frame or a frame of this step, the later one is a frame of this step. With d1 = cube_x - target_x at the earlier frame (its own target_x) and d2 at the later frame, write t1 + (t2 - t1) * |d1| / (|d1| + |d2|) rounded half up, e.g. 29. Never extrapolate; the carried-in scene_frame always supplies the frame before the flip."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "scene_frame",
+    "description": "New field. Holds the timestep, cube x and target x of the scene at this decision step (the last frame shown), as an ordered list [t, cube_x, target_x], e.g. [56, 104, 117]. Overwritten at every step, starting from the t=0 frame at the first step. It exists so that when the first crossing of the target line falls between the scene of one decision step and the first frame of the next, the crossing time can be interpolated between two actual frames instead of extrapolated. Since the side of the target line is the sign of cube_x minus target_x in this list, the cube_side field becomes redundant and should be dropped; the crossings count at a step is then built from the side of the carried-in scene_frame followed by the side of each frame shown."
+   },
+   {
+    "field": "first_cross_t",
+    "description": "Same meaning as before (timestep of the first crossing, written once at the step whose frames contain the first flip, never changed), but the computation is fixed exactly so annotator and policy produce the same number: take the last frame on the starting side (if the flip is before this step's first frame, that frame is the carried-in scene_frame) and the first frame on the other side; let d1 = cube_x - target_x at the earlier frame using that frame's own target_x, d2 likewise at the later frame; t_cross = t1 + (t2 - t1) * |d1| / (|d1| + |d2|), rounded half up to a whole timestep. e.g. 29. No extrapolation is ever used."
+   }
+  ],
+  "refused": "Nothing is withheld. Both reports are passed on: the timing-threshold report leads to the tightened press conditions, and the first-crossing-time report (policy extrapolated 59 where the annotation interpolated 58, because only the annotator saw the frame before the flip) leads to the new scene_frame field and an identical interpolation formula in both documents, so the policy and the annotator compute the same number from the same two frames."
+ },
+ "critiques": [
+  {
+   "step": [
+    26,
+    "exec",
+    54
+   ],
+   "memory_in": "crossings=0; cube_side=smaller_x; first_cross_t=",
+   "answered": "C: press button to stop the cube",
+   "recorded": "B: remain static",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The press thresholds fired too early here: with first_cross_t=29, T_2=87 and the scene at t=54 gives remaining=33, which satisfies both (a) remaining<=35 and (b) remaining<=first_cross_t+4=33, yet the recorded choice is B because the cube is still RUNNING OUT (v=(206-194)/6=+2 on the larger_x side, before its predicted turnaround at 2*first_cross_t=58) and a press now would land around t=79-84, before the cube reaches the target at t=87. The instruction should say that while the cube is RUNNING OUT and has not yet reached its predicted turnaround (current timestep < 2*first_cross_t), choose B unless remaining <= ~30 (i.e. the (a) threshold must be tighter than 35, and condition (b) must not include the +4 slack / must require the scene timestep to be at or past 2*first_cross_t); otherwise it should state the exact remaining-timesteps cutoff that makes t=54 with first_cross_t=29 a B and the next step a C.",
+   "missing": ""
+  },
+  {
+   "step": [
+    95,
+    "exec",
+    104
+   ],
+   "memory_in": "crossings=0; cube_side=smaller_x; first_cross_t=",
+   "answered": "B: remain static",
+   "recorded": "B: remain static",
+   "missing_from_memory": "The cube position and timestep of the last frame of the previous decision step (the frame where cube_side=smaller_x was last seen). Without it the crossing time had to be extrapolated from t=64 (x=123) and t=80 (x=156) with target_x=112, giving 58.67 -> 59, whereas the recorded 58 presumably comes from interpolating between the actual pre-crossing frame and t=64, which only the annotator could see.",
+   "missing_from_policy_prompt_for_memory": "When the flip is between the carried-in cube_side and this step's first frame, the instruction does not say which target_x to use (it varies per frame: 112 at t=64, 114 at t=80), nor how to round a value like 58.67, nor that a prior-frame cube position should be stored to interpolate instead of extrapolating. Either define the extrapolation precisely so it yields the recorded value, or add a field (last_cube_x / last_t) so the crossing time is always interpolated between two actual frames.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "The cube position and timestep of the last frame of the previous decision step (the frame where cube_side=smaller_x was last seen). Without it the crossing time had to be extrapolated from t=64 (x=123) and t=80 (x=156) with target_x=112, giving 58.67 -> 59, whereas the recorded 58 presumably comes from interpolating between the actual pre-crossing frame and t=64, which only the annotator could see."
+  }
+ ]
+}

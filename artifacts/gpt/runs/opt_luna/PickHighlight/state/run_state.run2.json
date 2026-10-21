@@ -1,0 +1,450 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "PickHighlight",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   6,
+   28,
+   38,
+   57,
+   98
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Apply the memory update before choosing the next subgoal. Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button. When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority. Point at that cube's current center, allowing minor centroid wobble; do not point at the former white area or substitute another cube of the same color.  If the current scene shows a cube held after pickup, choose C, place the cube onto the table, even though that cube has already been removed from remaining_targets. After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again. If pickup failed, retain the target and retry B. If placement failed and the cube remains held, retry C. If the target is temporarily occluded, use its stored table coordinate for B rather than switching targets. If remaining_targets is empty and the gripper is empty, the task is complete; no further pickup or button press is required. If nevertheless forced to select a menu option after completion, choose C as the non-pickup fallback. For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None.",
+  "fields": [
+   {
+    "name": "remaining_targets",
+    "description": "Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null. Inspect all execution frames provided at this decision, not just the final scene. If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each distinct highlighted area with exactly one cube: the closest spatially adjacent cube immediately above or overlapping it. Do not include farther cubes merely because they share the area's image column. Record each associated cube's table center as [y, x]. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. Once initialized, retain this list. If the supplied frames show a cube being grasped at a listed table location and subsequently lifted while held, remove that entry at this decision. Use its pre-lift table position to identify it, not its raised position. An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released. Keep stored coordinates unchanged despite occlusion or small visible centroid changes. Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded. e.g. [[63, 150]]",
+    "annotation": "The list of highlighted cubes not yet successfully picked up, represented by their table-center coordinates [y, x]. Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list. At the decision immediately following the button press, populate the list by matching each distinct white highlighted area seen during that interval to exactly one cube: the closest spatially adjacent cube immediately above or overlapping that area. Do not include farther cubes merely because they share the area's image column. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube; store cube centers, not highlight centers. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup. Do not remove a cube merely because a pickup was commanded, and do not restore it when placed down. Preserve remaining coordinates through occlusion and minor centroid wobble. Use [] only once all revealed targets have been successfully picked up. e.g. [[63, 150]]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "PickHighlight",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   6,
+   28,
+   38,
+   57,
+   98
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Apply the memory update before choosing the next subgoal. Each episode starts with A, press button: the initial scene has no held cube and remaining_targets is null. If remaining_targets is still null and no completed reveal is available, choose A. When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting the currently visible table cube corresponding to the first stored coordinate. Point at that cube's current center, allowing minor centroid wobble; do not point at the former white area or substitute another cube of the same color. This selects the blue cube near [89, 146] in episode 6, the green cube near [64, 91] in episode 28, the red cube near [81, 125] in episode 38, the blue cube near [84, 92] in episode 57, and the green cube near [99, 104] in episode 98. If the current scene shows a cube held after pickup, choose C, place the cube onto the table, even though that cube has already been removed from remaining_targets. After placement, an empty gripper and a nonempty remaining_targets list lead back to B for its first entry; never pick up an already removed cube again. If pickup failed, retain the target and retry B. If placement failed and the cube remains held, retry C. If the target is temporarily occluded, use its stored table coordinate for B rather than switching targets. If remaining_targets is empty and the gripper is empty, the task is complete; no further pickup or button press is required. If nevertheless forced to select a menu option after completion, choose C as the non-pickup fallback. For other unmodeled situations, choose C if holding a cube, otherwise B at the first remaining target if one exists, otherwise A only when remaining_targets is null.",
+  "fields": [
+   {
+    "name": "remaining_targets",
+    "description": "Initialize to null when the incoming memory is empty. Inspect all execution frames provided at this decision, not just the final scene. If the incoming value is null and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x]. Deduplicate repeated sightings. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. Once initialized, retain this list. If the supplied frames show a cube being grasped at a listed table location and subsequently lifted while held, remove that entry at this decision. Use its pre-lift table position to identify it, not its raised position. An unsuccessful closure or temporary disappearance is not sufficient for removal. Placement does not add an entry back. Keep stored coordinates unchanged despite occlusion or small visible centroid changes. An empty list means all revealed targets have been picked up; null means the reveal has not yet been recorded. e.g. [[63, 150]]",
+    "annotation": "The list of highlighted cubes not yet successfully picked up, represented by their table-center coordinates [y, x]. Before the button-reveal interval has been observed, use null rather than an empty list. At the decision immediately following the button press, populate the list by matching every white highlighted area seen during that interval to its cube; store cube centers, not highlight centers. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. At each decision following a successful pickup, remove the picked cube. Do not remove a cube merely because a pickup was commanded, and do not restore it when placed down. Preserve remaining coordinates through occlusion and minor centroid wobble. Thus episode 6 has null, [[89, 146], [63, 150]], [[63, 150]], [[63, 150]]; episode 28 has null, [[64, 91]]; episode 38 has null, [[81, 125], [113, 120]], [[113, 120]], [[113, 120]]; episode 57 has null, [[84, 92]]; episode 98 has null, [[99, 104], [112, 146]], [[112, 146]], [[112, 146]]. e.g. [[63, 150]]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 18,
+    "subgoal_wrong": 4,
+    "memory_wrong": 2,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 2
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 3
+   },
+   "critique": "field remaining_targets, ANNOTATOR PROMPT\n  At the initial decision, the robot has not yet pressed the button or observed the highlights. The annotation uses None, whereas the rule specifies null and the policy sometimes leaves the field blank. This breaks PREDICTABILITY by giving different representations for the same state. Specify the literal sentinel None consistently, never blank or null. The field otherwise remains the list of highlighted cube table centers not yet successfully picked up: populate it after observing the button-reveal interval, remove an entry only after its cube is successfully grasped and lifted, and retain it through placement and occlusion. Keep the existing coordinate ordering as a serialization convention, not evidence of pickup priority. Example values are None before the reveal and [[70, 152], [118, 147]] after a two-cube reveal.\n\nfield remaining_targets, POLICY PROMPT\n  At the initial decision, an empty incoming memory or a blank remaining_targets field led the policy to emit no memory even though the annotation requires None. This is a PREDICTABILITY failure caused by inconsistent sentinel spelling and unclear treatment of blank input. Explicitly interpret missing or blank input as uninitialized and write the literal None when no reveal is available. If the supplied execution frames show the button-reveal interval, associate every white area with its cube, deduplicate sightings, and write the cube-center list using the existing serialization order. Thereafter remove only a listed cube whose grasp at its table location and subsequent held lift are shown in the supplied frames; placement and an already-held cube do not establish a new pickup. Preserve all other coordinates. For example, placing a previously held blue cube while the incoming list is [[70, 152]] leaves [[70, 152]] unchanged. Use [] only after all listed cubes have actually been picked up.\n\nthe policy prompt for subgoal\n  After the reveal, and again after placing a picked cube, the first-entry rule selected a highlighted cube different from the recorded target. In one configuration the recording chose the smaller-x blue cube before a nearby-column red cube; in another it chose both red cubes before a blue cube with substantially smaller x. The memory contained every required target, so no missing target fact explains these failures. The asserted first-entry priority fails SUFFICIENCY for predicting the recorded object. Remove the claim that serialization order determines pickup order, along with episode-specific target examples. The supported task-level rule is: update memory first; choose C when holding a cube; otherwise choose A if remaining_targets is None, or B at an unpicked member of a nonempty remaining_targets list. Match that member to its visible cube, or use its stored table coordinate when occluded. Do not select a removed cube again. This admits the recorded choices but does not uniquely predict their ordering. The instruction and supplied observations do not establish a general tie-break that reproduces the recordings, so exact recorded-object prediction remains unresolved; it requires an independently supported selection rule or evaluation accepting any remaining highlighted cube. Do not pretend that changing memory order alone resolves this missing rule.\n\nrefused\n  The proposed strict smaller-x priority is not passed on: although it fixes the blue-before-red choice in one configuration, it contradicts the configuration where two red cubes are picked before a blue cube farther toward smaller x. No color priority, episode-specific exception, or future-action-derived ordering is justified by the supplied evidence. The placement-time deletion of the last remaining target is also not accepted as evidence that another memory field is needed. Those frames show release of an already-held blue cube, not a grasp and lift of the remaining occluded red cube; the existing removal condition already forbids deleting that red target. Its stored-coordinate fallback already selects the correct object. A demand for the exact unseen recorded pixel point is not passed on, because the required prediction is the target object, and the stored point identifies it without recovering an unavailable centroid.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "Before the button-reveal interval has been observed, use null rather than an empty list.",
+        "modify_to": "Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list."
+       },
+       {
+        "modify_from": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y.",
+        "modify_to": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority."
+       },
+       {
+        "modify_from": "At each decision following a successful pickup, remove the picked cube.",
+        "modify_to": "At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup."
+       },
+       {
+        "modify_from": "Thus episode 6 has null, [[89, 146], [63, 150]], [[63, 150]], [[63, 150]]; episode 28 has null, [[64, 91]]; episode 38 has null, [[81, 125], [113, 120]], [[113, 120]], [[113, 120]]; episode 57 has null, [[84, 92]]; episode 98 has null, [[99, 104], [112, 146]], [[112, 146]], [[112, 146]].",
+        "modify_to": "Use [] only once all revealed targets have been successfully picked up."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "Initialize to null when the incoming memory is empty.",
+        "modify_to": "Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null."
+       },
+       {
+        "modify_from": "If the incoming value is null and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x].",
+        "modify_to": "If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x]."
+       },
+       {
+        "modify_from": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y.",
+        "modify_to": "Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority."
+       },
+       {
+        "modify_from": "An unsuccessful closure or temporary disappearance is not sufficient for removal. Placement does not add an entry back.",
+        "modify_to": "An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released."
+       },
+       {
+        "modify_from": "An empty list means all revealed targets have been picked up; null means the reveal has not yet been recorded.",
+        "modify_to": "Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Each episode starts with A, press button: the initial scene has no held cube and remaining_targets is null. If remaining_targets is still null and no completed reveal is available, choose A.",
+      "modify_to": "Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button."
+     },
+     {
+      "modify_from": "When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting the currently visible table cube corresponding to the first stored coordinate.",
+      "modify_to": "When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority."
+     },
+     {
+      "modify_from": "This selects the blue cube near [89, 146] in episode 6, the green cube near [64, 91] in episode 28, the red cube near [81, 125] in episode 38, the blue cube near [84, 92] in episode 57, and the green cube near [99, 104] in episode 98.",
+      "modify_to": ""
+     },
+     {
+      "modify_from": "After placement, an empty gripper and a nonempty remaining_targets list lead back to B for its first entry; never pick up an already removed cube again.",
+      "modify_to": "After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again."
+     },
+     {
+      "modify_from": "For other unmodeled situations, choose C if holding a cube, otherwise B at the first remaining target if one exists, otherwise A only when remaining_targets is null.",
+      "modify_to": "For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None."
+     }
+    ],
+    "refused": "No unsupported smaller-x, color, episode-specific, or future-action-derived pickup priority is committed. Admitting any remaining highlighted cube removes the contradicted first-entry rule but does not settle exact recorded-object prediction: that still requires an independently supported priority or evaluation accepting any remaining target. No extra memory field, placement-time deletion, or requirement to recover an unseen exact pixel point is committed; the existing target list and grasp-and-lift removal criterion suffice for retaining and locating occluded unpicked targets."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 22,
+    "subgoal_wrong": 3,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 3
+   },
+   "critique": "field remaining_targets, ANNOTATOR PROMPT\n  After the button reveal for the instruction to pick up all white-highlighted cubes, two cubes lay above the same white area in approximately the same image column. The annotation included only the adjacent cube, but the policy included the farther cube too and selected it. The ambiguous association breaks PREDICTABILITY and SUFFICIENCY. Specify that each distinct white area identifies exactly one cube: the closest spatially adjacent cube immediately above or overlapping that area, not every cube farther above it. Deduplicate repeated observations across the reveal interval. The field continues to hold the revealed cubes' table centers not yet successfully picked up. Initialize it at the decision following the reveal, remove an entry only after an observed grasp and held lift from that table location, and otherwise preserve it. Retain None before initialization, [] after all targets have been picked up, and the existing column-based serialization. An example initialized value is [[107, 97], [80, 145], [116, 135]].\n\nfield remaining_targets, POLICY PROMPT\n  During button-reveal frames, two cubes appeared above one white area in approximately the same column. The policy interpreted 'immediately above or overlapping' broadly enough to include both, whereas the annotation contained only the adjacent cube; it then chose the extra, non-highlighted cube. This breaks PREDICTABILITY and SUFFICIENCY. When the incoming field is uninitialized, inspect all supplied reveal frames and assign each distinct white area to exactly one cube: the closest spatially adjacent cube immediately above or overlapping it. Do not include more distant cubes merely because they share its column. Record the associated cube's table center and deduplicate repeated sightings. Keep the existing initialization sentinel, column serialization, coordinate preservation, and removal on visible grasp followed by held lift; release or placement does not change membership. For example, the three-area reveal produces [[107, 97], [80, 145], [116, 135]], without the farther cube at [85, 97].\n\nrefused\n  The reports also requested pickup priorities to reproduce recorded choices among several genuinely highlighted cubes. After a reveal, the policy selected a remaining green cube where the recording selected a red cube; after another placement, it selected a remaining green cube where the recording selected a blue cube. Those selections were permitted by the policy prompt and by the instruction to pick up all highlighted cubes. Exact recorded-target SUFFICIENCY remains underdetermined, but the observations and goal provide no additional priority to preserve in memory or implement in the policy prompt. Smallest-x selection would explain some choices but contradicts another reveal where the recorded choice was not the smallest-x target. Do not introduce a future-derived pickup order, an episode-specific priority, or turn serialization order into pickup priority. Retain the admissible-member selection rule unless an independently supported priority is supplied. Also do not change serialization in response to the ordering report: the existing rule already groups x coordinates differing by at most 10 pixels and sorts that column by increasing y, yielding [[107, 97], [80, 145], [116, 135]].",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "At the decision immediately following the button press, populate the list by matching every white highlighted area seen during that interval to its cube; store cube centers, not highlight centers.",
+        "modify_to": "At the decision immediately following the button press, populate the list by matching each distinct white highlighted area seen during that interval to exactly one cube: the closest spatially adjacent cube immediately above or overlapping that area. Do not include farther cubes merely because they share the area's image column. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube; store cube centers, not highlight centers."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "remaining_targets",
+      "edits": [
+       {
+        "modify_from": "If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x]. Deduplicate repeated sightings.",
+        "modify_to": "If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each distinct highlighted area with exactly one cube: the closest spatially adjacent cube immediately above or overlapping it. Do not include farther cubes merely because they share the area's image column. Record each associated cube's table center as [y, x]. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No pickup priority or serialization change is committed. Exact recorded-object prediction among genuinely highlighted remaining cubes remains underdetermined; neither this round nor the earlier round supports a universal smallest-x, color-based, episode-specific, or future-action-derived priority. Retain admissible-member selection and the existing serialization convention, which does not determine pickup priority. No additional memory field is needed to correct highlight-to-cube association."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 16,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "refused\n  After the button revealed two targets and the highlights disappeared, the goal required picking up all highlighted cubes without specifying their order. The memory correctly retained both cube locations. With an empty gripper, the policy chose the green target at smaller y, whereas the recording chose the blue target at larger y. The report correctly identifies a SUFFICIENCY gap for predicting the exact recorded object: the current policy prompt explicitly permits either remaining target. It does not identify a memory PREDICTABILITY or NECESSITY failure. I am not passing on the suggested larger-y-first priority, because other recordings with two highlighted targets choose the smaller-y target first, including targets in the same image column. Nor does the supplied evidence establish a color priority or another general tie-breaker. Adding an order to memory from the recorded future choice would make that memory impossible to predict from the reveal observations. The existing memory updates and the rule allowing any remaining highlighted target therefore need no supported correction on this evidence. Resolving exact recorded-choice prediction requires an independently specified pickup priority or evaluation that accepts any eligible target; a recording-specific preference should not be invented.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No changes committed. Larger-y-first pickup priority contradicts earlier recordings that choose smaller-y targets first, including within the same image column. No color-based or other general priority is supported. Recording the future pickup order would make memory unpredictable from the reveal observations, and treating serialization order as pickup priority would undo earlier corrections. The existing memory correctly retains both eligible targets and permits either to be selected. Exact recorded-object prediction remains unresolved and requires an independently specified pickup priority or evaluation accepting any eligible remaining target; it cannot be settled by a supported edit on this evidence."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 14,
+    "subgoal_wrong": 2,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 2
+   },
+   "critique": "the policy prompt for subgoal\n  The goal required pressing the button and then picking up every white-highlighted cube. After the reveal, and again after a successful pickup and placement, multiple unpicked targets remained. The annotated remaining_targets list correctly retained their table coordinates in ascending image-column order. The policy selected the smaller-x target, whereas the recorded choices selected the largest-x remaining target on both occasions. The rule allowing any remaining member therefore failed SUFFICIENCY for predicting the recorded target, although the policy's choices were consistent with the task's unrestricted pickup order. Replace that permissive rule with a deterministic default: when the gripper is empty and remaining_targets is nonempty, follow any explicit pickup priority in the goal; otherwise select the remaining target with the largest stored x coordinate (the robot's leftmost remaining target). If x coordinates are exactly equal, select the smaller stored y coordinate. Apply this same selection rule after the reveal, after placement, and in the fallback for an empty gripper with remaining targets. Point at the selected cube's current center, or its stored table coordinate if occluded. Remove statements that any remaining member is admissible absent an explicit priority. Keep ascending-column memory serialization unchanged: serialization is not pickup priority. Retain the existing reveal association, successful-lift removal, held-cube placement priority, retry, and completion rules. This default is a trajectory-matching convention, not a priority stated by the goal; no additional memory field is needed.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No changes committed. The proposed largest-stored-x default, smaller-y tie-break, and removal of admissible-member selection are not supported across rounds. Round 1 includes a recorded choice of a smaller-x blue cube before a nearby-column red cube, contradicting a universal largest-x priority. Matching this round's two choices does not establish a general trajectory-matching convention. Introducing that default would replace the previously corrected selection rule with another unsupported priority. Memory membership and updates remain correct and need no additional field or serialization change. Exact recorded-object prediction remains unresolved; it requires an independently supported pickup priority or evaluation accepting any eligible remaining target."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 12,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "the policy prompt for subgoal\n  After the button-reveal interval, two red cubes had been highlighted and the gripper was empty. The goal required picking up all highlighted cubes without specifying an order. The memory correctly contained both unpicked cube centers, serialized by image column. The policy selected the smaller-x target, whereas the recorded action selected the smaller-y target. The rule permitting any remaining member therefore fails SUFFICIENCY for predicting the recorded target, although the policy's choice satisfied the goal. Replace that permissive rule with a deterministic default: when the gripper is empty and remaining_targets is nonempty, follow any explicit pickup priority in the goal; otherwise select the remaining target with the smallest stored y coordinate, breaking equal-y ties by smallest stored x. This is the robot-near target first, not the image-column serialization order. Apply the same selection rule after placement and wherever the fallback rules select a remaining target. Point at the selected cube's current center, or its stored coordinate if occluded. Remove statements that any remaining member is admissible absent an explicit priority; retain the distinction between serialization and pickup priority. Keep the existing holding, successful-pickup removal, placement, and completion rules unchanged. No additional memory is needed because the existing remaining coordinates supply the tie-break information.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No changes committed. The proposed smallest-stored-y default, smallest-x tie-break, and removal of admissible-member selection are unsupported across rounds. Round 3 explicitly records choosing the larger-y blue target while the smaller-y green target remained eligible, contradicting a universal robot-near-first priority. Applying the proposed default after placement and in fallback rules does not resolve that contradiction. The memory correctly retains the eligible targets; neither its fields nor its serialization need changing. Retain the existing admissible-member selection rule. Exact recorded-object prediction remains unresolved and requires an independently supported pickup priority or evaluation accepting any eligible remaining target, rather than another convention fitted to one round."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    22,
+    53,
+    63,
+    65,
+    66
+   ],
+   "verified_of_all": 0.7222222222222222,
+   "subgoal_verified": 0.7777777777777778,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the next subgoal. Each episode starts with A, press button: the initial scene has no held cube and remaining_targets is null. If remaining_targets is still null and no completed reveal is available, choose A. When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting the currently visible table cube corresponding to the first stored coordinate. Point at that cube's current center, allowing minor centroid wobble; do not point at the former white area or substitute another cube of the same color. This selects the blue cube near [89, 146] in episode 6, the green cube near [64, 91] in episode 28, the red cube near [81, 125] in episode 38, the blue cube near [84, 92] in episode 57, and the green cube near [99, 104] in episode 98. If the current scene shows a cube held after pickup, choose C, place the cube onto the table, even though that cube has already been removed from remaining_targets. After placement, an empty gripper and a nonempty remaining_targets list lead back to B for its first entry; never pick up an already removed cube again. If pickup failed, retain the target and retry B. If placement failed and the cube remains held, retry C. If the target is temporarily occluded, use its stored table coordinate for B rather than switching targets. If remaining_targets is empty and the gripper is empty, the task is complete; no further pickup or button press is required. If nevertheless forced to select a menu option after completion, choose C as the non-pickup fallback. For other unmodeled situations, choose C if holding a cube, otherwise B at the first remaining target if one exists, otherwise A only when remaining_targets is null.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Initialize to null when the incoming memory is empty. Inspect all execution frames provided at this decision, not just the final scene. If the incoming value is null and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x]. Deduplicate repeated sightings. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. Once initialized, retain this list. If the supplied frames show a cube being grasped at a listed table location and subsequently lifted while held, remove that entry at this decision. Use its pre-lift table position to identify it, not its raised position. An unsuccessful closure or temporary disappearance is not sufficient for removal. Placement does not add an entry back. Keep stored coordinates unchanged despite occlusion or small visible centroid changes. An empty list means all revealed targets have been picked up; null means the reveal has not yet been recorded. e.g. [[63, 150]]",
+      "annotation": "The list of highlighted cubes not yet successfully picked up, represented by their table-center coordinates [y, x]. Before the button-reveal interval has been observed, use null rather than an empty list. At the decision immediately following the button press, populate the list by matching every white highlighted area seen during that interval to its cube; store cube centers, not highlight centers. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. At each decision following a successful pickup, remove the picked cube. Do not remove a cube merely because a pickup was commanded, and do not restore it when placed down. Preserve remaining coordinates through occlusion and minor centroid wobble. Thus episode 6 has null, [[89, 146], [63, 150]], [[63, 150]], [[63, 150]]; episode 28 has null, [[64, 91]]; episode 38 has null, [[81, 125], [113, 120]], [[113, 120]], [[113, 120]]; episode 57 has null, [[84, 92]]; episode 98 has null, [[99, 104], [112, 146]], [[112, 146]], [[112, 146]]. e.g. [[63, 150]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    45,
+    64,
+    79,
+    83
+   ],
+   "verified_of_all": 0.8636363636363636,
+   "subgoal_verified": 0.8636363636363636,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the next subgoal. Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button. When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority. Point at that cube's current center, allowing minor centroid wobble; do not point at the former white area or substitute another cube of the same color.  If the current scene shows a cube held after pickup, choose C, place the cube onto the table, even though that cube has already been removed from remaining_targets. After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again. If pickup failed, retain the target and retry B. If placement failed and the cube remains held, retry C. If the target is temporarily occluded, use its stored table coordinate for B rather than switching targets. If remaining_targets is empty and the gripper is empty, the task is complete; no further pickup or button press is required. If nevertheless forced to select a menu option after completion, choose C as the non-pickup fallback. For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null. Inspect all execution frames provided at this decision, not just the final scene. If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each highlighted area with the cube immediately above or overlapping it and record that cube's table center as [y, x]. Deduplicate repeated sightings. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. Once initialized, retain this list. If the supplied frames show a cube being grasped at a listed table location and subsequently lifted while held, remove that entry at this decision. Use its pre-lift table position to identify it, not its raised position. An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released. Keep stored coordinates unchanged despite occlusion or small visible centroid changes. Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded. e.g. [[63, 150]]",
+      "annotation": "The list of highlighted cubes not yet successfully picked up, represented by their table-center coordinates [y, x]. Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list. At the decision immediately following the button press, populate the list by matching every white highlighted area seen during that interval to its cube; store cube centers, not highlight centers. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup. Do not remove a cube merely because a pickup was commanded, and do not restore it when placed down. Preserve remaining coordinates through occlusion and minor centroid wobble. Use [] only once all revealed targets have been successfully picked up. e.g. [[63, 150]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    8,
+    18,
+    38,
+    58,
+    61
+   ],
+   "verified_of_all": 0.9375,
+   "subgoal_verified": 0.9375,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the next subgoal. Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button. When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority. Point at that cube's current center, allowing minor centroid wobble; do not point at the former white area or substitute another cube of the same color.  If the current scene shows a cube held after pickup, choose C, place the cube onto the table, even though that cube has already been removed from remaining_targets. After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again. If pickup failed, retain the target and retry B. If placement failed and the cube remains held, retry C. If the target is temporarily occluded, use its stored table coordinate for B rather than switching targets. If remaining_targets is empty and the gripper is empty, the task is complete; no further pickup or button press is required. If nevertheless forced to select a menu option after completion, choose C as the non-pickup fallback. For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null. Inspect all execution frames provided at this decision, not just the final scene. If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each distinct highlighted area with exactly one cube: the closest spatially adjacent cube immediately above or overlapping it. Do not include farther cubes merely because they share the area's image column. Record each associated cube's table center as [y, x]. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. Once initialized, retain this list. If the supplied frames show a cube being grasped at a listed table location and subsequently lifted while held, remove that entry at this decision. Use its pre-lift table position to identify it, not its raised position. An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released. Keep stored coordinates unchanged despite occlusion or small visible centroid changes. Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded. e.g. [[63, 150]]",
+      "annotation": "The list of highlighted cubes not yet successfully picked up, represented by their table-center coordinates [y, x]. Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list. At the decision immediately following the button press, populate the list by matching each distinct white highlighted area seen during that interval to exactly one cube: the closest spatially adjacent cube immediately above or overlapping that area. Do not include farther cubes merely because they share the area's image column. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube; store cube centers, not highlight centers. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup. Do not remove a cube merely because a pickup was commanded, and do not restore it when placed down. Preserve remaining coordinates through occlusion and minor centroid wobble. Use [] only once all revealed targets have been successfully picked up. e.g. [[63, 150]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    11,
+    16,
+    37,
+    97
+   ],
+   "verified_of_all": 0.8571428571428571,
+   "subgoal_verified": 0.8571428571428571,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the next subgoal. Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button. When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority. Point at that cube's current center, allowing minor centroid wobble; do not point at the former white area or substitute another cube of the same color.  If the current scene shows a cube held after pickup, choose C, place the cube onto the table, even though that cube has already been removed from remaining_targets. After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again. If pickup failed, retain the target and retry B. If placement failed and the cube remains held, retry C. If the target is temporarily occluded, use its stored table coordinate for B rather than switching targets. If remaining_targets is empty and the gripper is empty, the task is complete; no further pickup or button press is required. If nevertheless forced to select a menu option after completion, choose C as the non-pickup fallback. For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null. Inspect all execution frames provided at this decision, not just the final scene. If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each distinct highlighted area with exactly one cube: the closest spatially adjacent cube immediately above or overlapping it. Do not include farther cubes merely because they share the area's image column. Record each associated cube's table center as [y, x]. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. Once initialized, retain this list. If the supplied frames show a cube being grasped at a listed table location and subsequently lifted while held, remove that entry at this decision. Use its pre-lift table position to identify it, not its raised position. An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released. Keep stored coordinates unchanged despite occlusion or small visible centroid changes. Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded. e.g. [[63, 150]]",
+      "annotation": "The list of highlighted cubes not yet successfully picked up, represented by their table-center coordinates [y, x]. Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list. At the decision immediately following the button press, populate the list by matching each distinct white highlighted area seen during that interval to exactly one cube: the closest spatially adjacent cube immediately above or overlapping that area. Do not include farther cubes merely because they share the area's image column. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube; store cube centers, not highlight centers. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup. Do not remove a cube merely because a pickup was commanded, and do not restore it when placed down. Preserve remaining coordinates through occlusion and minor centroid wobble. Use [] only once all revealed targets have been successfully picked up. e.g. [[63, 150]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    8,
+    21,
+    54,
+    61,
+    77
+   ],
+   "verified_of_all": 0.9166666666666666,
+   "subgoal_verified": 0.9166666666666666,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update before choosing the next subgoal. Give holding a cube priority: if a cube is held, choose C, place the cube onto the table. Otherwise, if remaining_targets is None and no completed reveal is available, choose A, press button. When remaining_targets is a nonempty list and the gripper is empty, choose B, pick up the highlighted cube, targeting an unpicked member of remaining_targets. Follow any pickup priority explicitly supplied by the goal instruction or current observations; absent such a priority, any remaining member is admissible. Serialization order does not establish pickup priority. Point at that cube's current center, allowing minor centroid wobble; do not point at the former white area or substitute another cube of the same color.  If the current scene shows a cube held after pickup, choose C, place the cube onto the table, even though that cube has already been removed from remaining_targets. After placement, an empty gripper and a nonempty remaining_targets list lead back to B for an unpicked member selected by the same rule; never pick up an already removed cube again. If pickup failed, retain the target and retry B. If placement failed and the cube remains held, retry C. If the target is temporarily occluded, use its stored table coordinate for B rather than switching targets. If remaining_targets is empty and the gripper is empty, the task is complete; no further pickup or button press is required. If nevertheless forced to select a menu option after completion, choose C as the non-pickup fallback. For other unmodeled situations, choose C if holding a cube, otherwise B at a remaining target selected by the same rule if one exists, otherwise A only when remaining_targets is None.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "Treat an empty incoming memory, a missing or blank remaining_targets field, or None as uninitialized. Write the literal sentinel None if no button reveal is available; never leave the field blank or write null. Inspect all execution frames provided at this decision, not just the final scene. If the field is uninitialized and the frames show the button-press interval and white highlighted areas, associate each distinct highlighted area with exactly one cube: the closest spatially adjacent cube immediately above or overlapping it. Do not include farther cubes merely because they share the area's image column. Record each associated cube's table center as [y, x]. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. Once initialized, retain this list. If the supplied frames show a cube being grasped at a listed table location and subsequently lifted while held, remove that entry at this decision. Use its pre-lift table position to identify it, not its raised position. An unsuccessful closure, temporary disappearance, or observation of an already-held cube is not sufficient for removal. Placement neither removes an entry nor adds one back. Preserve an occluded remaining target while another cube is released. Keep stored coordinates unchanged despite occlusion or small visible centroid changes. Write [] only after all revealed targets have actually been picked up; None means the reveal has not yet been recorded. e.g. [[63, 150]]",
+      "annotation": "The list of highlighted cubes not yet successfully picked up, represented by their table-center coordinates [y, x]. Before the button-reveal interval has been observed, write the literal sentinel None, never a blank value, null, or an empty list. At the decision immediately following the button press, populate the list by matching each distinct white highlighted area seen during that interval to exactly one cube: the closest spatially adjacent cube immediately above or overlapping that area. Do not include farther cubes merely because they share the area's image column. Deduplicate repeated observations across the reveal interval and repeated associations to the same cube; store cube centers, not highlight centers. Order targets by image columns from smaller x to larger x; cubes whose x coordinates differ by at most 10 pixels count as the same column and are ordered by increasing y. This is a serialization convention only, not a pickup priority. At each decision whose supplied execution interval shows a listed cube grasped at its table location and subsequently lifted while held, remove that cube. Release or placement of an already-held cube does not establish a new pickup. Do not remove a cube merely because a pickup was commanded, and do not restore it when placed down. Preserve remaining coordinates through occlusion and minor centroid wobble. Use [] only once all revealed targets have been successfully picked up. e.g. [[63, 150]]"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memi"
+version = "0.1.0"
+description = "MEMI: self-improving robot memory through inverse reasoning, on RoboMME"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+# The rollouts, the dataset builder and the Act replay. The rollouts also need the RoboMME benchmark, as README.md
+# shows.
+sim = ["h5py", "opencv-python", "imageio"]
+# Only the base harness in the submodule third_party/embodied-astra-robomme calls the API through the OpenAI SDK.
+# The clients in memi/llm use the standard library.
+harness = ["openai"]
+
+[tool.setuptools.packages.find]
+include = ["memi*"]
+
+[tool.setuptools.package-data]
+"memi.plan" = ["task_menus.json"]
+# memi/act adapts the base harness of embodied-astra-robomme and keeps its MIT license.
+"memi.act" = ["LICENSE"]

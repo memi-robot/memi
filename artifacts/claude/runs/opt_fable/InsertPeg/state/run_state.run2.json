@@ -1,0 +1,459 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "InsertPeg",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   1,
+   15,
+   33,
+   54,
+   60
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in subgoal A. Rules: 1. If the scene shows no peg held in the gripper (no 'is held in the gripper' entry, fingers 100% open, gripper raised out of frame) and the demonstration steps are shown with an empty memory: choose A, pick up the peg by grasping one end, and point at grasp_point, i.e. the coordinates of the peg end that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point and insert_side at this step. 2. If the scene shows a peg end 'is held in the gripper' (fingers about 22-25% open, gripper raised): the pick is done. If insert_side is right, choose B, insert the peg from the right side. If insert_side is left, choose C, insert the peg from the left side. 3. If the scene shows no peg held and the memory already holds grasp_point (the pick failed or dropped): choose A again and point at grasp_point, using the current position of the peg head or peg tail entry in the current scene nearest that stored point, whatever its class. 4. Any situation not covered: if nothing is held, choose A pointing at grasp_point (or, if grasp_point is unknown, at the peg end nearest the box); if something is held, choose B when insert_side is right or unknown, and C when insert_side is left. Carry grasp_point and insert_side forward unchanged.",
+  "fields": [
+   {
+    "name": "grasp_point",
+    "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have just gone from 100% open to about 22-25% open; pick the peg head or peg tail entry whose coordinates are nearest the gripper in that frame; then write that same end's coordinates as they appear in the start-of-execution scene (pegs are at their demonstration t=0 positions). At every later step copy the carried value unchanged, even once a peg is held. The end's class is not written; when it is needed, read it as whichever class ('peg head' or 'peg tail') lists these coordinates in the scene. e.g. [114, 212]",
+    "annotation": "The [y, x] of the peg end the demonstration gripper closed on. Set at the first decision step from the demonstration frame where the gripper is at its lowest (height about 0.01-0.03) and the fingers first drop from 100% open to the closed-on-peg width (about 22-25% open): take the peg head or peg tail entry nearest the gripper position in that frame, and record that end's coordinates as they appear in the start-of-execution scene (the pegs lie at the same positions as at demonstration t=0). Never changes afterwards, even once a peg is held. Whether that end is a head or a tail is not stored; it is whichever class ('peg head' or 'peg tail') lists those coordinates in the scene. e.g. [114, 212]"
+   },
+   {
+    "name": "insert_side",
+    "description": "At the first decision step: look at the last few demonstration frames, where the gripper is low (height about 0.04), fingers still closed, and gripper y close to the aperture box y. If the gripper x in those frames is SMALLER than the aperture box x, write right; if LARGER, write left. At every later step copy the carried value unchanged. e.g. right",
+    "annotation": "The side of the box the demonstration inserted the peg from, right or left. Set at the first decision step from the final demonstration frames (gripper low, height about 0.04, fingers still closed, gripper y near the aperture box y): if the gripper x there is SMALLER than the aperture box x the value is right; if LARGER it is left. Never changes afterwards. e.g. right"
+   }
+  ]
+ },
+ "initial": {
+  "task": "InsertPeg",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   1,
+   15,
+   33,
+   54,
+   60
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in subgoal A. Rules: 1. If the scene shows no peg held in the gripper (no 'is held in the gripper' entry, fingers 100% open, gripper raised out of frame) and the demonstration steps are shown with an empty memory: choose A, pick up the peg by grasping one end, and point at grasp_point, i.e. the coordinates of the peg end (head or tail, matching grasp_end) that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point, grasp_end and insert_side at this step. 2. If the scene shows a peg end 'is held in the gripper' (fingers about 22% open, gripper raised): the pick is done. If insert_side is right, choose B, insert the peg from the right side. If insert_side is left, choose C, insert the peg from the left side. 3. If the scene shows no peg held and the memory already holds grasp_point (the pick failed or dropped): choose A again and point at grasp_point, using the current position of the peg end of class grasp_end nearest that stored point. 4. Any situation not covered: if nothing is held, choose A pointing at grasp_point (or, if grasp_point is unknown, at the peg end nearest the box); if something is held, choose B when insert_side is right or unknown, and C when insert_side is left. Carry all memory fields forward unchanged.",
+  "fields": [
+   {
+    "name": "grasp_point",
+    "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have just gone from 100% open to about 22% open; pick the peg head or peg tail entry whose coordinates are nearest the gripper in that frame; then write that same end's coordinates as they appear in the start-of-execution scene (pegs are at their demonstration t=0 positions). At every later step copy the carried value unchanged. e.g. [114, 212]",
+    "annotation": "The [y, x] of the peg end the demonstration gripper closed on. Set at the first decision step from the demonstration frame where the gripper is at its lowest (height about 0.01-0.03) and the fingers go from 100% open to about 22% open: take the peg head or peg tail entry nearest the gripper position in that frame, and record that end's coordinates as they appear in the start-of-execution scene (the pegs lie at the same positions as at demonstration t=0). Never changes afterwards. e.g. [114, 212]"
+   },
+   {
+    "name": "grasp_end",
+    "description": "At the first decision step: head if the nearest entry to the gripper at the demonstration grasp frame (lowest height, fingers just closed to ~22%) is a peg head, tail if it is a peg tail. At every later step copy the carried value unchanged. e.g. tail",
+    "annotation": "Which end of the peg the demonstration gripper closed on, head or tail. Set at the first decision step from the same grasp frame as grasp_point: whichever of peg head / peg tail is nearest the gripper at the moment the fingers close. Never changes afterwards. e.g. tail"
+   },
+   {
+    "name": "insert_side",
+    "description": "At the first decision step: look at the last few demonstration frames, where the gripper is low (height about 0.04), fingers still closed, and gripper y close to the aperture box y. If the gripper x in those frames is SMALLER than the aperture box x, write right; if LARGER, write left. At every later step copy the carried value unchanged. e.g. right",
+    "annotation": "The side of the box the demonstration inserted the peg from, right or left. Set at the first decision step from the final demonstration frames (gripper low, height about 0.04, fingers still closed, gripper y near the aperture box y): if the gripper x there is SMALLER than the aperture box x the value is right; if LARGER it is left. Never changes afterwards. e.g. right"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "grasp_point": 0,
+     "grasp_end": 0,
+     "insert_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field grasp_end, ANNOTATOR PROMPT\n  DELETE this field. It was carried at every step and read at none. It holds only the class (head/tail) of the end whose coordinates grasp_point already holds, and in every scene that class is recoverable: the stored grasp_point coordinates coincide with exactly one entry under 'peg head' or 'peg tail' in the start-of-execution scene, so the class is read off the scene whenever a point is needed. Fold it into grasp_point and drop it (NECESSITY: a later step recovers the fact).\n\nfield grasp_point, ANNOTATOR PROMPT\n  KEEP, and let it stand alone for what grasp_end used to add. Holds the [y, x] of the peg end the demonstration gripper closed on, taken from the demonstration frame where the gripper is lowest (height about 0.01-0.03) and the fingers first drop from 100% open to the closed-on-peg width (about 22-25%), recorded as that end's coordinates in the start-of-execution scene (pegs lie at their demonstration t=0 positions). Set at the first decision step, never changed. Whether that end is a head or a tail is not stored; it is whichever class lists those coordinates in the scene. It was read at no step in this minibatch because every pick succeeded and the next step already showed a peg held; it is kept because its one use, re-pointing after a failed or dropped pick when the demonstration is no longer shown, cannot be recovered from any later step. e.g. [80, 180]\n\nfield grasp_end, POLICY PROMPT\n  DELETE this field. Do not write it. When the policy needs to know whether the grasped end is a head or a tail, it looks up which class ('peg head' or 'peg tail') lists the grasp_point coordinates in the current scene.\n\nfield grasp_point, POLICY PROMPT\n  At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have just gone from 100% open to about 22-25%; take the peg head or peg tail entry nearest the gripper in that frame; write that same end's coordinates as they appear in the start-of-execution scene (pegs stand at their demonstration t=0 positions). At every later step copy the carried value unchanged, even once a peg is held. The end's class is not written; it is read from whichever class lists these coordinates in the scene. e.g. [80, 180]\n\nthe policy prompt for subgoal\n  No step was answered wrongly, so no transition rule sent the policy astray; the only change is to stop referring to the deleted field grasp_end. Rule 1 (nothing held, demonstration shown, memory empty): choose A and point at the peg end the demonstration closed on, found as described for grasp_point; write grasp_point and insert_side at this step; do not write grasp_end. Rule 2 (a peg end 'is held in the gripper', fingers about 22-25%): unchanged, B when insert_side is right, C when insert_side is left; this rule reads only insert_side. Rule 3 (nothing held, memory holds grasp_point, i.e. the pick failed or the peg dropped): choose A and point at the peg head or peg tail entry in the current scene nearest the stored grasp_point, whatever its class; the class is whichever list contains it, not a memory field. Rule 4 (fallback) likewise drops the mention of grasp_end: nothing held, point at grasp_point or, if unknown, at the peg end nearest the box; something held, B when insert_side is right or unknown, C when left. Carry grasp_point and insert_side forward unchanged.\n\nrefused\n  No step reported a failure; every subgoal and memory matched the record. The only item acted on is the unread-field block. grasp_point was read at no step, and the strict reading of that block would drop it too, but it is not dropped: in every episode here the pick succeeded on the first try, so the second step already showed a peg held and needed only insert_side. The one situation grasp_point exists for, a pick that closes on nothing or drops the peg before the next decision step, did not occur in this minibatch, and when it does occur the demonstration is no longer shown, so nothing in that later step can recover which end was demonstrated. That is the NECESSITY case for keeping it. grasp_end, by contrast, is dropped outright because the scene recovers it from grasp_point at any step.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "delete",
+      "field": "grasp_end",
+      "edits": [],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "grasp_point",
+      "edits": [
+       {
+        "modify_from": "the fingers go from 100% open to about 22% open",
+        "modify_to": "the fingers first drop from 100% open to the closed-on-peg width (about 22-25% open)"
+       },
+       {
+        "modify_from": "Never changes afterwards. e.g. [114, 212]",
+        "modify_to": "Never changes afterwards, even once a peg is held. Whether that end is a head or a tail is not stored; it is whichever class ('peg head' or 'peg tail') lists those coordinates in the scene. e.g. [114, 212]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "grasp_point",
+      "edits": [
+       {
+        "modify_from": "the fingers have just gone from 100% open to about 22% open",
+        "modify_to": "the fingers have just gone from 100% open to about 22-25% open"
+       },
+       {
+        "modify_from": "At every later step copy the carried value unchanged. e.g. [114, 212]",
+        "modify_to": "At every later step copy the carried value unchanged, even once a peg is held. The end's class is not written; when it is needed, read it as whichever class ('peg head' or 'peg tail') lists these coordinates in the scene. e.g. [114, 212]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "i.e. the coordinates of the peg end (head or tail, matching grasp_end) that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point, grasp_end and insert_side at this step.",
+      "modify_to": "i.e. the coordinates of the peg end that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point and insert_side at this step."
+     },
+     {
+      "modify_from": "(fingers about 22% open, gripper raised)",
+      "modify_to": "(fingers about 22-25% open, gripper raised)"
+     },
+     {
+      "modify_from": "using the current position of the peg end of class grasp_end nearest that stored point.",
+      "modify_to": "using the current position of the peg head or peg tail entry in the current scene nearest that stored point, whatever its class."
+     },
+     {
+      "modify_from": "Carry all memory fields forward unchanged.",
+      "modify_to": "Carry grasp_point and insert_side forward unchanged."
+     }
+    ],
+    "refused": "Nothing in the report is refused. grasp_end is deleted on both sides because the scene recovers the class from grasp_point at any step, so it fails NECESSITY; grasp_point is kept, as the report argues, because re-pointing after a failed or dropped pick cannot recover the demonstrated end once the demonstration is no longer shown. No transition rule is changed beyond removing references to the deleted field and aligning the finger-width figure, since every subgoal in round 1 was answered correctly."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "grasp_point": 0,
+     "insert_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  No step was reported as failed: at every first decision step the policy chose A pointing at the demonstrated peg end, and at every second decision step, with a peg end shown as held in the gripper, it chose B or C according to insert_side. The only item to act on is that grasp_point was carried and never read. I keep it. It is never read in these episodes because every pick succeeded on the first attempt, so the policy went straight from the first decision step (where it reads the demonstration directly to pick the point) to a step with a peg already held (where only insert_side matters). The field exists for the case the subgoal instruction's rule 3 covers: a pick that fails or a peg dropped, leaving nothing held and the demonstration no longer shown. At that moment the goal instruction demands the same end of the same peg, and nothing in the scene recovers which end that was, so the fact satisfies NECESSITY even though no step in this minibatch exercised it. Dropping it would leave a retry with no way to choose the correct end. No change to the annotator prompt, the memory instruction, or the subgoal instruction is needed.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The report asks for no change and none is committed. Round 2 scored 10 of 10 on both subgoal and memory, as did round 1, so no transition condition or field value sent the policy astray. The one open question, whether grasp_point should be dropped because it was carried and never read, is answered the same way as in round 1: it exists for a retry after a failed pick or a dropped peg, when the demonstration is no longer shown and nothing in the scene recovers which peg end was demonstrated. That is the NECESSITY case, and dropping it now would undo the round 1 decision to keep it without any new evidence. The annotator prompt, the memory instruction and the subgoal instruction stand as they are."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "grasp_point": 0,
+     "insert_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  No step of the minibatch failed: at every first decision step the policy chose the pick subgoal at the end the demonstration gripper closed on, and at every second decision step a peg end was shown held in the gripper and the policy chose the insertion side it had written from the demonstration's final approach, matching the recorded subgoals. The only report is that grasp_point was carried and never read. I am keeping that field, not dropping or folding it. It is written at the first decision step straight from the demonstration, which is shown once and never again, and it is only ever read when the pick has to be repeated: a later decision step that shows no peg held and fingers fully open, with no demonstration in view. In these episodes every pick succeeded on the first attempt, so that retry situation never occurred and nothing read the field, but no later step can recover which end to grasp without it, so NECESSITY holds for the situation the field exists for. insert_side cannot absorb it since it holds an unrelated fact. The three documents stay as they are.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The report asks for no change and none is committed. Round 3 scored 10 of 10 on both subgoal and memory, as did rounds 1 and 2, so no transition condition or field value sent the policy astray. The only open item is again that grasp_point was carried and never read. It stays, for the reason given in rounds 1 and 2: it is written at the first decision step straight from the demonstration, which is shown once and never again, and it is read only when a pick fails or the peg drops, a step that shows nothing held and no demonstration, where nothing in the scene recovers which peg end was demonstrated. That is the NECESSITY case; dropping it would undo the round 1 decision without new evidence, and folding it into insert_side would pack two unrelated facts into one field. The annotator prompt, the memory instruction and the subgoal instruction stand as they are."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "grasp_point": 0,
+     "insert_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field grasp_point, ANNOTATOR PROMPT\n  DELETE this field. It was annotated at every first decision step with the [y, x] of the peg end the demonstration gripper closed on, and carried unchanged. Across every episode the field was read at no step: at the first decision step the memory is empty and the demonstration steps are in front of the policy, so the grasp point is computed directly from the demonstration frame where the gripper is lowest and the fingers first drop to about 22-25% open; at every later decision step a peg end is already 'held in the gripper' and the only choice left is the insertion side, which insert_side settles. No step in these episodes shows a dropped or failed pick, so no later step ever needs the point back. The field fails NECESSITY: the one step that needs the fact (the first) has it from the demonstration shown at that same step. Only insert_side remains in the memory.\n\nfield grasp_point, POLICY PROMPT\n  DELETE this field. Do not write it at the first decision step and do not carry it. The grasp point for subgoal A is read directly from the demonstration steps shown at the first decision step (the frame where the gripper is at its lowest height, about 0.01-0.03, and the fingers have just gone from 100% open to about 22-25% open; take the peg head or peg tail entry nearest the gripper in that frame and point at that same end's coordinates in the start-of-execution scene). After that step nothing in the episode needs the point again, because the next decision step already shows a peg end held in the gripper. The memory consists of insert_side alone, written at the first decision step and copied unchanged afterwards.\n\nthe policy prompt for subgoal\n  The situation across all episodes is the same: the goal asks to grasp the demonstrated end of the demonstrated peg and insert it from the demonstrated side; the first decision step shows the demonstration and an empty scene with the gripper raised, and the recorded subgoal is A pointing at the demonstrated end; the second decision step shows a peg end held in the gripper raised at about 0.2 height, and the recorded subgoal is B or C according to insert_side. The policy chose these correctly, but it did so without ever reading grasp_point, so the instruction carries a field it never uses (NECESSITY). Rule 1 should stay but be reworded so that the point for A is derived at that step from the demonstration frame itself (lowest gripper height, fingers just closed to about 22-25%, nearest peg head or peg tail entry, taken at its start-of-execution coordinates), with no reference to writing or reading grasp_point; only insert_side is written at this step. Rule 2 stays unchanged: a peg end 'is held in the gripper' means the pick is done; choose B if insert_side is right and C if insert_side is left. Rule 3, which re-picks at a stored grasp_point after a failed or dropped pick, should be removed: no episode shows that situation and the field it reads no longer exists. Rule 4's fallback should no longer mention grasp_point: if nothing is held and the demonstration is not shown, choose A pointing at the peg end nearest the aperture box; if something is held, choose B when insert_side is right or unknown and C when insert_side is left. Carry insert_side forward unchanged.\n\nrefused\n  No step was reported as failed by the policy, so there is nothing to refuse from step reports. The only item acted on is the carried-and-never-read field grasp_point, which is dropped rather than kept: the one argument for keeping it would be a re-grasp after a dropped peg, but no episode in this minibatch contains such a step, and every episode ends with the peg held at the second decision step, so the field decides nothing anywhere in the data.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The report asks to delete grasp_point on both sides, to drop rule 3 of the subgoal instruction, and to reword rules 1 and 4 so nothing is written or read as grasp_point. None of that is committed. Round 4 scored 10 of 10 on both subgoal and memory, as did rounds 1, 2 and 3, so no transition condition or field value sent the policy astray and there is no failure to settle. The only item is again that grasp_point was carried and never read, and the reason is the same as in every earlier round: every pick in the minibatch succeeded on the first attempt, so the step that would read the field, a decision step showing nothing held with the demonstration no longer in view, never occurred. The report's own ground for deletion is that no episode contains such a step, which is absence of the situation, not evidence that a later step recovers the fact; when that situation does occur, nothing in the scene recovers which peg end was demonstrated, so NECESSITY holds for the one use the field exists for. Its proposed rule 4 fallback (point at the peg end nearest the aperture box) would then re-pick an arbitrary end against a goal that demands the demonstrated one. Deleting the field now would undo the round 1 decision, confirmed in rounds 2 and 3, with no new evidence, so the annotator prompt, the memory instruction and the subgoal instruction stand as they are."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "grasp_point": 0,
+     "insert_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field grasp_point, ANNOTATOR PROMPT\n  DELETE this field. It was written at the first decision step and never read at any later step. The pick point is needed only at the first decision step, where the demonstration is in view and the policy computes it directly from the demonstration frame in which the gripper is lowest and the fingers first close; the memory written at that step is first read at the next step, and at the next step a peg end is always already held, so the point is never needed again. The field fails NECESSITY: it holds a fact that no later step reads. The only situation it existed for, a failed pick that has to be retried after the demonstration is gone, does not occur in any episode. Keep only insert_side.\n\nfield grasp_point, POLICY PROMPT\n  DELETE this field. Do not write a pick point into memory. At the first decision step compute the pick point directly from the demonstration frames shown (lowest gripper height, fingers just closed from 100% to about 22-25% open, nearest peg head or peg tail entry, taken at its start-of-execution coordinates) and use it for the point of subgoal A at that same step; nothing about it is carried forward. The memory consists of insert_side alone, written at the first decision step from the final demonstration frames (gripper low near the aperture box; gripper x smaller than box x means right, larger means left) and copied unchanged at every later step.\n\nthe policy prompt for subgoal\n  Remove every reference to a grasp_point memory field. Rule 1 stays as the opening rule but its point is computed on the spot: when the demonstration is shown, memory is empty and nothing is held, choose A and point at the peg end the demonstration gripper closed on, found from the demonstration frame where the gripper is lowest and the fingers have just narrowed to about 22-25% open, taking the nearest peg head or peg tail entry of that frame at the coordinates that entry has in the start-of-execution scene; write insert_side at this step. Rule 2 stays: when a peg end is listed as held in the gripper with fingers about 22-25% open, the pick is done; choose B when insert_side is right and C when insert_side is left. Rule 3, the retry rule that pointed at a stored grasp_point, is dropped, since no stored point exists and no episode shows a pick that has to be retried. Rule 4 becomes: if nothing is held and the demonstration is no longer shown, choose A and point at the peg end nearest the aperture box on the side named by insert_side; if something is held, choose B when insert_side is right or unknown and C when insert_side is left. Carry insert_side forward unchanged.\n\nrefused\n  No step was reported as failed, so no policy report is being passed on or held back. The one thing acted on is the field block: grasp_point was carried at every step and read at none. It is not kept for the retry-after-failed-pick case, because that case appears in no episode of the minibatch; every second decision step shows a peg end already held, and the first decision step has the demonstration in view and needs no memory to find the pick point.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The report asks, for the third time, to delete grasp_point on both sides, drop rule 3 of the subgoal instruction, and reword rules 1 and 4 so no pick point is written or read. None of that is committed. Round 5 scored 10 of 10 on both subgoal and memory, as did every round since initialization, so no transition condition and no field value sent the policy astray and there is no failure to settle. The only item is again that grasp_point was carried and never read, and the ground offered is the same as in round 4: no episode in the minibatch contains a failed or dropped pick. That is absence of the situation, not evidence that a later step recovers the fact. The field exists for exactly one step, a decision step that shows nothing held with the demonstration no longer in view, and at that step nothing in the scene recovers which peg end the demonstration closed on; the report's proposed replacement fallback (the peg end nearest the aperture box on the insert_side) would re-pick an arbitrary end against a goal that demands the demonstrated one. NECESSITY holds for that use. Deleting the field now would undo the round 1 decision, confirmed in rounds 2, 3 and 4, with no new evidence, so the annotator prompt, the memory instruction and the subgoal instruction stand as they are."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    27,
+    76,
+    82,
+    88,
+    96
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "InsertPeg",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     1,
+     15,
+     33,
+     54,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A. Rules: 1. If the scene shows no peg held in the gripper (no 'is held in the gripper' entry, fingers 100% open, gripper raised out of frame) and the demonstration steps are shown with an empty memory: choose A, pick up the peg by grasping one end, and point at grasp_point, i.e. the coordinates of the peg end (head or tail, matching grasp_end) that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point, grasp_end and insert_side at this step. 2. If the scene shows a peg end 'is held in the gripper' (fingers about 22% open, gripper raised): the pick is done. If insert_side is right, choose B, insert the peg from the right side. If insert_side is left, choose C, insert the peg from the left side. 3. If the scene shows no peg held and the memory already holds grasp_point (the pick failed or dropped): choose A again and point at grasp_point, using the current position of the peg end of class grasp_end nearest that stored point. 4. Any situation not covered: if nothing is held, choose A pointing at grasp_point (or, if grasp_point is unknown, at the peg end nearest the box); if something is held, choose B when insert_side is right or unknown, and C when insert_side is left. Carry all memory fields forward unchanged.",
+    "fields": [
+     {
+      "name": "grasp_point",
+      "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have just gone from 100% open to about 22% open; pick the peg head or peg tail entry whose coordinates are nearest the gripper in that frame; then write that same end's coordinates as they appear in the start-of-execution scene (pegs are at their demonstration t=0 positions). At every later step copy the carried value unchanged. e.g. [114, 212]",
+      "annotation": "The [y, x] of the peg end the demonstration gripper closed on. Set at the first decision step from the demonstration frame where the gripper is at its lowest (height about 0.01-0.03) and the fingers go from 100% open to about 22% open: take the peg head or peg tail entry nearest the gripper position in that frame, and record that end's coordinates as they appear in the start-of-execution scene (the pegs lie at the same positions as at demonstration t=0). Never changes afterwards. e.g. [114, 212]"
+     },
+     {
+      "name": "grasp_end",
+      "description": "At the first decision step: head if the nearest entry to the gripper at the demonstration grasp frame (lowest height, fingers just closed to ~22%) is a peg head, tail if it is a peg tail. At every later step copy the carried value unchanged. e.g. tail",
+      "annotation": "Which end of the peg the demonstration gripper closed on, head or tail. Set at the first decision step from the same grasp frame as grasp_point: whichever of peg head / peg tail is nearest the gripper at the moment the fingers close. Never changes afterwards. e.g. tail"
+     },
+     {
+      "name": "insert_side",
+      "description": "At the first decision step: look at the last few demonstration frames, where the gripper is low (height about 0.04), fingers still closed, and gripper y close to the aperture box y. If the gripper x in those frames is SMALLER than the aperture box x, write right; if LARGER, write left. At every later step copy the carried value unchanged. e.g. right",
+      "annotation": "The side of the box the demonstration inserted the peg from, right or left. Set at the first decision step from the final demonstration frames (gripper low, height about 0.04, fingers still closed, gripper y near the aperture box y): if the gripper x there is SMALLER than the aperture box x the value is right; if LARGER it is left. Never changes afterwards. e.g. right"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    13,
+    17,
+    66,
+    96
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "InsertPeg",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     1,
+     15,
+     33,
+     54,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A. Rules: 1. If the scene shows no peg held in the gripper (no 'is held in the gripper' entry, fingers 100% open, gripper raised out of frame) and the demonstration steps are shown with an empty memory: choose A, pick up the peg by grasping one end, and point at grasp_point, i.e. the coordinates of the peg end that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point and insert_side at this step. 2. If the scene shows a peg end 'is held in the gripper' (fingers about 22-25% open, gripper raised): the pick is done. If insert_side is right, choose B, insert the peg from the right side. If insert_side is left, choose C, insert the peg from the left side. 3. If the scene shows no peg held and the memory already holds grasp_point (the pick failed or dropped): choose A again and point at grasp_point, using the current position of the peg head or peg tail entry in the current scene nearest that stored point, whatever its class. 4. Any situation not covered: if nothing is held, choose A pointing at grasp_point (or, if grasp_point is unknown, at the peg end nearest the box); if something is held, choose B when insert_side is right or unknown, and C when insert_side is left. Carry grasp_point and insert_side forward unchanged.",
+    "fields": [
+     {
+      "name": "grasp_point",
+      "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have just gone from 100% open to about 22-25% open; pick the peg head or peg tail entry whose coordinates are nearest the gripper in that frame; then write that same end's coordinates as they appear in the start-of-execution scene (pegs are at their demonstration t=0 positions). At every later step copy the carried value unchanged, even once a peg is held. The end's class is not written; when it is needed, read it as whichever class ('peg head' or 'peg tail') lists these coordinates in the scene. e.g. [114, 212]",
+      "annotation": "The [y, x] of the peg end the demonstration gripper closed on. Set at the first decision step from the demonstration frame where the gripper is at its lowest (height about 0.01-0.03) and the fingers first drop from 100% open to the closed-on-peg width (about 22-25% open): take the peg head or peg tail entry nearest the gripper position in that frame, and record that end's coordinates as they appear in the start-of-execution scene (the pegs lie at the same positions as at demonstration t=0). Never changes afterwards, even once a peg is held. Whether that end is a head or a tail is not stored; it is whichever class ('peg head' or 'peg tail') lists those coordinates in the scene. e.g. [114, 212]"
+     },
+     {
+      "name": "insert_side",
+      "description": "At the first decision step: look at the last few demonstration frames, where the gripper is low (height about 0.04), fingers still closed, and gripper y close to the aperture box y. If the gripper x in those frames is SMALLER than the aperture box x, write right; if LARGER, write left. At every later step copy the carried value unchanged. e.g. right",
+      "annotation": "The side of the box the demonstration inserted the peg from, right or left. Set at the first decision step from the final demonstration frames (gripper low, height about 0.04, fingers still closed, gripper y near the aperture box y): if the gripper x there is SMALLER than the aperture box x the value is right; if LARGER it is left. Never changes afterwards. e.g. right"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    12,
+    36,
+    45,
+    64,
+    65
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "InsertPeg",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     1,
+     15,
+     33,
+     54,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A. Rules: 1. If the scene shows no peg held in the gripper (no 'is held in the gripper' entry, fingers 100% open, gripper raised out of frame) and the demonstration steps are shown with an empty memory: choose A, pick up the peg by grasping one end, and point at grasp_point, i.e. the coordinates of the peg end that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point and insert_side at this step. 2. If the scene shows a peg end 'is held in the gripper' (fingers about 22-25% open, gripper raised): the pick is done. If insert_side is right, choose B, insert the peg from the right side. If insert_side is left, choose C, insert the peg from the left side. 3. If the scene shows no peg held and the memory already holds grasp_point (the pick failed or dropped): choose A again and point at grasp_point, using the current position of the peg head or peg tail entry in the current scene nearest that stored point, whatever its class. 4. Any situation not covered: if nothing is held, choose A pointing at grasp_point (or, if grasp_point is unknown, at the peg end nearest the box); if something is held, choose B when insert_side is right or unknown, and C when insert_side is left. Carry grasp_point and insert_side forward unchanged.",
+    "fields": [
+     {
+      "name": "grasp_point",
+      "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have just gone from 100% open to about 22-25% open; pick the peg head or peg tail entry whose coordinates are nearest the gripper in that frame; then write that same end's coordinates as they appear in the start-of-execution scene (pegs are at their demonstration t=0 positions). At every later step copy the carried value unchanged, even once a peg is held. The end's class is not written; when it is needed, read it as whichever class ('peg head' or 'peg tail') lists these coordinates in the scene. e.g. [114, 212]",
+      "annotation": "The [y, x] of the peg end the demonstration gripper closed on. Set at the first decision step from the demonstration frame where the gripper is at its lowest (height about 0.01-0.03) and the fingers first drop from 100% open to the closed-on-peg width (about 22-25% open): take the peg head or peg tail entry nearest the gripper position in that frame, and record that end's coordinates as they appear in the start-of-execution scene (the pegs lie at the same positions as at demonstration t=0). Never changes afterwards, even once a peg is held. Whether that end is a head or a tail is not stored; it is whichever class ('peg head' or 'peg tail') lists those coordinates in the scene. e.g. [114, 212]"
+     },
+     {
+      "name": "insert_side",
+      "description": "At the first decision step: look at the last few demonstration frames, where the gripper is low (height about 0.04), fingers still closed, and gripper y close to the aperture box y. If the gripper x in those frames is SMALLER than the aperture box x, write right; if LARGER, write left. At every later step copy the carried value unchanged. e.g. right",
+      "annotation": "The side of the box the demonstration inserted the peg from, right or left. Set at the first decision step from the final demonstration frames (gripper low, height about 0.04, fingers still closed, gripper y near the aperture box y): if the gripper x there is SMALLER than the aperture box x the value is right; if LARGER it is left. Never changes afterwards. e.g. right"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    51,
+    63,
+    85,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "InsertPeg",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     1,
+     15,
+     33,
+     54,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A. Rules: 1. If the scene shows no peg held in the gripper (no 'is held in the gripper' entry, fingers 100% open, gripper raised out of frame) and the demonstration steps are shown with an empty memory: choose A, pick up the peg by grasping one end, and point at grasp_point, i.e. the coordinates of the peg end that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point and insert_side at this step. 2. If the scene shows a peg end 'is held in the gripper' (fingers about 22-25% open, gripper raised): the pick is done. If insert_side is right, choose B, insert the peg from the right side. If insert_side is left, choose C, insert the peg from the left side. 3. If the scene shows no peg held and the memory already holds grasp_point (the pick failed or dropped): choose A again and point at grasp_point, using the current position of the peg head or peg tail entry in the current scene nearest that stored point, whatever its class. 4. Any situation not covered: if nothing is held, choose A pointing at grasp_point (or, if grasp_point is unknown, at the peg end nearest the box); if something is held, choose B when insert_side is right or unknown, and C when insert_side is left. Carry grasp_point and insert_side forward unchanged.",
+    "fields": [
+     {
+      "name": "grasp_point",
+      "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have just gone from 100% open to about 22-25% open; pick the peg head or peg tail entry whose coordinates are nearest the gripper in that frame; then write that same end's coordinates as they appear in the start-of-execution scene (pegs are at their demonstration t=0 positions). At every later step copy the carried value unchanged, even once a peg is held. The end's class is not written; when it is needed, read it as whichever class ('peg head' or 'peg tail') lists these coordinates in the scene. e.g. [114, 212]",
+      "annotation": "The [y, x] of the peg end the demonstration gripper closed on. Set at the first decision step from the demonstration frame where the gripper is at its lowest (height about 0.01-0.03) and the fingers first drop from 100% open to the closed-on-peg width (about 22-25% open): take the peg head or peg tail entry nearest the gripper position in that frame, and record that end's coordinates as they appear in the start-of-execution scene (the pegs lie at the same positions as at demonstration t=0). Never changes afterwards, even once a peg is held. Whether that end is a head or a tail is not stored; it is whichever class ('peg head' or 'peg tail') lists those coordinates in the scene. e.g. [114, 212]"
+     },
+     {
+      "name": "insert_side",
+      "description": "At the first decision step: look at the last few demonstration frames, where the gripper is low (height about 0.04), fingers still closed, and gripper y close to the aperture box y. If the gripper x in those frames is SMALLER than the aperture box x, write right; if LARGER, write left. At every later step copy the carried value unchanged. e.g. right",
+      "annotation": "The side of the box the demonstration inserted the peg from, right or left. Set at the first decision step from the final demonstration frames (gripper low, height about 0.04, fingers still closed, gripper y near the aperture box y): if the gripper x there is SMALLER than the aperture box x the value is right; if LARGER it is left. Never changes afterwards. e.g. right"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    2,
+    12,
+    36,
+    43,
+    45
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "InsertPeg",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     1,
+     15,
+     33,
+     54,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A. Rules: 1. If the scene shows no peg held in the gripper (no 'is held in the gripper' entry, fingers 100% open, gripper raised out of frame) and the demonstration steps are shown with an empty memory: choose A, pick up the peg by grasping one end, and point at grasp_point, i.e. the coordinates of the peg end that the demonstration gripper closed on, as that end appears in the current scene. Write grasp_point and insert_side at this step. 2. If the scene shows a peg end 'is held in the gripper' (fingers about 22-25% open, gripper raised): the pick is done. If insert_side is right, choose B, insert the peg from the right side. If insert_side is left, choose C, insert the peg from the left side. 3. If the scene shows no peg held and the memory already holds grasp_point (the pick failed or dropped): choose A again and point at grasp_point, using the current position of the peg head or peg tail entry in the current scene nearest that stored point, whatever its class. 4. Any situation not covered: if nothing is held, choose A pointing at grasp_point (or, if grasp_point is unknown, at the peg end nearest the box); if something is held, choose B when insert_side is right or unknown, and C when insert_side is left. Carry grasp_point and insert_side forward unchanged.",
+    "fields": [
+     {
+      "name": "grasp_point",
+      "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have just gone from 100% open to about 22-25% open; pick the peg head or peg tail entry whose coordinates are nearest the gripper in that frame; then write that same end's coordinates as they appear in the start-of-execution scene (pegs are at their demonstration t=0 positions). At every later step copy the carried value unchanged, even once a peg is held. The end's class is not written; when it is needed, read it as whichever class ('peg head' or 'peg tail') lists these coordinates in the scene. e.g. [114, 212]",
+      "annotation": "The [y, x] of the peg end the demonstration gripper closed on. Set at the first decision step from the demonstration frame where the gripper is at its lowest (height about 0.01-0.03) and the fingers first drop from 100% open to the closed-on-peg width (about 22-25% open): take the peg head or peg tail entry nearest the gripper position in that frame, and record that end's coordinates as they appear in the start-of-execution scene (the pegs lie at the same positions as at demonstration t=0). Never changes afterwards, even once a peg is held. Whether that end is a head or a tail is not stored; it is whichever class ('peg head' or 'peg tail') lists those coordinates in the scene. e.g. [114, 212]"
+     },
+     {
+      "name": "insert_side",
+      "description": "At the first decision step: look at the last few demonstration frames, where the gripper is low (height about 0.04), fingers still closed, and gripper y close to the aperture box y. If the gripper x in those frames is SMALLER than the aperture box x, write right; if LARGER, write left. At every later step copy the carried value unchanged. e.g. right",
+      "annotation": "The side of the box the demonstration inserted the peg from, right or left. Set at the first decision step from the final demonstration frames (gripper low, height about 0.04, fingers still closed, gripper y near the aperture box y): if the gripper x there is SMALLER than the aperture box x the value is right; if LARGER it is left. Never changes afterwards. e.g. right"
+     }
+    ]
+   }
+  }
+ ]
+}

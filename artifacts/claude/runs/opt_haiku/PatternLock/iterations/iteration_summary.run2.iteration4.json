@@ -1,0 +1,112 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "plan",
+  "moves_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  7,
+  30,
+  35,
+  59,
+  60
+ ],
+ "scored": 19,
+ "failed": 2,
+ "subgoal_wrong": 0,
+ "memory_wrong": 2,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.8947368421052632,
+ "reads": {
+  "plan": 14,
+  "moves_done": 14
+ },
+ "field_errors": {
+  "plan": {
+   "in": 2,
+   "sole": 2
+  },
+  "moves_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.10526315789473684,
+ "verified_of_all": 0.8947368421052632,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 19,
+ "critique": "field plan, ANNOTATOR PROMPT\n  Situation: at the first decision step, after watching the demonstration, the policy derived the correct sequence of moves and the correct first subgoal, and the annotated plan held the same letters, yet the step counted as wrong because the policy emitted the list in Python single-quote form while the annotation used a JSON double-quote form. The content agreed; only the quoting differed. This breaks PREDICTABILITY: two serializations of one fact at one step are compared literally, and the quoting form is not something the demonstration can tell the policy. Change: keep the same fact (the ordered list of menu letters the demonstration traces, derived from newly highlighted targets with the same dy/dx threshold rule, including the start marker possibly labelled 'highlighted area'), written at the first decision step and copied unchanged at every later step, but serialize it as a plain string of bare capital letters with no quotes, brackets, commas or spaces. Position 0 is the first move. Example value: DFAAG\n\nfield plan, POLICY PROMPT\n  Situation: at the first decision step the policy built the right move letters from the demonstration and chose the right subgoal, but wrote the plan with single quotes around each letter instead of the double quotes the instruction asked for, so the memory counted as a mismatch even though the letters were right. The instruction already demanded double quotes and the policy still varied the quoting; a representation with no quoting at all removes the failure. Breaks PREDICTABILITY (the value asked for and the value written differ in form only). Change: when the step shows demonstration steps and the carried memory is empty, derive the letters exactly as before (start at the first highlighted target or 'highlighted area' at demo t=0; for each newly highlighted target compute dy, dx against the previously highlighted one with the 8-pixel threshold; forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). When no demonstration is shown, copy the carried-in value character for character. Write the value as one string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. The value is compared character by character, so DFAAG is right and [\"D\", \"F\", \"A\", \"A\", \"G\"] or ['D', 'F', 'A', 'A', 'G'] are both wrong. Example value: DFAAG\n\nthe policy prompt for subgoal\n  The subgoal choice itself was never wrong in these episodes; the only change follows the new plan format. Where the instruction says the subgoal is the letter of plan at index moves_done, say instead that plan is a string of bare letters and the subgoal is the character at position moves_done (0-based) of that string, where moves_done is the value written at this step (0 at the first step with the demonstration shown, carried value plus one afterwards). Keep the rules that the first step performs the first character, that every later decision step advances by exactly one character regardless of where the gripper ended, that nothing is repeated or skipped, that when moves_done is at or beyond the length of the string the last character is repeated, and the fallback of deriving the direction from two visible highlighted targets or choosing A when no plan exists. No rule is to be removed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The subgoal choice itself was never wrong in these episodes; the only change follows the new plan format. Where the instruction says the subgoal is the letter of plan at index moves_done, say instead that plan is a string of bare letters and the subgoal is the character at position moves_done (0-based) of that string, where moves_done is the value written at this step (0 at the first step with the demonstration shown, carried value plus one afterwards). Keep the rules that the first step performs the first character, that every later decision step advances by exactly one character regardless of where the gripper ended, that nothing is repeated or skipped, that when moves_done is at or beyond the length of the string the last character is repeated, and the fallback of deriving the direction from two visible highlighted targets or choosing A when no plan exists. No rule is to be removed.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "plan",
+    "description": "Situation: at the first decision step the policy built the right move letters from the demonstration and chose the right subgoal, but wrote the plan with single quotes around each letter instead of the double quotes the instruction asked for, so the memory counted as a mismatch even though the letters were right. The instruction already demanded double quotes and the policy still varied the quoting; a representation with no quoting at all removes the failure. Breaks PREDICTABILITY (the value asked for and the value written differ in form only). Change: when the step shows demonstration steps and the carried memory is empty, derive the letters exactly as before (start at the first highlighted target or 'highlighted area' at demo t=0; for each newly highlighted target compute dy, dx against the previously highlighted one with the 8-pixel threshold; forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). When no demonstration is shown, copy the carried-in value character for character. Write the value as one string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. The value is compared character by character, so DFAAG is right and [\"D\", \"F\", \"A\", \"A\", \"G\"] or ['D', 'F', 'A', 'A', 'G'] are both wrong. Example value: DFAAG"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "plan",
+    "description": "Situation: at the first decision step, after watching the demonstration, the policy derived the correct sequence of moves and the correct first subgoal, and the annotated plan held the same letters, yet the step counted as wrong because the policy emitted the list in Python single-quote form while the annotation used a JSON double-quote form. The content agreed; only the quoting differed. This breaks PREDICTABILITY: two serializations of one fact at one step are compared literally, and the quoting form is not something the demonstration can tell the policy. Change: keep the same fact (the ordered list of menu letters the demonstration traces, derived from newly highlighted targets with the same dy/dx threshold rule, including the start marker possibly labelled 'highlighted area'), written at the first decision step and copied unchanged at every later step, but serialize it as a plain string of bare capital letters with no quotes, brackets, commas or spaces. Position 0 is the first move. Example value: DFAAG"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    7,
+    "exec",
+    179
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "D: move right",
+   "recorded": "D: move right",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction did say to write the plan as a JSON array with double-quoted letters (e.g. [\"E\", \"D\", \"G\", \"H\"]) and never single quotes; the content of my plan was correct and only the quoting form differed (I wrote ['D', 'F', 'A', 'A', 'G'] instead of [\"D\", \"F\", \"A\", \"A\", \"G\"]). The instruction was sufficient; nothing was missing beyond perhaps stating that the exact string form is compared literally so Python-style single-quoted lists count as wrong.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    59,
+    "exec",
+    190
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "F: move forward-right",
+   "recorded": "F: move forward-right",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The instruction did say to use double quotes, but my answer still used single quotes ['F', ...] instead of [\"F\", ...]. The instruction should state more forcefully, as a final checklist item, that the plan string must be emitted verbatim as a JSON array with double-quoted letters (e.g. [\"F\", \"A\"]) and that any other quoting (Python-style single quotes) counts as a mismatch, since the letters themselves and moves_done were correct.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

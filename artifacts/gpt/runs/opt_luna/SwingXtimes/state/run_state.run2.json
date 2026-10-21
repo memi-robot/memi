@@ -1,0 +1,354 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "SwingXtimes",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   44,
+   53,
+   56,
+   69,
+   72
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Read the requested cube color and repetition count from the goal each time. Let N be twice the repetition count; for 'move ... right-side target, then put it down on the left-side target', N is 2. Update completed_target_visits from the observed interval before selecting the next subgoal. Right means the smaller-x target and left means the larger-x target, irrespective of y. Start with A, pointing at the instructed cube on the table. When the cube is held and completed_target_visits is less than N, choose B: point at the right target if the count is even, or the left target if it is odd. This also governs the transition from pickup to the first target move and between successive target moves. Select a point on the target itself, not the elevated cube or wrist. Use the latest clear view of that target anywhere in the current observed interval if it is occluded in the final scene; in particular, episode 72's first right target is visible earlier in the pickup interval. When the cube is held and completed_target_visits equals N, choose C to lower and release it on the table at the final left target. When the count equals N and the final scene shows the cube released and the hand empty, choose D. Thus release precedes button pressing even when the goal only explicitly says to press the button after the repetitions. For an unexpected dropped cube before N, choose A at the instructed cube and retain the count. For an unconfirmed arrival while still holding the cube, repeat B toward the destination selected by count parity without incrementing the count. If a required object is obscured, use its latest clear position in the current interval; if none is available, choose the best-supported location from the visible scene rather than inventing a completed visit or stopping to ask. All points use [y, x].",
+  "fields": [
+   {
+    "name": "completed_target_visits",
+    "description": "With empty incoming memory, write 0. Otherwise start with the incoming integer. The next countable destination is the smaller-x target when that integer is even, and the larger-x target when it is odd. If the incoming count is below the required number of visits, increase once when the observed interval ends with the cube still grasped, the hand at approximately 0.100 height on the expected destination's side, and that destination highlighted in the final scene. The elevated wrist or cube need not coincide with the target in image coordinates: projection offsets above and slightly beside the target are expected and do not invalidate this arrival evidence. Use the final destination highlight, not a stale highlight during transit. Do not count pickup, which ends with the hand raised at approximately 0.150 height, or release, which ends with an open empty hand. Do not count multiple frames of the same arrival, and do not increase beyond the required number of visits (twice the requested repetition count, or two for the instruction to go right then put down left). Otherwise preserve the incoming integer. Treat the incoming integer as the pre-interval count and apply the arrival test above exactly once. Use the resulting count both to select the next subgoal and as the outgoing completed_target_visits value. Do not write the incoming count after using an incremented count for subgoal selection. e.g. 2",
+    "annotation": "Integer counting completed moves above targets while holding the instructed cube, in the required alternating order starting with the robot's right target. Initialize to 0. Increase by one at the decision step immediately following each completed target move; do not increase for pickup, release, or button pressing. Count each completed move once, not each frame showing a highlight. Episode 44 and episode 72 have values [0, 0, 1, 2, 3, 4, 4]; episode 53 has [0, 0, 1, 2, 3, 4, 5, 6, 6]; episodes 56 and 69 have [0, 0, 1, 2, 2]. e.g. 2"
+   }
+  ]
+ },
+ "initial": {
+  "task": "SwingXtimes",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   44,
+   53,
+   56,
+   69,
+   72
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Read the requested cube color and repetition count from the goal each time. Let N be twice the repetition count; for 'move ... right-side target, then put it down on the left-side target', N is 2. Update completed_target_visits from the observed interval before selecting the next subgoal. Right means the smaller-x target and left means the larger-x target, irrespective of y. Start with A, pointing at the instructed cube on the table. When the cube is held and completed_target_visits is less than N, choose B: point at the right target if the count is even, or the left target if it is odd. This also governs the transition from pickup to the first target move and between successive target moves. Select a point on the target itself, not the elevated cube or wrist. Use the latest clear view of that target anywhere in the current observed interval if it is occluded in the final scene; in particular, episode 72's first right target is visible earlier in the pickup interval. When the cube is held and completed_target_visits equals N, choose C to lower and release it on the table at the final left target. When the count equals N and the final scene shows the cube released and the hand empty, choose D. Thus release precedes button pressing even when the goal only explicitly says to press the button after the repetitions. For an unexpected dropped cube before N, choose A at the instructed cube and retain the count. For an unconfirmed arrival while still holding the cube, repeat B toward the destination selected by count parity without incrementing the count. If a required object is obscured, use its latest clear position in the current interval; if none is available, choose the best-supported location from the visible scene rather than inventing a completed visit or stopping to ask. All points use [y, x].",
+  "fields": [
+   {
+    "name": "completed_target_visits",
+    "description": "With empty incoming memory, write 0. Otherwise start with the incoming integer. The next countable destination is the smaller-x target when that integer is even, and the larger-x target when it is odd. Increase once if the observed interval shows completion of a move above that destination: the cube remains grasped, the final hand is hovering at approximately 0.100 height above that target, and that destination is highlighted at the final scene. Use the final destination rather than a stale highlight during transit. Do not count pickup, which ends with the hand raised at approximately 0.150 height, or release, which ends with an open empty hand. Do not count multiple frames of the same arrival, and do not increase beyond the required number of visits (twice the requested repetition count, or two for the instruction to go right then put down left). Otherwise preserve the incoming integer. e.g. 2",
+    "annotation": "Integer counting completed moves above targets while holding the instructed cube, in the required alternating order starting with the robot's right target. Initialize to 0. Increase by one at the decision step immediately following each completed target move; do not increase for pickup, release, or button pressing. Count each completed move once, not each frame showing a highlight. Episode 44 and episode 72 have values [0, 0, 1, 2, 3, 4, 4]; episode 53 has [0, 0, 1, 2, 3, 4, 5, 6, 6]; episodes 56 and 69 have [0, 0, 1, 2, 2]. e.g. 2"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 37,
+    "subgoal_wrong": 3,
+    "memory_wrong": 2,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "completed_target_visits": 2
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 2
+   },
+   "critique": "field completed_target_visits, POLICY PROMPT\n  During alternating right-then-left target visits, an interval ended with the instructed cube held, the hand at approximately 0.100 height, and the expected smaller-x target highlighted. The elevated hand projected above and slightly beside the target in the image. The policy preserved the incoming count and commanded another move to that same target, whereas the annotation counted the arrival and required moving left next. This is a PREDICTABILITY failure that also disrupted subgoal selection: 'hovering above' was interpreted as requiring coincident image coordinates. Clarify that this field remains an integer counting completed alternating target moves, initialized to 0. With a nonempty incoming count below the required total, determine the expected destination from incoming parity: smaller x for even, larger x for odd. Increment once when the current interval ends with the cube still grasped, the hand at approximately 0.100 height on that destination's side, and that destination highlighted. Image-coordinate coincidence between the target and the elevated wrist or cube is not required; projection offsets are expected. Use the final destination highlight, not a stale highlight during transit. For example, a confirmed right-target arrival with incoming count 4 writes 5. Preserve the existing exclusions for pickup, release, repeated frames, and counts beyond the required total.\n\nrefused\n  One failure occurred after all required target visits and the final release: the cube was resting on the left target, the hand was empty, and the carried count already equaled the required total. The policy retained that count but chose pickup instead of pressing the button, without identifying any missing information or rule. No change is warranted for that report. The existing policy prompt for subgoal explicitly selects button pressing when the count equals the total and the cube is released, and limits recovery pickup to drops before that total. The memory and observation were sufficient; this was failure to apply an existing rule, not a missing memory fact or transition. The annotator prompt also needs no change: the arrival failures concern recognition of the already-defined completed moves, not their annotated values.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "completed_target_visits",
+      "edits": [
+       {
+        "modify_from": "Increase once if the observed interval shows completion of a move above that destination: the cube remains grasped, the final hand is hovering at approximately 0.100 height above that target, and that destination is highlighted at the final scene. Use the final destination rather than a stale highlight during transit.",
+        "modify_to": "If the incoming count is below the required number of visits, increase once when the observed interval ends with the cube still grasped, the hand at approximately 0.100 height on the expected destination's side, and that destination highlighted in the final scene. The elevated wrist or cube need not coincide with the target in image coordinates: projection offsets above and slightly beside the target are expected and do not invalidate this arrival evidence. Use the final destination highlight, not a stale highlight during transit."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No annotation or subgoal-policy prompt change is committed. The annotation already counts the intended completed arrivals correctly. The reported post-release pickup error requires no new rule: the existing policy prompt for subgoal selects D when the count equals the required total and the cube is released with the hand empty, and restricts recovery pickup to drops before that total."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 35,
+    "subgoal_wrong": 0,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "completed_target_visits": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field completed_target_visits, POLICY PROMPT\n  After a completed move from the right target to the left target while holding the instructed cube, the incoming count was 1. The final scene showed the cube still grasped at approximately 0.100 height over the highlighted left target. The policy correctly chose to move back to the right target, but wrote 1 instead of the annotated value 2. This is a PREDICTABILITY failure in carrying the recognized arrival into outgoing memory, not a need for another field. Retain the field's meaning and existing arrival conditions, but make the update-and-write operation explicit: take the incoming integer as the pre-interval count, apply the arrival test once, and use the resulting integer both for subgoal selection and as the outgoing completed_target_visits value. Never return the incoming value after using an incremented value to select the next target. For example, an incoming value of 1 followed by a confirmed left-target arrival produces outgoing value 2 and selects the right target next when further visits remain. The field continues to count completed alternating target visits, increasing only on a confirmed arrival while holding the cube and remaining unchanged for pickup, release, or button pressing.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "completed_target_visits",
+      "edits": [
+       {
+        "modify_from": "Otherwise preserve the incoming integer. e.g. 2",
+        "modify_to": "Otherwise preserve the incoming integer. Treat the incoming integer as the pre-interval count and apply the arrival test above exactly once. Use the resulting count both to select the next subgoal and as the outgoing completed_target_visits value. Do not write the incoming count after using an incremented count for subgoal selection. e.g. 2"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": ""
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 39,
+    "subgoal_wrong": 0,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "completed_target_visits": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  During a task requiring three right-to-left repetitions, the observed interval ended with the held cube arriving above the highlighted right target at approximately 0.100 height. The incoming completed_target_visits value was 4, and the annotator prompt requires an outgoing value of 5. The policy correctly selected B toward the left target but wrote 4, retaining the pre-arrival count. No missing information or rule was reported. This is a memory-output error, not an unresolved PREDICTABILITY or SUFFICIENCY deficiency in the documents: the policy prompt for memory already explicitly requires counting this arrival once, using the resulting count for subgoal selection, and writing that same updated count rather than the incoming count. The annotator prompt agrees, and the policy prompt for subgoal correctly selects the left target after the fifth visit. No document change or additional memory field is warranted.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No changes committed, as the report recommends. Round 1 already clarified recognition of the target arrival, and Round 2 explicitly requires using the updated count both for subgoal selection and outgoing memory. The reported arrival with incoming count 4 therefore requires writing 5 and selecting the left target. Writing 4 while selecting that target violates the existing rule rather than exposing missing information or an unclear transition. No additional field or repeated instruction is warranted; all earlier edits remain intact."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 41,
+    "subgoal_wrong": 0,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "completed_target_visits": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "refused\n  The reported failure occurred during a three-repetition alternating-target task. The incoming completed_target_visits was 4, and the observed interval ended with the instructed cube still grasped at approximately 0.100 height over the robot's right target, which was highlighted. The policy correctly selected B toward the left target but wrote completed_target_visits as 4 instead of 5. No missing information or unclear rule was reported. This is an incorrect memory output, not a demonstrated defect in the documents' SUFFICIENCY or PREDICTABILITY: the annotator prompt counts this completed arrival, and the policy prompt for memory already explicitly requires incrementing the incoming count once, using the resulting count for subgoal selection, and writing that same incremented count rather than the incoming value. The policy prompt for subgoal also already selects the left target after that increment. The selected point identifies the correct target despite a minor coordinate difference. No annotation, memory-policy prompt, or subgoal-policy prompt change is warranted.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No changes committed, as the report recommends. Round 1 clarified arrival recognition, and Round 2 explicitly requires using the updated count for both subgoal selection and outgoing memory. The reported confirmed right-target arrival with incoming count 4 already requires writing 5 and selecting B toward the left target. Retaining 4 violates that existing rule, just as in Round 3; it does not establish a missing fact or unclear transition. No additional field, repeated instruction, or coordinate-selection change is warranted. All earlier edits remain intact."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 4,
+ "quiet": 2,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    27,
+    45,
+    53,
+    72,
+    78
+   ],
+   "verified_of_all": 0.918918918918919,
+   "subgoal_verified": 0.918918918918919,
+   "variables": {
+    "task": "SwingXtimes",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     44,
+     53,
+     56,
+     69,
+     72
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Read the requested cube color and repetition count from the goal each time. Let N be twice the repetition count; for 'move ... right-side target, then put it down on the left-side target', N is 2. Update completed_target_visits from the observed interval before selecting the next subgoal. Right means the smaller-x target and left means the larger-x target, irrespective of y. Start with A, pointing at the instructed cube on the table. When the cube is held and completed_target_visits is less than N, choose B: point at the right target if the count is even, or the left target if it is odd. This also governs the transition from pickup to the first target move and between successive target moves. Select a point on the target itself, not the elevated cube or wrist. Use the latest clear view of that target anywhere in the current observed interval if it is occluded in the final scene; in particular, episode 72's first right target is visible earlier in the pickup interval. When the cube is held and completed_target_visits equals N, choose C to lower and release it on the table at the final left target. When the count equals N and the final scene shows the cube released and the hand empty, choose D. Thus release precedes button pressing even when the goal only explicitly says to press the button after the repetitions. For an unexpected dropped cube before N, choose A at the instructed cube and retain the count. For an unconfirmed arrival while still holding the cube, repeat B toward the destination selected by count parity without incrementing the count. If a required object is obscured, use its latest clear position in the current interval; if none is available, choose the best-supported location from the visible scene rather than inventing a completed visit or stopping to ask. All points use [y, x].",
+    "fields": [
+     {
+      "name": "completed_target_visits",
+      "description": "With empty incoming memory, write 0. Otherwise start with the incoming integer. The next countable destination is the smaller-x target when that integer is even, and the larger-x target when it is odd. Increase once if the observed interval shows completion of a move above that destination: the cube remains grasped, the final hand is hovering at approximately 0.100 height above that target, and that destination is highlighted at the final scene. Use the final destination rather than a stale highlight during transit. Do not count pickup, which ends with the hand raised at approximately 0.150 height, or release, which ends with an open empty hand. Do not count multiple frames of the same arrival, and do not increase beyond the required number of visits (twice the requested repetition count, or two for the instruction to go right then put down left). Otherwise preserve the incoming integer. e.g. 2",
+      "annotation": "Integer counting completed moves above targets while holding the instructed cube, in the required alternating order starting with the robot's right target. Initialize to 0. Increase by one at the decision step immediately following each completed target move; do not increase for pickup, release, or button pressing. Count each completed move once, not each frame showing a highlight. Episode 44 and episode 72 have values [0, 0, 1, 2, 3, 4, 4]; episode 53 has [0, 0, 1, 2, 3, 4, 5, 6, 6]; episodes 56 and 69 have [0, 0, 1, 2, 2]. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    6,
+    31,
+    48,
+    58,
+    64
+   ],
+   "verified_of_all": 0.9714285714285714,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "SwingXtimes",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     44,
+     53,
+     56,
+     69,
+     72
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Read the requested cube color and repetition count from the goal each time. Let N be twice the repetition count; for 'move ... right-side target, then put it down on the left-side target', N is 2. Update completed_target_visits from the observed interval before selecting the next subgoal. Right means the smaller-x target and left means the larger-x target, irrespective of y. Start with A, pointing at the instructed cube on the table. When the cube is held and completed_target_visits is less than N, choose B: point at the right target if the count is even, or the left target if it is odd. This also governs the transition from pickup to the first target move and between successive target moves. Select a point on the target itself, not the elevated cube or wrist. Use the latest clear view of that target anywhere in the current observed interval if it is occluded in the final scene; in particular, episode 72's first right target is visible earlier in the pickup interval. When the cube is held and completed_target_visits equals N, choose C to lower and release it on the table at the final left target. When the count equals N and the final scene shows the cube released and the hand empty, choose D. Thus release precedes button pressing even when the goal only explicitly says to press the button after the repetitions. For an unexpected dropped cube before N, choose A at the instructed cube and retain the count. For an unconfirmed arrival while still holding the cube, repeat B toward the destination selected by count parity without incrementing the count. If a required object is obscured, use its latest clear position in the current interval; if none is available, choose the best-supported location from the visible scene rather than inventing a completed visit or stopping to ask. All points use [y, x].",
+    "fields": [
+     {
+      "name": "completed_target_visits",
+      "description": "With empty incoming memory, write 0. Otherwise start with the incoming integer. The next countable destination is the smaller-x target when that integer is even, and the larger-x target when it is odd. If the incoming count is below the required number of visits, increase once when the observed interval ends with the cube still grasped, the hand at approximately 0.100 height on the expected destination's side, and that destination highlighted in the final scene. The elevated wrist or cube need not coincide with the target in image coordinates: projection offsets above and slightly beside the target are expected and do not invalidate this arrival evidence. Use the final destination highlight, not a stale highlight during transit. Do not count pickup, which ends with the hand raised at approximately 0.150 height, or release, which ends with an open empty hand. Do not count multiple frames of the same arrival, and do not increase beyond the required number of visits (twice the requested repetition count, or two for the instruction to go right then put down left). Otherwise preserve the incoming integer. e.g. 2",
+      "annotation": "Integer counting completed moves above targets while holding the instructed cube, in the required alternating order starting with the robot's right target. Initialize to 0. Increase by one at the decision step immediately following each completed target move; do not increase for pickup, release, or button pressing. Count each completed move once, not each frame showing a highlight. Episode 44 and episode 72 have values [0, 0, 1, 2, 3, 4, 4]; episode 53 has [0, 0, 1, 2, 3, 4, 5, 6, 6]; episodes 56 and 69 have [0, 0, 1, 2, 2]. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    23,
+    38,
+    59,
+    71,
+    74
+   ],
+   "verified_of_all": 0.9743589743589743,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "SwingXtimes",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     44,
+     53,
+     56,
+     69,
+     72
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Read the requested cube color and repetition count from the goal each time. Let N be twice the repetition count; for 'move ... right-side target, then put it down on the left-side target', N is 2. Update completed_target_visits from the observed interval before selecting the next subgoal. Right means the smaller-x target and left means the larger-x target, irrespective of y. Start with A, pointing at the instructed cube on the table. When the cube is held and completed_target_visits is less than N, choose B: point at the right target if the count is even, or the left target if it is odd. This also governs the transition from pickup to the first target move and between successive target moves. Select a point on the target itself, not the elevated cube or wrist. Use the latest clear view of that target anywhere in the current observed interval if it is occluded in the final scene; in particular, episode 72's first right target is visible earlier in the pickup interval. When the cube is held and completed_target_visits equals N, choose C to lower and release it on the table at the final left target. When the count equals N and the final scene shows the cube released and the hand empty, choose D. Thus release precedes button pressing even when the goal only explicitly says to press the button after the repetitions. For an unexpected dropped cube before N, choose A at the instructed cube and retain the count. For an unconfirmed arrival while still holding the cube, repeat B toward the destination selected by count parity without incrementing the count. If a required object is obscured, use its latest clear position in the current interval; if none is available, choose the best-supported location from the visible scene rather than inventing a completed visit or stopping to ask. All points use [y, x].",
+    "fields": [
+     {
+      "name": "completed_target_visits",
+      "description": "With empty incoming memory, write 0. Otherwise start with the incoming integer. The next countable destination is the smaller-x target when that integer is even, and the larger-x target when it is odd. If the incoming count is below the required number of visits, increase once when the observed interval ends with the cube still grasped, the hand at approximately 0.100 height on the expected destination's side, and that destination highlighted in the final scene. The elevated wrist or cube need not coincide with the target in image coordinates: projection offsets above and slightly beside the target are expected and do not invalidate this arrival evidence. Use the final destination highlight, not a stale highlight during transit. Do not count pickup, which ends with the hand raised at approximately 0.150 height, or release, which ends with an open empty hand. Do not count multiple frames of the same arrival, and do not increase beyond the required number of visits (twice the requested repetition count, or two for the instruction to go right then put down left). Otherwise preserve the incoming integer. Treat the incoming integer as the pre-interval count and apply the arrival test above exactly once. Use the resulting count both to select the next subgoal and as the outgoing completed_target_visits value. Do not write the incoming count after using an incremented count for subgoal selection. e.g. 2",
+      "annotation": "Integer counting completed moves above targets while holding the instructed cube, in the required alternating order starting with the robot's right target. Initialize to 0. Increase by one at the decision step immediately following each completed target move; do not increase for pickup, release, or button pressing. Count each completed move once, not each frame showing a highlight. Episode 44 and episode 72 have values [0, 0, 1, 2, 3, 4, 4]; episode 53 has [0, 0, 1, 2, 3, 4, 5, 6, 6]; episodes 56 and 69 have [0, 0, 1, 2, 2]. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    23,
+    27,
+    49,
+    60,
+    82
+   ],
+   "verified_of_all": 0.975609756097561,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "SwingXtimes",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     44,
+     53,
+     56,
+     69,
+     72
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Read the requested cube color and repetition count from the goal each time. Let N be twice the repetition count; for 'move ... right-side target, then put it down on the left-side target', N is 2. Update completed_target_visits from the observed interval before selecting the next subgoal. Right means the smaller-x target and left means the larger-x target, irrespective of y. Start with A, pointing at the instructed cube on the table. When the cube is held and completed_target_visits is less than N, choose B: point at the right target if the count is even, or the left target if it is odd. This also governs the transition from pickup to the first target move and between successive target moves. Select a point on the target itself, not the elevated cube or wrist. Use the latest clear view of that target anywhere in the current observed interval if it is occluded in the final scene; in particular, episode 72's first right target is visible earlier in the pickup interval. When the cube is held and completed_target_visits equals N, choose C to lower and release it on the table at the final left target. When the count equals N and the final scene shows the cube released and the hand empty, choose D. Thus release precedes button pressing even when the goal only explicitly says to press the button after the repetitions. For an unexpected dropped cube before N, choose A at the instructed cube and retain the count. For an unconfirmed arrival while still holding the cube, repeat B toward the destination selected by count parity without incrementing the count. If a required object is obscured, use its latest clear position in the current interval; if none is available, choose the best-supported location from the visible scene rather than inventing a completed visit or stopping to ask. All points use [y, x].",
+    "fields": [
+     {
+      "name": "completed_target_visits",
+      "description": "With empty incoming memory, write 0. Otherwise start with the incoming integer. The next countable destination is the smaller-x target when that integer is even, and the larger-x target when it is odd. If the incoming count is below the required number of visits, increase once when the observed interval ends with the cube still grasped, the hand at approximately 0.100 height on the expected destination's side, and that destination highlighted in the final scene. The elevated wrist or cube need not coincide with the target in image coordinates: projection offsets above and slightly beside the target are expected and do not invalidate this arrival evidence. Use the final destination highlight, not a stale highlight during transit. Do not count pickup, which ends with the hand raised at approximately 0.150 height, or release, which ends with an open empty hand. Do not count multiple frames of the same arrival, and do not increase beyond the required number of visits (twice the requested repetition count, or two for the instruction to go right then put down left). Otherwise preserve the incoming integer. Treat the incoming integer as the pre-interval count and apply the arrival test above exactly once. Use the resulting count both to select the next subgoal and as the outgoing completed_target_visits value. Do not write the incoming count after using an incremented count for subgoal selection. e.g. 2",
+      "annotation": "Integer counting completed moves above targets while holding the instructed cube, in the required alternating order starting with the robot's right target. Initialize to 0. Increase by one at the decision step immediately following each completed target move; do not increase for pickup, release, or button pressing. Count each completed move once, not each frame showing a highlight. Episode 44 and episode 72 have values [0, 0, 1, 2, 3, 4, 4]; episode 53 has [0, 0, 1, 2, 3, 4, 5, 6, 6]; episodes 56 and 69 have [0, 0, 1, 2, 2]. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    15,
+    25,
+    26,
+    39,
+    75
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "SwingXtimes",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     44,
+     53,
+     56,
+     69,
+     72
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Read the requested cube color and repetition count from the goal each time. Let N be twice the repetition count; for 'move ... right-side target, then put it down on the left-side target', N is 2. Update completed_target_visits from the observed interval before selecting the next subgoal. Right means the smaller-x target and left means the larger-x target, irrespective of y. Start with A, pointing at the instructed cube on the table. When the cube is held and completed_target_visits is less than N, choose B: point at the right target if the count is even, or the left target if it is odd. This also governs the transition from pickup to the first target move and between successive target moves. Select a point on the target itself, not the elevated cube or wrist. Use the latest clear view of that target anywhere in the current observed interval if it is occluded in the final scene; in particular, episode 72's first right target is visible earlier in the pickup interval. When the cube is held and completed_target_visits equals N, choose C to lower and release it on the table at the final left target. When the count equals N and the final scene shows the cube released and the hand empty, choose D. Thus release precedes button pressing even when the goal only explicitly says to press the button after the repetitions. For an unexpected dropped cube before N, choose A at the instructed cube and retain the count. For an unconfirmed arrival while still holding the cube, repeat B toward the destination selected by count parity without incrementing the count. If a required object is obscured, use its latest clear position in the current interval; if none is available, choose the best-supported location from the visible scene rather than inventing a completed visit or stopping to ask. All points use [y, x].",
+    "fields": [
+     {
+      "name": "completed_target_visits",
+      "description": "With empty incoming memory, write 0. Otherwise start with the incoming integer. The next countable destination is the smaller-x target when that integer is even, and the larger-x target when it is odd. If the incoming count is below the required number of visits, increase once when the observed interval ends with the cube still grasped, the hand at approximately 0.100 height on the expected destination's side, and that destination highlighted in the final scene. The elevated wrist or cube need not coincide with the target in image coordinates: projection offsets above and slightly beside the target are expected and do not invalidate this arrival evidence. Use the final destination highlight, not a stale highlight during transit. Do not count pickup, which ends with the hand raised at approximately 0.150 height, or release, which ends with an open empty hand. Do not count multiple frames of the same arrival, and do not increase beyond the required number of visits (twice the requested repetition count, or two for the instruction to go right then put down left). Otherwise preserve the incoming integer. Treat the incoming integer as the pre-interval count and apply the arrival test above exactly once. Use the resulting count both to select the next subgoal and as the outgoing completed_target_visits value. Do not write the incoming count after using an incremented count for subgoal selection. e.g. 2",
+      "annotation": "Integer counting completed moves above targets while holding the instructed cube, in the required alternating order starting with the robot's right target. Initialize to 0. Increase by one at the decision step immediately following each completed target move; do not increase for pickup, release, or button pressing. Count each completed move once, not each frame showing a highlight. Episode 44 and episode 72 have values [0, 0, 1, 2, 3, 4, 4]; episode 53 has [0, 0, 1, 2, 3, 4, 5, 6, 6]; episodes 56 and 69 have [0, 0, 1, 2, 2]. e.g. 2"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,114 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "target_cube",
+  "picks_done",
+  "target_colour"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  10,
+  19,
+  41,
+  87
+ ],
+ "scored": 25,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.96,
+ "memory_verified": 0.96,
+ "reads": {
+  "target_cube": 11,
+  "picks_done": 20,
+  "target_colour": 0
+ },
+ "field_errors": {
+  "target_cube": {
+   "in": 1,
+   "sole": 1
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  },
+  "target_colour": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "target_colour": "read at no step of 25"
+ },
+ "loss": 0.04,
+ "verified_of_all": 0.96,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 25,
+ "critique": "field target_cube, ANNOTATOR PROMPT\n  Position [y, x] of the cube the demonstration picked up, at its current table position. Situation: a demonstration in which the picked cube was swapped with a neighbour, swapped back with the same neighbour, and then swapped a third time with the cube the gripper never touched; the goal asked for three pick-ups of that cube. The annotated value was the far spot the third swap carried it to, but the policy stopped its ledger after the two swaps that returned the cube to its pick spot and pointed at the cube now resting on the pick spot (a different cube). PREDICTABILITY: the ledger stopped early, so the written value could not match the rule. The rule stays the same in substance but must state the swap search explicitly: the shuffle is read as a sequence of STILL CONFIGURATIONS. A still configuration is a demonstration frame whose cube list is unchanged from the frame before it, with every cube within a few px of some resting spot. The rule compares each still configuration with the next one, up to and including the last demonstration frame; every pair of consecutive still configurations that differ is exactly one swap (the two spots whose occupants changed exchanged occupants; the frames between them with cubes off every resting spot are mid-crossing frames and are never used). The number of swaps is whatever this comparison yields, commonly three, sometimes one or two; a swap may pair the pick spot with a cube the gripper never touched, and may come after a pair of swaps that had returned the picked cube to its pick spot, so the label is carried swap by swap to the very last frame and never settled earlier. The value is the labelled spot as listed in the scene at the start of execution. At every later decision step the value is the position of the resting listed cube (of any listed class) within about 8 px of the previous value; if none is listed resting there (held, occluded under the gripper, or shown only as 'lifted off the table'), the value is the previous value unchanged. Gripper coordinates, 'held in the gripper' and 'lifted off the table' coordinates are never used, and the value never jumps to a different resting cube. e.g. [79, 146]\n\nfield target_colour, ANNOTATOR PROMPT\n  DELETE. The policy read this field at no step; the subgoal rules never use it and the target_cube update is settled by position alone (the only cube within about 8 px of the carried value is the target, in every episode seen, coloured or not). Its one use is folded into target_cube by matching on position only.\n\nfield target_cube, POLICY PROMPT\n  Position [y, x] of the cube the demonstration picked, at its current table position. Failure: with a demonstration showing three swap windows (the picked cube swapped out, swapped back by the same pair, then swapped away again with the untouched cube), the policy wrote the ledger for the first two swaps, saw the label back on the pick spot, stopped, and wrote the cube resting on the pick spot. PREDICTABILITY. What must change: the ledger must be forced to run to the last demonstration frame by an explicit still-frame procedure. At the first decision step (memory empty): Step 1, identify the pick spot P as the listed cube nearest the gripper's [y, x] at the lowest frame (height about 0.02) where the fingers first read about 46%; after the put-down (fingers reopen beside it) write L = the spot where it now rests. Step 2, from that frame onward, write out every STILL FRAME: a frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot, while the gripper is parked raised. Mid-crossing frames (cubes listed off every resting spot) are skipped and never used. Step 3, compare each still configuration to the NEXT still configuration, one pair at a time, writing a line for every pair until the pair that ends at the last demonstration frame. Where the two configurations are identical write 'no swap'. Where they differ, exactly two spots changed occupants: write 'swap k: spot X <-> spot Y; L now = ...' (if L is within about 10 px of X write Y, if of Y write X, otherwise unchanged). Then write 'swaps found: n' and only then stop; expect commonly three swaps and sometimes one or two, and never stop when L happens to be back on P, because a later swap can move it again, including a swap with a cube the gripper never touched. Step 4, write the listed position in the scene at the start of execution nearest the final L (within about 10 px). Never write the cube resting on P once P appeared in any swap line. At every later decision step: write the position of the resting listed cube (any listed class) within about 8 px of the carried value; if none (held, occluded, or listed only as 'lifted off the table'), copy the carried value unchanged. Do not use gripper, 'held in the gripper' or 'lifted off the table' coordinates, and never relocate to a different resting cube. e.g. [79, 146]\n\nfield target_colour, POLICY PROMPT\n  DELETE this field. It was never read; the target_cube update matches by position alone, so nothing needs the colour word.\n\nthe policy prompt for subgoal\n  No rule change is needed for the choice of option. One wording change: the rule 'A: pick up the cube, pointing at target_cube' should no longer mention colour anywhere, since target_colour is removed; the point is target_cube as written at this step, and the fallback for an unmatched target_cube is the resting listed cube nearest target_cube regardless of listed class.\n\nrefused\n  Nothing reported was refused. The one failed step reported that the ledger instruction let it stop after two swaps; that fault is confirmed by the demonstration, which contains a third swap window, and is passed on as the explicit still-frame comparison to the last demonstration frame.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No rule change is needed for the choice of option. One wording change: the rule 'A: pick up the cube, pointing at target_cube' should no longer mention colour anywhere, since target_colour is removed; the point is target_cube as written at this step, and the fallback for an unmatched target_cube is the resting listed cube nearest target_cube regardless of listed class.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_cube",
+    "description": "Position [y, x] of the cube the demonstration picked, at its current table position. Failure: with a demonstration showing three swap windows (the picked cube swapped out, swapped back by the same pair, then swapped away again with the untouched cube), the policy wrote the ledger for the first two swaps, saw the label back on the pick spot, stopped, and wrote the cube resting on the pick spot. PREDICTABILITY. What must change: the ledger must be forced to run to the last demonstration frame by an explicit still-frame procedure. At the first decision step (memory empty): Step 1, identify the pick spot P as the listed cube nearest the gripper's [y, x] at the lowest frame (height about 0.02) where the fingers first read about 46%; after the put-down (fingers reopen beside it) write L = the spot where it now rests. Step 2, from that frame onward, write out every STILL FRAME: a frame whose cube list is the same (within a few px) as the frame before it, with every cube on a resting spot, while the gripper is parked raised. Mid-crossing frames (cubes listed off every resting spot) are skipped and never used. Step 3, compare each still configuration to the NEXT still configuration, one pair at a time, writing a line for every pair until the pair that ends at the last demonstration frame. Where the two configurations are identical write 'no swap'. Where they differ, exactly two spots changed occupants: write 'swap k: spot X <-> spot Y; L now = ...' (if L is within about 10 px of X write Y, if of Y write X, otherwise unchanged). Then write 'swaps found: n' and only then stop; expect commonly three swaps and sometimes one or two, and never stop when L happens to be back on P, because a later swap can move it again, including a swap with a cube the gripper never touched. Step 4, write the listed position in the scene at the start of execution nearest the final L (within about 10 px). Never write the cube resting on P once P appeared in any swap line. At every later decision step: write the position of the resting listed cube (any listed class) within about 8 px of the carried value; if none (held, occluded, or listed only as 'lifted off the table'), copy the carried value unchanged. Do not use gripper, 'held in the gripper' or 'lifted off the table' coordinates, and never relocate to a different resting cube. e.g. [79, 146]"
+   },
+   {
+    "field": "target_colour",
+    "description": "DELETE this field. It was never read; the target_cube update matches by position alone, so nothing needs the colour word."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_cube",
+    "description": "Position [y, x] of the cube the demonstration picked up, at its current table position. Situation: a demonstration in which the picked cube was swapped with a neighbour, swapped back with the same neighbour, and then swapped a third time with the cube the gripper never touched; the goal asked for three pick-ups of that cube. The annotated value was the far spot the third swap carried it to, but the policy stopped its ledger after the two swaps that returned the cube to its pick spot and pointed at the cube now resting on the pick spot (a different cube). PREDICTABILITY: the ledger stopped early, so the written value could not match the rule. The rule stays the same in substance but must state the swap search explicitly: the shuffle is read as a sequence of STILL CONFIGURATIONS. A still configuration is a demonstration frame whose cube list is unchanged from the frame before it, with every cube within a few px of some resting spot. The rule compares each still configuration with the next one, up to and including the last demonstration frame; every pair of consecutive still configurations that differ is exactly one swap (the two spots whose occupants changed exchanged occupants; the frames between them with cubes off every resting spot are mid-crossing frames and are never used). The number of swaps is whatever this comparison yields, commonly three, sometimes one or two; a swap may pair the pick spot with a cube the gripper never touched, and may come after a pair of swaps that had returned the picked cube to its pick spot, so the label is carried swap by swap to the very last frame and never settled earlier. The value is the labelled spot as listed in the scene at the start of execution. At every later decision step the value is the position of the resting listed cube (of any listed class) within about 8 px of the previous value; if none is listed resting there (held, occluded under the gripper, or shown only as 'lifted off the table'), the value is the previous value unchanged. Gripper coordinates, 'held in the gripper' and 'lifted off the table' coordinates are never used, and the value never jumps to a different resting cube. e.g. [79, 146]"
+   },
+   {
+    "field": "target_colour",
+    "description": "DELETE. The policy read this field at no step; the subgoal rules never use it and the target_cube update is settled by position alone (the only cube within about 8 px of the carried value is the target, in every episode seen, coloured or not). Its one use is folded into target_cube by matching on position only."
+   }
+  ],
+  "refused": "Nothing reported was refused. The one failed step reported that the ledger instruction let it stop after two swaps; that fault is confirmed by the demonstration, which contains a third swap window, and is passed on as the explicit still-frame comparison to the last demonstration frame."
+ },
+ "critiques": [
+  {
+   "step": [
+    10,
+    "exec",
+    363
+   ],
+   "memory_in": "target_cube=; picks_done=; target_colour=",
+   "answered": "A: pick up the cube at [98, 128]",
+   "recorded": "A: pick up the cube at [80, 149]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The ledger procedure was there but I stopped tracking after the two swaps of the pair [99,126] <-> [126,127] (which returned L to [99,126]) and missed the third swap at t=304-336, where the still list [80,148],[98,126],[126,128] became [79,146],[98,128],[126,128] with [80,148] and [98,126] both vacated mid-crossing ([88,122],[90,153]) while [126,128] stayed, i.e. swap: [80,148] <-> [98,126]; L now = [80,148]. The instruction should say explicitly: compare EVERY still frame to the previous still frame until the last demonstration frame, count the swaps (here three: 1) [99,126]<->[126,127], 2) [99,126]<->[126,127], 3) [80,148]<->[98,126]), and note that the third swap can involve a cube the gripper never touched (the far-left one at [80,148]) so L ends on that spot; then target_cube = the listed cube nearest L in the execution scene, here [79,146], not the cube now resting on P ([98,128]).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

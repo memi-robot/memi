@@ -1,0 +1,81 @@
+{
+ "task": "PickHighlight",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    22,
+    53,
+    63,
+    65,
+    66
+   ],
+   "verified_of_all": 0.6666666666666666,
+   "subgoal_verified": 0.8333333333333334
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    45,
+    64,
+    79,
+    83
+   ],
+   "verified_of_all": 0.7727272727272727,
+   "subgoal_verified": 0.7727272727272727
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    8,
+    18,
+    38,
+    58,
+    61
+   ],
+   "verified_of_all": 0.875,
+   "subgoal_verified": 0.875
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    11,
+    16,
+    37,
+    97
+   ],
+   "verified_of_all": 0.9285714285714286,
+   "subgoal_verified": 0.9285714285714286
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    8,
+    21,
+    54,
+    61,
+    77
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "The episode starts in A (press button): the first decision step, with empty memory and no execution steps, is always A. Rules, applied to whatever situation you are in: 1. Choose A, press button, only when the button_pressed value you write at THIS step is `no`: that is, the memory carried in says `no` or is empty AND no execution step shown here shows the press (neither the pressed-down label nor the gripper at the button's position at low height with closed fingers). Every rule below likewise uses the button_pressed and pending_cubes values written at this step, not the carried ones. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes as written at this step (the list is ordered by the cubes' position in the observation listing at the button-press step, and the first entry is always the next cube to pick); never choose by distance from the gripper, by x or by y. Point at that stored [y, x], or at the cube visible within a few pixels of it (cube positions wobble). If no cube is currently listed at that position it is merely hidden by the arm: still choose B at the stored point; never switch to another entry for that reason and never treat the list as empty. 4. Only when the pending_cubes carried in was already empty, nothing was picked up at this step, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. A step that merely shows a placing (fingers reopened, cube back on the table) with a non-empty carried list is not finished: apply rule 3 and choose B at the first entry of pending_cubes. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in pending_cubes choose B at its first entry; else choose A.",
+ "fields": [
+  {
+   "name": "button_pressed",
+   "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the press (neither the pressed-down label nor the gripper at the button's position at low height with closed fingers). At the first decision step, when the memory carried in is empty, write the starting value `no` explicitly; never leave the field blank. Write `yes` as soon as any execution step shown at this step either says the button is pressed down, or shows the gripper within a few pixels of the button's [y, x] at a height of about 0.02-0.04 with fingers nearly closed (0-2% open); the highlighted areas then vanish from the listing before the decision step, which confirms the press. Either sign alone is enough; do not wait for the label. Write `yes` also whenever the memory carried in already says `yes`. Never go back to `no`. e.g. yes"
+  },
+  {
+   "name": "pending_cubes",
+   "description": "Ordered list of the [y, x] of cubes on highlighted white areas not yet picked up; the FIRST entry is the next cube to pick. At the first decision step (memory carried in empty, no execution steps) write `[]` explicitly; never leave it blank. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area, and order the entries by where those cubes stand in the object listing of that same execution step: the cube listed earlier among the observed objects comes first (colour groups in the order the listing gives them, e.g. blue before green before red; within one colour the instance listed earlier first). Do NOT order by the order the highlighted areas are listed, by distance to the gripper, by x or by y. Otherwise copy the list carried in, but if the execution steps shown at this step show a pick-up (the gripper descends onto a cube with open fingers, closes to about 46%, and that cube is then marked 'is held in the gripper'), remove the ONE entry whose stored [y, x] is nearest the position where the gripper closed (the held cube's position just before it was lifted), whatever its place in the list, and keep all other entries in their existing order. Do not remove anything on a placing step, i.e. one whose first execution frame already shows a cube held and whose later frames show the fingers opening to ~88-100% and the cube resting on the table again: copy the list unchanged. Never remove an entry just because no cube is currently observed at its position; a cube can be hidden by the arm and still remain pending. Example: highlighted areas at [57, 102] and [110, 105], the listing names the blue cube at [106, 104] before the green cube at [53, 101] -> write [[106, 104], [53, 101]]. Example: carried [[118, 147], [70, 152]], execution steps show the gripper closing at [118, 147] and a cube held -> write [[70, 152]]. e.g. [[106, 104], [53, 101]]"
+  }
+ ],
+ "stage": "optimized"
+}

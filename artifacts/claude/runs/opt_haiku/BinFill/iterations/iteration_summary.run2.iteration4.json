@@ -1,0 +1,224 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "placed",
+  "arrivals"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  62,
+  69,
+  72,
+  84,
+  86
+ ],
+ "scored": 29,
+ "failed": 10,
+ "subgoal_wrong": 3,
+ "memory_wrong": 7,
+ "subgoal_verified": 0.896551724137931,
+ "memory_verified": 0.7586206896551724,
+ "reads": {
+  "placed": 22,
+  "arrivals": 21
+ },
+ "field_errors": {
+  "placed": {
+   "in": 0,
+   "sole": 0
+  },
+  "arrivals": {
+   "in": 7,
+   "sole": 7
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3448275862068966,
+ "verified_of_all": 0.6551724137931034,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 3,
+ "decisions": 29,
+ "critique": "field arrivals, ANNOTATOR PROMPT\n  Keep the field as it is (ordered list of [y, x] positions of goal-color cubes lying on the table, oldest first, written as nested brackets, e.g. [[77, 139], [100, 66]]) but change five points of its filling. (1) Initial ordering. When several goal-color cubes are already on the table at the first decision step, the scene gives no arrival order and sorting by y does not reproduce the oracle: in one episode with five red and five blue cubes present from the start the oracle took the red cube nearest the bin first, then three blue cubes in an order that is neither y order, nearest-to-bin nor nearest-to-gripper. The annotator reads the whole episode, so at the first step list the pre-existing goal-color cubes in the order the oracle actually picks them during the episode, oldest-picked first; after them list the cubes of a needed color that are never picked, ordered by distance to the bin's reported center, nearest first; a cube of a color the goal does not name is never listed. With one goal-color cube in the scene this is just that cube. (2) Removal happens only at a pick-up step: a step whose execution frames show the fingers going from open to about 46% while the gripper is on a table cube, followed by a held line. Remove the entry within about 12 px of the gripper in that closing frame. At a put-into-bin step, where the first execution frame already shows a cube held, remove nothing: the held cube's entry was already removed at the pick-up step. Never remove an entry that still has a detection of its color within about 12 px in the scene at the decision step; the 12 px test is never stretched to the nearest entry. (3) Retention uses only the 12 px match against the scene at the decision step; the bin-echo and release-echo exclusions apply only to appending new detections, so an entry that matches a detection near the just-released cube's last reported position, or near the gripper at release, is kept and refreshed. (4) Release echo frame: the release frame is the first execution frame in which the fingers are about 100% open and no object line says held (an earlier frame with fingers 67-99% open is not it). A goal-color detection that first appears in or after that frame within about 12 px of the gripper reported there, or that moves a few px along with the retreating gripper over the following frames, is a release echo and is never appended, however far from the bin center it is. A detection is not an echo if it matches an existing entry within about 12 px or was already at the same place in the first execution frame of the step. A goal-color detection that appears during the step far from both the bin center (more than about 28 px) and the release point and then stays put is a genuine new arrival and is appended. (5) When several new detections are appended in one step, append them in the order of the execution frame in which each first appeared (earliest frame first), tracking each across frames within about 12 px; only when two first appear in the same frame use the listing order of that frame. Example over a step in which a green cube appeared at [86, 143] in an early frame and another at [86, 95] in a later frame, with [86, 119] picked up: [[86, 143], [86, 95]].\n\nfield arrivals, POLICY PROMPT\n  Same field, same format (nested brackets, e.g. [[77, 139], [100, 66]]). Replace the first-step ordering and the four numbered checks by the following. First decision step (carried-in memory blank, no execution frames): if exactly one goal-color cube is in the scene, the list is that cube. If several are, the scene does not show which came first; list first the cubes of the color named first in the goal instruction, then the other goal color(s) in the order the goal names them, and within each color order by distance to the bin's reported center, nearest first, skipping any detection within about 28 px of that center. Every later step starts from the carried-in list and applies in order: (1) PICK-UP REMOVAL, only if some execution frame of this step shows the fingers at about 100% open over a table cube and a later frame of this step shows them at about 46% with a cube then reported held: remove the entry within about 12 px of the gripper in the frame where the fingers first reached 46%. If the very first execution frame already shows a cube held (fingers 46%, a held line), this is a put-into-bin step and nothing is removed, whatever entry lies near the gripper. Never remove an entry that still matches a detection of its color within about 12 px in the last frame. (2) RETAIN AND REFRESH: each remaining entry that has a detection of its color within about 12 px in the last frame is kept and set to that position; this match ignores the bin-echo and release-echo tests, which concern only new detections. Drop an entry with no such detection. (3) APPEND NEW: a goal-color table detection in the last frame that matches no remaining entry within about 12 px is appended unless it is a bin echo (within about 28 px of the bin's reported center) or a release echo. The release frame is the first execution frame of this step where the fingers are about 100% open with no held line; a frame with fingers 67-99% open is not it. A release echo is a detection of the just-released color that first appeared in or after the release frame within about 12 px of the gripper reported in that frame, or that has moved a few px with the retreating gripper from frame to frame; it is excluded even when far from the bin center. A detection that was already at its place in the first execution frame of the step, or matches a carried entry, is never an echo. A detection that appears mid-step more than about 28 px from the bin center and more than about 12 px from the release point and stays put is a genuine new cube: append it. (4) When several new detections are appended, append in the order of the execution frame in which each first appeared, earliest first, tracking each across frames within about 12 px; same-frame arrivals follow that frame's listing order. Order is otherwise never changed. Example: carried [[77, 139]], a pick-up step closing on [77, 139] with a red cube that appeared at [100, 66] several frames earlier far from bin and gripper, and two red detections within 28 px of the bin: write [[100, 66]].\n\nthe policy prompt for subgoal\n  Rule 3's color and cube choice sent the policy wrong at the first decision step and at the later pick steps of the one episode where many cubes of both goal colors were already on the table at the start (goal: one red then three blue; the oracle took the red cube nearest the bin, then blue cubes in an order that is neither first-in-y, nearest-to-bin nor nearest-to-gripper). Change the first-step clause: at the first decision step (blank carried-in memory, gripper raised out of the frame) the working color is the color named first in the goal instruction, and among its table cubes the policy points at the one nearest the bin's reported center that is at least about 28 px from it; this is also the first entry the memory instruction now writes into `arrivals`, so 'pick the first `arrivals` entry of a needed color' still holds once that list is built. Delete the sentence 'the order in which the goal names the colors does not matter'. At every later step keep the existing rule: finish the color of the last word of `placed` if it is still short, otherwise take the color of the first `arrivals` entry of a still-needed color, and among candidates of the working color take the one that comes first in `arrivals` (matched within about 12 px in the last frame), falling back to nearest-the-bin only when no candidate matches any entry. Add nothing else; rules 1 and 2 were applied correctly at every failed step.\n\nrefused\n  Two steps of the many-cubes-at-start episode proposed concrete selection rules for choosing among blue cubes that were all present from the start: one that the working cube is the needed-color cube nearest the gripper's last-frame position, another that it is the one nearest the bin. Each rule fits the single step that reported it and contradicts the other recorded blue picks in the same episode (the first blue pick was neither nearest the gripper nor nearest the bin, the second was nearest the gripper only by a one-pixel tie). No criterion readable from the scene reproduces the oracle's order among cubes present from the start, so I have not passed on either rule. Instead the annotator prompt now records the oracle's actual pick order at the first step (the annotator can read ahead), which makes the later pick steps of that episode settled by `arrivals`, while the policy's memory and subgoal instructions use the only heuristic that matches the recorded first pick (goal-named color first, nearest the bin within that color); the remaining blue order in that episode stays unpredictable at the first step and is accepted as such. The other reports (removal firing on put-into-bin steps, echo tests applied to retention, undefined release frame, unordered multi-appends, mid-step far-from-bin arrivals) are all passed on as one revision of `arrivals`; no change to `placed` was asked for or needed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 3's color and cube choice sent the policy wrong at the first decision step and at the later pick steps of the one episode where many cubes of both goal colors were already on the table at the start (goal: one red then three blue; the oracle took the red cube nearest the bin, then blue cubes in an order that is neither first-in-y, nearest-to-bin nor nearest-to-gripper). Change the first-step clause: at the first decision step (blank carried-in memory, gripper raised out of the frame) the working color is the color named first in the goal instruction, and among its table cubes the policy points at the one nearest the bin's reported center that is at least about 28 px from it; this is also the first entry the memory instruction now writes into `arrivals`, so 'pick the first `arrivals` entry of a needed color' still holds once that list is built. Delete the sentence 'the order in which the goal names the colors does not matter'. At every later step keep the existing rule: finish the color of the last word of `placed` if it is still short, otherwise take the color of the first `arrivals` entry of a still-needed color, and among candidates of the working color take the one that comes first in `arrivals` (matched within about 12 px in the last frame), falling back to nearest-the-bin only when no candidate matches any entry. Add nothing else; rules 1 and 2 were applied correctly at every failed step.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "arrivals",
+    "description": "Same field, same format (nested brackets, e.g. [[77, 139], [100, 66]]). Replace the first-step ordering and the four numbered checks by the following. First decision step (carried-in memory blank, no execution frames): if exactly one goal-color cube is in the scene, the list is that cube. If several are, the scene does not show which came first; list first the cubes of the color named first in the goal instruction, then the other goal color(s) in the order the goal names them, and within each color order by distance to the bin's reported center, nearest first, skipping any detection within about 28 px of that center. Every later step starts from the carried-in list and applies in order: (1) PICK-UP REMOVAL, only if some execution frame of this step shows the fingers at about 100% open over a table cube and a later frame of this step shows them at about 46% with a cube then reported held: remove the entry within about 12 px of the gripper in the frame where the fingers first reached 46%. If the very first execution frame already shows a cube held (fingers 46%, a held line), this is a put-into-bin step and nothing is removed, whatever entry lies near the gripper. Never remove an entry that still matches a detection of its color within about 12 px in the last frame. (2) RETAIN AND REFRESH: each remaining entry that has a detection of its color within about 12 px in the last frame is kept and set to that position; this match ignores the bin-echo and release-echo tests, which concern only new detections. Drop an entry with no such detection. (3) APPEND NEW: a goal-color table detection in the last frame that matches no remaining entry within about 12 px is appended unless it is a bin echo (within about 28 px of the bin's reported center) or a release echo. The release frame is the first execution frame of this step where the fingers are about 100% open with no held line; a frame with fingers 67-99% open is not it. A release echo is a detection of the just-released color that first appeared in or after the release frame within about 12 px of the gripper reported in that frame, or that has moved a few px with the retreating gripper from frame to frame; it is excluded even when far from the bin center. A detection that was already at its place in the first execution frame of the step, or matches a carried entry, is never an echo. A detection that appears mid-step more than about 28 px from the bin center and more than about 12 px from the release point and stays put is a genuine new cube: append it. (4) When several new detections are appended, append in the order of the execution frame in which each first appeared, earliest first, tracking each across frames within about 12 px; same-frame arrivals follow that frame's listing order. Order is otherwise never changed. Example: carried [[77, 139]], a pick-up step closing on [77, 139] with a red cube that appeared at [100, 66] several frames earlier far from bin and gripper, and two red detections within 28 px of the bin: write [[100, 66]]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "arrivals",
+    "description": "Keep the field as it is (ordered list of [y, x] positions of goal-color cubes lying on the table, oldest first, written as nested brackets, e.g. [[77, 139], [100, 66]]) but change five points of its filling. (1) Initial ordering. When several goal-color cubes are already on the table at the first decision step, the scene gives no arrival order and sorting by y does not reproduce the oracle: in one episode with five red and five blue cubes present from the start the oracle took the red cube nearest the bin first, then three blue cubes in an order that is neither y order, nearest-to-bin nor nearest-to-gripper. The annotator reads the whole episode, so at the first step list the pre-existing goal-color cubes in the order the oracle actually picks them during the episode, oldest-picked first; after them list the cubes of a needed color that are never picked, ordered by distance to the bin's reported center, nearest first; a cube of a color the goal does not name is never listed. With one goal-color cube in the scene this is just that cube. (2) Removal happens only at a pick-up step: a step whose execution frames show the fingers going from open to about 46% while the gripper is on a table cube, followed by a held line. Remove the entry within about 12 px of the gripper in that closing frame. At a put-into-bin step, where the first execution frame already shows a cube held, remove nothing: the held cube's entry was already removed at the pick-up step. Never remove an entry that still has a detection of its color within about 12 px in the scene at the decision step; the 12 px test is never stretched to the nearest entry. (3) Retention uses only the 12 px match against the scene at the decision step; the bin-echo and release-echo exclusions apply only to appending new detections, so an entry that matches a detection near the just-released cube's last reported position, or near the gripper at release, is kept and refreshed. (4) Release echo frame: the release frame is the first execution frame in which the fingers are about 100% open and no object line says held (an earlier frame with fingers 67-99% open is not it). A goal-color detection that first appears in or after that frame within about 12 px of the gripper reported there, or that moves a few px along with the retreating gripper over the following frames, is a release echo and is never appended, however far from the bin center it is. A detection is not an echo if it matches an existing entry within about 12 px or was already at the same place in the first execution frame of the step. A goal-color detection that appears during the step far from both the bin center (more than about 28 px) and the release point and then stays put is a genuine new arrival and is appended. (5) When several new detections are appended in one step, append them in the order of the execution frame in which each first appeared (earliest frame first), tracking each across frames within about 12 px; only when two first appear in the same frame use the listing order of that frame. Example over a step in which a green cube appeared at [86, 143] in an early frame and another at [86, 95] in a later frame, with [86, 119] picked up: [[86, 143], [86, 95]]."
+   }
+  ],
+  "refused": "Two steps of the many-cubes-at-start episode proposed concrete selection rules for choosing among blue cubes that were all present from the start: one that the working cube is the needed-color cube nearest the gripper's last-frame position, another that it is the one nearest the bin. Each rule fits the single step that reported it and contradicts the other recorded blue picks in the same episode (the first blue pick was neither nearest the gripper nor nearest the bin, the second was nearest the gripper only by a one-pixel tie). No criterion readable from the scene reproduces the oracle's order among cubes present from the start, so I have not passed on either rule. Instead the annotator prompt now records the oracle's actual pick order at the first step (the annotator can read ahead), which makes the later pick steps of that episode settled by `arrivals`, while the policy's memory and subgoal instructions use the only heuristic that matches the recorded first pick (goal-named color first, nearest the bin within that color); the remaining blue order in that episode stays unpredictable at the first step and is accepted as such. The other reports (removal firing on put-into-bin steps, echo tests applied to retention, undefined release frame, unordered multi-appends, mid-step far-from-bin arrivals) are all passed on as one revision of `arrivals`; no change to `placed` was asked for or needed."
+ },
+ "critiques": [
+  {
+   "step": [
+    62,
+    "exec",
+    219
+   ],
+   "memory_in": "placed=none; arrivals=[[77, 139]]",
+   "answered": "A: pick up the cube at [77, 139]",
+   "recorded": "A: pick up the cube at [78, 140]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did say to append unmatched goal-color detections in the last frame, but it did not state plainly that a red cube appearing mid-step far from both the bin and the release point (here [100, 66], absent at t=144, present from t=160 on, ~96 px from the bin center and ~125 px from the gripper at release) is a genuine new arrival that must be appended, so the updated arrivals should read [[77, 139], [100, 66]] while [74, 161] and [119, 153] are dropped as bin echoes (within 28 px of [95, 162]).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    69,
+    "exec",
+    114
+   ],
+   "memory_in": "placed=none; arrivals=[[86, 119]]",
+   "answered": "B: put it into the bin",
+   "recorded": "B: put it into the bin",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "When several new goal-color detections are appended to arrivals in one step, the instruction did not say in what order to append them. Here two new green cubes appeared within this step: [86, 143] first at t=64 and [86, 95] first at t=112. The last frame lists them as [86, 95], [86, 143] (sorted by x), and I appended in that listed order. The instruction should state: append new detections in the order of the execution frame in which each first appeared (earliest frame first), tracking each across frames within about 12 px, and only fall back to the last frame's listed order (or ascending y) when two appear in the same frame. That gives [[86, 143], [86, 95]].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    69,
+    "exec",
+    196
+   ],
+   "memory_in": "placed=none; arrivals=[[86, 143], [86, 95]]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The arrivals rule's release-echo test says 'within about 12 px of the gripper in the frame the fingers opened' without saying which frame that is. Here the fingers went 93% at t=160 (gripper [91, 166], 16 px from the detection) and 100% at t=176 (gripper [82, 164], under 9 px from the new detection at [80, 168]). I took the first opening frame and so did not exclude [75, 169]. The instruction should say the echo test uses the first frame where the fingers are about 100% open (and nothing is held), and that a goal-color detection that first appears in that frame within about 12 px of the gripper and then drifts a few px with the retreating arm (here [80, 168] -> [75, 169] while the gripper moved [82, 164] -> [61, 159]) is a release echo and is never appended to arrivals, even though it is far from the bin center.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    72,
+    "exec",
+    187
+   ],
+   "memory_in": "placed=none; arrivals=[[107, 81], [78, 162]]",
+   "answered": "A: pick up the cube at [107, 81]",
+   "recorded": "A: pick up the cube at [108, 83]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The arrivals removal check (1) should state that it applies only when the fingers close on a cube within this step's own execution frames (a pick-up step); in a put-into-bin step like this one, where the cube is already reported held in the very first frame (t=128, fingers 46%), the pick-up entry was already removed at the previous step and nothing is removed now, even though a held line is present. It should add explicitly: never remove an entry whose table detection is still present in the last frame (e.g. [78, 162] at t=187), and the 12 px test must not be stretched to the nearest entry (the held cube at [53, 114] is ~50 px from [78, 162]).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    72,
+    "exec",
+    340
+   ],
+   "memory_in": "placed=blue; arrivals=[[78, 162], [79, 130], [92, 97]]",
+   "answered": "A: pick up the cube at [79, 162]",
+   "recorded": "A: pick up the cube at [79, 163]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Step (1) of the arrivals check told me to remove the entry nearest the gripper 'in the frame where the fingers first closed on it', but at this step the cube is already held in the first execution frame (t=288, fingers 46%, gripper at [79, 92]); the closing frame is not in this step. Applying step (1) anyway removed [92, 97] (13.9 px from the gripper, borderline to the 'about 12 px' threshold), and then step (3) re-appended it as a new detection after [58, 89], in scene listing order. The instruction should state that step (1) applies only when the fingers close on the cube within this step's execution frames; if the cube is already held in the first execution frame, its entry was removed at the previous (pick-up) step and nothing is removed now, so [92, 97] simply stays in place and is updated to [90, 97], with only the genuinely new [58, 89] appended at the end.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    72,
+    "exec",
+    508
+   ],
+   "memory_in": "placed=blue blue; arrivals=[[80, 130], [90, 97], [58, 89]]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Two things about `arrivals` at a step whose first execution frame already shows the cube held (the pick-up was completed at the previous step, so its entry was already removed then): (a) removal rule (1) must not fire again — do not remove the carried entry nearest the gripper when no frame of this step shows the fingers first closing on a cube; the carried [80, 130] is a real table cube, not the held one. (b) The release-echo exclusion in rule (3)/(2) must carry the same caveat the subgoal instruction has: a detection of the released color within 12 px of the gripper at the frame the fingers opened (here [78, 130] vs gripper [80, 140] at t=480) is NOT an echo if a detection was already at that place in the first execution frame ([80, 130] at t=448) or matches a carried entry within 12 px; keep the entry, just update its position to [78, 130]. Without these the step wrongly drops [80, 130] and writes [[90, 97], [58, 90]].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    84,
+    "exec",
+    328
+   ],
+   "memory_in": "placed=red; arrivals=[[86, 117], [96, 103]]",
+   "answered": "C: press the button",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Step (1) of the arrivals check did not say what to do when the first execution frame already shows the cube held (fingers 46% open, 'is held in the gripper') with no frame in this step where the fingers close on it: that cube's entry was already removed at the earlier pick-up step, so nothing is removed here, and the gripper position in the first held frame ([73, 125]) must not be used to remove the nearest entry ([86, 117]). It also did not say that the bin-echo and release-echo exclusions in step (3) apply only to appending new detections, not to retaining existing entries: [86, 117] matched the last-frame detection [86, 116] within 12 px, so it is kept and updated to [86, 116] even though that detection is within about 12 px of the held cube's last reported position [75, 120].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=; arrivals=",
+   "answered": "A: pick up the cube at [53, 121]",
+   "recorded": "A: pick up the cube at [90, 170]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "At step #1 (placed=none, every cube listed in the scene at once, so no real arrival order exists) the instruction told me to pick the first entry of `arrivals` of a needed color, i.e. the smallest-y cube [53, 121]. The recorded choice is the red cube at [89, 169], which is the needed-color cube nearest the bin's reported center [117, 152] (about 33 px, outside the 28 px echo zone) among all red and blue cubes. The instruction should say that when `placed` is none and the carried-in memory is blank (the first decision step), the y-sorted `arrivals` list does not encode which cube came first, so the working cube is the one of any still-needed color nearest the bin's reported center that is 28 px or more from it, with ties broken by that distance rather than by arrivals order; arrivals order only governs later steps once cubes have genuinely appeared over time.",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    181
+   ],
+   "memory_in": "placed=none; arrivals=[[53, 121], [62, 76], [63, 129], [70, 113], [75, 87], [81, 150], [82, 124], [85, 100], [106, 94]]",
+   "answered": "A: pick up the cube at [62, 76]",
+   "recorded": "A: pick up the cube at [86, 101]",
+   "missing_from_memory": "The memory did not carry the oracle's actual pick order among the blue cubes. `arrivals` was built at step #1 by sorting on y, which put [62, 76] first among blues, but the oracle's first blue pick is the cube at [85, 100] (now [86, 101]); nothing in memory marked that cube as the one to take first.",
+   "missing_from_policy_prompt_for_memory": "It told me to order `arrivals` at the first decision step by reported y (smaller y first). That ordering is a guess that does not match the oracle's order: all nine cubes were already present at step #1, so 'oldest-arrived' cannot be read from the scene, and whatever criterion the oracle uses (it chose [85, 100] over [62, 76], [63, 129] and [80, 149]) is not the y-sort the instruction prescribes.",
+   "missing_from_policy_prompt_for_subgoal": "It told me that after red is finished the working color is blue and that I should take the first blue entry in `arrivals` ([62, 76]), but the recorded pick is [86, 101] (the blue cube at [85, 100]). That cube is neither first in `arrivals` nor nearest the bin ([80, 149] is at ~37 px from the bin, [85, 100] at ~61 px), so the instruction gave no criterion that selects it; it needs the rule the oracle actually uses to choose among several blue cubes present from the start.",
+   "missing": "The memory did not carry the oracle's actual pick order among the blue cubes. `arrivals` was built at step #1 by sorting on y, which put [62, 76] first among blues, but the oracle's first blue pick is the cube at [85, 100] (now [86, 101]); nothing in memory marked that cube as the one to take first."
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    366
+   ],
+   "memory_in": "placed=red; arrivals=[[54, 121], [62, 76], [63, 129], [72, 113], [75, 87], [80, 149], [82, 124], [106, 94]]",
+   "answered": "A: pick up the cube at [62, 76]",
+   "recorded": "A: pick up the cube at [65, 130]",
+   "missing_from_memory": "The true arrival order of the blue cubes. The carried `arrivals` was built at step #1 by sorting on y, so [62, 76] sits before [63, 129] only because 62 < 63, not because it arrived earlier; the recorded pick of [63, 129] implies that cube is the one the oracle treats as oldest (or that the oracle does not use arrival order at all), and nothing in memory encoded that.",
+   "missing_from_policy_prompt_for_memory": "It never says how to order cubes that are already on the table at step #1 in a way that matches the oracle; 'ordered by y as reported' produced [62, 76] ahead of [63, 129], which contradicts the recorded choice. It should state the real ordering key (e.g. nearest to the gripper's home/current position, or the order the oracle actually uses) rather than y.",
+   "missing_from_policy_prompt_for_subgoal": "The rule 'choose the one that comes first in arrivals' selects [62, 76] here, yet the record picks [63, 129] (the blue cube nearest the gripper at [49, 159], ~33 px, with [81, 149] a near tie at ~34 px). The instruction needs the actual selection criterion among same-color candidates when the pre-existing cubes' order is not an arrival order, e.g. pick the needed-color cube nearest the gripper's position in the last frame (ties broken by smaller y), rather than the first `arrivals` entry.",
+   "missing": "The true arrival order of the blue cubes. The carried `arrivals` was built at step #1 by sorting on y, so [62, 76] sits before [63, 129] only because 62 < 63, not because it arrived earlier; the recorded pick of [63, 129] implies that cube is the one the oracle treats as oldest (or that the oracle does not use arrival order at all), and nothing in memory encoded that."
+  }
+ ]
+}

@@ -1,0 +1,112 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "button_pressed",
+  "pending_cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  8,
+  18,
+  38,
+  58,
+  61
+ ],
+ "scored": 16,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.875,
+ "memory_verified": 0.875,
+ "reads": {
+  "button_pressed": 3,
+  "pending_cubes": 6
+ },
+ "field_errors": {
+  "button_pressed": {
+   "in": 0,
+   "sole": 0
+  },
+  "pending_cubes": {
+   "in": 2,
+   "sole": 2
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.125,
+ "verified_of_all": 0.875,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 16,
+ "critique": "field pending_cubes, ANNOTATOR PROMPT\n  The current rule orders the list by the episode's actual pick order, which is right, but its comment that the order is 'nearly always increasing x' is false in this minibatch: with two highlighted cubes the first one picked was the smaller-x cube once, the larger-x cube twice. Replace that comment with the ordering that fits every episode seen: when the highlighted cubes are of different colours, the blue cube was picked before the green cube; when they are of the same colour, the cube nearer the robot (smaller y) was picked first, regardless of x. Keep the primary definition (order as the episode actually picks them up, first-picked first) and keep the removal rule unchanged. Example: highlighted cubes green at [53, 101] and blue at [106, 104] -> [[106, 104], [53, 101]]; two red cubes at [81, 125] and [113, 120] -> [[81, 125], [113, 120]].\n\nfield pending_cubes, POLICY PROMPT\n  The ordering clause 'by increasing x (robot's right-most first)' must be removed; it predicted the wrong first entry at the button-press step twice (PREDICTABILITY). Replace it with: at the step whose execution steps list the highlighted areas, write one entry per area (the [y, x] of the cube nearest that area in that execution step), ordered by colour first — blue before red before green — and, among cubes of the same colour, by increasing y (the cube nearest the robot first, the farthest last); x plays no part. Example: green at [53, 101] and blue at [106, 104] -> [[106, 104], [53, 101]]; two red cubes at [81, 125] and [113, 120] -> [[81, 125], [113, 120]]. All other clauses (copying the list, removing the entry nearest the grasped cube's pre-lift table position, leaving it unchanged on a place step) stay as they are.\n\nthe policy prompt for subgoal\n  The failures are at the step right after the button press, where the execution steps show the button pressed down and the highlighted areas appearing and then vanishing, the gripper is raised and empty, and the policy must choose B and point at the first cube to pick. Rule 3's special clause for that step ('point at the highlighted cube with the smallest x, the robot's right-most') sent the policy to the wrong cube in two episodes; it was right only once, by coincidence. It breaks SUFFICIENCY because the carried-in memory is still empty there and the clause itself picks the wrong cube. Replace that clause with: on the button-press step point at the first entry of the pending_cubes list as written at this step under the memory instruction (blue before red before green; among same-coloured cubes the one with the smallest y, nearest the robot), using that cube's current position, or the highlighted-area position when the cube is not listed. On every later step keep pointing at the first entry of the carried-in list after removing any cube grasped on this step. Remove every mention of 'smallest x' or 'right-most' ordering from rule 3. All other rules (1, 2, 4, 5) stand.\n\nrefused\n  Each failed step proposed a different single-axis ordering: one asked for increasing y (nearest cube first), the other for decreasing y (farthest cube first). Taken across the minibatch these contradict each other, and the existing increasing-x rule contradicts both, so none is passed on as a pure coordinate rule. The only ordering consistent with every episode read end to end is colour priority (blue before green in the one mixed-colour case) with increasing y within a colour; it is passed on with that caveat rather than either step's proposal. Both steps also noted that the point may sit at the highlighted-area position rather than the exact cube coordinate; that is already permitted by rule 3's tolerance and the recorded points were within a few pixels of the cube, so no separate change is made for it.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The failures are at the step right after the button press, where the execution steps show the button pressed down and the highlighted areas appearing and then vanishing, the gripper is raised and empty, and the policy must choose B and point at the first cube to pick. Rule 3's special clause for that step ('point at the highlighted cube with the smallest x, the robot's right-most') sent the policy to the wrong cube in two episodes; it was right only once, by coincidence. It breaks SUFFICIENCY because the carried-in memory is still empty there and the clause itself picks the wrong cube. Replace that clause with: on the button-press step point at the first entry of the pending_cubes list as written at this step under the memory instruction (blue before red before green; among same-coloured cubes the one with the smallest y, nearest the robot), using that cube's current position, or the highlighted-area position when the cube is not listed. On every later step keep pointing at the first entry of the carried-in list after removing any cube grasped on this step. Remove every mention of 'smallest x' or 'right-most' ordering from rule 3. All other rules (1, 2, 4, 5) stand.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pending_cubes",
+    "description": "The ordering clause 'by increasing x (robot's right-most first)' must be removed; it predicted the wrong first entry at the button-press step twice (PREDICTABILITY). Replace it with: at the step whose execution steps list the highlighted areas, write one entry per area (the [y, x] of the cube nearest that area in that execution step), ordered by colour first — blue before red before green — and, among cubes of the same colour, by increasing y (the cube nearest the robot first, the farthest last); x plays no part. Example: green at [53, 101] and blue at [106, 104] -> [[106, 104], [53, 101]]; two red cubes at [81, 125] and [113, 120] -> [[81, 125], [113, 120]]. All other clauses (copying the list, removing the entry nearest the grasped cube's pre-lift table position, leaving it unchanged on a place step) stay as they are."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pending_cubes",
+    "description": "The current rule orders the list by the episode's actual pick order, which is right, but its comment that the order is 'nearly always increasing x' is false in this minibatch: with two highlighted cubes the first one picked was the smaller-x cube once, the larger-x cube twice. Replace that comment with the ordering that fits every episode seen: when the highlighted cubes are of different colours, the blue cube was picked before the green cube; when they are of the same colour, the cube nearer the robot (smaller y) was picked first, regardless of x. Keep the primary definition (order as the episode actually picks them up, first-picked first) and keep the removal rule unchanged. Example: highlighted cubes green at [53, 101] and blue at [106, 104] -> [[106, 104], [53, 101]]; two red cubes at [81, 125] and [113, 120] -> [[81, 125], [113, 120]]."
+   }
+  ],
+  "refused": "Each failed step proposed a different single-axis ordering: one asked for increasing y (nearest cube first), the other for decreasing y (farthest cube first). Taken across the minibatch these contradict each other, and the existing increasing-x rule contradicts both, so none is passed on as a pure coordinate rule. The only ordering consistent with every episode read end to end is colour priority (blue before green in the one mixed-colour case) with increasing y within a colour; it is passed on with that caveat rather than either step's proposal. Both steps also noted that the point may sit at the highlighted-area position rather than the exact cube coordinate; that is already permitted by rule 3's tolerance and the recorded points were within a few pixels of the cube, so no separate change is made for it."
+ },
+ "critiques": [
+  {
+   "step": [
+    38,
+    "exec",
+    107
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [113, 120]",
+   "recorded": "B: pick up the highlighted cube at [83, 126]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The ordering rule is wrong for this step: it says order the pending_cubes entries by increasing x, which with highlighted cubes at [113,120] and [81,125] puts [113,120] first; the recorded list [[81,125],[113,120]] is ordered by increasing y (the robot's nearest cube first, the farthest last). The instruction should say to order entries by increasing y (nearest to the robot first), not by x, and should not use a near-tie in x (120 vs 125) to decide the order.",
+   "missing_from_policy_prompt_for_subgoal": "On the button-press step the rule says to point at the highlighted cube with the smallest x (robot's right-most), which gave [113,120]; the recorded point [83,126] is the highlighted cube with the smallest y (the one nearest the robot, at [81,125]/area [85,125]). The instruction should say: point at the highlighted cube nearest the robot (smallest y), i.e. the first entry of the pending_cubes list ordered by increasing y, and the point may sit at the cube/highlighted-area position (~[83,126]).",
+   "missing": ""
+  },
+  {
+   "step": [
+    58,
+    "exec",
+    116
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [53, 101]",
+   "recorded": "B: pick up the highlighted cube at [107, 105]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The ordering rule 'by increasing x' gives green [53, 101] before blue [106, 104] here (x 101 < 104), but the recorded list puts the blue cube [106, 104] first. With the two cubes only 3 px apart in x, x-order is not what decides; the recorded order is the cube with the LARGER y (the forward one, [110, 105] area) first, then the one nearer the robot. The instruction should state the ordering by decreasing y (forward cube first), or whatever the true criterion is, instead of increasing x.",
+   "missing_from_policy_prompt_for_subgoal": "On the button-press step it tells me to point at the highlighted cube with the smallest x, which here is the green cube [53, 101]; the recorded point is the blue cube on the forward highlighted area [110, 105] (larger y). It should say to point at the first entry of the list as ordered by the corrected rule (forward / larger-y cube first), and it should allow pointing at the highlighted area position [110, 105] rather than requiring the exact cube coordinate.",
+   "missing": ""
+  }
+ ]
+}

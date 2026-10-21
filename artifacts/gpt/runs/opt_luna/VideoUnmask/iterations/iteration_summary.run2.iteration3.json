@@ -1,0 +1,96 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "remaining_targets"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  3,
+  22,
+  39,
+  44,
+  63
+ ],
+ "scored": 11,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.8181818181818182,
+ "memory_verified": 1.0,
+ "reads": {
+  "remaining_targets": 9
+ },
+ "field_errors": {
+  "remaining_targets": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.18181818181818182,
+ "verified_of_all": 0.8181818181818182,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 1,
+ "decisions": 11,
+ "critique": "the policy prompt for subgoal\n  For a goal requesting two hidden cubes in order, the first container had been picked up and released, and remaining_targets correctly held only [[85, 163]]. The second target was visible near that point early in the current execution frames but absent from the final detections. The policy selected a different visible container at [121, 178]. The unrestricted nearest-visible-container fallback conflicts with the instruction to use the remembered point when the target is occluded, breaking SUFFICIENCY by allowing a distractor to replace the remembered target. Remove the unrestricted nearest-visible-container fallback. Match a visible container to the first remaining point only when it is locally consistent with that target: for these observations, require its center to be within 15 image-coordinate units of the remembered point, or require direct tracking evidence in the current frames establishing the same container's displacement. If no such match exists, treat the target as temporarily undetected and select A at the remembered point, not at a distant visible container. A recent detection near the remembered point followed by disappearance supports this undetected-target rule; it does not justify switching objects. Preserve the existing grasp, release, and memory-update rules.\n\nrefused\n  In another two-target task, the current frames showed the first container grasped with a nonzero partial opening and lifted while that opening remained maintained, with no subsequent release. The policy correctly removed the first target from remaining_targets but incorrectly chose A for the second target instead of B to release the held container. No missing information or document defect was reported. The existing policy prompt for subgoal already explicitly requires B when a completed pickup leaves a container held and another target remains, and explicitly accepts maintained partial closure during lift despite unchanged container detections. This is a failure to apply an already sufficient rule, not a reason to add memory or change its transitions.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "For a goal requesting two hidden cubes in order, the first container had been picked up and released, and remaining_targets correctly held only [[85, 163]]. The second target was visible near that point early in the current execution frames but absent from the final detections. The policy selected a different visible container at [121, 178]. The unrestricted nearest-visible-container fallback conflicts with the instruction to use the remembered point when the target is occluded, breaking SUFFICIENCY by allowing a distractor to replace the remembered target. Remove the unrestricted nearest-visible-container fallback. Match a visible container to the first remaining point only when it is locally consistent with that target: for these observations, require its center to be within 15 image-coordinate units of the remembered point, or require direct tracking evidence in the current frames establishing the same container's displacement. If no such match exists, treat the target as temporarily undetected and select A at the remembered point, not at a distant visible container. A recent detection near the remembered point followed by disappearance supports this undetected-target rule; it does not justify switching objects. Preserve the existing grasp, release, and memory-update rules.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "In another two-target task, the current frames showed the first container grasped with a nonzero partial opening and lifted while that opening remained maintained, with no subsequent release. The policy correctly removed the first target from remaining_targets but incorrectly chose A for the second target instead of B to release the held container. No missing information or document defect was reported. The existing policy prompt for subgoal already explicitly requires B when a completed pickup leaves a container held and another target remains, and explicitly accepts maintained partial closure during lift despite unchanged container detections. This is a failure to apply an already sufficient rule, not a reason to add memory or change its transitions."
+ },
+ "critiques": [
+  {
+   "step": [
+    3,
+    "exec",
+    292
+   ],
+   "memory_in": "remaining_targets=[[85, 163]]",
+   "answered": "A: pick up the container at [121, 178]",
+   "recorded": "A: pick up the container at [82, 165]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The nearest-visible-container fallback needs a proximity limit: [121, 178] is not a small centroid shift from the remembered target [85, 163]. The target was visible at [87, 163] at t=256 and is absent from later detections; treat it as temporarily undetected and point at the remembered [85, 163], selecting the recorded target near [82, 165], rather than substituting a distant visible container.",
+   "missing": ""
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    189
+   ],
+   "memory_in": "remaining_targets=[[69, 138], [141, 78]]",
+   "answered": "A: pick up the container at [141, 78]",
+   "recorded": "B: put down the container",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

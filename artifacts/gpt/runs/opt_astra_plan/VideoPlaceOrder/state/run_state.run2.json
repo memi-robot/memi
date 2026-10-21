@@ -1,0 +1,289 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoPlaceOrder",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   18,
+   22,
+   46,
+   49,
+   60
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start in A: with the hand empty in the initial execution scene, pick up the cube whose color is specified by the goal, pointing at its current visible center. Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B. For B, point at the target matching selected_target, using its current visible center when available and the stored point if occluded. Do not select another target based on proximity to the held cube. If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube. After a successful release onto the selected target, the goal is complete; no button press is required. C is not used for these goals: button presses in the demonstration neither reset the placement count nor require imitation. If an unexpected decision follows a completed correct placement and a menu command is mandatory, choose A on the goal cube and subsequently B onto the same selected target, rather than pressing the button. For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known. If selected_target is unknown and a drop is mandatory, use the nearest visible target as a deterministic fallback, without claiming it is the demonstrated target.",
+  "fields": [
+   {
+    "name": "selected_target",
+    "description": "When the incoming memory is empty and the current step includes the demonstration, read the cube color and placement ordinal from the goal. Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical marked target that received the requested placement, then scan every remaining demonstration frame and track that target into the first execution scene. Track through all subsequent motion, including large shuffles, temporary occlusion, and small visible-center shifts. Establish consistent one-to-one correspondences between successive target sets using continuous motion, considering moving targets jointly and keeping stationary targets separate. Neither coordinate-list order nor occupation of a previously occupied location establishes identity. Write the tracked target's center in the first execution scene as [y, x], not its placement-time location. On subsequent steps copy the incoming selected_target unchanged, regardless of the current grasp or target-center wobble. If the demonstration does not establish the requested placement or the visible sequence genuinely cannot establish the receiving target's identity through to the first execution scene, write \"unknown\" rather than inventing a placement or correspondence. e.g. [116, 163]",
+    "annotation": "Store one [y, x] point identifying the target on which the goal-named cube was placed at the goal-requested ordinal during the demonstration. Count completed placements onto targets chronologically, not frames, initial cube positions, flyovers, button presses, or the final release onto the unmarked central workspace. Identify a placement by lowering the carried cube onto a target and releasing it. Identify the physical marked target that received the requested placement, then track that target through all remaining demonstration frames and into the first execution scene, including large shuffles, temporary occlusion, and small apparent coordinate shifts. Establish consistent one-to-one correspondences among targets in successive frames using their motion jointly, keeping stationary targets separate. Neither coordinate-list order nor occupation of a previous target location establishes identity. Use the tracked physical target's center in the first execution scene as the canonical stored [y, x] point, not its placement-time location. If the visible sequence genuinely cannot establish the requested target's identity, write \"unknown\". Write this point at decision step #1 and retain it unchanged at every subsequent decision step. For episodes 18, 22, 46, 49, and 60 respectively, the values at both steps are [116, 163], [114, 168], [122, 132], [108, 87], and [136, 82]. e.g. [116, 163]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoPlaceOrder",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   18,
+   22,
+   46,
+   49,
+   60
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start in A: with the hand empty in the initial execution scene, pick up the cube whose color is specified by the goal, pointing at its current visible center. Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B. For B, point at the target matching selected_target, using its current visible center when available and the stored point if occluded. Do not select another target based on proximity to the held cube. If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube. After a successful release onto the selected target, the goal is complete; no button press is required. C is not used for these goals: button presses in the demonstration neither reset the placement count nor require imitation. If an unexpected decision follows a completed correct placement and a menu command is mandatory, choose A on the goal cube and subsequently B onto the same selected target, rather than pressing the button. For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known. If selected_target is unknown and a drop is mandatory, use the nearest visible target as a deterministic fallback, without claiming it is the demonstrated target.",
+  "fields": [
+   {
+    "name": "selected_target",
+    "description": "When the incoming memory is empty and the current step includes the demonstration, read the cube color and placement ordinal from the goal. Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Match the requested placement's target to the same target in the first execution scene and write that scene's target center as [y, x]. Track target identity through temporary occlusion and small visible-center shifts rather than treating them as new targets. On subsequent steps copy the incoming selected_target unchanged, regardless of the current grasp or target-center wobble. If the demonstration does not establish the requested target, write \"unknown\" rather than inventing a placement. e.g. [116, 163]",
+    "annotation": "Store one [y, x] point identifying the target on which the goal-named cube was placed at the goal-requested ordinal during the demonstration. Count completed placements onto targets chronologically, not frames, initial cube positions, flyovers, button presses, or the final release onto the unmarked central workspace. Identify a placement by lowering the carried cube onto a target and releasing it. Use the selected target's center in the first execution scene as the canonical stored point, matching its identity across occlusion and small apparent coordinate shifts. Write this point at decision step #1 and retain it unchanged at every subsequent decision step. For episodes 18, 22, 46, 49, and 60 respectively, the values at both steps are [116, 163], [114, 168], [122, 132], [108, 87], and [136, 82]. e.g. [116, 163]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 0,
+    "memory_wrong": 3,
+    "memory_only": 3,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "selected_target": 3
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field selected_target, ANNOTATOR PROMPT\n  When the goal requested an ordinal demonstrated placement, the policy correctly chose to pick up the named cube but stored the target's old location. The annotated memory instead identified that target after a late shuffle. This affected first-placement goals and a second-placement goal: in the latter, the second-placement target moved into the former first-placement location. The rule's reference only to occlusion and small coordinate shifts leaves these different values unresolved, breaking PREDICTABILITY and jeopardizing later SUFFICIENCY. Clarify that selected_target holds the first execution scene's center of the physical target that received the requested chronological placement, tracked through all subsequent demonstration motion, including large shuffles. Identify the placement by release onto a marked target, then follow that target through the remaining demonstration rather than matching its placement-time location to the execution scene. Use successive motion and a consistent one-to-one correspondence among moving targets; do not treat coordinate-list order or final spatial position as identity. Write the resulting [y, x] point at the first decision and retain it unchanged thereafter. For example, a first-placement target initially near [137, 104] moves through [115, 110], [98, 135], and [100, 164], ending at the execution target [101, 166]; store [101, 166].\n\nfield selected_target, POLICY PROMPT\n  At the initial decision, the demonstration includes completed cube placements followed by target motion while the cube rests in the central workspace. The policy chose the correct pickup but selected the placement-time location for memory, whereas the annotation selected the same physical target's post-shuffle location. The existing small-wobble matching instruction does not explain this difference, breaking PREDICTABILITY and risking a later drop onto the wrong object. When incoming memory is empty and the demonstration is present, count completed target placements of the goal-named cube chronologically as before. Identify the requested placement's target, then scan every remaining demonstration frame and track that target through any shuffle. Establish one-to-one correspondences between successive target sets using continuous motion, considering the moving targets jointly and keeping stationary targets separate. Neither sorted coordinate-list position nor return to a previously occupied location establishes identity. For example, a second-placement target near [75, 92] subsequently moves through [87, 117] and [119, 130] to the bottom target in the execution scene; write selected_target=[141, 118], not the execution target remaining near its original upper location. Canonicalize the tracked endpoint to its center in the first execution scene, write it at this decision, and copy it unchanged at subsequent decisions. Keep the existing exclusions for initial cube positions, flyovers, button presses, and central-workspace releases. If the visible sequence genuinely cannot establish target identity, use \"unknown\" rather than inventing a correspondence.\n\nrefused\n  Do not change chronological placement counting or correct the annotated second-placement memory to the target at the original second-placement location. The report suggesting that the annotated bottom target represented the first placement overlooked the late shuffle: the upper target that received the second release moves through the center and finishes at the bottom. The first-placement reports likewise concern physical targets moving to different locations, not incorrect release counting. No additional memory field or subgoal-rule change is needed: the existing pickup and drop rules select the correct objects once selected_target is derived by tracking the demonstrated target through the shuffle.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "selected_target",
+      "edits": [
+       {
+        "modify_from": "Use the selected target's center in the first execution scene as the canonical stored point, matching its identity across occlusion and small apparent coordinate shifts.",
+        "modify_to": "Identify the physical marked target that received the requested placement, then track that target through all remaining demonstration frames and into the first execution scene, including large shuffles, temporary occlusion, and small apparent coordinate shifts. Establish consistent one-to-one correspondences among targets in successive frames using their motion jointly, keeping stationary targets separate. Neither coordinate-list order nor occupation of a previous target location establishes identity. Use the tracked physical target's center in the first execution scene as the canonical stored [y, x] point, not its placement-time location. If the visible sequence genuinely cannot establish the requested target's identity, write \"unknown\"."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "selected_target",
+      "edits": [
+       {
+        "modify_from": "Match the requested placement's target to the same target in the first execution scene and write that scene's target center as [y, x]. Track target identity through temporary occlusion and small visible-center shifts rather than treating them as new targets.",
+        "modify_to": "Identify the physical marked target that received the requested placement, then scan every remaining demonstration frame and track that target into the first execution scene. Track through all subsequent motion, including large shuffles, temporary occlusion, and small visible-center shifts. Establish consistent one-to-one correspondences between successive target sets using continuous motion, considering moving targets jointly and keeping stationary targets separate. Neither coordinate-list order nor occupation of a previously occupied location establishes identity. Write the tracked target's center in the first execution scene as [y, x], not its placement-time location."
+       },
+       {
+        "modify_from": "If the demonstration does not establish the requested target, write \"unknown\" rather than inventing a placement.",
+        "modify_to": "If the demonstration does not establish the requested placement or the visible sequence genuinely cannot establish the receiving target's identity through to the first execution scene, write \"unknown\" rather than inventing a placement or correspondence."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No proposed substantive correction is refused. Episode-specific motion paths are not added: the general physical-identity tracking rule covers them. Chronological placement counting, the existing exclusions, and the subgoal rules remain unchanged; no additional memory field is needed."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 1,
+ "quiet": 4,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    23,
+    39,
+    51,
+    66,
+    87
+   ],
+   "verified_of_all": 0.7,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the hand empty in the initial execution scene, pick up the cube whose color is specified by the goal, pointing at its current visible center. Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B. For B, point at the target matching selected_target, using its current visible center when available and the stored point if occluded. Do not select another target based on proximity to the held cube. If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube. After a successful release onto the selected target, the goal is complete; no button press is required. C is not used for these goals: button presses in the demonstration neither reset the placement count nor require imitation. If an unexpected decision follows a completed correct placement and a menu command is mandatory, choose A on the goal cube and subsequently B onto the same selected target, rather than pressing the button. For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known. If selected_target is unknown and a drop is mandatory, use the nearest visible target as a deterministic fallback, without claiming it is the demonstrated target.",
+    "fields": [
+     {
+      "name": "selected_target",
+      "description": "When the incoming memory is empty and the current step includes the demonstration, read the cube color and placement ordinal from the goal. Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Match the requested placement's target to the same target in the first execution scene and write that scene's target center as [y, x]. Track target identity through temporary occlusion and small visible-center shifts rather than treating them as new targets. On subsequent steps copy the incoming selected_target unchanged, regardless of the current grasp or target-center wobble. If the demonstration does not establish the requested target, write \"unknown\" rather than inventing a placement. e.g. [116, 163]",
+      "annotation": "Store one [y, x] point identifying the target on which the goal-named cube was placed at the goal-requested ordinal during the demonstration. Count completed placements onto targets chronologically, not frames, initial cube positions, flyovers, button presses, or the final release onto the unmarked central workspace. Identify a placement by lowering the carried cube onto a target and releasing it. Use the selected target's center in the first execution scene as the canonical stored point, matching its identity across occlusion and small apparent coordinate shifts. Write this point at decision step #1 and retain it unchanged at every subsequent decision step. For episodes 18, 22, 46, 49, and 60 respectively, the values at both steps are [116, 163], [114, 168], [122, 132], [108, 87], and [136, 82]. e.g. [116, 163]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    63,
+    84,
+    85,
+    93
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the hand empty in the initial execution scene, pick up the cube whose color is specified by the goal, pointing at its current visible center. Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B. For B, point at the target matching selected_target, using its current visible center when available and the stored point if occluded. Do not select another target based on proximity to the held cube. If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube. After a successful release onto the selected target, the goal is complete; no button press is required. C is not used for these goals: button presses in the demonstration neither reset the placement count nor require imitation. If an unexpected decision follows a completed correct placement and a menu command is mandatory, choose A on the goal cube and subsequently B onto the same selected target, rather than pressing the button. For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known. If selected_target is unknown and a drop is mandatory, use the nearest visible target as a deterministic fallback, without claiming it is the demonstrated target.",
+    "fields": [
+     {
+      "name": "selected_target",
+      "description": "When the incoming memory is empty and the current step includes the demonstration, read the cube color and placement ordinal from the goal. Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical marked target that received the requested placement, then scan every remaining demonstration frame and track that target into the first execution scene. Track through all subsequent motion, including large shuffles, temporary occlusion, and small visible-center shifts. Establish consistent one-to-one correspondences between successive target sets using continuous motion, considering moving targets jointly and keeping stationary targets separate. Neither coordinate-list order nor occupation of a previously occupied location establishes identity. Write the tracked target's center in the first execution scene as [y, x], not its placement-time location. On subsequent steps copy the incoming selected_target unchanged, regardless of the current grasp or target-center wobble. If the demonstration does not establish the requested placement or the visible sequence genuinely cannot establish the receiving target's identity through to the first execution scene, write \"unknown\" rather than inventing a placement or correspondence. e.g. [116, 163]",
+      "annotation": "Store one [y, x] point identifying the target on which the goal-named cube was placed at the goal-requested ordinal during the demonstration. Count completed placements onto targets chronologically, not frames, initial cube positions, flyovers, button presses, or the final release onto the unmarked central workspace. Identify a placement by lowering the carried cube onto a target and releasing it. Identify the physical marked target that received the requested placement, then track that target through all remaining demonstration frames and into the first execution scene, including large shuffles, temporary occlusion, and small apparent coordinate shifts. Establish consistent one-to-one correspondences among targets in successive frames using their motion jointly, keeping stationary targets separate. Neither coordinate-list order nor occupation of a previous target location establishes identity. Use the tracked physical target's center in the first execution scene as the canonical stored [y, x] point, not its placement-time location. If the visible sequence genuinely cannot establish the requested target's identity, write \"unknown\". Write this point at decision step #1 and retain it unchanged at every subsequent decision step. For episodes 18, 22, 46, 49, and 60 respectively, the values at both steps are [116, 163], [114, 168], [122, 132], [108, 87], and [136, 82]. e.g. [116, 163]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    39,
+    57,
+    73,
+    92
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the hand empty in the initial execution scene, pick up the cube whose color is specified by the goal, pointing at its current visible center. Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B. For B, point at the target matching selected_target, using its current visible center when available and the stored point if occluded. Do not select another target based on proximity to the held cube. If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube. After a successful release onto the selected target, the goal is complete; no button press is required. C is not used for these goals: button presses in the demonstration neither reset the placement count nor require imitation. If an unexpected decision follows a completed correct placement and a menu command is mandatory, choose A on the goal cube and subsequently B onto the same selected target, rather than pressing the button. For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known. If selected_target is unknown and a drop is mandatory, use the nearest visible target as a deterministic fallback, without claiming it is the demonstrated target.",
+    "fields": [
+     {
+      "name": "selected_target",
+      "description": "When the incoming memory is empty and the current step includes the demonstration, read the cube color and placement ordinal from the goal. Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical marked target that received the requested placement, then scan every remaining demonstration frame and track that target into the first execution scene. Track through all subsequent motion, including large shuffles, temporary occlusion, and small visible-center shifts. Establish consistent one-to-one correspondences between successive target sets using continuous motion, considering moving targets jointly and keeping stationary targets separate. Neither coordinate-list order nor occupation of a previously occupied location establishes identity. Write the tracked target's center in the first execution scene as [y, x], not its placement-time location. On subsequent steps copy the incoming selected_target unchanged, regardless of the current grasp or target-center wobble. If the demonstration does not establish the requested placement or the visible sequence genuinely cannot establish the receiving target's identity through to the first execution scene, write \"unknown\" rather than inventing a placement or correspondence. e.g. [116, 163]",
+      "annotation": "Store one [y, x] point identifying the target on which the goal-named cube was placed at the goal-requested ordinal during the demonstration. Count completed placements onto targets chronologically, not frames, initial cube positions, flyovers, button presses, or the final release onto the unmarked central workspace. Identify a placement by lowering the carried cube onto a target and releasing it. Identify the physical marked target that received the requested placement, then track that target through all remaining demonstration frames and into the first execution scene, including large shuffles, temporary occlusion, and small apparent coordinate shifts. Establish consistent one-to-one correspondences among targets in successive frames using their motion jointly, keeping stationary targets separate. Neither coordinate-list order nor occupation of a previous target location establishes identity. Use the tracked physical target's center in the first execution scene as the canonical stored [y, x] point, not its placement-time location. If the visible sequence genuinely cannot establish the requested target's identity, write \"unknown\". Write this point at decision step #1 and retain it unchanged at every subsequent decision step. For episodes 18, 22, 46, 49, and 60 respectively, the values at both steps are [116, 163], [114, 168], [122, 132], [108, 87], and [136, 82]. e.g. [116, 163]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    17,
+    31,
+    77,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the hand empty in the initial execution scene, pick up the cube whose color is specified by the goal, pointing at its current visible center. Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B. For B, point at the target matching selected_target, using its current visible center when available and the stored point if occluded. Do not select another target based on proximity to the held cube. If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube. After a successful release onto the selected target, the goal is complete; no button press is required. C is not used for these goals: button presses in the demonstration neither reset the placement count nor require imitation. If an unexpected decision follows a completed correct placement and a menu command is mandatory, choose A on the goal cube and subsequently B onto the same selected target, rather than pressing the button. For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known. If selected_target is unknown and a drop is mandatory, use the nearest visible target as a deterministic fallback, without claiming it is the demonstrated target.",
+    "fields": [
+     {
+      "name": "selected_target",
+      "description": "When the incoming memory is empty and the current step includes the demonstration, read the cube color and placement ordinal from the goal. Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical marked target that received the requested placement, then scan every remaining demonstration frame and track that target into the first execution scene. Track through all subsequent motion, including large shuffles, temporary occlusion, and small visible-center shifts. Establish consistent one-to-one correspondences between successive target sets using continuous motion, considering moving targets jointly and keeping stationary targets separate. Neither coordinate-list order nor occupation of a previously occupied location establishes identity. Write the tracked target's center in the first execution scene as [y, x], not its placement-time location. On subsequent steps copy the incoming selected_target unchanged, regardless of the current grasp or target-center wobble. If the demonstration does not establish the requested placement or the visible sequence genuinely cannot establish the receiving target's identity through to the first execution scene, write \"unknown\" rather than inventing a placement or correspondence. e.g. [116, 163]",
+      "annotation": "Store one [y, x] point identifying the target on which the goal-named cube was placed at the goal-requested ordinal during the demonstration. Count completed placements onto targets chronologically, not frames, initial cube positions, flyovers, button presses, or the final release onto the unmarked central workspace. Identify a placement by lowering the carried cube onto a target and releasing it. Identify the physical marked target that received the requested placement, then track that target through all remaining demonstration frames and into the first execution scene, including large shuffles, temporary occlusion, and small apparent coordinate shifts. Establish consistent one-to-one correspondences among targets in successive frames using their motion jointly, keeping stationary targets separate. Neither coordinate-list order nor occupation of a previous target location establishes identity. Use the tracked physical target's center in the first execution scene as the canonical stored [y, x] point, not its placement-time location. If the visible sequence genuinely cannot establish the requested target's identity, write \"unknown\". Write this point at decision step #1 and retain it unchanged at every subsequent decision step. For episodes 18, 22, 46, 49, and 60 respectively, the values at both steps are [116, 163], [114, 168], [122, 132], [108, 87], and [136, 82]. e.g. [116, 163]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    23,
+    40,
+    54,
+    59,
+    84
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: with the hand empty in the initial execution scene, pick up the cube whose color is specified by the goal, pointing at its current visible center. Use execution observations, not the demonstration's final hand pose, to determine the current grasp state. If the currently shown execution interval includes descent onto that cube, closure to a cube-sized opening (about 46%), and withdrawal with that opening maintained, treat the pickup as completed and choose B, even if the object description omits 'held' or reports a center near its old tabletop position. An explicit held annotation also supports B. For B, point at the target matching selected_target, using its current visible center when available and the stored point if occluded. Do not select another target based on proximity to the held cube. If a pickup visibly closes on nothing or otherwise clearly fails and the desired cube remains available, choose A again at that cube. After a successful release onto the selected target, the goal is complete; no button press is required. C is not used for these goals: button presses in the demonstration neither reset the placement count nor require imitation. If an unexpected decision follows a completed correct placement and a menu command is mandatory, choose A on the goal cube and subsequently B onto the same selected target, rather than pressing the button. For other uncovered situations, use A when the hand is empty and the goal cube can be located, and B when holding the goal cube and selected_target is known. If selected_target is unknown and a drop is mandatory, use the nearest visible target as a deterministic fallback, without claiming it is the demonstrated target.",
+    "fields": [
+     {
+      "name": "selected_target",
+      "description": "When the incoming memory is empty and the current step includes the demonstration, read the cube color and placement ordinal from the goal. Scan the demonstration chronologically for that cube's completed target placements: a carried cube is lowered onto a target, released, and left there as the hand withdraws. Count each release once; do not count initial positions, flyovers, button presses, or releases onto unmarked workspace. Identify the physical marked target that received the requested placement, then scan every remaining demonstration frame and track that target into the first execution scene. Track through all subsequent motion, including large shuffles, temporary occlusion, and small visible-center shifts. Establish consistent one-to-one correspondences between successive target sets using continuous motion, considering moving targets jointly and keeping stationary targets separate. Neither coordinate-list order nor occupation of a previously occupied location establishes identity. Write the tracked target's center in the first execution scene as [y, x], not its placement-time location. On subsequent steps copy the incoming selected_target unchanged, regardless of the current grasp or target-center wobble. If the demonstration does not establish the requested placement or the visible sequence genuinely cannot establish the receiving target's identity through to the first execution scene, write \"unknown\" rather than inventing a placement or correspondence. e.g. [116, 163]",
+      "annotation": "Store one [y, x] point identifying the target on which the goal-named cube was placed at the goal-requested ordinal during the demonstration. Count completed placements onto targets chronologically, not frames, initial cube positions, flyovers, button presses, or the final release onto the unmarked central workspace. Identify a placement by lowering the carried cube onto a target and releasing it. Identify the physical marked target that received the requested placement, then track that target through all remaining demonstration frames and into the first execution scene, including large shuffles, temporary occlusion, and small apparent coordinate shifts. Establish consistent one-to-one correspondences among targets in successive frames using their motion jointly, keeping stationary targets separate. Neither coordinate-list order nor occupation of a previous target location establishes identity. Use the tracked physical target's center in the first execution scene as the canonical stored [y, x] point, not its placement-time location. If the visible sequence genuinely cannot establish the requested target's identity, write \"unknown\". Write this point at decision step #1 and retain it unchanged at every subsequent decision step. For episodes 18, 22, 46, 49, and 60 respectively, the values at both steps are [116, 163], [114, 168], [122, 132], [108, 87], and [136, 82]. e.g. [116, 163]"
+     }
+    ]
+   }
+  }
+ ]
+}

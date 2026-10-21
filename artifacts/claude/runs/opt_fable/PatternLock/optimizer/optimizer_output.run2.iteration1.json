@@ -1,0 +1,63 @@
+{
+ "episodes": [
+  33,
+  41,
+  54,
+  70,
+  86
+ ],
+ "user_chars": 12654,
+ "usage": {
+  "prompt_tokens": 7542,
+  "completion_tokens": 727,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 7538
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on.",
+    "modify_to": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step."
+   },
+   {
+    "modify_from": "If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter.",
+    "modify_to": "If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter."
+   },
+   {
+    "modify_from": "In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+    "modify_to": "In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A."
+   }
+  ],
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "Nothing refused. The report's single change, indexing the subgoal by the carried-in moves_done plus one instead of by the value being written at this step, is committed as stated; the memory fields themselves are unchanged since they were filled and written correctly in both rounds."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on.",
+    "modify_to": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step."
+   },
+   {
+    "modify_from": "If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter.",
+    "modify_to": "If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter."
+   },
+   {
+    "modify_from": "In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+    "modify_to": "In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A."
+   }
+  ],
+  "refused": "Nothing refused. The report's single change, indexing the subgoal by the carried-in moves_done plus one instead of by the value being written at this step, is committed as stated; the memory fields themselves are unchanged since they were filled and written correctly in both rounds."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. The report's single change, indexing the subgoal by the carried-in moves_done plus one instead of by the value being written at this step, is committed as stated; the memory fields themselves are unchanged since they were filled and written correctly in both rounds.",
+ "text": "{\"annotator_prompt\": [],\n \"policy_prompt_for_memory\": [],\n \"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on.\",\n   \"modify_to\": \"Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan[0]). At every later decision step (memory carried in, no demonstration shown), the subgoal is plan[carried moves_done + 1], indexed 0-based by the carried-in value plus one. The execution steps shown at that step just completed plan[carried moves_done]; that letter is never chosen again at this step. So the first step performs plan[0], the second step (carried moves_done = 0) performs plan[1], the third step (carried moves_done = 1) performs plan[2], and so on. Index by the carried-in memory only, never by the memory being written at this step.\"},\n  {\"modify_from\": \"If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter.\",\n   \"modify_to\": \"If carried moves_done + 1 is at or beyond the length of the plan (nothing remains), repeat the last plan letter.\"},\n  {\"modify_from\": \"In any other unforeseen situation, pick plan[moves_done] if it exists, else A.\",\n   \"modify_to\": \"In any other unforeseen situation, pick plan[carried moves_done + 1] if it exists (plan[0] when memory is empty), else A.\"}],\n \"refused\": \"Nothing refused. The report's single change, indexing the subgoal by the carried-in moves_done plus one instead of by the value being written at this step, is committed as stated; the memory fields themselves are unchanged since they were filled and written correctly in both rounds.\"}"
+}

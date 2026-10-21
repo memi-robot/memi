@@ -1,0 +1,85 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "method",
+  "holding"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  11,
+  57,
+  74,
+  84,
+  96
+ ],
+ "scored": 6,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "method": 1,
+  "holding": 0
+ },
+ "field_errors": {
+  "method": {
+   "in": 0,
+   "sole": 0
+  },
+  "holding": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "holding": "read at no step of 6"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 6,
+ "critique": "field holding, ANNOTATOR PROMPT\n  DELETE this field. It was carried and never read. Everything it held is visible in the scene at the decision step itself: a gripper raised above about 0.10 with fingers at about 20-30% is the peg in hand, raised with fingers at about 40-60% is the cube in hand, fingers 100% open or about 0% is nothing in hand. In the episode where the robot picked up the peg and then stood with it raised, the subgoal to hook the cube was chosen from the raised gripper and 22% fingers in the current scene, not from the carried value, which was still `none` anyway because a value written at a step is only read at the step after it. The field therefore breaks NECESSITY: the current step always recovers the fact. The memory keeps only `method`, which is the one fact the first decision step shows and no later step recovers.\n\nfield holding, POLICY PROMPT\n  DELETE this field. The policy does not write or carry what is in the fingers; it reads that from the scene at each decision step when choosing the subgoal. The memory holds `method` only: fixed at the first decision step from the demonstration steps (`pick`, `hook` or `push`, by the existing tests) and copied unchanged at every later step. e.g. hook\n\nthe policy prompt for subgoal\n  Remove every reference to the `holding` memory field, including the clause that says `holding` means the value written for this decision step rather than the value carried in; that clause existed only because the carried value was always one step stale, which is the same fact showing the field is useless. In its place state the in-hand test directly on the scene at the decision step: the gripper raised above about 0.10 with fingers at about 20-30% means the peg is in hand; raised with fingers at about 40-60% means the cube is in hand; fingers 100% open or about 0% means nothing is in hand; the stick's or cube's listed coordinates staying at their old place and the absence of a held mark never count against a grasp. Then the rules read: `method` is `push` -> C, always. `method` is `pick` and nothing in hand -> D; `method` is `pick` and cube in hand -> E. `method` is `hook` and nothing in hand -> A; `method` is `hook` and peg in hand -> B. Keep the fallback for an unreadable `method` and the prohibitions on E without the cube in hand and B without the peg in hand, both judged by finger opening and gripper height in the current scene. Keep the note that menu options need no target point and, if one is demanded, to point at the object the option names.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Remove every reference to the `holding` memory field, including the clause that says `holding` means the value written for this decision step rather than the value carried in; that clause existed only because the carried value was always one step stale, which is the same fact showing the field is useless. In its place state the in-hand test directly on the scene at the decision step: the gripper raised above about 0.10 with fingers at about 20-30% means the peg is in hand; raised with fingers at about 40-60% means the cube is in hand; fingers 100% open or about 0% means nothing is in hand; the stick's or cube's listed coordinates staying at their old place and the absence of a held mark never count against a grasp. Then the rules read: `method` is `push` -> C, always. `method` is `pick` and nothing in hand -> D; `method` is `pick` and cube in hand -> E. `method` is `hook` and nothing in hand -> A; `method` is `hook` and peg in hand -> B. Keep the fallback for an unreadable `method` and the prohibitions on E without the cube in hand and B without the peg in hand, both judged by finger opening and gripper height in the current scene. Keep the note that menu options need no target point and, if one is demanded, to point at the object the option names.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "holding",
+    "description": "DELETE this field. The policy does not write or carry what is in the fingers; it reads that from the scene at each decision step when choosing the subgoal. The memory holds `method` only: fixed at the first decision step from the demonstration steps (`pick`, `hook` or `push`, by the existing tests) and copied unchanged at every later step. e.g. hook"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "holding",
+    "description": "DELETE this field. It was carried and never read. Everything it held is visible in the scene at the decision step itself: a gripper raised above about 0.10 with fingers at about 20-30% is the peg in hand, raised with fingers at about 40-60% is the cube in hand, fingers 100% open or about 0% is nothing in hand. In the episode where the robot picked up the peg and then stood with it raised, the subgoal to hook the cube was chosen from the raised gripper and 22% fingers in the current scene, not from the carried value, which was still `none` anyway because a value written at a step is only read at the step after it. The field therefore breaks NECESSITY: the current step always recovers the fact. The memory keeps only `method`, which is the one fact the first decision step shows and no later step recovers."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": []
+}

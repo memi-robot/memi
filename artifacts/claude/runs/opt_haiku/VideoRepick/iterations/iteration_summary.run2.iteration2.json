@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "target_cube",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  43,
+  50,
+  53,
+  73,
+  74
+ ],
+ "scored": 23,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9565217391304348,
+ "memory_verified": 0.9565217391304348,
+ "reads": {
+  "target_cube": 11,
+  "picks_done": 18
+ },
+ "field_errors": {
+  "target_cube": {
+   "in": 1,
+   "sole": 1
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.043478260869565216,
+ "verified_of_all": 0.9565217391304348,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 23,
+ "critique": "field target_cube, ANNOTATOR PROMPT\n  Situation: a three-pick goal with a demonstration whose shuffle moved the picked cube twice, each time with a different partner. First the picked cube traded places with a second cube, so a stranger came to rest exactly on the picked cube's original spot; then the picked cube (now on the second cube's old spot) traded places with a third cube and ended on the third cube's spot, far from where it started. The annotated value was the picked cube's final spot, but a fresh policy wrote the original spot, so the memory was not predictable from the instruction and the first pick went to the wrong cube (PREDICTABILITY of target_cube, and through it SUFFICIENCY of the first subgoal). The rule stays the same in substance but must state the tracking procedure as a chain: for every consecutive pair of shuffle frames, find the cubes whose listed positions changed by more than a few px; each such cube is carried to the changed position closest to the direction it was already travelling, and the picked-cube label travels with it. A swap may be followed by another swap with a different partner, so the picked cube's label can hop through several spots; the number of swaps is not counted and the cube resting on the original pick position after the shuffle is, whenever any swap touched that position, a different cube that was swapped in. The value is the position at the end of the chain, read in the scene at the start of execution. e.g. [107, 174]\n\nfield target_cube, POLICY PROMPT\n  Same failure: in a demonstration whose shuffle swapped the picked cube once with one neighbour and then again with another, the policy wrote the cube sitting on the original pick position rather than following the chain of swaps, so its memory disagreed with the annotated value and it pointed the first pick at the wrong cube (PREDICTABILITY, then SUFFICIENCY). The instruction must give an explicit per-frame procedure instead of the general 'exchanging places' remark: after locating the picked cube (gripper lowest at about height 0.02, fingers first about 46%, nearest listed cube), go through the demonstration frames one pair at a time. In each pair, cubes whose positions are within a few px are the same cube; the cubes whose positions changed are in motion, and each one is matched to the new position that continues its own arc (closest to where its previous motion was heading), never to the position it started from. Carry the 'picked' label along with the cube it is on. Keep doing this through every frame until the last one, however many swaps occur and whatever partners they involve; a second swap commonly uses a different partner, so the picked cube can end two spots away from where it started. Do not decide by which cube is 'back' on the original spot: once any swap has touched that spot, the cube resting there afterwards is a different cube. The value written is the position of the labelled cube in the scene at the start of execution. Later-step updates are unchanged. e.g. [107, 174]",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_cube",
+    "description": "Same failure: in a demonstration whose shuffle swapped the picked cube once with one neighbour and then again with another, the policy wrote the cube sitting on the original pick position rather than following the chain of swaps, so its memory disagreed with the annotated value and it pointed the first pick at the wrong cube (PREDICTABILITY, then SUFFICIENCY). The instruction must give an explicit per-frame procedure instead of the general 'exchanging places' remark: after locating the picked cube (gripper lowest at about height 0.02, fingers first about 46%, nearest listed cube), go through the demonstration frames one pair at a time. In each pair, cubes whose positions are within a few px are the same cube; the cubes whose positions changed are in motion, and each one is matched to the new position that continues its own arc (closest to where its previous motion was heading), never to the position it started from. Carry the 'picked' label along with the cube it is on. Keep doing this through every frame until the last one, however many swaps occur and whatever partners they involve; a second swap commonly uses a different partner, so the picked cube can end two spots away from where it started. Do not decide by which cube is 'back' on the original spot: once any swap has touched that spot, the cube resting there afterwards is a different cube. The value written is the position of the labelled cube in the scene at the start of execution. Later-step updates are unchanged. e.g. [107, 174]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_cube",
+    "description": "Situation: a three-pick goal with a demonstration whose shuffle moved the picked cube twice, each time with a different partner. First the picked cube traded places with a second cube, so a stranger came to rest exactly on the picked cube's original spot; then the picked cube (now on the second cube's old spot) traded places with a third cube and ended on the third cube's spot, far from where it started. The annotated value was the picked cube's final spot, but a fresh policy wrote the original spot, so the memory was not predictable from the instruction and the first pick went to the wrong cube (PREDICTABILITY of target_cube, and through it SUFFICIENCY of the first subgoal). The rule stays the same in substance but must state the tracking procedure as a chain: for every consecutive pair of shuffle frames, find the cubes whose listed positions changed by more than a few px; each such cube is carried to the changed position closest to the direction it was already travelling, and the picked-cube label travels with it. A swap may be followed by another swap with a different partner, so the picked cube's label can hop through several spots; the number of swaps is not counted and the cube resting on the original pick position after the shuffle is, whenever any swap touched that position, a different cube that was swapped in. The value is the position at the end of the chain, read in the scene at the start of execution. e.g. [107, 174]"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    74,
+    "exec",
+    321
+   ],
+   "memory_in": "target_cube=; picks_done=",
+   "answered": "A: pick up the cube at [89, 91]",
+   "recorded": "A: pick up the cube at [109, 175]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The tracking through the shuffle must be done frame by frame and the picked cube may be swapped more than once with different partners: here at t=192-256 the picked cube at [90,91] exchanged places with the cube at [107,118] (its arc [90,91]->[87,95]->[87,116]->[100,119]->[105,121]), and then at t=256-304 that cube at [105,121] exchanged places with the cube at [110,173] ([105,121]->[93,142]->[102,166]->[107,174]), so the picked cube ends at [107,174] even though a cube sits unmoved at the original position [89,91] from t=256 on. The instruction should warn explicitly that a cube resting at the original pick position after the shuffle is usually a different cube that was swapped in, and that each moving pair's start and end must be matched by nearest position per frame, not by which cube is 'back' at the old spot.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

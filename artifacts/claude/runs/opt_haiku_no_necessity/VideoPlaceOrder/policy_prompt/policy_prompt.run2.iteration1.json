@@ -1,0 +1,14 @@
+{
+ "task": "VideoPlaceOrder",
+ "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: 1. If the cube named in the goal instruction is NOT held (fingers ~100% open, gripper raised or empty, cube resting on the table): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open, gripper raised to height ~0.15, cube listed as held or at the gripper position): choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4). 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but memory is empty and no list can be derived, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+ "fields": [
+  {
+   "name": "demo_placements",
+   "description": "At the first decision step (the one that shows DEMONSTRATION STEPS and the memory is empty), scan the demo frames for the cube whose colour the goal instruction names, and write the ordered list of target positions, in [y, x], where it was released: a release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper'; record the target whose position (read from a demo frame listing all four targets, such as the last demo frame) is closest to where the cube now rests. Skip the demo's final release near the image centre (cube left around [82, 127] with no target there), skip the cube's starting spot, and skip button presses (fingers 0% open, no cube held). At every later step, copy the carried-in value unchanged. Empty list if no demonstration frames are shown and nothing is carried in. e.g. [[116, 163], [75, 163]]"
+  },
+  {
+   "name": "goal_target",
+   "description": "At the first decision step, after writing demo_placements, take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point. At every later step copy the carried-in value unchanged. unknown if demo_placements is empty. e.g. [116, 163]"
+  }
+ ]
+}

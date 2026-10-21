@@ -1,0 +1,154 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "buttons_pressed",
+  "green_container",
+  "red_container",
+  "blue_container",
+  "picked_colors"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  22,
+  25,
+  39,
+  85
+ ],
+ "scored": 21,
+ "failed": 2,
+ "subgoal_wrong": 1,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.9523809523809523,
+ "memory_verified": 0.9047619047619048,
+ "reads": {
+  "buttons_pressed": 16,
+  "green_container": 8,
+  "red_container": 9,
+  "blue_container": 8,
+  "picked_colors": 9
+ },
+ "field_errors": {
+  "buttons_pressed": {
+   "in": 1,
+   "sole": 1
+  },
+  "green_container": {
+   "in": 0,
+   "sole": 0
+  },
+  "red_container": {
+   "in": 1,
+   "sole": 1
+  },
+  "blue_container": {
+   "in": 0,
+   "sole": 0
+  },
+  "picked_colors": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.09523809523809523,
+ "verified_of_all": 0.9047619047619048,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 21,
+ "critique": "field buttons_pressed, ANNOTATOR PROMPT\n  Situation: on every episode the frames of the first press never contain the phrase 'is pressed down'; the press is visible only as the gripper descending onto a button (height about 0.03 or lower, fingers closed, button listed a few pixels off its rest spot) while two containers glide and swap. The rule said the count rises when an 'is pressed down' frame appears, so the value it describes (0) differs from the value filled in (1). This breaks PREDICTABILITY. Change: buttons_pressed is the count of presses completed, where a press is any execution frame shown at this step in which either a button is reported 'is pressed down', or the gripper stands within a few pixels of a button's position at height 0.035 or lower with fingers closed. 0 at the first step, 1 at the step after the first press (the one that also shows the container shuffle), 2 from the step after the second press to the end. e.g. 1\n\nfield red_container, ANNOTATOR PROMPT\n  Situation: after the red container had been lifted and the red cube seen beneath it, the container was set back down over the cube in the last frames before the next decision. The rule said both 'write the exposed cube's position' and 'update to the last frame shown', so two values were possible for one step. This breaks PREDICTABILITY. Change: once a cube of this color has been seen exposed (its container held in the gripper, cube visible), the field holds the cube's last visible position and freezes there; a container later put down over it does not change the field. Before that event the field is the covering container's position in the last frame shown, tracked through each press-time swap. The same freezing applies to green_container and blue_container. e.g. [100, 166]\n\nfield green_container, ANNOTATOR PROMPT\n  Same freezing clause as red_container: once the green cube has been seen exposed, keep its last visible position and ignore any container later set down over it. e.g. [136, 108]\n\nfield blue_container, ANNOTATOR PROMPT\n  Same freezing clause as red_container: once the blue cube has been seen exposed, keep its last visible position and ignore any container later set down over it. e.g. [120, 181]\n\nfield buttons_pressed, POLICY PROMPT\n  Situation: at the decision step after the first press, no frame carried the phrase 'is pressed down', the only signs being the gripper at the button's position at height 0.025 with fingers closed and the containers shuffling; the policy kept 0 while the recorded value was 1, then answered the first-button press again. This breaks PREDICTABILITY (and through it SUFFICIENCY). Change: carried-in count plus 1 if any execution frame shown at this step either reports a button 'is pressed down' or shows the gripper within a few pixels of a button's listed position at height 0.035 or lower with fingers closed (containers gliding and swapping in neighbouring frames is a confirming sign of the same press). Count at most one press per step. Start at 0. e.g. 1\n\nfield red_container, POLICY PROMPT\n  Situation one: when the containers first appeared the policy left the field at the red cube's old position instead of the container standing on it. Situation two: after the red cube was exposed, the container was put back down over it and the policy wrote the put-down container's position while the recorded value kept the cube's last visible position. Both break PREDICTABILITY. Change: before containers exist, the red cube's position. In the step where containers appear, the field becomes the position of the container standing on the carried-in position, for every color including a container that never moves. Then follow that container frame to frame (match each container to the nearest one in the previous frame; during a press two movers swap places) and write the last frame shown. Once a frame shows the red cube exposed beneath a container held in the gripper, write the cube's last visible position and freeze the field; a container later set down over the cube does not update it. e.g. [100, 166]\n\nfield green_container, POLICY PROMPT\n  Kept exactly like red_container, including: becomes a container position as soon as containers appear even if that container never moves, and freezes at the cube's last visible position once the green cube has been seen exposed. e.g. [136, 108]\n\nfield blue_container, POLICY PROMPT\n  Kept exactly like red_container, including: becomes a container position as soon as containers appear even if that container never moves, and freezes at the cube's last visible position once the blue cube has been seen exposed. e.g. [120, 181]\n\nthe policy prompt for subgoal\n  The step that went wrong is the one after the first press: rules 1 and 2 key on buttons_pressed and are correct, but the policy left the count at 0 because the memory instruction only recognised the phrase 'is pressed down', so it chose A again where B was recorded. The rule set itself needs no new rule and loses none; its opening clause should say explicitly that buttons_pressed is updated first using the press signs named in the memory instruction (the literal phrase, or the gripper standing on a button at height 0.035 or lower with fingers closed, typically accompanied by two containers swapping), and only then are rules 1 and 2 applied. Rule 5 stays as it is: point C at the remembered container position of the second color named in the goal, which after the freezing change is unaffected because the picked color's frozen field is never used for pointing.\n\nrefused\n  At the step after the first put-down the policy's point for the second container differed from the recorded point by a couple of pixels while naming the same container and the same memory position; it reported nothing about the subgoal instruction and nothing there is changed, since the choice of container was right and the recorded point sits on the remembered container position.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The step that went wrong is the one after the first press: rules 1 and 2 key on buttons_pressed and are correct, but the policy left the count at 0 because the memory instruction only recognised the phrase 'is pressed down', so it chose A again where B was recorded. The rule set itself needs no new rule and loses none; its opening clause should say explicitly that buttons_pressed is updated first using the press signs named in the memory instruction (the literal phrase, or the gripper standing on a button at height 0.035 or lower with fingers closed, typically accompanied by two containers swapping), and only then are rules 1 and 2 applied. Rule 5 stays as it is: point C at the remembered container position of the second color named in the goal, which after the freezing change is unaffected because the picked color's frozen field is never used for pointing.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "buttons_pressed",
+    "description": "Situation: at the decision step after the first press, no frame carried the phrase 'is pressed down', the only signs being the gripper at the button's position at height 0.025 with fingers closed and the containers shuffling; the policy kept 0 while the recorded value was 1, then answered the first-button press again. This breaks PREDICTABILITY (and through it SUFFICIENCY). Change: carried-in count plus 1 if any execution frame shown at this step either reports a button 'is pressed down' or shows the gripper within a few pixels of a button's listed position at height 0.035 or lower with fingers closed (containers gliding and swapping in neighbouring frames is a confirming sign of the same press). Count at most one press per step. Start at 0. e.g. 1"
+   },
+   {
+    "field": "red_container",
+    "description": "Situation one: when the containers first appeared the policy left the field at the red cube's old position instead of the container standing on it. Situation two: after the red cube was exposed, the container was put back down over it and the policy wrote the put-down container's position while the recorded value kept the cube's last visible position. Both break PREDICTABILITY. Change: before containers exist, the red cube's position. In the step where containers appear, the field becomes the position of the container standing on the carried-in position, for every color including a container that never moves. Then follow that container frame to frame (match each container to the nearest one in the previous frame; during a press two movers swap places) and write the last frame shown. Once a frame shows the red cube exposed beneath a container held in the gripper, write the cube's last visible position and freeze the field; a container later set down over the cube does not update it. e.g. [100, 166]"
+   },
+   {
+    "field": "green_container",
+    "description": "Kept exactly like red_container, including: becomes a container position as soon as containers appear even if that container never moves, and freezes at the cube's last visible position once the green cube has been seen exposed. e.g. [136, 108]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Kept exactly like red_container, including: becomes a container position as soon as containers appear even if that container never moves, and freezes at the cube's last visible position once the blue cube has been seen exposed. e.g. [120, 181]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "buttons_pressed",
+    "description": "Situation: on every episode the frames of the first press never contain the phrase 'is pressed down'; the press is visible only as the gripper descending onto a button (height about 0.03 or lower, fingers closed, button listed a few pixels off its rest spot) while two containers glide and swap. The rule said the count rises when an 'is pressed down' frame appears, so the value it describes (0) differs from the value filled in (1). This breaks PREDICTABILITY. Change: buttons_pressed is the count of presses completed, where a press is any execution frame shown at this step in which either a button is reported 'is pressed down', or the gripper stands within a few pixels of a button's position at height 0.035 or lower with fingers closed. 0 at the first step, 1 at the step after the first press (the one that also shows the container shuffle), 2 from the step after the second press to the end. e.g. 1"
+   },
+   {
+    "field": "red_container",
+    "description": "Situation: after the red container had been lifted and the red cube seen beneath it, the container was set back down over the cube in the last frames before the next decision. The rule said both 'write the exposed cube's position' and 'update to the last frame shown', so two values were possible for one step. This breaks PREDICTABILITY. Change: once a cube of this color has been seen exposed (its container held in the gripper, cube visible), the field holds the cube's last visible position and freezes there; a container later put down over it does not change the field. Before that event the field is the covering container's position in the last frame shown, tracked through each press-time swap. The same freezing applies to green_container and blue_container. e.g. [100, 166]"
+   },
+   {
+    "field": "green_container",
+    "description": "Same freezing clause as red_container: once the green cube has been seen exposed, keep its last visible position and ignore any container later set down over it. e.g. [136, 108]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same freezing clause as red_container: once the blue cube has been seen exposed, keep its last visible position and ignore any container later set down over it. e.g. [120, 181]"
+   }
+  ],
+  "refused": "At the step after the first put-down the policy's point for the second container differed from the recorded point by a couple of pixels while naming the same container and the same memory position; it reported nothing about the subgoal instruction and nothing there is changed, since the choice of container was right and the recorded point sits on the remembered container position."
+ },
+ "critiques": [
+  {
+   "step": [
+    85,
+    "exec",
+    114
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[104, 126]; red_container=[96, 168]; blue_container=[92, 86]; picked_colors=[]",
+   "answered": "A: press the first button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "No frame shown here says a button 'is pressed down'; the only evidence of the press is the gripper at [60, 154] height 0.025 with fingers 0% open on the button at [60, 154] (t=80), the button's listed position shifting to [63, 153], and two containers gliding and swapping between t=64 and t=112. The instruction should say that buttons_pressed increments when any execution frame shows the gripper at a button's position at height about 0.03 or below with fingers closed, or when the containers move/swap during the frames, not only on the literal phrase 'is pressed down'. It should also say explicitly that once containers appear, every color's field becomes a container position, including the container that never moves: red_container must be written as the container standing on [96, 168], i.e. [93, 170], not left as the cube's old position.",
+   "missing_from_policy_prompt_for_subgoal": "It should say that when the execution frames at this step show the gripper descending onto a button (low height, closed fingers, containers shuffling), that button has just been pressed, so answer B even if the carried-in buttons_pressed was 0; the rule should key on the updated count after recognizing the press from the frames.",
+   "missing": ""
+  },
+  {
+   "step": [
+    85,
+    "exec",
+    366
+   ],
+   "memory_in": "buttons_pressed=2; green_container=[89, 85]; red_container=[96, 168]; blue_container=[101, 126]; picked_colors=[\"red\"]",
+   "answered": "C: pick up the container at [101, 126]",
+   "recorded": "C: pick up the container at [99, 127]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The red cube was exposed (visible at [96,168] then [100,166] under the held container) and then the container was set back down over it at [90,168] in the last frames. The instruction says 'write the exposed cube's position' and also 'write its position in the last frame shown', and does not say which wins once the container is put back down. The recorded value keeps the cube's last visible position [100,166], so the rule should state: once a cube has been seen exposed, keep the cube's last visible position and do not switch back to the position of the container set down over it.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

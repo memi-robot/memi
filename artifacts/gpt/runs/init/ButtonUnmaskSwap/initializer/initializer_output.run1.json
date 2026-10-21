@@ -1,0 +1,31 @@
+{
+ "episodes": [
+  8,
+  15,
+  66,
+  73,
+  79
+ ],
+ "shown_steps": 21,
+ "system_chars": 9109,
+ "user_chars": 28741,
+ "model": "gpt-6-astra",
+ "usage": {
+  "prompt_tokens": 11640,
+  "completion_tokens": 1212,
+  "total_tokens": 12852,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 11637,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 160,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"name\": \"pending_target_positions\",\n      \"description\": \"An ordered list of [y, x] positions identifying the containers for the cube colors requested in the goal, in goal order, excluding targets already successfully picked up. Before covering, use the visible cube centers. Once covered, follow the identity of the covering container through every shuffle, recording its center at the decision scene; contents travel with the container, not with the original table location. Use the complete motion trajectory, not nearest matching between shuffle endpoints. Remove the first entry at the decision step showing its successful pickup, before any subsequent put-down. Track remaining entries during pickup and put-down despite small apparent center shifts. Thus episode 8's first target ends the shuffles near [111, 128] and its second near [82, 155]; episode 15's targets end near [128, 200] and [102, 182]; episode 66's target ends near [123, 178]; episode 73's near [103, 123]; episode 79's targets near [133, 183] and [106, 154]. An empty list means all requested pickups have occurred. e.g. [[111, 128], [82, 155]]\"\n    },\n    {\n      \"name\": \"buttons_completed\",\n      \"description\": \"The number of required button presses completed so far, written as 0, 1, or 2. Record 0 at the initial decision, 1 at the decision following the first button press, and 2 at the decision following the second button press and thereafter. Count completed presses, not buttons currently appearing depressed. e.g. 1\"\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"name\": \"pending_target_positions\",\n      \"description\": \"With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. Process the observed frames chronologically: associate each exposed target cube with the container descending over it, then follow that container through the observed motion. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. Resolve the rotating pairs using trajectory continuity and direction across all intermediate frames, allowing identities to exchange endpoints; nearest endpoint matching alone is incorrect. Update each remaining entry to its container's center in the decision scene. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]\"\n    },\n    {\n      \"name\": \"buttons_completed\",\n      \"description\": \"Initialize to 0 with empty incoming memory. Process the interval for a completed button press: a hand descent to the button followed by withdrawal, with button depression or contact-height evidence, increments the incoming count once, capped at 2. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: the low contact and subsequent withdrawal in episode 66 also show the second press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1\"\n    }\n  ],\n  \"subgoal_execution_plan\": \"Update memory from the observed interval before selecting the next command. Every episode starts with A. If buttons_completed is 0, choose A, press the first button. If it is 1, choose B, press the second button. Only when it is 2 may container pickup begin. With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations, prefer the best trajectory-consistent match for the pending target, and retry an uncompleted button or pickup rather than declaring success without evidence. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.\"\n}"
+}

@@ -1,0 +1,92 @@
+{
+ "task": "StopCube",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 5,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    14,
+    20,
+    25,
+    43,
+    99
+   ],
+   "verified_of_all": 0.9130434782608695,
+   "subgoal_verified": 0.9130434782608695
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    2,
+    38,
+    66,
+    93
+   ],
+   "verified_of_all": 0.8235294117647058,
+   "subgoal_verified": 0.8235294117647058
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    14,
+    26,
+    39,
+    80,
+    95
+   ],
+   "verified_of_all": 0.9130434782608695,
+   "subgoal_verified": 0.9565217391304348
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    66,
+    68,
+    72,
+    77,
+    83
+   ],
+   "verified_of_all": 0.8461538461538461,
+   "subgoal_verified": 0.9230769230769231
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    34,
+    36,
+    41,
+    60,
+    88
+   ],
+   "verified_of_all": 0.9615384615384616,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "stage": "optimized",
+ "fields": [
+  {
+   "name": "crossings",
+   "description": "Number of times, since t=0 and up to and including the scene at this decision step, that the cube's x-coordinate has moved from one side of the target's x-coordinate to the other (cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions; a crossing happens between two consecutive observed frames when the sign of cube_x minus target_x flips; being near the target without flipping is not a crossing). Each crossing is one arrival of the cube at the target. At step #1 the value is 0. It increases only at the step whose observed frames contain the flip. e.g. 2"
+  },
+  {
+   "name": "cube_side",
+   "description": "Which side of the target line the cube is on in the scene at this decision step (the last frame shown): 'smaller_x' if cube_x < target_x, 'larger_x' if cube_x > target_x. cube_x and target_x are the SECOND numbers of the cube's and the target's [y, x] positions (the first numbers are y and are never used here): a cube at [131, 61] and a target at [107, 145] give 61 and 145, and 61 < 145 -> 'smaller_x'. At step #1 it is read from the t=0 frame. e.g. smaller_x"
+  },
+  {
+   "name": "peak_speed",
+   "description": "The fastest cube x-speed observed so far in the episode, in pixels of x per timestep. Take ALL observed frames of the episode in time order, from the t=0 scene up to and including the scene at this decision step, including the pair formed by the scene at one decision step and the first frame shown at the next (this cross-step pair is what last_cube_x and last_t are kept for). Only pairs of consecutive frames whose timestep gap is at least 8 count; pairs closer than 8 timesteps (such as the 1-, 3- or 5-timestep gap just before a decision scene) are skipped because detection wobble dominates them. For each counted pair compute |cube_x(later) - cube_x(earlier)| divided by the gap, rounded to one decimal with halves rounding up (3.875 -> 3.9); write the largest such quotient seen so far. cube_x is the SECOND number of the cube's [y, x] position. At step #1 there is only one frame, so write 0. The value never decreases; it changes only at a step whose counted pairs contain a faster quotient than any before. e.g. 2.0"
+  },
+  {
+   "name": "last_cube_x",
+   "description": "The cube's x-coordinate (the SECOND number of its [y, x] position; a cube at [85, 52] gives 52) in the scene at this decision step (the last frame shown), as a plain number. Overwritten at every step; at step #1 it is read from the t=0 frame. e.g. 206"
+  },
+  {
+   "name": "last_t",
+   "description": "The timestep index t of the scene at this decision step (the last frame shown). Overwritten at every step; at step #1 it is 0. e.g. 54"
+  }
+ ]
+}

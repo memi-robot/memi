@@ -1,0 +1,27 @@
+{
+ "task": "ButtonUnmaskSwap",
+ "run": 1,
+ "stage": "init",
+ "initialized_on": [
+  8,
+  15,
+  66,
+  73,
+  79
+ ],
+ "seed": 7,
+ "provider": "openai",
+ "model": "gpt-6-astra",
+ "reasoning_effort": "low",
+ "policy_prompt_for_subgoal": "Update memory from the observed interval before selecting the next command. Every episode starts with A. If buttons_completed is 0, choose A, press the first button. If it is 1, choose B, press the second button. Only when it is 2 may container pickup begin. With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations, prefer the best trajectory-consistent match for the pending target, and retry an uncompleted button or pickup rather than declaring success without evidence. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.",
+ "fields": [
+  {
+   "name": "pending_target_positions",
+   "description": "With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. Process the observed frames chronologically: associate each exposed target cube with the container descending over it, then follow that container through the observed motion. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. Resolve the rotating pairs using trajectory continuity and direction across all intermediate frames, allowing identities to exchange endpoints; nearest endpoint matching alone is incorrect. Update each remaining entry to its container's center in the decision scene. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]"
+  },
+  {
+   "name": "buttons_completed",
+   "description": "Initialize to 0 with empty incoming memory. Process the interval for a completed button press: a hand descent to the button followed by withdrawal, with button depression or contact-height evidence, increments the incoming count once, capped at 2. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: the low contact and subsequent withdrawal in episode 66 also show the second press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1"
+  }
+ ]
+}

@@ -1,0 +1,168 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "placed",
+  "cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  0,
+  59,
+  62,
+  81,
+  98
+ ],
+ "scored": 35,
+ "failed": 6,
+ "subgoal_wrong": 4,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.8857142857142857,
+ "memory_verified": 0.9428571428571428,
+ "reads": {
+  "placed": 15,
+  "cubes": 25
+ },
+ "field_errors": {
+  "placed": {
+   "in": 0,
+   "sole": 0
+  },
+  "cubes": {
+   "in": 2,
+   "sole": 2
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.17142857142857143,
+ "verified_of_all": 0.8285714285714286,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 4,
+ "decisions": 35,
+ "critique": "field cubes, ANNOTATOR PROMPT\n  Keep the field as it is (ordered list of goal-color cubes on the table and not yet picked, oldest first, each as [color, [y, x]]), but make three points of its update explicit, because the policy's value diverged from the annotated one at pick-decision steps where a cube had appeared near the bin or had drifted a few pixels (PREDICTABILITY). (1) Removal: an entry is removed only at the step whose own execution steps show the fingers closing (opening dropping from 100% to about 46%) on a cube and that cube then reported as 'held in the gripper'; when the step's execution steps open with a cube already held, nothing is removed for it, since that was done at the previous step. (2) Matching: any detection of a goal color within about 10 px of an existing entry's position is that entry; it keeps its slot and only its position is refreshed to the latest report. An entry is never dropped and re-appended, and the list is never reordered. (3) Bin exclusion: 'at the bin's position' means within about 10 px of the reported bin center; a cube reported 20 px or more from the bin center is a table cube and is appended as a new entry in order of first appearance, even if it appeared right after a release. A detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one. Example value after one start cube was picked and two cubes appeared during execution: [[\"red\", [77, 139]], [\"red\", [119, 153]], [\"red\", [100, 66]]]\n\nfield cubes, POLICY PROMPT\n  Same field, same age order (oldest first, each as [color, [y, x]]). Write the update as: copy the carried-in list; remove an entry only if the execution steps shown at THIS step include the fingers closing (100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and must be entered even if it showed up just after a release. Never reorder, never drop-and-re-append, never enter colors the goal does not name. Example: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]], a green reported at [68, 160] refreshes the second entry in place, giving [[\"blue\", [117, 71]], [\"green\", [68, 160]]].\n\nthe policy prompt for subgoal\n  Rule 3 keeps its selection criterion: among cubes of the color to pick, point at the first entry of `cubes` (as updated at this step) that has that color; this is the oldest cube of that color on the table, and across these episodes the recorded picks follow it whenever cubes arrived at different times: a cube present at the start is taken before any cube that appeared later, and cubes that appeared during execution are taken in order of appearance. Add one sentence making this explicit and ruling out the alternatives the policy reached for: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step-1 tie-break among start cubes, which stays as written), or the one with the smallest y; the age order in `cubes` is the only criterion. Also state the pointing tolerance plainly: the target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step, and a point within one or two pixels of its center is correct, so a detection that has drifted a few pixels is still the same cube. No rule is removed.\n\nrefused\n  Several pick steps in one episode where five cubes of each goal color were all present from the start reported that the selection criterion was wrong, each proposing a different replacement: smallest y among visible cubes, nearest the gripper, nearest the button, or a memory field carrying the oracle's intended order. None of these is passed on. Each proposal fits the single step that made it and contradicts the others in the same episode (the pick that was nearest the gripper at one step was farthest at another; the one nearest the button at one step was not at the next; smallest y fits the blue picks but not the green ones), and the recorded order among those start cubes also does not follow distance to the bin. The oracle's order among several same-colored cubes that are all present at the first step is not recoverable from any scene or from anything the memory could have been told, so no rule can be written for it; the step-1 default (nearest the bin's center) stays as the fixed tie-break. In every other episode, where cubes of the goal color appeared one by one during execution, the recorded picks follow the age order already in the rule, so the age-order criterion is kept rather than replaced. One step that reported nothing missing, and one that reported only memory-wording issues, had chosen the correct cube within a pixel or two; their subgoal answers are counted as settled and only their memory discrepancies are addressed above.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 3 keeps its selection criterion: among cubes of the color to pick, point at the first entry of `cubes` (as updated at this step) that has that color; this is the oldest cube of that color on the table, and across these episodes the recorded picks follow it whenever cubes arrived at different times: a cube present at the start is taken before any cube that appeared later, and cubes that appeared during execution are taken in order of appearance. Add one sentence making this explicit and ruling out the alternatives the policy reached for: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step-1 tie-break among start cubes, which stays as written), or the one with the smallest y; the age order in `cubes` is the only criterion. Also state the pointing tolerance plainly: the target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step, and a point within one or two pixels of its center is correct, so a detection that has drifted a few pixels is still the same cube. No rule is removed.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "cubes",
+    "description": "Same field, same age order (oldest first, each as [color, [y, x]]). Write the update as: copy the carried-in list; remove an entry only if the execution steps shown at THIS step include the fingers closing (100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and must be entered even if it showed up just after a release. Never reorder, never drop-and-re-append, never enter colors the goal does not name. Example: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]], a green reported at [68, 160] refreshes the second entry in place, giving [[\"blue\", [117, 71]], [\"green\", [68, 160]]]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "cubes",
+    "description": "Keep the field as it is (ordered list of goal-color cubes on the table and not yet picked, oldest first, each as [color, [y, x]]), but make three points of its update explicit, because the policy's value diverged from the annotated one at pick-decision steps where a cube had appeared near the bin or had drifted a few pixels (PREDICTABILITY). (1) Removal: an entry is removed only at the step whose own execution steps show the fingers closing (opening dropping from 100% to about 46%) on a cube and that cube then reported as 'held in the gripper'; when the step's execution steps open with a cube already held, nothing is removed for it, since that was done at the previous step. (2) Matching: any detection of a goal color within about 10 px of an existing entry's position is that entry; it keeps its slot and only its position is refreshed to the latest report. An entry is never dropped and re-appended, and the list is never reordered. (3) Bin exclusion: 'at the bin's position' means within about 10 px of the reported bin center; a cube reported 20 px or more from the bin center is a table cube and is appended as a new entry in order of first appearance, even if it appeared right after a release. A detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one. Example value after one start cube was picked and two cubes appeared during execution: [[\"red\", [77, 139]], [\"red\", [119, 153]], [\"red\", [100, 66]]]"
+   }
+  ],
+  "refused": "Several pick steps in one episode where five cubes of each goal color were all present from the start reported that the selection criterion was wrong, each proposing a different replacement: smallest y among visible cubes, nearest the gripper, nearest the button, or a memory field carrying the oracle's intended order. None of these is passed on. Each proposal fits the single step that made it and contradicts the others in the same episode (the pick that was nearest the gripper at one step was farthest at another; the one nearest the button at one step was not at the next; smallest y fits the blue picks but not the green ones), and the recorded order among those start cubes also does not follow distance to the bin. The oracle's order among several same-colored cubes that are all present at the first step is not recoverable from any scene or from anything the memory could have been told, so no rule can be written for it; the step-1 default (nearest the bin's center) stays as the fixed tie-break. In every other episode, where cubes of the goal color appeared one by one during execution, the recorded picks follow the age order already in the rule, so the age-order criterion is kept rather than replaced. One step that reported nothing missing, and one that reported only memory-wording issues, had chosen the correct cube within a pixel or two; their subgoal answers are counted as settled and only their memory discrepancies are addressed above."
+ },
+ "critiques": [
+  {
+   "step": [
+    59,
+    "exec",
+    0
+   ],
+   "memory_in": "placed=; cubes=",
+   "answered": "A: pick up the cube at [94, 131]",
+   "recorded": "A: pick up the cube at [67, 142]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The instruction says that at step #1 the cube to pick is the needed-color cube nearest the bin's center; applied here that is the blue cube at [94, 131] (about 35 px from the bin at [112, 161]), yet the recorded pick is the blue cube at [66, 141] (about 50 px from the bin, the second-nearest blue). The instruction does not say what criterion selects among the blue cubes at the first step when the nearest-to-bin one is not the one to take, nor whether the first cube of `cubes` of the needed color is what the oracle actually picks; the stated rule (nearest the bin, then first entry in `cubes`) leads to [94, 131], not [66, 141].",
+   "missing": ""
+  },
+  {
+   "step": [
+    59,
+    "exec",
+    199
+   ],
+   "memory_in": "placed=[]; cubes=[[\"green\", [96, 188]], [\"blue\", [94, 131]], [\"green\", [72, 172]], [\"blue\", [60, 165]], [\"green\", [107, 100]], [\"green\", [77, 109]], [\"green\", [58, 128]], [\"blue\", [84, 88]], [\"blue\", [81, 71]]]",
+   "answered": "A: pick up the cube at [94, 131]",
+   "recorded": "A: pick up the cube at [82, 72]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The selection rule among cubes of the needed color is wrong. It told me to point at the first `cubes` entry of that color (ordered by distance to the bin, nearest first), which is the blue at [94, 131]. The recorded answer picked the blue at [82, 72] (the entry [81, 71]), the last blue entry. Together with step #1, where [60, 165] was picked rather than the bin-nearest [94, 131], the recorded choices are consistent with picking the needed-color cube with the SMALLEST y (nearest the robot, i.e. backward-most) among those visible on the table at this decision step: blue y values 61, 81, 84, 94 -> first pick was y=60, this pick is y=81. The instruction should state that criterion (smallest y among visible cubes of the needed color, ties to smaller x, excluding any detection on the bin) instead of 'oldest / first entry of `cubes`'.",
+   "missing": ""
+  },
+  {
+   "step": [
+    59,
+    "exec",
+    523
+   ],
+   "memory_in": "placed=[\"blue\", \"blue\"]; cubes=[[\"green\", [96, 188]], [\"green\", [72, 172]], [\"blue\", [63, 165]], [\"green\", [107, 100]], [\"green\", [78, 109]], [\"green\", [57, 124]], [\"blue\", [84, 88]]]",
+   "answered": "A: pick up the cube at [96, 188]",
+   "recorded": "A: pick up the cube at [78, 110]",
+   "missing_from_memory": "Nothing derivable settles which green cube is next: the memory's `cubes` order (oldest first, step-1 order by distance to bin) puts green [96, 188] first, but the recorded target is the green at [78, 109] (fifth green entry). If the oracle's pick order among same-color cubes is a fixed sequence not recoverable from the scene, the memory needed to carry that intended order (e.g. a `next` field or `cubes` ordered by the true pick order), which it did not.",
+   "missing_from_policy_prompt_for_memory": "The `cubes` ordering rule (nearest the bin first at step #1, then age) does not match the order the oracle actually picks in: here the recorded pick is green [78, 109], not the first green entry [96, 188]. The instruction should order `cubes` by whatever criterion the oracle uses (on this step the chosen green is the one nearest the button at [60, 96], 22 px away, closer than any other green), or state that order is not the pick order.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 3 says to point at the first entry of `cubes` with the needed color, which gives [96, 188]; the recorded answer points at the green cube at [78, 109]. The instruction needs the real selection criterion among same-color cubes when starting a new color (e.g. the needed-color cube nearest the button / or some other rule), since 'oldest in `cubes`' and 'nearest the bin' both pick the wrong cube here.",
+   "missing": "Nothing derivable settles which green cube is next: the memory's `cubes` order (oldest first, step-1 order by distance to bin) puts green [96, 188] first, but the recorded target is the green at [78, 109] (fifth green entry). If the oracle's pick order among same-color cubes is a fixed sequence not recoverable from the scene, the memory needed to carry that intended order (e.g. a `next` field or `cubes` ordered by the true pick order), which it did not."
+  },
+  {
+   "step": [
+    59,
+    "exec",
+    694
+   ],
+   "memory_in": "placed=[\"blue\", \"blue\", \"blue\"]; cubes=[[\"green\", [96, 188]], [\"green\", [72, 172]], [\"blue\", [59, 166]], [\"green\", [107, 100]], [\"green\", [59, 128]], [\"blue\", [84, 88]]]",
+   "answered": "A: pick up the cube at [96, 188]",
+   "recorded": "A: pick up the cube at [74, 173]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The rule for choosing among several cubes of the needed color is wrong for this step: it says point at the oldest entry of that color in `cubes` ([96, 188]), but the recorded answer picks the green cube at [72, 172], which is the one nearest the gripper's current position ([44, 172] at the last frame; distance ~28 px versus ~54 px to [96, 188]) and the one it just released beside. The instruction should say that when more than one cube of the needed color is on the table, point at the one closest to the gripper's position in the scene at this decision step (or state whatever the real tie-break is), not the first entry in `cubes`.",
+   "missing": ""
+  },
+  {
+   "step": [
+    62,
+    "exec",
+    219
+   ],
+   "memory_in": "placed=[]; cubes=[[\"red\", [77, 139]], [\"red\", [119, 153]]]",
+   "answered": "A: pick up the cube at [77, 139]",
+   "recorded": "A: pick up the cube at [78, 140]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    98,
+    "exec",
+    163
+   ],
+   "memory_in": "placed=[]; cubes=[[\"blue\", [117, 71]], [\"blue\", [63, 81]], [\"green\", [75, 88]], [\"green\", [71, 154]]]",
+   "answered": "A: pick up the cube at [75, 88]",
+   "recorded": "A: pick up the cube at [76, 89]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say clearly that an entry is removed only when the execution steps shown at THIS step contain the gripper closing on and lifting that cube; when the steps open with a cube already 'held in the gripper' (the pick happened before the previous decision step) nothing is removed. It also did not say plainly that a carried entry whose color reappears within about 10 px (here green [71,154] -> [68,160], about 7 px) keeps its slot in the order and only has its position refreshed, and must never be dropped and re-appended at the end as if it were a newly seen cube.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

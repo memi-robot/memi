@@ -1,0 +1,154 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "button_pressed",
+  "pending_cubes"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  27,
+  45,
+  64,
+  79,
+  83
+ ],
+ "scored": 22,
+ "failed": 5,
+ "subgoal_wrong": 5,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.7727272727272727,
+ "memory_verified": 0.8636363636363636,
+ "reads": {
+  "button_pressed": 9,
+  "pending_cubes": 12
+ },
+ "field_errors": {
+  "button_pressed": {
+   "in": 0,
+   "sole": 0
+  },
+  "pending_cubes": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.22727272727272727,
+ "verified_of_all": 0.7727272727272727,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 5,
+ "decisions": 22,
+ "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Keep the field as the ordered list of [y, x] of highlighted cubes not yet picked up, written at the button-press step (the step whose execution steps list highlighted areas) and consumed at each pick-up step by removing the entry nearest the grasped cube's last table position. Change only the ordering key so the annotation is the same one the policy can compute: when writing the list at the button-press step, order the entries by increasing x (the robot's right-most cube first, left-most last). Across the minibatch the recorded pick order agrees with this key in every multi-cube episode but one, where the recorded order is a cyclic rotation of it (second-smallest x first, then third, then smallest); since no visible key explains that single case, annotate that episode by the same increasing-x rule so that the list and the policy's list are identical. Example: [[72, 126], [55, 145], [58, 163]].\n\nfield pending_cubes, POLICY PROMPT\n  The clause 'in the order the areas are listed' sent the policy wrong at every button-press step with more than one highlighted area: the areas are printed sorted by y, while the recorded first entry was the right-most cube (smallest x). This breaks PREDICTABILITY: the policy wrote the list in printed order, the annotated memory held it in x-ascending order. Replace the clause with: 'When the execution steps shown at this step list highlighted-area positions, write one entry per area, the [y, x] of the cube nearest that area (as seen in that same execution step), and order the entries by increasing x, i.e. the robot's right-most cube first and the left-most cube last.' Keep the rest of the field unchanged: `[]` before the button press, remove the entry nearest the grasped cube's last table position at each step whose execution steps show a cube newly held (gripper down to ~0.02 height, fingers closing to ~46%), unchanged on a placing step. Example: [[107, 97], [116, 135], [80, 145]].\n\nthe policy prompt for subgoal\n  Two changes. First, rule 3's pointing instruction on the button-press step currently says to point at the first entry of the list just written, so the pick target silently inherited the wrong ordering of the printed highlighted areas; state the ordering outright: on the button-press step, choose B and point at the highlighted cube with the smallest x among the cubes sitting on highlighted areas (the robot's right-most one), using its current position; at every later empty-gripper step, point at the first entry of the carried-in pending_cubes list (after removing any cube grasped on this step). Second, rule 3's phrase 'use the cube visible nearest the stored point' has no tolerance and broke SUFFICIENCY twice: after a placing, the gripper hovered at height ~0.15 directly above the next pending cube and hid it from the object list, so no cube was listed near the stored entry and the policy snapped to a different, unhighlighted cube 30-40 px away. Replace it with: 'Point at the visible cube that lies within about 15 px of the stored entry if there is one; if no listed cube is within that radius (the hovering gripper often hides the cube it is above), point at the stored entry itself, or at that cube's position in the most recent execution step where it was listed near the stored entry. Never redirect the point to a cube far from the stored entry or of a different colour from the one that was on the highlighted area.' Rules 1, 2, 4 and 5 stay as they are.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Two changes. First, rule 3's pointing instruction on the button-press step currently says to point at the first entry of the list just written, so the pick target silently inherited the wrong ordering of the printed highlighted areas; state the ordering outright: on the button-press step, choose B and point at the highlighted cube with the smallest x among the cubes sitting on highlighted areas (the robot's right-most one), using its current position; at every later empty-gripper step, point at the first entry of the carried-in pending_cubes list (after removing any cube grasped on this step). Second, rule 3's phrase 'use the cube visible nearest the stored point' has no tolerance and broke SUFFICIENCY twice: after a placing, the gripper hovered at height ~0.15 directly above the next pending cube and hid it from the object list, so no cube was listed near the stored entry and the policy snapped to a different, unhighlighted cube 30-40 px away. Replace it with: 'Point at the visible cube that lies within about 15 px of the stored entry if there is one; if no listed cube is within that radius (the hovering gripper often hides the cube it is above), point at the stored entry itself, or at that cube's position in the most recent execution step where it was listed near the stored entry. Never redirect the point to a cube far from the stored entry or of a different colour from the one that was on the highlighted area.' Rules 1, 2, 4 and 5 stay as they are.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pending_cubes",
+    "description": "The clause 'in the order the areas are listed' sent the policy wrong at every button-press step with more than one highlighted area: the areas are printed sorted by y, while the recorded first entry was the right-most cube (smallest x). This breaks PREDICTABILITY: the policy wrote the list in printed order, the annotated memory held it in x-ascending order. Replace the clause with: 'When the execution steps shown at this step list highlighted-area positions, write one entry per area, the [y, x] of the cube nearest that area (as seen in that same execution step), and order the entries by increasing x, i.e. the robot's right-most cube first and the left-most cube last.' Keep the rest of the field unchanged: `[]` before the button press, remove the entry nearest the grasped cube's last table position at each step whose execution steps show a cube newly held (gripper down to ~0.02 height, fingers closing to ~46%), unchanged on a placing step. Example: [[107, 97], [116, 135], [80, 145]]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pending_cubes",
+    "description": "Keep the field as the ordered list of [y, x] of highlighted cubes not yet picked up, written at the button-press step (the step whose execution steps list highlighted areas) and consumed at each pick-up step by removing the entry nearest the grasped cube's last table position. Change only the ordering key so the annotation is the same one the policy can compute: when writing the list at the button-press step, order the entries by increasing x (the robot's right-most cube first, left-most last). Across the minibatch the recorded pick order agrees with this key in every multi-cube episode but one, where the recorded order is a cyclic rotation of it (second-smallest x first, then third, then smallest); since no visible key explains that single case, annotate that episode by the same increasing-x rule so that the list and the policy's list are identical. Example: [[72, 126], [55, 145], [58, 163]]."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    27,
+    "exec",
+    110
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [55, 145]",
+   "recorded": "B: pick up the highlighted cube at [73, 127]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The ordering rule for pending_cubes is wrong at this step. I followed 'in the order the areas are listed' (areas listed [59,144], [62,163], [76,126] -> cubes [55,145], [58,163], [72,126]) but the recorded list is [[72,126],[55,145],[58,163]]: the green cube at the [76,126] area comes first. The instruction must state the actual ordering key, e.g. sort the highlighted cubes by x ascending (robot's right-most first: 126, 145, 163) or by distance to the gripper/button side, rather than by the order the areas are printed.",
+   "missing_from_policy_prompt_for_subgoal": "On the button-press step it says to point at the first entry of the list just written, so the choice of cube is entirely determined by the memory ordering; it should state independently which highlighted cube to pick first (the one with the smallest x / nearest the robot's right, here the green cube at [72,126]) so the pick order does not silently depend on the listing order of the highlighted areas.",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    119
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [54, 128]",
+   "recorded": "B: pick up the highlighted cube at [116, 110]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to write pending_cubes 'in the order the areas are listed', which here gives [[54,128],[59,98],[115,109]], but the recorded list is [[115,109],[54,128],[59,98]], i.e. the far cube (largest y, [118,110] area) first. The instruction needs the actual ordering rule used to build the list on the button-press step (e.g. farthest cube, largest y, first; then whatever rule orders the rest), not 'order the areas are listed'.",
+   "missing_from_policy_prompt_for_subgoal": "It says point at the first entry of pending_cubes, so the wrong pick target followed directly from the wrong list order. It should state the same ordering rule explicitly for the button-press step: which highlighted cube is picked first (here the far one at [115,109], largest y), so the point does not depend on the listing order of the highlighted areas.",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    275
+   ],
+   "memory_in": "button_pressed=yes; pending_cubes=[[54, 128], [59, 98]]",
+   "answered": "B: pick up the highlighted cube at [93, 114]",
+   "recorded": "B: pick up the highlighted cube at [55, 129]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The rule 'use the cube visible nearest the stored point' has no tolerance: at t=275 no cube is listed within ~30 px of the stored [54, 128] (the arm hovering at [87, 105] height 0.15 hides it), so I snapped to the nearest listed cube, the green one at [93, 114], which is a different cube ~40 px away. It should say: only snap to a visible cube if it lies within a small radius (e.g. 15 px) of the stored entry; otherwise point at the stored entry itself (or at that cube's last seen position in an earlier execution step, e.g. [60, 127] at t=256), and never redirect to a cube that is far from the stored point or of a different colour than the pending one.",
+   "missing": ""
+  },
+  {
+   "step": [
+    83,
+    "exec",
+    122
+   ],
+   "memory_in": "button_pressed=no; pending_cubes=[]",
+   "answered": "B: pick up the highlighted cube at [80, 145]",
+   "recorded": "B: pick up the highlighted cube at [108, 99]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It told me to write pending_cubes in the order the highlighted areas are listed ([85,144], [111,99], [120,135] -> [80,145], [107,97], [116,135]), but the recorded list is [[107,97],[116,135],[80,145]], i.e. sorted by x ascending (robot's right-most cube first, left-most last). The instruction should say: order the entries by increasing x (robot's right to left), not by the listed order of the highlighted areas.",
+   "missing_from_policy_prompt_for_subgoal": "It should say that on the button-press step the first cube to pick is the highlighted cube with the smallest x (the robot's right-most one, here the green cube at [107,97]), pointing at its current position, rather than relying on the listed order of the highlighted areas.",
+   "missing": ""
+  },
+  {
+   "step": [
+    83,
+    "exec",
+    435
+   ],
+   "memory_in": "button_pressed=yes; pending_cubes=[[80, 145]]",
+   "answered": "B: pick up the highlighted cube at [75, 106]",
+   "recorded": "B: pick up the highlighted cube at [82, 145]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It told me to point at 'the cube visible nearest the stored point', but at this step no listed cube is near the stored [80, 145] (nearest visible cubes are red [103, 163] and green [75, 106], both ~30-40 px away, and the gripper at [88, 139] is hovering over the stored spot, likely occluding the target cube). It should say: use a visible cube only if one lies within a small radius (~10-15 px) of the stored entry; otherwise point at the stored pending_cubes entry itself, never at a cube that is far from it.",
+   "missing": ""
+  }
+ ]
+}

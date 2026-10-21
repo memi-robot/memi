@@ -1,0 +1,92 @@
+{
+ "task": "ButtonUnmaskSwap",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 5,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    1,
+    22,
+    25,
+    39,
+    85
+   ],
+   "verified_of_all": 0.23809523809523808,
+   "subgoal_verified": 0.6666666666666666
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    10,
+    15,
+    36,
+    39,
+    47
+   ],
+   "verified_of_all": 0.782608695652174,
+   "subgoal_verified": 0.9565217391304348
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    1,
+    2,
+    28,
+    34,
+    53
+   ],
+   "verified_of_all": 0.8235294117647058,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    17,
+    27,
+    78,
+    79
+   ],
+   "verified_of_all": 0.3333333333333333,
+   "subgoal_verified": 0.6190476190476191
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    14,
+    25,
+    38,
+    87,
+    93
+   ],
+   "verified_of_all": 0.6842105263157895,
+   "subgoal_verified": 0.8421052631578947
+  }
+ ],
+ "stage": "optimized",
+ "fields": [
+  {
+   "name": "buttons_pressed",
+   "description": "Number of button presses whose execution frames have been shown at or before this step. The value changes at the step whose OWN execution frames show the press, not at the next step: 0 at the first step (no execution frames); 1 at the step whose frames show the first press (normally the step right after A); 2 at the step whose frames show the second press (normally the step right after B) and at every later step. A press is a frame saying a button 'is pressed down', or the gripper within about 6 px of a button's [y, x] at height below about 0.06 with fingers closed. The gripper lowering onto a container (height around 0.1, 20 px or more from any button, a button merely missing from the list because it is occluded) is not a press. Each step shows at most one press. Safety net: at any step whose frames show a container 'held in the gripper' or the gripper lowered onto a container, the value is 2 whatever the earlier count, since both presses precede any pick-up. e.g. 2"
+  },
+  {
+   "name": "green_container",
+   "description": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed by chaining through every frame shown: starting from the previous step's last frame, each container is matched to the container of the previous frame with the smallest displacement (the gliding may already be under way in the first frame of a step). Frames are sparse (about 16 ticks apart), so a gliding container is typically 15-35 px from its previous-frame position; 'smallest displacement' is judged at that scale, and 'a few pixels' or 'jitter' refers only to a container that did not move at all. A step is a MOVED step whenever any frame lists a container more than about 6 px from every container of the previous frame (the previous step's last frame counts as the frame before the first); in a moved step the joint one-to-one chain is run through every frame for all three colors and its result is written, even when the last-frame layout coincides with the previous step's last-frame layout. In an unmoved step (every frame's containers within about 6 px of the previous frame's) each field keeps the same container's last-frame position. During a press two containers glide around each other; a single circling pass ends with them swapped, a double pass ends with them back at their starting spots, and the chain decides which. The three color chains (green, red, blue) are run jointly as a one-to-one assignment frame to frame: in each frame every container gets exactly one color, so no two color fields end on the same container and no moving container is left unassigned. When the two nearest candidates for one color are nearly tied (displacements within a few pixels of each other), the tie is broken by the assignment that leaves a distinct container for the other colors with the smallest total displacement. A step whose last frame shows the containers in the same arrangement as the previous step's last frame is not evidence that nothing moved: when any intermediate frame shows a container displaced, every color is re-chained through every frame, and the result is usually two colors swapped. Example: carried green [100, 166]; frames show a container at [101, 168], then [110, 178], [125, 182], [130, 163], last frame [130, 160]; write [130, 160] even though the goal names only blue. Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal. Precedence, applied before any chaining: if green is already in picked_colors at the previous step, or any frame of this step shows the green cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible (not the position the container had before it was lifted), and the container chain is not run for green at this step or any later step; the held container's position and the position of a container set back down on the cube are never written, even when only containers are listed in the last frames of the step. e.g. [109, 126]"
+  },
+  {
+   "name": "red_container",
+   "description": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and blue as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical, written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal; with precedence over all chaining: if red is already in picked_colors at the previous step, or any frame of this step shows the red cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for red at this step or any later step, and neither the held container's position nor that of a container set back down on the cube is ever written. e.g. [101, 165]"
+  },
+  {
+   "name": "blue_container",
+   "description": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, followed by chained smallest-displacement matching frame by frame from the previous step's last frame (one circling pass swaps the pair, two passes return them; trust the chain; frames are sparse so 15-35 px per-frame displacements are normal gliding and 'a few pixels' means a container that did not move; a step is a moved step when any frame lists a container more than about 6 px from every container of the previous frame, and in a moved step the joint chain is run and written even when first and last layouts coincide), chained jointly with green and red as a one-to-one assignment per frame, near-ties broken by consistency with the other chains, re-chained at any step whose frames show a container displaced even when the step's first and last layouts look identical, written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal; with precedence over all chaining: if blue is already in picked_colors at the previous step, or any frame of this step shows the blue cube itself (container lifted or 'held in the gripper'), the field is the cube's position in the last frame where the cube is visible (not the container's pre-lift position), the chain is not run for blue at this step or any later step, and neither the held container's position nor that of a container set back down on the cube is ever written. e.g. [102, 79]"
+  },
+  {
+   "name": "picked_colors",
+   "description": "Ordered list of cube colors whose hiding container has been lifted so far. Written as the literal JSON text with double quotes and no spaces: [] when empty (including at the first step), [\"red\"] after the red cube has been exposed, [\"red\",\"green\"] after both; a single-quoted list such as ['red'] is not the recorded value. [] until the step whose execution frames show a cube visible beneath a lifted or 'held in the gripper' container; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+  }
+ ]
+}

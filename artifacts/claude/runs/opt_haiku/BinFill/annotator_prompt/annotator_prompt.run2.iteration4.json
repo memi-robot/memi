@@ -1,0 +1,13 @@
+{
+ "task": "BinFill",
+ "fields": [
+  {
+   "name": "placed",
+   "description": "Ordered list of the colors of the cubes that have been put into the bin so far, one entry per completed 'put it into the bin' subgoal, oldest first. The value is the color words separated by single spaces, with no brackets, quotes or commas; at step #1 it is the word none. At the decision step that directly follows an execution of B (the execution steps show a cube held in the gripper and then released over the bin, and the scene at the decision step shows the gripper open with nothing held), append the color of the cube that was held during that execution. Never append after a pick-up execution (one that ends with a cube held) and never after pressing the button. That held-then-released event is always one completed bin placement: count it regardless of where the gripper was reported when the fingers opened (often 30-50 px from the bin's reported center) and regardless of any same-color cube detection appearing on the table at or near the release point in the same frames, since the bin is opaque and detections near it are unreliable. Example sequence over an episode: none -> none -> green -> green -> green green. e.g. blue blue blue green"
+  },
+  {
+   "name": "arrivals",
+   "description": "Ordered list of the [y, x] positions of the goal-color cubes currently lying on the table, in the order they first appeared in the episode, oldest first. Goal-color cubes are not all present at the start: new ones appear on the table while the robot works, and the oracle picks, within the color being worked, the one that has been on the table longest. At step #1 the list holds every goal-color cube in the scene, ordered by y as reported (smaller y first). At each later step: remove the entry of the cube the robot picked up during the step (the entry nearest where the fingers closed on a cube); append, at the end, every goal-color detection on the table in the scene at the decision step that matches no existing entry within about 12 px, except bin echoes (within about 28 px of the bin's reported center) and release echoes (a detection of the just-released color within about 12 px of where the held cube was last reported or of the gripper when the fingers opened); drop an entry that no longer has a detection of its color within about 12 px in the scene at the decision step; refresh each remaining entry to its position in the scene at the decision step. The annotator may use the whole episode to check which detections are real cubes (a real one is later picked or stays at the same place for the rest of the episode). e.g. [[70, 82], [95, 158], [79, 88]]"
+  }
+ ]
+}

@@ -1,0 +1,38 @@
+{
+ "task": "ButtonUnmaskSwap",
+ "run": 1,
+ "stage": "init",
+ "initialized_on": [
+  8,
+  15,
+  66,
+  73,
+  79
+ ],
+ "seed": 7,
+ "provider": "anthropic",
+ "model": "claude-fable-5-1",
+ "reasoning_effort": "low",
+ "fields": [
+  {
+   "name": "buttons_pressed",
+   "description": "Count of button presses completed so far, including any press whose 'is pressed down' frame appears among the execution steps shown at this decision step. 0 at step #1, 1 at the step after the first press, 2 from the step after the second press to the end. e.g. 1"
+  },
+  {
+   "name": "green_container",
+   "description": "Current [y, x] of the container hiding the green cube. At step #1 (before any container exists) it is the green cube's own position. From the step where containers appear, it is the position of the container that came down on the green cube, then followed frame by frame through every shuffle: during each button press two containers glide around each other and end up having swapped places, so the green container's position becomes the other mover's resting position. Updated at every step to the last frame shown. Once this container has been lifted and the cube is exposed, keep the cube's exposed position. e.g. [109, 126]"
+  },
+  {
+   "name": "red_container",
+   "description": "Current [y, x] of the container hiding the red cube, kept exactly like green_container: cube position at step #1, then the container that covered it, tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step. e.g. [82, 152]"
+  },
+  {
+   "name": "blue_container",
+   "description": "Current [y, x] of the container hiding the blue cube, kept exactly like green_container: cube position at step #1, then the container that covered it, tracked through each press-time shuffle (the two moving containers swap places), updated to the last frame shown at each step. e.g. [102, 79]"
+  },
+  {
+   "name": "picked_colors",
+   "description": "Ordered list of cube colors whose hiding container has been lifted so far. Empty until the step whose execution frames show a container 'held in the gripper' with a cube revealed beneath; then that cube's color is appended, and the list is kept afterwards. e.g. [\"green\"]"
+  }
+ ]
+}

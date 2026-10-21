@@ -1,0 +1,96 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "goal_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  23,
+  40,
+  54,
+  59,
+  84
+ ],
+ "scored": 10,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.8,
+ "memory_verified": 1.0,
+ "reads": {
+  "goal_target": 5
+ },
+ "field_errors": {
+  "goal_target": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 10,
+ "critique": "refused\n  Two steps reported the same thing and are answered together. Both were second decision steps on a goal naming the 'first' target: the robot had just lifted the goal-named cube from the centre of the table (fingers partly closed, gripper raised), the memory carried goal_target as the target of the earliest demonstration placement, and the policy chose 'drop onto' that target. The recorded subgoal instead dropped onto a target that the goal-named cube was never set down on anywhere in the demonstration: in both demonstrations the cube was placed on exactly two targets (an earlier one, then a later one after the button press) before the final centre set-down, and the recorded drop went to one of the two targets the cube never visited. The policy proposed that the procedure for finding the earliest placement is wrong or skips an early set-down. I read both demonstrations frame by frame and there is no earlier placement to find: the gripper descends once to the cube, carries it on a straight path and releases it on the target the memory names; no set-down, hidden or otherwise, occurs near the recorded target at any time. The same forward-counting procedure gives exactly the recorded answer in the other three episodes of this minibatch, including one that also asks for the 'first' target and one with three placements. Rewriting the rule to produce the recorded target in the two failed steps would require naming a placement that the demonstration does not show, and would break the three episodes that currently agree. The memory the policy wrote at those steps equals the annotated memory, so PREDICTABILITY holds, and the subgoal it chose follows from that memory and the scene, so the documents settled the step as far as the demonstration allows; the disagreement is between the recorded answer and the demonstration itself. Nothing is passed on; all three documents stay as they are.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "Two steps reported the same thing and are answered together. Both were second decision steps on a goal naming the 'first' target: the robot had just lifted the goal-named cube from the centre of the table (fingers partly closed, gripper raised), the memory carried goal_target as the target of the earliest demonstration placement, and the policy chose 'drop onto' that target. The recorded subgoal instead dropped onto a target that the goal-named cube was never set down on anywhere in the demonstration: in both demonstrations the cube was placed on exactly two targets (an earlier one, then a later one after the button press) before the final centre set-down, and the recorded drop went to one of the two targets the cube never visited. The policy proposed that the procedure for finding the earliest placement is wrong or skips an early set-down. I read both demonstrations frame by frame and there is no earlier placement to find: the gripper descends once to the cube, carries it on a straight path and releases it on the target the memory names; no set-down, hidden or otherwise, occurs near the recorded target at any time. The same forward-counting procedure gives exactly the recorded answer in the other three episodes of this minibatch, including one that also asks for the 'first' target and one with three placements. Rewriting the rule to produce the recorded target in the two failed steps would require naming a placement that the demonstration does not show, and would break the three episodes that currently agree. The memory the policy wrote at those steps equals the annotated memory, so PREDICTABILITY holds, and the subgoal it chose follows from that memory and the scene, so the documents settled the step as far as the demonstration allows; the disagreement is between the recorded answer and the demonstration itself. Nothing is passed on; all three documents stay as they are."
+ },
+ "critiques": [
+  {
+   "step": [
+    23,
+    "exec",
+    844
+   ],
+   "memory_in": "goal_target=[137, 103]",
+   "answered": "B: drop onto at [137, 103]",
+   "recorded": "B: drop onto at [101, 168]",
+   "missing_from_memory": "goal_target carried in as [137, 103], but the recorded drop goes to the target at [101, 166] (listed as [101, 168] in the recorded answer). The memory should have held the first-placement target near [101, 166]; it carried the wrong target, so following it with rule 2 gave [137, 103].",
+   "missing_from_policy_prompt_for_memory": "The first-step procedure evidently selected the wrong placement as 'first': it produced [137, 103] where the first placement of the green cube in the demonstration was onto the target near [101, 166]. The instruction needs to make the identification of the earliest placement robust (e.g. which demonstration frame counts as the first set-down of the green cube, and that the ordinal is counted over placements of the goal-named cube only), so that goal_target is written as [101, 166] at the first decision step. It also must be consistent with the recorded subgoal: recorded memory [137, 103] alongside recorded drop at [101, 168] is contradictory.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target carried in as [137, 103], but the recorded drop goes to the target at [101, 166] (listed as [101, 168] in the recorded answer). The memory should have held the first-placement target near [101, 166]; it carried the wrong target, so following it with rule 2 gave [137, 103]."
+  },
+  {
+   "step": [
+    59,
+    "exec",
+    907
+   ],
+   "memory_in": "goal_target=[74, 91]",
+   "answered": "B: drop onto at [74, 93]",
+   "recorded": "B: drop onto at [127, 103]",
+   "missing_from_memory": "goal_target carried in was [74, 91], but the recorded drop is onto the target at [126, 103]; the memory should have held [126, 103] (the first target the blue cube was placed on in the demonstration), so the carried value identified the wrong placement as the first one.",
+   "missing_from_policy_prompt_for_memory": "The placement-detection procedure yielded [74, 91] as the first placement while the recorded answer implies the first placement was onto the target near [126, 103]; the instruction needs to make clear how to find the earliest placement (e.g. which frames count as the first placement, that an early set-down near [126, 103] counts even if the fingers/height readings differ from the stated ranges, and not to skip it), since following the stated procedure produced the wrong first target.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target carried in was [74, 91], but the recorded drop is onto the target at [126, 103]; the memory should have held [126, 103] (the first target the blue cube was placed on in the demonstration), so the carried value identified the wrong placement as the first one."
+  }
+ ]
+}

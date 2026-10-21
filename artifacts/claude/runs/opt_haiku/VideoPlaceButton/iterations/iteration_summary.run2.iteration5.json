@@ -1,0 +1,88 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "cube_placed",
+  "goal_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  8,
+  46,
+  51,
+  72,
+  74
+ ],
+ "scored": 10,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9,
+ "memory_verified": 1.0,
+ "reads": {
+  "cube_placed": 5,
+  "goal_target": 5
+ },
+ "field_errors": {
+  "cube_placed": {
+   "in": 0,
+   "sole": 0
+  },
+  "goal_target": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1,
+ "verified_of_all": 0.9,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 10,
+ "critique": "refused\n  One step reported that goal_target was wrong. The goal asked for the green cube on the target used right before the button press. In that demonstration the green cube was carried to the far-left target, released there with the cube resting within a few pixels of it, and it still lay on that same target in the frames immediately before the gripper closed and pressed the button; after the press it was moved to a different target and then put away. The annotator prompt, the policy prompt for memory, and the policy's own first-step computation all produced that far-left target, and the policy chose B: drop onto it. The recorded subgoal instead points at a third target that the goal cube never touched at any point in the demonstration, neither before nor after the press. The policy's proposed fix (take the nearest release before the press whose cube lies within 8 px of a target, and verify the cube rests there just before the press) gives exactly the value already written, so it would not change the outcome. In the other four episodes of this minibatch, both 'before' and 'after' goals, the same rule yields the target the recorded subgoal points at, with the recorded point within 1-2 px of the stored goal_target. The recorded label at this step therefore cannot be reached from the demonstration by any rule that also fits the other episodes, and I am treating it as noise in the recording rather than a defect in the documents. No change to any of the three documents is passed on.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": "One step reported that goal_target was wrong. The goal asked for the green cube on the target used right before the button press. In that demonstration the green cube was carried to the far-left target, released there with the cube resting within a few pixels of it, and it still lay on that same target in the frames immediately before the gripper closed and pressed the button; after the press it was moved to a different target and then put away. The annotator prompt, the policy prompt for memory, and the policy's own first-step computation all produced that far-left target, and the policy chose B: drop onto it. The recorded subgoal instead points at a third target that the goal cube never touched at any point in the demonstration, neither before nor after the press. The policy's proposed fix (take the nearest release before the press whose cube lies within 8 px of a target, and verify the cube rests there just before the press) gives exactly the value already written, so it would not change the outcome. In the other four episodes of this minibatch, both 'before' and 'after' goals, the same rule yields the target the recorded subgoal points at, with the recorded point within 1-2 px of the stored goal_target. The recorded label at this step therefore cannot be reached from the demonstration by any rule that also fits the other episodes, and I am treating it as noise in the recording rather than a defect in the documents. No change to any of the three documents is passed on."
+ },
+ "critiques": [
+  {
+   "step": [
+    51,
+    "exec",
+    880
+   ],
+   "memory_in": "cube_placed=no; goal_target=[136, 170]",
+   "answered": "B: drop onto at [136, 170]",
+   "recorded": "B: drop onto at [120, 146]",
+   "missing_from_memory": "goal_target was wrong: it carried [136, 170] but the target used right before the button press in the demonstration was the one at [119, 145] (recorded drop point [120, 146]). The memory should have been carrying goal_target=[119, 145].",
+   "missing_from_policy_prompt_for_memory": "The first-step procedure for computing goal_target from the demonstration selected the wrong release frame for 'before'. It needs a more robust way to identify the placement immediately preceding the press: e.g. take the release frame whose goal-cube position lies within ~8 px of a target and that is the nearest such release before the press frame, ignoring releases of other cubes or releases at the put-away/initial pile, and verify the chosen target by checking the cube rests on it in the frames just before the press.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target was wrong: it carried [136, 170] but the target used right before the button press in the demonstration was the one at [119, 145] (recorded drop point [120, 146]). The memory should have been carrying goal_target=[119, 145]."
+  }
+ ]
+}

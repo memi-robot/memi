@@ -1,0 +1,100 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "grasp_point",
+  "grasp_end",
+  "insert_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  12,
+  36,
+  45,
+  64,
+  65
+ ],
+ "scored": 10,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "grasp_point": 0,
+  "grasp_end": 0,
+  "insert_side": 5
+ },
+ "field_errors": {
+  "grasp_point": {
+   "in": 0,
+   "sole": 0
+  },
+  "grasp_end": {
+   "in": 0,
+   "sole": 0
+  },
+  "insert_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "grasp_point": "read at no step of 10",
+  "grasp_end": "read at no step of 10"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field grasp_end, ANNOTATOR PROMPT\n  DELETE this field. It was never read at any decision step. The fact it holds (head or tail) is already carried by grasp_point: on a retry after a failed pick, the peg end of either class whose current coordinates lie nearest grasp_point is the end to grasp again, since the pegs stay where they lay at the start of execution. Holding the class separately duplicates a fact the point already fixes and breaks NECESSITY.\n\nfield grasp_point, ANNOTATOR PROMPT\n  KEEP, unchanged in content, but state its purpose: it is the retry target. It holds the [y, x] of the peg end the demonstration gripper closed on, as that end lies in the start-of-execution scene. It is set once at the first decision step from the demonstration grasp frame (gripper at its lowest, height about 0.01-0.03, fingers first dropped from 100% open toward closed) and never changes. It is read only at a decision step where no peg is held and the memory is not empty, i.e. after a failed or dropped pick, because the demonstration is not shown again and nothing else in that step recovers which end was picked. In every episode of this minibatch the first pick succeeded, so the field was carried and not read; that is the expected pattern when nothing fails, not a reason to drop it. e.g. [108, 165]\n\nfield grasp_end, POLICY PROMPT\n  DELETE this field. Do not write or carry it. Which end to re-grasp after a failed pick is found from grasp_point alone: take the peg head or peg tail entry in the current scene nearest grasp_point.\n\nfield grasp_point, POLICY PROMPT\n  At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have first dropped from 100% open toward closed; take the peg head or peg tail entry nearest the gripper in that frame; write that end's coordinates as they appear in the start-of-execution scene. This is the same point you give to subgoal A. At every later step copy the carried value unchanged. It is only needed if a later step shows no peg held: then it tells you which end to pick again, because the demonstration is no longer shown. e.g. [108, 165]\n\nthe policy prompt for subgoal\n  Rule 1 stays as it is, except that it now writes only grasp_point and insert_side at the first decision step (grasp_end no longer exists). Rule 2 stays: when a peg end 'is held in the gripper' (fingers about 22% open, gripper raised), choose B if insert_side is right and C if insert_side is left; this is the only rule any second step in this minibatch needed, and the only memory it reads is insert_side. Rule 3 is rewritten to stop referring to grasp_end: if the scene shows no peg held and grasp_point is already in memory (the pick failed or the peg was dropped), choose A and point at the peg head or peg tail entry in the current scene whose coordinates are nearest grasp_point, whichever class it is. Rule 4 stays, with the same removal of grasp_end, and keeps 'carry all memory fields forward unchanged'.\n\nrefused\n  No failed steps were reported: every decision step in the minibatch was answered as recorded, so nothing from the policy is being dropped. The only thing acted on is the carried-and-unread block. It names grasp_point and grasp_end as read at no step. I am not dropping grasp_point, because every episode here had a successful first pick and so no step was the one it exists for; the step it exists for is a second decision step with nothing held, where the demonstration is gone and the end to grasp cannot be recovered from the scene. I am dropping grasp_end, because the end it names is the one nearest grasp_point in the current scene, so it never adds a fact the policy could not get from grasp_point.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 1 stays as it is, except that it now writes only grasp_point and insert_side at the first decision step (grasp_end no longer exists). Rule 2 stays: when a peg end 'is held in the gripper' (fingers about 22% open, gripper raised), choose B if insert_side is right and C if insert_side is left; this is the only rule any second step in this minibatch needed, and the only memory it reads is insert_side. Rule 3 is rewritten to stop referring to grasp_end: if the scene shows no peg held and grasp_point is already in memory (the pick failed or the peg was dropped), choose A and point at the peg head or peg tail entry in the current scene whose coordinates are nearest grasp_point, whichever class it is. Rule 4 stays, with the same removal of grasp_end, and keeps 'carry all memory fields forward unchanged'.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "grasp_end",
+    "description": "DELETE this field. Do not write or carry it. Which end to re-grasp after a failed pick is found from grasp_point alone: take the peg head or peg tail entry in the current scene nearest grasp_point."
+   },
+   {
+    "field": "grasp_point",
+    "description": "At the first decision step (demonstration shown, memory empty): find the demonstration frame where the gripper is at its lowest height (about 0.01-0.03) and the fingers have first dropped from 100% open toward closed; take the peg head or peg tail entry nearest the gripper in that frame; write that end's coordinates as they appear in the start-of-execution scene. This is the same point you give to subgoal A. At every later step copy the carried value unchanged. It is only needed if a later step shows no peg held: then it tells you which end to pick again, because the demonstration is no longer shown. e.g. [108, 165]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "grasp_end",
+    "description": "DELETE this field. It was never read at any decision step. The fact it holds (head or tail) is already carried by grasp_point: on a retry after a failed pick, the peg end of either class whose current coordinates lie nearest grasp_point is the end to grasp again, since the pegs stay where they lay at the start of execution. Holding the class separately duplicates a fact the point already fixes and breaks NECESSITY."
+   },
+   {
+    "field": "grasp_point",
+    "description": "KEEP, unchanged in content, but state its purpose: it is the retry target. It holds the [y, x] of the peg end the demonstration gripper closed on, as that end lies in the start-of-execution scene. It is set once at the first decision step from the demonstration grasp frame (gripper at its lowest, height about 0.01-0.03, fingers first dropped from 100% open toward closed) and never changes. It is read only at a decision step where no peg is held and the memory is not empty, i.e. after a failed or dropped pick, because the demonstration is not shown again and nothing else in that step recovers which end was picked. In every episode of this minibatch the first pick succeeded, so the field was carried and not read; that is the expected pattern when nothing fails, not a reason to drop it. e.g. [108, 165]"
+   }
+  ],
+  "refused": "No failed steps were reported: every decision step in the minibatch was answered as recorded, so nothing from the policy is being dropped. The only thing acted on is the carried-and-unread block. It names grasp_point and grasp_end as read at no step. I am not dropping grasp_point, because every episode here had a successful first pick and so no step was the one it exists for; the step it exists for is a second decision step with nothing held, where the demonstration is gone and the end to grasp cannot be recovered from the scene. I am dropping grasp_end, because the end it names is the one nearest grasp_point in the current scene, so it never adds a fact the policy could not get from grasp_point."
+ },
+ "critiques": []
+}

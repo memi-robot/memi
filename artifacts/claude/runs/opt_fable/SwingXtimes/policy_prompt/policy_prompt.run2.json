@@ -1,0 +1,77 @@
+{
+ "task": "SwingXtimes",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 1,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    27,
+    45,
+    53,
+    72,
+    78
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    6,
+    31,
+    48,
+    58,
+    64
+   ],
+   "verified_of_all": 0.9714285714285714,
+   "subgoal_verified": 0.9714285714285714
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    23,
+    38,
+    59,
+    71,
+    74
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    23,
+    27,
+    49,
+    60,
+    82
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    15,
+    25,
+    26,
+    39,
+    75
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "Coordinates are [y, x]. The right-side target is the one with the SMALLER x; the left-side target is the one with the LARGER x. First read the goal to get the required number of target visits REQ: if it says 'repeating this back and forth motion N times' then REQ = 2*N (two=4, three=6); if it instead says 'then put it down on the left-side target' then REQ = 2. Every episode starts with subgoal A. Before applying the rules, compute this step's UPDATED visits_done exactly as the memory instruction says (carried-in value, plus 1 if the current scene shows the cube held AND a highlighted target). Every comparison with REQ below refers to that updated value, never to the carried-in value. Rules (apply whichever matches the current step and the updated memory): 1. If the cube is NOT held in the gripper and visits_done is 0 (cube resting on the table, fingers open, nothing done yet): choose A, pick up the cube, pointing at the cube's center coordinates. 2. If the cube IS held in the gripper and updated visits_done < REQ: choose B, move to the top of the target, pointing at the target that is NOT highlighted in the current scene, using that target's listed coordinates. If neither target is highlighted (right after the pick-up), point at the right-side target, the one with the smaller x. 3. If the cube IS held in the gripper and updated visits_done >= REQ (the cube is now above the left-side target after the last required visit): choose C, put the cube on the table. 4. If the cube is NOT held in the gripper and updated visits_done >= REQ (cube resting on the table after the put-down, fingers fully open, gripper raised): choose D, press the button. If no rule matches: when the cube is held, choose B pointing at the target that is not highlighted; when the cube is on the table and visits_done is 0, choose A at the cube; when the cube is on the table and visits_done > 0, choose D.",
+ "fields": [
+  {
+   "name": "visits_done",
+   "description": "Carry in the previous value (start at 0 on the first step, where memory is empty). Add 1 if and only if the scene at this decision step (the last frame shown) shows the cube 'held in the gripper' AND a 'highlighted target' is listed in that scene. Do NOT consult the earlier execution frames of this step; it does not matter whether they already showed the highlight. Otherwise keep the carried-in value unchanged: if no highlighted target is listed (pick-up just ended), or the cube is not held (put-down ended with fingers fully open and the cube resting on the table, or the press-button step), the value does not change. Write the updated value; it is the value the subgoal rules read at this step. e.g. 3"
+  }
+ ],
+ "stage": "optimized"
+}

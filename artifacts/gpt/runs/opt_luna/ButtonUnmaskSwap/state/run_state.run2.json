@@ -1,0 +1,506 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "ButtonUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   8,
+   15,
+   66,
+   73,
+   79
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A. Determine whether a container is currently held from the latest decision scene, using earlier frames only to interpret the transition. A container held earlier in the interval is no longer held after observed release onto the table and withdrawal of the open gripper. With both presses completed, an empty hand at the decision scene, and a nonempty pending_target_positions list, choose C pointing inside the visible container identified by its first entry; use its current center rather than requiring an exact historical pixel. With a container still held at the decision scene and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.",
+  "fields": [
+   {
+    "name": "pending_target_positions",
+    "description": "With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. Seed target identities from incoming positions, which are anchors at the preceding decision scene, not coordinates required to appear exactly in the first new frame. If motion has already begun by that frame, associate the displaced candidates jointly with those anchors using their initial displacement and the subsequent observed pair motion. Resolve this initial association consistently with the later trajectory, then propagate the assigned identities through the entire interval. Never snap an identity back to its incoming position merely because another container occupies it. For newly covered cubes, use the association with their descending covers. For each rotating pair, temporarily track both members, including any non-target partner. Estimate their shared center, using the pair midpoint solely as a temporary rotation reference, never as a target position. Anchor both identities at their pre-motion positions and use the first small, distinguishable displacement to establish their angular direction around that center. Then, at each successive observed frame, compare the two possible joint assignments using both members' signed angular displacements about the shared center. Among assignments consistent with the established rotation direction, select the smallest common forward angular advance consistent with the preceding motion, rather than an assignment requiring an additional half-turn between adjacent samples. Resolve both identities jointly, not by independently minimizing endpoint distance. Propagate each assigned identity from that frame into the next; do not restart association from its pre-motion position when the pair settles. Carry the resulting identities into the next frame and through the final settling frames. Returning to the same unordered pair of positions must not reset identities: one observed half-turn exchanges them, and two observed half-turns restore them. Apply this procedure to each subsequent moving pair, carrying forward any target identity from earlier exchanges even when its partner changes. These temporary partner tracks do not add persistent memory fields. Perform this tracking even when the button count already determines the next command, and preserve the remaining targets' goal order when writing their updated positions. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. Once covered, every output entry must identify an actual observed container at that scene, never a pair midpoint or an interpolated trajectory position. Process all observed motion, including motion before the next button makes contact, before writing these centers. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]",
+    "annotation": "An ordered list of [y, x] positions identifying the containers for the cube colors requested in the goal, in goal order, excluding targets already successfully picked up. Before covering, use the visible cube centers. Once covered, follow the identity of the covering container through every shuffle, recording its center at the decision scene; contents travel with the container, not with the original table location. Use the complete motion trajectory, not nearest matching between shuffle endpoints. Remove the first entry at the decision step showing its successful pickup, before any subsequent put-down. Track remaining entries during pickup and put-down despite small apparent center shifts.  An empty list means all requested pickups have occurred. e.g. [[111, 128], [82, 155]]"
+   },
+   {
+    "name": "buttons_completed",
+    "description": "Initialize to 0 with empty incoming memory. Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1",
+    "annotation": "The number of required button presses completed so far, written as 0, 1, or 2. Record 0 at the initial decision, 1 at the decision following the first button press, and 2 at the decision following the second button press and thereafter. Count completed presses, not buttons currently appearing depressed. e.g. 1"
+   }
+  ]
+ },
+ "initial": {
+  "task": "ButtonUnmaskSwap",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   8,
+   15,
+   66,
+   73,
+   79
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Update memory from the observed interval before selecting the next command. Every episode starts with A. If buttons_completed is 0, choose A, press the first button. If it is 1, choose B, press the second button. Only when it is 2 may container pickup begin. With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations, prefer the best trajectory-consistent match for the pending target, and retry an uncompleted button or pickup rather than declaring success without evidence. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.",
+  "fields": [
+   {
+    "name": "pending_target_positions",
+    "description": "With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. Process the observed frames chronologically: associate each exposed target cube with the container descending over it, then follow that container through the observed motion. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. Resolve the rotating pairs using trajectory continuity and direction across all intermediate frames, allowing identities to exchange endpoints; nearest endpoint matching alone is incorrect. Update each remaining entry to its container's center in the decision scene. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]",
+    "annotation": "An ordered list of [y, x] positions identifying the containers for the cube colors requested in the goal, in goal order, excluding targets already successfully picked up. Before covering, use the visible cube centers. Once covered, follow the identity of the covering container through every shuffle, recording its center at the decision scene; contents travel with the container, not with the original table location. Use the complete motion trajectory, not nearest matching between shuffle endpoints. Remove the first entry at the decision step showing its successful pickup, before any subsequent put-down. Track remaining entries during pickup and put-down despite small apparent center shifts. Thus episode 8's first target ends the shuffles near [111, 128] and its second near [82, 155]; episode 15's targets end near [128, 200] and [102, 182]; episode 66's target ends near [123, 178]; episode 73's near [103, 123]; episode 79's targets near [133, 183] and [106, 154]. An empty list means all requested pickups have occurred. e.g. [[111, 128], [82, 155]]"
+   },
+   {
+    "name": "buttons_completed",
+    "description": "Initialize to 0 with empty incoming memory. Process the interval for a completed button press: a hand descent to the button followed by withdrawal, with button depression or contact-height evidence, increments the incoming count once, capped at 2. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: the low contact and subsequent withdrawal in episode 66 also show the second press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1",
+    "annotation": "The number of required button presses completed so far, written as 0, 1, or 2. Record 0 at the initial decision, 1 at the decision following the first button press, and 2 at the decision following the second button press and thereafter. Count completed presses, not buttons currently appearing depressed. e.g. 1"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 21,
+    "subgoal_wrong": 4,
+    "memory_wrong": 8,
+    "memory_only": 5,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "pending_target_positions": 7,
+     "buttons_completed": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 2,
+    "point_wrong": 2
+   },
+   "critique": "field pending_target_positions, POLICY PROMPT\n  When button execution covered the requested cubes and rotated pairs of containers, the policy sometimes correctly chose the next button but retained original cube positions or matched targets to their original endpoints. In other cases it selected the wrong container after both presses. The annotated list instead followed the identities through the exchange. This breaks PREDICTABILITY and, when pickup is due, SUFFICIENCY. Keep the existing ordered list of current positions of requested containers not yet successfully lifted, but make its update procedure explicit: on every decision, including decisions whose next command is another button press, process all observed motion before writing the list. Associate exposed cubes with their descending covers. For a rotating pair, estimate its shared center and follow each member's angular progression around that center across the intermediate frames. Resolve associations jointly for both members, continuing the observed rotation direction rather than independently choosing the nearest endpoint. Returning to the same unordered pair of table positions does not mean the identities returned; a half-turn exchanges them, and successive exchanges must each be applied. Continue tracking through any residual motion in later pickup intervals. For example, a target cover starting at [128, 122], passing through [132, 104] and [122, 89], and finishing opposite its start must be recorded at [104, 94], giving [[104, 94]], even when the next command is still B. A subsequent observed exchange can move that same target back to [128, 122]. Stationary pending targets must also be updated from cube centers to cover centers, and every list entry must be written at its decision-scene position. Preserve the existing successful-lift removal rule: remove the first entry once upon an observed grasp and lift, not on a failed grasp or a continuing held-object observation during put-down.\n\nfield buttons_completed, POLICY PROMPT\n  After an interval visibly showed contact with the second button, its depressed state, and withdrawal, the policy sometimes retained 1 and chose B again, although the annotated count was 2. This is a PREDICTABILITY failure that also produced an incorrect subgoal. Retain the field as the number of completed required presses, with values 0, 1, and 2. Clarify the update ordering: start from the incoming count, recognize the completed contact-and-withdrawal event anywhere in the observed interval, increment once, and write the updated count before applying action-selection rules. In particular, incoming 1 plus an observed completed second press yields 2, even if the button has sprung back in the final scene. Depression is sufficient supporting evidence; low contact followed by withdrawal also qualifies. Preserve 2 throughout subsequent container manipulation. Example value: 2.\n\nthe policy prompt for subgoal\n  When both presses had visibly completed, the policy sometimes chose B again, including a case where it correctly wrote buttons_completed=2 and retained the correct target positions. The available memory and observation were sufficient, but the action did not use the updated count, defeating the intended SUFFICIENCY of the selection rules. Make the existing update-before-selection requirement an explicit exclusive dispatch: first finish all memory updates from the observed interval; then use only the resulting count for button selection. Choose A if that count is 0 and B if it is 1. If it is 2, neither A nor B is eligible merely because the incoming count was smaller or a button has sprung back. With count 2 and an empty hand, choose C at the current container identified by the first updated pending position. With a held container and remaining targets, choose D; successful lifting has already removed the lifted target. Preserve the existing completion handling. Restrict the retry fallback to events not established as completed; it must never override observed completion or the count-2 branch.\n\nrefused\n  Do not add episode-specific trajectory clauses or hard-coded endpoint tables to either document. The reported exchanges share one failure mechanism—original-position or nearest-endpoint matching instead of continuing the rotating pair's motion—and are addressed by the general tracking procedure. The annotations already follow that procedure and remove targets on successful lift, so no annotation-field change or extra memory field is warranted. The initial response that chose A and recorded the requested red and blue cube centers in goal order with count 0 was semantically correct; its only visible difference was spacing inside coordinate lists. That is not a SUFFICIENCY, PREDICTABILITY, or NECESSITY failure and does not justify changing the memory definition.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "pending_target_positions",
+      "edits": [
+       {
+        "modify_from": "Thus episode 8's first target ends the shuffles near [111, 128] and its second near [82, 155]; episode 15's targets end near [128, 200] and [102, 182]; episode 66's target ends near [123, 178]; episode 73's near [103, 123]; episode 79's targets near [133, 183] and [106, 154]. ",
+        "modify_to": ""
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_target_positions",
+      "edits": [
+       {
+        "modify_from": "Process the observed frames chronologically: associate each exposed target cube with the container descending over it, then follow that container through the observed motion.",
+        "modify_to": "At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals."
+       },
+       {
+        "modify_from": "Resolve the rotating pairs using trajectory continuity and direction across all intermediate frames, allowing identities to exchange endpoints; nearest endpoint matching alone is incorrect. Update each remaining entry to its container's center in the decision scene.",
+        "modify_to": "For each rotating pair, estimate its shared center and follow both members' angular progression around that center across intermediate frames. Resolve the two identities jointly, continuing the observed rotation direction rather than independently choosing nearest endpoints. Returning to the same unordered pair of positions does not establish that identities returned: a half-turn exchanges them, and each successive observed exchange must be applied. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "buttons_completed",
+      "edits": [
+       {
+        "modify_from": "Process the interval for a completed button press: a hand descent to the button followed by withdrawal, with button depression or contact-height evidence, increments the incoming count once, capped at 2.",
+        "modify_to": "Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene."
+       },
+       {
+        "modify_from": "A pressed-down label is sufficient supporting evidence but is not mandatory: the low contact and subsequent withdrawal in episode 66 also show the second press.",
+        "modify_to": "A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Update memory from the observed interval before selecting the next command. Every episode starts with A. If buttons_completed is 0, choose A, press the first button. If it is 1, choose B, press the second button. Only when it is 2 may container pickup begin.",
+      "modify_to": "Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A."
+     },
+     {
+      "modify_from": "For an unanticipated ambiguous situation, preserve facts not contradicted by observations, prefer the best trajectory-consistent match for the pending target, and retry an uncompleted button or pickup rather than declaring success without evidence.",
+      "modify_to": "For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2."
+     }
+    ],
+    "refused": "No new memory fields, episode-specific trajectory clauses, or hard-coded endpoint tables are added. The general joint-motion tracking procedure covers the reported exchanges; existing episode-specific examples are removed without changing the annotation semantics. Coordinate-list spacing does not change the represented facts and warrants no edit. The successful-lift removal rule and completion handling remain unchanged."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 23,
+    "subgoal_wrong": 2,
+    "memory_wrong": 7,
+    "memory_only": 5,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "pending_target_positions": 7,
+     "buttons_completed": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 2
+   },
+   "critique": "field pending_target_positions, POLICY PROMPT\n  When the goal required identifying covered cubes after both button presses, rotating pairs returned to approximately the same unordered positions while their contents exchanged places. After the first press the policy correctly selected the second button but sometimes wrote the targets at their original locations, unlike the annotated memory. After the second press the same error sometimes selected the wrong first container or left the later target at its pre-exchange location. These are PREDICTABILITY failures and, when the first target is affected, SUFFICIENCY failures. Retain this field as the ordered list of current [y, x] positions of requested containers not yet successfully lifted, but make the existing rotation instruction an explicit tracking procedure: seed target identities from incoming positions, associate exposed cubes with their descending covers, and process every observed frame in chronological order. For each moving pair, temporarily track both members, including a non-target partner. Estimate their common center and compare the two possible joint assignments at each successive frame. Select the assignment that continues the angular direction established by the preceding motion, rather than independently minimizing endpoint distance. Carry those identities forward through the final settling frames. A return of the unordered pair to its starting positions must not reset identities. One observed half-turn exchanges the identities; two observed half-turns restore them. Apply this procedure again to every subsequent rotating pair, even when the next command is already determined by the button count, and keep tracking residual motion during manipulation. At the decision scene, write every remaining target's current center in unchanged goal order. For example, a target moving from [134, 173] through [125, 156] and [109, 151] to [99, 166] must yield [[99, 166]], not the opposite endpoint near its starting position. Remove the first entry only upon an observed successful grasp-and-lift, and preserve that removal during put-down. No additional persistent field is needed.\n\nrefused\n  The reports asking for explicit individual coordinate paths all describe the same failure to apply the existing identity-through-rotation rule. Pass on a shared operational tracking clarification, not separate rules keyed to particular colors, positions, or button numbers. The observed shuffles include both single exchanges and repeated exchanges, so a blanket rule that every button press swaps a pair would be incorrect. Do not change the annotator prompt: its current values already follow the observed container identities, including exchanging two requested targets and moving a previously exchanged target through a different pair. Do not change the policy prompt for subgoal or buttons_completed: the failed cases either chose the correct button with incorrect target memory, chose a wrong container because that memory was not updated through the shuffle, or retained an incorrect later-target position despite choosing the correct first container. The existing dispatch on the updated button count and selection of the first pending target are sufficient once tracking is applied correctly.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_target_positions",
+      "edits": [
+       {
+        "modify_from": "For each rotating pair, estimate its shared center and follow both members' angular progression around that center across intermediate frames. Resolve the two identities jointly, continuing the observed rotation direction rather than independently choosing nearest endpoints. Returning to the same unordered pair of positions does not establish that identities returned: a half-turn exchanges them, and each successive observed exchange must be applied.",
+        "modify_to": "Seed target identities from the incoming positions at the start of the observed interval; for newly covered cubes, use the association with their descending covers. For each rotating pair, temporarily track both members, including any non-target partner. Estimate their shared center. At each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment consistent with the angular direction established by the preceding motion rather than independently minimizing endpoint distance. Carry the resulting identities into the next frame and through the final settling frames. Returning to the same unordered pair of positions must not reset identities: one observed half-turn exchanges them, and two observed half-turns restore them. Apply this procedure to each subsequent moving pair, carrying forward any target identity from earlier exchanges even when its partner changes. These temporary partner tracks do not add persistent memory fields. Perform this tracking even when the button count already determines the next command, and preserve the remaining targets' goal order when writing their updated positions."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No individual coordinate paths, color-specific cases, button-specific shuffle rules, or hard-coded endpoints are added. The shared frame-by-frame joint-assignment procedure covers these cases without assuming that every button press swaps a pair. No additional persistent field is needed. The annotator prompt, successful-lift removal rule, buttons_completed updates, and exclusive subgoal dispatch remain unchanged; the reported failures concern tracking identities, not those definitions or transitions."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 17,
+    "subgoal_wrong": 0,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "pending_target_positions": 1,
+     "buttons_completed": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field pending_target_positions, POLICY PROMPT\n  When the goal requested red followed by green, the first press rotated the red container with a non-target while green stayed stationary. The policy correctly selected the second button and counted one completed press, but wrote the red container's original table location rather than its exchanged location. The annotated list was [[102, 160], [90, 92]], whereas the policy wrote [[145, 133], [90, 92]]. This is a PREDICTABILITY failure in maintaining container identity, not a button-dispatch failure. Retain the field's definition and pickup-removal event, but make the rotation procedure operational with an anchored example: establish each identity from its pre-motion position, use the first small displacement to establish its direction, and propagate that identity through the intermediate positions and final settling frame. A target moving from [145, 132] through [125, 127] and [106, 140] to [102, 160] must be recorded at [102, 160], even though another container settles near its original position at [145, 133]. The return of the unordered pair to its original arrangement is not evidence that the target returned. Update the ordered list after processing the entire visible interval, including when the next action is another button press; in this example write [[102, 160], [90, 92]]. Keep all existing successful-pickup removal and remaining-target tracking rules. No additional persistent field is needed.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_target_positions",
+      "edits": [
+       {
+        "modify_from": "Estimate their shared center. At each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment consistent with the angular direction established by the preceding motion rather than independently minimizing endpoint distance.",
+        "modify_to": "Estimate their shared center. Anchor both identities at their pre-motion positions and use the first small, distinguishable displacement to establish their angular direction around that center. Then, at each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment that continues the established angular progression rather than independently minimizing endpoint distance. Propagate each assigned identity from that frame into the next; do not restart association from its pre-motion position when the pair settles."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The requested coordinate-path example is not added: earlier rounds rejected individual paths and hard-coded endpoints for this same tracking failure. The general clarification specifies how to establish the initial rotation direction without introducing an episode-specific exception. Processing the entire interval even before another button command, preserving goal order, and tracking through settling are already required. The annotation definition, pickup-removal event, button updates, and subgoal dispatch remain unchanged; no additional persistent field is needed."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 21,
+    "subgoal_wrong": 3,
+    "memory_wrong": 5,
+    "memory_only": 4,
+    "memory_only_unexplained": 3,
+    "fields": {
+     "pending_target_positions": 5,
+     "buttons_completed": 2
+    },
+    "format_wrong": 0,
+    "choice_wrong": 3,
+    "point_wrong": 0
+   },
+   "critique": "field pending_target_positions, POLICY PROMPT\n  When requested cubes were covered and a pair of containers rotated during a button press, the policy correctly chose the second button but sometimes wrote the targets at their original locations or at points between containers. The annotated memory instead followed the target identities through the exchange and recorded actual container centers. This is a PREDICTABILITY failure: the angular-assignment description needs an operational tie-break rather than merely requiring continued angular progression. Keep this field as an ordered list of current target-container centers, removing an entry only after its successful pickup. For each moving pair, use the pair midpoint solely as a temporary rotation reference, never as a target position. Establish direction from the first small displacement. At each subsequent frame, compare both joint identity assignments using signed angular displacements about that reference; choose the smallest common forward angular advance consistent with the preceding motion, rather than an assignment that requires an additional half-turn between adjacent samples. Carry those assigned identities through settling, even when the unordered endpoint locations resemble the starting locations. For example, a target starting at [145, 132], moving through [125, 127] and [106, 140], finishes at [102, 160], not the other container's [145, 133]. With the second target stationary, write [[102, 160], [90, 92]]. Every output entry must identify an observed container in the decision scene, not a rotation midpoint or an interpolated trajectory position. Apply tracking before choosing either a button or a pickup, including motion before the next button makes contact.\n\nthe policy prompt for subgoal\n  After the first requested container had been lifted and then put down, the observed interval began with a held container but ended with its release and the open gripper withdrawing. The memory correctly contained only the remaining target and buttons_completed=2, yet the policy chose D again instead of C. This is a SUFFICIENCY failure in the temporal interpretation of the held-container condition, not a missing persistent fact. Replace the unqualified held-container dispatch condition with a decision-scene condition: determine whether the hand is currently holding a container from the latest scene, using earlier frames only to interpret the transition. A container held earlier in the interval does not remain held after observed release onto the table and withdrawal of the open gripper. With both presses completed, an empty hand, and a nonempty pending list, choose C at the current container corresponding to its first entry. Choose D to free the hand only if a container remains held at the decision scene. Retain the existing pickup-removal and button-count dispatch rules; do not add a persistent holding flag.\n\nrefused\n  No annotation-rule change or additional memory field is warranted: the annotations already follow container identities, record their decision-scene centers, remove successfully lifted targets, and count completed presses. Some failures provided no proposed missing information. Their target-position errors are addressed by the tracking clarification above. Their button-count errors are not passed on as a new transition rule: one policy left the count at 0 despite visible completion of the first press while nevertheless choosing B; another retained 1 and chose B again after the second button had visibly depressed and the hand had withdrawn. The existing policy prompt already explicitly increments for those observed events, preserves completion after spring-back, and requires dispatch on the updated count. These answers violate that rule rather than reveal an unavailable fact. The reported trajectory-specific request to record a particular exchanged target position is generalized into the tracking clarification, not added as an episode-specific lookup.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_target_positions",
+      "edits": [
+       {
+        "modify_from": "Estimate their shared center.",
+        "modify_to": "Estimate their shared center, using the pair midpoint solely as a temporary rotation reference, never as a target position."
+       },
+       {
+        "modify_from": "Then, at each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment that continues the established angular progression rather than independently minimizing endpoint distance.",
+        "modify_to": "Then, at each successive observed frame, compare the two possible joint assignments using both members' signed angular displacements about the shared center. Among assignments consistent with the established rotation direction, select the smallest common forward angular advance consistent with the preceding motion, rather than an assignment requiring an additional half-turn between adjacent samples. Resolve both identities jointly, not by independently minimizing endpoint distance."
+       },
+       {
+        "modify_from": "Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers.",
+        "modify_to": "Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. Once covered, every output entry must identify an actual observed container at that scene, never a pair midpoint or an interpolated trajectory position. Process all observed motion, including motion before the next button makes contact, before writing these centers."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand.",
+      "modify_to": "Determine whether a container is currently held from the latest decision scene, using earlier frames only to interpret the transition. A container held earlier in the interval is no longer held after observed release onto the table and withdrawal of the open gripper. With both presses completed, an empty hand at the decision scene, and a nonempty pending_target_positions list, choose C pointing inside the visible container identified by its first entry; use its current center rather than requiring an exact historical pixel. With a container still held at the decision scene and further pending targets, choose D to free the hand."
+     }
+    ],
+    "refused": "No episode-specific coordinate path or endpoint lookup is added; earlier rounds rejected these for the same identity-tracking failure. The joint angular-assignment tie-break applies generally while preserving frame-by-frame propagation through successive exchanges and settling. No annotation change or additional persistent field, including a holding flag, is needed. The existing button-completion update and exclusive dispatch already cover the reported count errors and remain unchanged, as do successful-lift removal and completion handling."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 19,
+    "subgoal_wrong": 1,
+    "memory_wrong": 5,
+    "memory_only": 4,
+    "memory_only_unexplained": 3,
+    "fields": {
+     "pending_target_positions": 5,
+     "buttons_completed": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field pending_target_positions, ANNOTATOR PROMPT\n  When requested cubes were covered and a pair of containers rotated during the first button press, the policy correctly selected the second button but sometimes wrote the target at its original side of the pair. The annotated memory instead placed it at the opposite side. In the two-target cases this also affected a later target even while the first target stayed stationary. These are PREDICTABILITY failures: returning to the same unordered pair of occupied locations does not mean the identities returned. Make the annotation's half-turn convention explicit: follow each covering container through the intermediate observations, exchanging identities after one observed half-turn and restoring them after a second. Do not infer a full turn from similar starting and ending layouts. The field remains an ordered list of current target centers, excluding successful pickups; update centers at every decision and remove the first entry only when its successful lift is shown. For example, after the first exchange a stationary red target followed by a moving blue target is recorded as [[92, 116], [121, 159]], and after the next exchange as [[92, 116], [95, 172]]. Preserve the existing trajectory-based annotations rather than relabeling them to match the policy's endpoint-based answers.\n\nfield pending_target_positions, POLICY PROMPT\n  During button execution, a rotating pair could finish near its original unordered positions, or already have moved before the first frame of the next observation interval. The policy selected the correct button but sometimes failed to exchange target identities; later it could retain the old location because another container occupied it. In one case this sent the final pickup to the wrong container. This breaks PREDICTABILITY for the updated positions and SUFFICIENCY for subsequent target selection. Retain the ordered list of pending target centers and the existing successful-lift removal rule, but make rotation assignment operationally explicit. At the start of an interval, treat incoming target positions as anchors from the preceding decision, not as coordinates that must appear exactly in the first new frame. Associate displaced first-frame candidates jointly with those anchors using the first-frame displacement and the subsequent observed pair motion; continue that assignment through the whole interval. For successive pair observations, compare joint assignments by signed angular advance in the established direction, allowing the smaller forward advance even when nearest-distance matching would imply a backward move. Carry identities through settling; an unordered layout recurring after a half-turn exchanges identities, not restores them. Never snap an identity back to its incoming location merely because that location becomes occupied. For example, an incoming moving target at [121, 159] can first appear at [112, 152], continue through [97, 151] and [95, 169], and settle at [95, 172]; with a stationary first target the output is [[92, 116], [95, 172]]. Update all pending targets before dispatching any command, even when their positions do not affect that command. These are temporary within-interval associations, not additional persistent fields.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_target_positions",
+      "edits": [
+       {
+        "modify_from": "Seed target identities from the incoming positions at the start of the observed interval; for newly covered cubes, use the association with their descending covers.",
+        "modify_to": "Seed target identities from incoming positions, which are anchors at the preceding decision scene, not coordinates required to appear exactly in the first new frame. If motion has already begun by that frame, associate the displaced candidates jointly with those anchors using their initial displacement and the subsequent observed pair motion. Resolve this initial association consistently with the later trajectory, then propagate the assigned identities through the entire interval. Never snap an identity back to its incoming position merely because another container occupies it. For newly covered cubes, use the association with their descending covers."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No annotation-rule change is committed: its complete-trajectory identity tracking already defines the correct annotations, and the report requests preserving those values. Half-turn exchange and restoration after two observed half-turns are already explicit in the policy prompt. The existing joint signed-angular-advance procedure, settling rules, and updates of every pending target before dispatch remain unchanged rather than being duplicated. No coordinate-path examples or hard-coded endpoints are added, consistent with earlier rounds. No additional persistent fields or subgoal changes are needed; the new clarification addresses association across the observation-interval boundary while preserving successful-lift removal, button updates, and decision-scene holding conditions."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    1,
+    22,
+    25,
+    39,
+    85
+   ],
+   "verified_of_all": 0.5714285714285714,
+   "subgoal_verified": 0.8095238095238095,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Update memory from the observed interval before selecting the next command. Every episode starts with A. If buttons_completed is 0, choose A, press the first button. If it is 1, choose B, press the second button. Only when it is 2 may container pickup begin. With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations, prefer the best trajectory-consistent match for the pending target, and retry an uncompleted button or pickup rather than declaring success without evidence. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.",
+    "fields": [
+     {
+      "name": "pending_target_positions",
+      "description": "With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. Process the observed frames chronologically: associate each exposed target cube with the container descending over it, then follow that container through the observed motion. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. Resolve the rotating pairs using trajectory continuity and direction across all intermediate frames, allowing identities to exchange endpoints; nearest endpoint matching alone is incorrect. Update each remaining entry to its container's center in the decision scene. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]",
+      "annotation": "An ordered list of [y, x] positions identifying the containers for the cube colors requested in the goal, in goal order, excluding targets already successfully picked up. Before covering, use the visible cube centers. Once covered, follow the identity of the covering container through every shuffle, recording its center at the decision scene; contents travel with the container, not with the original table location. Use the complete motion trajectory, not nearest matching between shuffle endpoints. Remove the first entry at the decision step showing its successful pickup, before any subsequent put-down. Track remaining entries during pickup and put-down despite small apparent center shifts. Thus episode 8's first target ends the shuffles near [111, 128] and its second near [82, 155]; episode 15's targets end near [128, 200] and [102, 182]; episode 66's target ends near [123, 178]; episode 73's near [103, 123]; episode 79's targets near [133, 183] and [106, 154]. An empty list means all requested pickups have occurred. e.g. [[111, 128], [82, 155]]"
+     },
+     {
+      "name": "buttons_completed",
+      "description": "Initialize to 0 with empty incoming memory. Process the interval for a completed button press: a hand descent to the button followed by withdrawal, with button depression or contact-height evidence, increments the incoming count once, capped at 2. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: the low contact and subsequent withdrawal in episode 66 also show the second press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1",
+      "annotation": "The number of required button presses completed so far, written as 0, 1, or 2. Record 0 at the initial decision, 1 at the decision following the first button press, and 2 at the decision following the second button press and thereafter. Count completed presses, not buttons currently appearing depressed. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    10,
+    15,
+    36,
+    39,
+    47
+   ],
+   "verified_of_all": 0.6956521739130435,
+   "subgoal_verified": 0.9130434782608695,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A. With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.",
+    "fields": [
+     {
+      "name": "pending_target_positions",
+      "description": "With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. For each rotating pair, estimate its shared center and follow both members' angular progression around that center across intermediate frames. Resolve the two identities jointly, continuing the observed rotation direction rather than independently choosing nearest endpoints. Returning to the same unordered pair of positions does not establish that identities returned: a half-turn exchanges them, and each successive observed exchange must be applied. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]",
+      "annotation": "An ordered list of [y, x] positions identifying the containers for the cube colors requested in the goal, in goal order, excluding targets already successfully picked up. Before covering, use the visible cube centers. Once covered, follow the identity of the covering container through every shuffle, recording its center at the decision scene; contents travel with the container, not with the original table location. Use the complete motion trajectory, not nearest matching between shuffle endpoints. Remove the first entry at the decision step showing its successful pickup, before any subsequent put-down. Track remaining entries during pickup and put-down despite small apparent center shifts.  An empty list means all requested pickups have occurred. e.g. [[111, 128], [82, 155]]"
+     },
+     {
+      "name": "buttons_completed",
+      "description": "Initialize to 0 with empty incoming memory. Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1",
+      "annotation": "The number of required button presses completed so far, written as 0, 1, or 2. Record 0 at the initial decision, 1 at the decision following the first button press, and 2 at the decision following the second button press and thereafter. Count completed presses, not buttons currently appearing depressed. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    1,
+    2,
+    28,
+    34,
+    53
+   ],
+   "verified_of_all": 0.9411764705882353,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A. With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.",
+    "fields": [
+     {
+      "name": "pending_target_positions",
+      "description": "With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. Seed target identities from the incoming positions at the start of the observed interval; for newly covered cubes, use the association with their descending covers. For each rotating pair, temporarily track both members, including any non-target partner. Estimate their shared center. At each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment consistent with the angular direction established by the preceding motion rather than independently minimizing endpoint distance. Carry the resulting identities into the next frame and through the final settling frames. Returning to the same unordered pair of positions must not reset identities: one observed half-turn exchanges them, and two observed half-turns restore them. Apply this procedure to each subsequent moving pair, carrying forward any target identity from earlier exchanges even when its partner changes. These temporary partner tracks do not add persistent memory fields. Perform this tracking even when the button count already determines the next command, and preserve the remaining targets' goal order when writing their updated positions. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]",
+      "annotation": "An ordered list of [y, x] positions identifying the containers for the cube colors requested in the goal, in goal order, excluding targets already successfully picked up. Before covering, use the visible cube centers. Once covered, follow the identity of the covering container through every shuffle, recording its center at the decision scene; contents travel with the container, not with the original table location. Use the complete motion trajectory, not nearest matching between shuffle endpoints. Remove the first entry at the decision step showing its successful pickup, before any subsequent put-down. Track remaining entries during pickup and put-down despite small apparent center shifts.  An empty list means all requested pickups have occurred. e.g. [[111, 128], [82, 155]]"
+     },
+     {
+      "name": "buttons_completed",
+      "description": "Initialize to 0 with empty incoming memory. Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1",
+      "annotation": "The number of required button presses completed so far, written as 0, 1, or 2. Record 0 at the initial decision, 1 at the decision following the first button press, and 2 at the decision following the second button press and thereafter. Count completed presses, not buttons currently appearing depressed. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    17,
+    27,
+    78,
+    79
+   ],
+   "verified_of_all": 0.6666666666666666,
+   "subgoal_verified": 0.8571428571428571,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A. With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.",
+    "fields": [
+     {
+      "name": "pending_target_positions",
+      "description": "With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. Seed target identities from the incoming positions at the start of the observed interval; for newly covered cubes, use the association with their descending covers. For each rotating pair, temporarily track both members, including any non-target partner. Estimate their shared center. Anchor both identities at their pre-motion positions and use the first small, distinguishable displacement to establish their angular direction around that center. Then, at each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment that continues the established angular progression rather than independently minimizing endpoint distance. Propagate each assigned identity from that frame into the next; do not restart association from its pre-motion position when the pair settles. Carry the resulting identities into the next frame and through the final settling frames. Returning to the same unordered pair of positions must not reset identities: one observed half-turn exchanges them, and two observed half-turns restore them. Apply this procedure to each subsequent moving pair, carrying forward any target identity from earlier exchanges even when its partner changes. These temporary partner tracks do not add persistent memory fields. Perform this tracking even when the button count already determines the next command, and preserve the remaining targets' goal order when writing their updated positions. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]",
+      "annotation": "An ordered list of [y, x] positions identifying the containers for the cube colors requested in the goal, in goal order, excluding targets already successfully picked up. Before covering, use the visible cube centers. Once covered, follow the identity of the covering container through every shuffle, recording its center at the decision scene; contents travel with the container, not with the original table location. Use the complete motion trajectory, not nearest matching between shuffle endpoints. Remove the first entry at the decision step showing its successful pickup, before any subsequent put-down. Track remaining entries during pickup and put-down despite small apparent center shifts.  An empty list means all requested pickups have occurred. e.g. [[111, 128], [82, 155]]"
+     },
+     {
+      "name": "buttons_completed",
+      "description": "Initialize to 0 with empty incoming memory. Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1",
+      "annotation": "The number of required button presses completed so far, written as 0, 1, or 2. Record 0 at the initial decision, 1 at the decision following the first button press, and 2 at the decision following the second button press and thereafter. Count completed presses, not buttons currently appearing depressed. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    14,
+    25,
+    38,
+    87,
+    93
+   ],
+   "verified_of_all": 0.7368421052631579,
+   "subgoal_verified": 0.9473684210526315,
+   "variables": {
+    "task": "ButtonUnmaskSwap",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     15,
+     66,
+     73,
+     79
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Finish all memory updates from the observed interval before selecting the next command. Dispatch exclusively on the resulting buttons_completed value: if 0, choose A, press the first button; if 1, choose B, press the second button; if 2, neither A nor B is eligible and use the container-handling rules below. Never select a button using the incoming count after updating it, or because a completed button has sprung back. At the initial decision the initialized count is 0, so choose A. Determine whether a container is currently held from the latest decision scene, using earlier frames only to interpret the transition. A container held earlier in the interval is no longer held after observed release onto the table and withdrawal of the open gripper. With both presses completed, an empty hand at the decision scene, and a nonempty pending_target_positions list, choose C pointing inside the visible container identified by its first entry; use its current center rather than requiring an exact historical pixel. With a container still held at the decision scene and further pending targets, choose D to free the hand. The successful lift has already removed the completed target from the list, so after D finishes and the hand is empty, choose C for the new first entry, not the container just replaced. These rules produce A, B, C for single-target goals and A, B, C, D, C for two-target goals. Completion is reached upon successfully lifting the final requested container; the supplied episodes end with that final pickup command. If another decision is nevertheless requested with an empty target list and a held container, choose D. For an unanticipated ambiguous situation, preserve facts not contradicted by observations and prefer the best trajectory-consistent match for the pending target. Retry only a button press or pickup not established as completed. This fallback must never override observed completion, restore a removed target, or permit A or B when the updated buttons_completed is 2. If no target remains and an action is still mandatory with an empty hand, use D as the non-pickup fallback.",
+    "fields": [
+     {
+      "name": "pending_target_positions",
+      "description": "With empty incoming memory, read the requested colors in goal order and initialize an ordered list of their visible cube centers as [y, x]. Otherwise start with the incoming list. At every decision, including one whose next command is another button press, process all observed frames chronologically before writing memory or selecting a command. Associate each exposed target cube with the container descending over it, then follow that container through all observed motion, including residual motion during later pickup or put-down intervals. Track contents with moving containers; never reassign a color solely because a container returns to an original cube location. Seed target identities from the incoming positions at the start of the observed interval; for newly covered cubes, use the association with their descending covers. For each rotating pair, temporarily track both members, including any non-target partner. Estimate their shared center, using the pair midpoint solely as a temporary rotation reference, never as a target position. Anchor both identities at their pre-motion positions and use the first small, distinguishable displacement to establish their angular direction around that center. Then, at each successive observed frame, compare the two possible joint assignments using both members' signed angular displacements about the shared center. Among assignments consistent with the established rotation direction, select the smallest common forward angular advance consistent with the preceding motion, rather than an assignment requiring an additional half-turn between adjacent samples. Resolve both identities jointly, not by independently minimizing endpoint distance. Propagate each assigned identity from that frame into the next; do not restart association from its pre-motion position when the pair settles. Carry the resulting identities into the next frame and through the final settling frames. Returning to the same unordered pair of positions must not reset identities: one observed half-turn exchanges them, and two observed half-turns restore them. Apply this procedure to each subsequent moving pair, carrying forward any target identity from earlier exchanges even when its partner changes. These temporary partner tracks do not add persistent memory fields. Perform this tracking even when the button count already determines the next command, and preserve the remaining targets' goal order when writing their updated positions. Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. Once covered, every output entry must identify an actual observed container at that scene, never a pair midpoint or an interpolated trajectory position. Process all observed motion, including motion before the next button makes contact, before writing these centers. If the interval shows the first pending container being grasped and lifted successfully, remove that entry once; a held-container observation continuing into a put-down interval is not a new pickup. Recognize success from the grasp-and-lift transition, supported by the revealed requested cube. Keep tracking the remaining targets during the hand's movements, ignoring small occlusion-induced center wobble. Write [] when none remain. e.g. [[111, 128], [82, 155]]",
+      "annotation": "An ordered list of [y, x] positions identifying the containers for the cube colors requested in the goal, in goal order, excluding targets already successfully picked up. Before covering, use the visible cube centers. Once covered, follow the identity of the covering container through every shuffle, recording its center at the decision scene; contents travel with the container, not with the original table location. Use the complete motion trajectory, not nearest matching between shuffle endpoints. Remove the first entry at the decision step showing its successful pickup, before any subsequent put-down. Track remaining entries during pickup and put-down despite small apparent center shifts.  An empty list means all requested pickups have occurred. e.g. [[111, 128], [82, 155]]"
+     },
+     {
+      "name": "buttons_completed",
+      "description": "Initialize to 0 with empty incoming memory. Start from the incoming count and inspect the entire observed interval for completion of the next required button press. A hand descent to that button followed by withdrawal, with button depression or contact-height evidence, increments the count once, capped at 2. Write this updated count before selecting a command. In particular, incoming 1 plus a completed second press yields 2 even if the button has sprung back in the decision scene. The first menu button is the larger-x button in these scenes; the second is the smaller-x button. A pressed-down label is sufficient supporting evidence but is not mandatory: low contact followed by withdrawal also establishes the press. Preserve the count when buttons spring back and throughout container manipulation. Do not increment merely because a button is visible. e.g. 1",
+      "annotation": "The number of required button presses completed so far, written as 0, 1, or 2. Record 0 at the initial decision, 1 at the decision following the first button press, and 2 at the decision following the second button press and thereafter. Count completed presses, not buttons currently appearing depressed. e.g. 1"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,85 @@
+{
+ "episodes": [
+  5,
+  7,
+  55,
+  68,
+  95
+ ],
+ "user_chars": 12597,
+ "usage": {
+  "prompt_tokens": 7413,
+  "completion_tokens": 962,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 7409
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "placements_done",
+    "edits": [
+     {
+      "modify_from": "add 1 if the execution steps shown at this step contain the cube marked 'is held in the gripper' and then, later in the same step, the fingers opened to about 100% with the gripper low (height below about 0.03) and the cube now lying at roughly the target's position, no longer held. Otherwise keep the carried value unchanged. Never decrease it. e.g. 1",
+      "modify_to": "add 1 if BOTH hold: (a) at least one execution frame shown at this step has the goal-colored cube marked 'is held in the gripper', and (b) in the final scene of this step the goal-colored cube is NOT marked held, the fingers are about 100% open, and the cube lies within a few pixels of the target position. Do not require any particular finger percentage or gripper height at an intermediate frame; a release frame may show fingers only 80-90% open with the cube still marked held, and that still counts once the final scene meets (b). Do not add 1 if the cube was never marked held during this step (a missed grasp, even if the cube already rests on the target from before), or if the final scene shows the cube held. Otherwise keep the carried value unchanged. Never decrease it. e.g. 2"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "placements_done",
+    "edits": [
+     {
+      "modify_from": "It increases by exactly one at each decision step whose execution steps show the cube held in the gripper, then the fingers opening to ~100% while the gripper is low (height below about 0.03) at the target position, leaving the cube resting on the target (the step whose correct subgoal follows a 'place' command). It never decreases. e.g. 1",
+      "modify_to": "It increases by exactly one at each decision step whose execution steps show the goal-colored cube labelled 'is held in the gripper' at some frame AND whose final scene shows that cube no longer labelled held, lying within a few pixels of the target position, with the fingers ~100% open (the step whose correct subgoal follows a 'place' command). No finger percentage or gripper height is required at any intermediate frame; the 'is held' label may lag a frame behind the actual release and is ignored at intermediate frames. A step in which the gripper closed on nothing (cube never labelled held) does not count even if the cube already sits on the target from an earlier placement. A step ending with the cube held does not count. It never decreases. e.g. 2"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "Nothing refused. The report's change replaces the fragile per-frame condition (fingers ~100% AND height < 0.03 in one frame) with an end-of-step condition, which generalizes the original intent rather than adding an exception; it does not undo any earlier edit since round 1 made none. The subgoal instruction already reads the updated count and needs no change."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "placements_done",
+    "edits": [
+     {
+      "modify_from": "It increases by exactly one at each decision step whose execution steps show the cube held in the gripper, then the fingers opening to ~100% while the gripper is low (height below about 0.03) at the target position, leaving the cube resting on the target (the step whose correct subgoal follows a 'place' command). It never decreases. e.g. 1",
+      "modify_to": "It increases by exactly one at each decision step whose execution steps show the goal-colored cube labelled 'is held in the gripper' at some frame AND whose final scene shows that cube no longer labelled held, lying within a few pixels of the target position, with the fingers ~100% open (the step whose correct subgoal follows a 'place' command). No finger percentage or gripper height is required at any intermediate frame; the 'is held' label may lag a frame behind the actual release and is ignored at intermediate frames. A step in which the gripper closed on nothing (cube never labelled held) does not count even if the cube already sits on the target from an earlier placement. A step ending with the cube held does not count. It never decreases. e.g. 2"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "placements_done",
+    "edits": [
+     {
+      "modify_from": "add 1 if the execution steps shown at this step contain the cube marked 'is held in the gripper' and then, later in the same step, the fingers opened to about 100% with the gripper low (height below about 0.03) and the cube now lying at roughly the target's position, no longer held. Otherwise keep the carried value unchanged. Never decrease it. e.g. 1",
+      "modify_to": "add 1 if BOTH hold: (a) at least one execution frame shown at this step has the goal-colored cube marked 'is held in the gripper', and (b) in the final scene of this step the goal-colored cube is NOT marked held, the fingers are about 100% open, and the cube lies within a few pixels of the target position. Do not require any particular finger percentage or gripper height at an intermediate frame; a release frame may show fingers only 80-90% open with the cube still marked held, and that still counts once the final scene meets (b). Do not add 1 if the cube was never marked held during this step (a missed grasp, even if the cube already rests on the target from before), or if the final scene shows the cube held. Otherwise keep the carried value unchanged. Never decrease it. e.g. 2"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "Nothing refused. The report's change replaces the fragile per-frame condition (fingers ~100% AND height < 0.03 in one frame) with an end-of-step condition, which generalizes the original intent rather than adding an exception; it does not undo any earlier edit since round 1 made none. The subgoal instruction already reads the updated count and needs no change."
+ },
+ "not_applied": [],
+ "refused": "Nothing refused. The report's change replaces the fragile per-frame condition (fingers ~100% AND height < 0.03 in one frame) with an end-of-step condition, which generalizes the original intent rather than adding an exception; it does not undo any earlier edit since round 1 made none. The subgoal instruction already reads the updated count and needs no change.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"placements_done\", \"edits\": [{\"modify_from\": \"It increases by exactly one at each decision step whose execution steps show the cube held in the gripper, then the fingers opening to ~100% while the gripper is low (height below about 0.03) at the target position, leaving the cube resting on the target (the step whose correct subgoal follows a 'place' command). It never decreases. e.g. 1\", \"modify_to\": \"It increases by exactly one at each decision step whose execution steps show the goal-colored cube labelled 'is held in the gripper' at some frame AND whose final scene shows that cube no longer labelled held, lying within a few pixels of the target position, with the fingers ~100% open (the step whose correct subgoal follows a 'place' command). No finger percentage or gripper height is required at any intermediate frame; the 'is held' label may lag a frame behind the actual release and is ignored at intermediate frames. A step in which the gripper closed on nothing (cube never labelled held) does not count even if the cube already sits on the target from an earlier placement. A step ending with the cube held does not count. It never decreases. e.g. 2\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"placements_done\", \"edits\": [{\"modify_from\": \"add 1 if the execution steps shown at this step contain the cube marked 'is held in the gripper' and then, later in the same step, the fingers opened to about 100% with the gripper low (height below about 0.03) and the cube now lying at roughly the target's position, no longer held. Otherwise keep the carried value unchanged. Never decrease it. e.g. 1\", \"modify_to\": \"add 1 if BOTH hold: (a) at least one execution frame shown at this step has the goal-colored cube marked 'is held in the gripper', and (b) in the final scene of this step the goal-colored cube is NOT marked held, the fingers are about 100% open, and the cube lies within a few pixels of the target position. Do not require any particular finger percentage or gripper height at an intermediate frame; a release frame may show fingers only 80-90% open with the cube still marked held, and that still counts once the final scene meets (b). Do not add 1 if the cube was never marked held during this step (a missed grasp, even if the cube already rests on the target from before), or if the final scene shows the cube held. Otherwise keep the carried value unchanged. Never decrease it. e.g. 2\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"Nothing refused. The report's change replaces the fragile per-frame condition (fingers ~100% AND height < 0.03 in one frame) with an end-of-step condition, which generalizes the original intent rather than adding an exception; it does not undo any earlier edit since round 1 made none. The subgoal instruction already reads the updated count and needs no change.\"}"
+}

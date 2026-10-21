@@ -1,0 +1,92 @@
+{
+ "episodes": [
+  1,
+  17,
+  27,
+  78,
+  79
+ ],
+ "user_chars": 39000,
+ "usage": {
+  "prompt_tokens": 9808,
+  "completion_tokens": 638,
+  "total_tokens": 10446,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 7513,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand.",
+    "modify_to": "Determine whether a container is currently held from the latest decision scene, using earlier frames only to interpret the transition. A container held earlier in the interval is no longer held after observed release onto the table and withdrawal of the open gripper. With both presses completed, an empty hand at the decision scene, and a nonempty pending_target_positions list, choose C pointing inside the visible container identified by its first entry; use its current center rather than requiring an exact historical pixel. With a container still held at the decision scene and further pending targets, choose D to free the hand."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "pending_target_positions",
+    "edits": [
+     {
+      "modify_from": "Estimate their shared center.",
+      "modify_to": "Estimate their shared center, using the pair midpoint solely as a temporary rotation reference, never as a target position."
+     },
+     {
+      "modify_from": "Then, at each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment that continues the established angular progression rather than independently minimizing endpoint distance.",
+      "modify_to": "Then, at each successive observed frame, compare the two possible joint assignments using both members' signed angular displacements about the shared center. Among assignments consistent with the established rotation direction, select the smallest common forward angular advance consistent with the preceding motion, rather than an assignment requiring an additional half-turn between adjacent samples. Resolve both identities jointly, not by independently minimizing endpoint distance."
+     },
+     {
+      "modify_from": "Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers.",
+      "modify_to": "Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. Once covered, every output entry must identify an actual observed container at that scene, never a pair midpoint or an interpolated trajectory position. Process all observed motion, including motion before the next button makes contact, before writing these centers."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "No episode-specific coordinate path or endpoint lookup is added; earlier rounds rejected these for the same identity-tracking failure. The joint angular-assignment tie-break applies generally while preserving frame-by-frame propagation through successive exchanges and settling. No annotation change or additional persistent field, including a holding flag, is needed. The existing button-completion update and exclusive dispatch already cover the reported count errors and remain unchanged, as do successful-lift removal and completion handling."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "pending_target_positions",
+    "edits": [
+     {
+      "modify_from": "Estimate their shared center.",
+      "modify_to": "Estimate their shared center, using the pair midpoint solely as a temporary rotation reference, never as a target position."
+     },
+     {
+      "modify_from": "Then, at each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment that continues the established angular progression rather than independently minimizing endpoint distance.",
+      "modify_to": "Then, at each successive observed frame, compare the two possible joint assignments using both members' signed angular displacements about the shared center. Among assignments consistent with the established rotation direction, select the smallest common forward angular advance consistent with the preceding motion, rather than an assignment requiring an additional half-turn between adjacent samples. Resolve both identities jointly, not by independently minimizing endpoint distance."
+     },
+     {
+      "modify_from": "Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers.",
+      "modify_to": "Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. Once covered, every output entry must identify an actual observed container at that scene, never a pair midpoint or an interpolated trajectory position. Process all observed motion, including motion before the next button makes contact, before writing these centers."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand.",
+    "modify_to": "Determine whether a container is currently held from the latest decision scene, using earlier frames only to interpret the transition. A container held earlier in the interval is no longer held after observed release onto the table and withdrawal of the open gripper. With both presses completed, an empty hand at the decision scene, and a nonempty pending_target_positions list, choose C pointing inside the visible container identified by its first entry; use its current center rather than requiring an exact historical pixel. With a container still held at the decision scene and further pending targets, choose D to free the hand."
+   }
+  ],
+  "refused": "No episode-specific coordinate path or endpoint lookup is added; earlier rounds rejected these for the same identity-tracking failure. The joint angular-assignment tie-break applies generally while preserving frame-by-frame propagation through successive exchanges and settling. No annotation change or additional persistent field, including a holding flag, is needed. The existing button-completion update and exclusive dispatch already cover the reported count errors and remain unchanged, as do successful-lift removal and completion handling."
+ },
+ "not_applied": [],
+ "refused": "No episode-specific coordinate path or endpoint lookup is added; earlier rounds rejected these for the same identity-tracking failure. The joint angular-assignment tie-break applies generally while preserving frame-by-frame propagation through successive exchanges and settling. No annotation change or additional persistent field, including a holding flag, is needed. The existing button-completion update and exclusive dispatch already cover the reported count errors and remain unchanged, as do successful-lift removal and completion handling.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"pending_target_positions\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Estimate their shared center.\",\n          \"modify_to\": \"Estimate their shared center, using the pair midpoint solely as a temporary rotation reference, never as a target position.\"\n        },\n        {\n          \"modify_from\": \"Then, at each successive observed frame, compare the two possible joint assignments of the pair's identities to its observed members, selecting the assignment that continues the established angular progression rather than independently minimizing endpoint distance.\",\n          \"modify_to\": \"Then, at each successive observed frame, compare the two possible joint assignments using both members' signed angular displacements about the shared center. Among assignments consistent with the established rotation direction, select the smallest common forward angular advance consistent with the preceding motion, rather than an assignment requiring an additional half-turn between adjacent samples. Resolve both identities jointly, not by independently minimizing endpoint distance.\"\n        },\n        {\n          \"modify_from\": \"Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers.\",\n          \"modify_to\": \"Update every remaining entry to its container's center in the decision scene, including stationary targets whose cube centers must be replaced by their covering containers' centers. Once covered, every output entry must identify an actual observed container at that scene, never a pair midpoint or an interpolated trajectory position. Process all observed motion, including motion before the next button makes contact, before writing these centers.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"With both presses completed and no container currently held, choose C pointing inside the visible container identified by the first entry of pending_target_positions; use its current center rather than requiring an exact historical pixel. With a container held and further pending targets, choose D to free the hand.\",\n      \"modify_to\": \"Determine whether a container is currently held from the latest decision scene, using earlier frames only to interpret the transition. A container held earlier in the interval is no longer held after observed release onto the table and withdrawal of the open gripper. With both presses completed, an empty hand at the decision scene, and a nonempty pending_target_positions list, choose C pointing inside the visible container identified by its first entry; use its current center rather than requiring an exact historical pixel. With a container still held at the decision scene and further pending targets, choose D to free the hand.\"\n    }\n  ],\n  \"refused\": \"No episode-specific coordinate path or endpoint lookup is added; earlier rounds rejected these for the same identity-tracking failure. The joint angular-assignment tie-break applies generally while preserving frame-by-frame propagation through successive exchanges and settling. No annotation change or additional persistent field, including a holding flag, is needed. The existing button-completion update and exclusive dispatch already cover the reported count errors and remain unchanged, as do successful-lift removal and completion handling.\"\n}"
+}

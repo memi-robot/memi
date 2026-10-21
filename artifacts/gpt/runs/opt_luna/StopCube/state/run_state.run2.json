@@ -1,0 +1,532 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "StopCube",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   23,
+   32,
+   66,
+   94,
+   99
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Select A, move to the top of the visible button to prepare, only when the observed hand is not already prepared. Recognize a closed gripper with wrist height approximately 0.15 (including 0.154–0.155), wrist roughly 34–36 image units above the button, and a small horizontal offset as already prepared. This configuration takes precedence over apparent wrist/button image-center misalignment: the wrist is not the fingertips' contact point. Do not select A merely because those image centers differ. Once prepared, choose between B and C using the updated passage_count and the requested ordinal N from the goal. C must be initiated before the requested passage because button pressing takes approximately 25–35 recording time units. For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable crossing-time calculation gives 0 < estimated remaining arrival time <= 35 recording time units. An estimate above 35 is outside the launch window; do not round it into the window. The count alone never authorizes C. Select B if passage_count is less than N-1, or if it equals N-1 but the estimated next passage is outside this window or its timing is uncertain. Estimate the upcoming arrival using incoming motion_history together with all newly shown execution observations, accounting for slowing and reversal at endpoints. Calculate the next crossing timestamp before choosing C. First check the combined timestamped evidence for repeated motion: matching positions and directions across cycles can establish a period. When recurrence is established, interpolate earlier crossings of the currently visible target x between their bracketing samples and advance those crossing times by whole periods. Use the earliest predicted crossing strictly after the current timestamp, considering both crossing directions. Prefer this observed recurrence over a conflicting rough velocity estimate. If recurrence is not yet established, fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the combined timestamped evidence, allowing for pixel noise, and solve for its earliest crossing of the currently visible target x strictly after the current timestamp. If neither method reliably establishes whether arrival is within the launch window, select B. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Do not extrapolate a near-zero endpoint velocity as constant or interpret two identical endpoint positions as evidence that the cube has permanently stopped. From the combined timestamped evidence, estimate the next target-crossing timestamp and subtract the current timestamp to obtain the remaining arrival time. Apply this calculation after an observed reversal as well as during approach to or departure from an endpoint; retain earlier travel and reversal evidence in the estimate. If the hand is prepared, updated passage_count=N-1, and the evidence reliably establishes 0 < estimated remaining arrival time <= 35 recording time units, select C. This conjunction requires C, rather than merely permitting it. Choose B if the crossing is farther away or the combined evidence genuinely cannot establish whether it is within the window; endpoint proximity alone still never authorizes C. Update crossing counts only from newly shown observations, never by recounting retained history. When the cube is moving away from the target after the preceding crossing, calculate the next crossing by including both the remaining travel to the endpoint and the return travel to the target; distance to the target divided by current speed is not a valid arrival estimate in this situation. Slowing down or nearing an endpoint does not by itself authorize C. A fast endpoint turnaround can nevertheless be the press-launch time if the estimated next crossing is within the lead window and passage_count equals N-1; do not require that the cube already be moving toward the target. Select B while fewer than N-1 passages have completed, or while the requested next passage remains farther away than this lead window. Reevaluate after every B; remaining static can span several passages, so update memory from every shown frame. None of these menu options requires a supplied point; A and C concern the visible button. Use the timing-uncertainty fallback to B only when the combined motion evidence genuinely cannot establish whether arrival is within the lead window. Pixel noise or modest uncertainty in the exact crossing timestamp does not justify waiting when the well-supported arrival estimates lie wholly within that window and the preparedness and ordinal conditions hold; select C in that case. Otherwise refine the estimate from the next observations rather than pressing on the wrong ordinal. If already stopped at the requested target, remain static. For other uncovered situations, prepare with A if necessary, otherwise remain static with B.",
+  "fields": [
+   {
+    "name": "passage_count",
+    "description": "Start at 0 for empty memory, otherwise use the incoming passage_count. Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Extract cube_x and target_x from the SECOND component of the cube's and target's respective [y, x] positions, never the first component. Compute the sign of cube_x minus target_x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears. Include observations during A and B, and count multiple crossings within one decision interval separately. Write the resulting count, without adding any predicted future passage from the command being selected. e.g. 2",
+    "annotation": "The number of completed target-center passages by the cube up to and including this decision's final observation. Count passages in both directions, including during preparation; do not count proximity alone. A passage occurs when cube x minus target x changes sign along the continuous motion. Initialize to 0. The values by decision step are: episode 23: 0,1,2,3,4; episode 32: 0,1,2,3,4; episode 66: 0,0,1,1; episode 94: 0,0,1,2,2; episode 99: 0,0,1,1. e.g. 2"
+   },
+   {
+    "name": "last_side",
+    "description": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. Extract x from the SECOND component of each observed [y, x] position for both cube and target, never the first component. Starting with incoming last_side, or 0 for empty memory, process newly shown execution observations chronologically and replace the working side with each nonzero sign of cube_x minus target_x. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1",
+    "annotation": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1"
+   },
+   {
+    "name": "motion_history",
+    "description": "With empty memory, start with an empty ordered list; otherwise preserve incoming motion_history. Append all newly shown execution observations chronologically, including the final observation, keeping only one sample for any repeated timestamp. Exclude demonstration observations. Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Extract every cube_x measurement from the SECOND component of the observed cube [y, x] position, never the first component. Use the combined incoming history and newly shown execution observations to estimate motion for subgoal selection. Do not recount retained history when updating passage_count: that update still uses only newly shown observations and incoming last_side. Each history entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]",
+    "annotation": "An ordered list of timestamped cube x observations from execution up to and including this decision's final observation. At the first decision, record all execution observations shown, including the initial execution observation; exclude demonstration observations. At each later decision, preserve previous entries and append newly shown execution observations chronologically, keeping only one sample for any repeated timestamp. Never include future observations or predicted command outcomes. Each entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "StopCube",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   23,
+   32,
+   66,
+   94,
+   99
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Start in A: move to the top of the visible button to prepare. Select A whenever the hand is not yet in the prepared position. The prepared pose in these observations has the wrist above the button, height approximately 0.15, and closed fingers; do not mistake the wrist's image position for the fingertips' contact point. Once prepared, choose between B and C using the updated passage_count and the requested ordinal N from the goal. C must be initiated before the requested passage because button pressing takes approximately 25–35 recording time units. If passage_count equals N-1 and the next target passage is approximately 35 or fewer time units away, select C. Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant. In particular, an endpoint turnaround can already be the press-launch time for a fast cube. The final shown decisions in episodes 23 and 32 are such turnarounds; those in episodes 66, 94, and 99 show motion toward the requested next passage. Select B while fewer than N-1 passages have completed, or while the requested next passage remains farther away than this lead window. Reevaluate after every B; remaining static can span several passages, so update memory from every shown frame. None of these menu options requires a supplied point; A and C concern the visible button. If motion timing is uncertain, default to B while refining the estimate from the next observations, rather than pressing on the wrong ordinal. If already stopped at the requested target, remain static. For other uncovered situations, prepare with A if necessary, otherwise remain static with B.",
+  "fields": [
+   {
+    "name": "passage_count",
+    "description": "Start at 0 for empty memory, otherwise use the incoming passage_count. Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears. Include observations during A and B, and count multiple crossings within one decision interval separately. Write the resulting count, without adding any predicted future passage from the command being selected. e.g. 2",
+    "annotation": "The number of completed target-center passages by the cube up to and including this decision's final observation. Count passages in both directions, including during preparation; do not count proximity alone. A passage occurs when cube x minus target x changes sign along the continuous motion. Initialize to 0. The values by decision step are: episode 23: 0,1,2,3,4; episode 32: 0,1,2,3,4; episode 66: 0,0,1,1; episode 94: 0,0,1,2,2; episode 99: 0,0,1,1. e.g. 2"
+   },
+   {
+    "name": "last_side",
+    "description": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1",
+    "annotation": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 23,
+    "subgoal_wrong": 3,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "passage_count": 0,
+     "last_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 3,
+    "point_wrong": 0
+   },
+   "critique": "the policy prompt for subgoal\n  When stopping on a requested later passage, the policy sometimes chose A although the wrist was already stationary above the button at height approximately 0.154–0.155 with closed fingers. The updated memory correctly counted one passage, fewer than the two required before launching a press for the third passage. In other cases, the policy chose C immediately after the count reached N-1 although the cube was still moving away from the target and its return passage was outside the press lead window. The memory updates were correct; these are SUFFICIENCY failures in applying the subgoal conditions, not missing historical information or unpredictable memory transitions. Make prepared-pose recognition explicit and give it precedence over apparent image misalignment: a closed gripper with wrist height approximately 0.15, wrist roughly 34–36 image units above the button, and a small horizontal offset is already prepared. The wrist is not the fingertip contact point. Do not select A merely because wrist and button image centers differ. Select A only when the observed hand is not in this prepared configuration. For a prepared hand, make the press test a conjunction: C requires both updated passage_count=N-1 and a reliable estimate that the next target crossing is within approximately 35 recording time units. The count alone never authorizes C. If passage_count<N-1, select B. If passage_count=N-1 but the next crossing is farther away, select B. In particular, when motion is outward after the preceding crossing, include the remaining travel to the endpoint and the return travel to the target in the arrival estimate; neither slowing down nor nearing an endpoint by itself authorizes pressing. Estimate arrival using the timestamped motion in the currently shown interval, accounting for periodic acceleration and reversal rather than using constant endpoint velocity. Preserve the possibility of pressing at a fast turnaround when that estimate actually places the next crossing inside the lead window; do not replace the timing test with a blanket requirement that the cube already be moving toward the target. If the estimate is uncertain, choose B rather than treating the ordinal count or endpoint proximity as sufficient evidence. Remove episode-specific timing examples and replace them with these observable conditions. Keep the existing no-point menu semantics and stopped-at-target behavior. No memory fields or memory transitions need to change.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Start in A: move to the top of the visible button to prepare. Select A whenever the hand is not yet in the prepared position. The prepared pose in these observations has the wrist above the button, height approximately 0.15, and closed fingers; do not mistake the wrist's image position for the fingertips' contact point.",
+      "modify_to": "Select A, move to the top of the visible button to prepare, only when the observed hand is not already prepared. Recognize a closed gripper with wrist height approximately 0.15 (including 0.154–0.155), wrist roughly 34–36 image units above the button, and a small horizontal offset as already prepared. This configuration takes precedence over apparent wrist/button image-center misalignment: the wrist is not the fingertips' contact point. Do not select A merely because those image centers differ."
+     },
+     {
+      "modify_from": "If passage_count equals N-1 and the next target passage is approximately 35 or fewer time units away, select C.",
+      "modify_to": "For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable motion-based estimate places the next target passage approximately 35 or fewer recording time units away. The count alone never authorizes C. Select B if passage_count is less than N-1, or if it equals N-1 but the estimated next passage is outside this window or its timing is uncertain."
+     },
+     {
+      "modify_from": "In particular, an endpoint turnaround can already be the press-launch time for a fast cube. The final shown decisions in episodes 23 and 32 are such turnarounds; those in episodes 66, 94, and 99 show motion toward the requested next passage.",
+      "modify_to": "When the cube is moving away from the target after the preceding crossing, estimate the next crossing by including both the remaining travel to the endpoint and the return travel to the target. Slowing down or nearing an endpoint does not by itself authorize C. A fast endpoint turnaround can nevertheless be the press-launch time if the estimated next crossing is within the lead window and passage_count equals N-1; do not require that the cube already be moving toward the target."
+     }
+    ],
+    "refused": ""
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 17,
+    "subgoal_wrong": 2,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "passage_count": 0,
+     "last_side": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 2,
+    "point_wrong": 0
+   },
+   "critique": "field motion_history, ANNOTATOR PROMPT\n  When the goal required stopping on the second or third passage, a short decision interval showed only nearly stationary positions at an endpoint. The annotated count correctly said that N-1 passages had completed, and last_side was correct, but the policy chose B instead of C because earlier motion timing had been discarded. This breaks SUFFICIENCY: these endpoint observations alone cannot distinguish a fast return from a slow one. Add motion_history, an ordered list of timestamped cube x observations from execution, through the current decision's final observation. Initialize it with the initial execution observation and append newly observed samples at every decision; never include future observations or a predicted command outcome. Each entry records time and cube_x, not a spatial coordinate pair. For example: [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]. This field preserves the temporal motion evidence needed to estimate the oscillation across decision boundaries. Keep passage_count and last_side unchanged.\n\nfield motion_history, POLICY PROMPT\n  When a second- or third-passage goal reached a short observation interval near an endpoint, the incoming count and side were correct but the current positions did not reveal turnaround timing or return speed. The policy therefore chose B rather than C. This is a SUFFICIENCY failure caused by losing earlier timestamped motion, not an error in crossing-count updates. With empty memory, initialize motion_history to an empty ordered list. At each decision, append every newly shown execution observation's time and cube_x in chronological order, including the final observation. Preserve incoming entries; if an identical timestamp is shown again, keep only one sample for that timestamp. Write the resulting list without adding predicted positions. For example: [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]. These entries contain a timestamp and a scalar x measurement, not a [y, x] point. Use incoming history together with newly shown observations to estimate motion before choosing the subgoal. Do not interpret two identical endpoint positions as evidence that the cube has permanently stopped.\n\nthe policy prompt for subgoal\n  For second- and third-passage goals, short intervals near an endpoint left the policy seeing only slow or identical cube positions. Although passage_count correctly equaled N-1 and last_side was correct, it chose B because the current interval could not support a reliable crossing forecast. This breaks SUFFICIENCY. Replace the instruction to fit periodic motion using only the current interval with an instruction to use incoming motion_history together with all newly shown execution observations. Fit the smooth periodic trajectory to this combined timestamped evidence, allowing for pixel noise, and estimate the next crossing of the currently visible target x after the current timestamp. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Retain the existing prepared-hand test, passage-count requirement, and approximately 35-time-unit press-launch window: choose C when prepared, the updated count equals N-1, and the combined motion evidence predicts the next crossing within that window, even if the cube is still approaching or turning at an endpoint. Choose B when the crossing is farther away or the combined evidence remains genuinely insufficient. Remove only the restriction to current-interval fitting; do not remove the uncertainty fallback or replace timing with an endpoint-proximity trigger. Crossing counts must still be updated only from newly shown observations, never by recounting the retained history.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "add",
+      "field": "motion_history",
+      "edits": [],
+      "description": "An ordered list of timestamped cube x observations from execution up to and including this decision's final observation. At the first decision, record all execution observations shown, including the initial execution observation; exclude demonstration observations. At each later decision, preserve previous entries and append newly shown execution observations chronologically, keeping only one sample for any repeated timestamp. Never include future observations or predicted command outcomes. Each entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]"
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "add",
+      "field": "motion_history",
+      "edits": [],
+      "description": "With empty memory, start with an empty ordered list; otherwise preserve incoming motion_history. Append all newly shown execution observations chronologically, including the final observation, keeping only one sample for any repeated timestamp. Exclude demonstration observations. Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Use the combined incoming history and newly shown execution observations to estimate motion for subgoal selection. Do not recount retained history when updating passage_count: that update still uses only newly shown observations and incoming last_side. Each history entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]"
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant.",
+      "modify_to": "Estimate the upcoming arrival using incoming motion_history together with all newly shown execution observations, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Do not extrapolate a near-zero endpoint velocity as constant or interpret two identical endpoint positions as evidence that the cube has permanently stopped. Apply the existing conjunction of preparedness, updated passage_count=N-1, and an estimated next crossing within approximately 35 recording time units to this combined evidence. Choose B if that crossing is farther away or the combined evidence remains genuinely insufficient; endpoint proximity alone still never authorizes C. Update crossing counts only from newly shown observations, never by recounting retained history."
+     }
+    ],
+    "refused": ""
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 23,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "passage_count": 0,
+     "last_side": 0,
+     "motion_history": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "the policy prompt for subgoal\n  When the goal requested the second target passage, the hand was prepared and the updated passage_count was 1. The retained motion history and new observations showed the cube slowing at the far endpoint, reversing, and returning toward the target. The policy nevertheless selected B rather than C, despite an arrival estimate inside the press lead window. Memory updating was correct; this is a SUFFICIENCY failure in applying the timing rule, not a missing memory fact. Strengthen the existing motion-estimation rule with an explicit operational connection: after an observed reversal, use the combined timestamped history to estimate the next target crossing, subtract the current timestamp, and apply the lead-window test directly. For example, motion reversing near time 120, then returning from x=183 at time 128 through x=169 at time 144 to x=153 at time 155, with target x=108, supports a crossing around time 181–183. The remaining 26–28 time units are inside the approximately 35-unit window. When the hand is prepared and passage_count=N-1, such evidence requires C, not B. Clarify that the uncertainty fallback applies only when the combined evidence genuinely cannot establish whether arrival is within the window; a noisy but well-supported estimate wholly inside it is not grounds for waiting. Preserve the ordinal-count conjunction, endpoint-aware estimation, and B for crossings outside the window. No existing rule needs removal.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Apply the existing conjunction of preparedness, updated passage_count=N-1, and an estimated next crossing within approximately 35 recording time units to this combined evidence. Choose B if that crossing is farther away or the combined evidence remains genuinely insufficient; endpoint proximity alone still never authorizes C.",
+      "modify_to": "From the combined timestamped evidence, estimate the next target-crossing timestamp and subtract the current timestamp to obtain the remaining arrival time. Apply this calculation after an observed reversal as well as during approach to or departure from an endpoint; retain earlier travel and reversal evidence in the estimate. If the hand is prepared, updated passage_count=N-1, and the evidence reliably places the remaining arrival time within approximately 35 recording time units, select C. This conjunction requires C, rather than merely permitting it. Choose B if the crossing is farther away or the combined evidence genuinely cannot establish whether it is within the window; endpoint proximity alone still never authorizes C."
+     },
+     {
+      "modify_from": "If motion timing is uncertain, default to B while refining the estimate from the next observations, rather than pressing on the wrong ordinal.",
+      "modify_to": "Use the timing-uncertainty fallback to B only when the combined motion evidence genuinely cannot establish whether arrival is within the lead window. Pixel noise or modest uncertainty in the exact crossing timestamp does not justify waiting when the well-supported arrival estimates lie wholly within that window and the preparedness and ordinal conditions hold; select C in that case. Otherwise refine the estimate from the next observations rather than pressing on the wrong ordinal."
+     }
+    ],
+    "refused": "The episode-specific timestamps and cube positions are not added as a worked trigger. The general crossing-timestamp-minus-current-timestamp test covers that case without introducing an episode-specific exception. No memory changes are needed."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 26,
+    "subgoal_wrong": 3,
+    "memory_wrong": 2,
+    "memory_only": 2,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "passage_count": 0,
+     "last_side": 0,
+     "motion_history": 2
+    },
+    "format_wrong": 0,
+    "choice_wrong": 3,
+    "point_wrong": 0
+   },
+   "critique": "field motion_history, ANNOTATOR PROMPT\n  When the goal requested the fifth target passage, the policy chose the correct preparation or pressing action and preserved the correct timestamped cube positions, but wrote JSON-style history text instead of the annotated Python-style text. This is a serialization-level PREDICTABILITY failure, not missing motion information. Keep the field's meaning and update events unchanged: record the initial execution observations, then append newly shown execution observations chronologically at every decision, excluding demonstrations and deduplicating timestamps. Specify one canonical textual representation: single-quoted keys, key order 'time' then 'cube_x', one space after each colon and comma, and no extra outer quotation marks within the value. Example field text: [{'time': 0, 'cube_x': 64}, {'time': 16, 'cube_x': 92}]. Apply this representation consistently to annotations.\n\nfield motion_history, POLICY PROMPT\n  When preparing for or launching a press on the fifth passage, the policy's history contained the same observations as the annotation but used double-quoted keys and different spacing. The resulting mismatch breaks textual PREDICTABILITY despite semantic agreement. Preserve the existing chronological append-only update: initialize from execution observations shown with empty memory; otherwise retain incoming entries and append newly shown execution observations, including the final observation, once per timestamp. Exclude demonstration observations and predicted outcomes. Require the same canonical field text as the annotation: single-quoted keys, 'time' before 'cube_x', and one space after each colon and comma. Example: [{'time': 0, 'cube_x': 64}, {'time': 16, 'cube_x': 92}]. Serialization does not change which observations are retained or how they inform timing.\n\nthe policy prompt for subgoal\n  The timing failures occurred with an already prepared hand and an updated count exactly one below the requested ordinal. For a second-passage goal, the policy pressed while the cube was still traveling toward the far endpoint, although the return crossing remained much farther than the launch window; later it waited after reversal although the crossing was roughly 30 time units away. For a fifth-passage goal, it pressed when repeated motion placed the next crossing roughly 37 time units away. The memories already contained the required crossing counts and motion observations. These are operational SUFFICIENCY failures in applying the arrival-time rule, not reasons to add memory fields. Replace every 'approximately 35' launch boundary with the explicit condition 0 < estimated remaining arrival time <= 35 recording time units; estimates above 35 must not be rounded into the window. Require an actual crossing-time calculation before choosing C. First use incoming history together with newly shown observations to identify repeated motion: when matching positions and directions establish a period, locate the corresponding earlier crossing by interpolation between its bracketing samples and advance it by whole periods to the next future crossing. Prefer this directly observed recurrence over a conflicting rough velocity estimate. If recurrence is not yet established, fit the smooth periodic model already specified to the combined evidence and solve for its next future crossing of the visible target x. When moving away from the target, this must include travel to the endpoint and back; distance divided by current speed is not a valid arrival estimate. For example, an established period of about 240 and an earlier same-direction crossing near time 300 predict a crossing near 540: at time 503 choose B, whereas at time 515 choose C if the count is one below the requested ordinal. With slower motion starting near one endpoint and reaching the opposite endpoint near time 120, a return crossing near time 184 is outside the window at time 101 but inside it at time 155. These calculations illustrate the general rule, not episode-specific triggers. Keep the ordinal gate mandatory, count every newly observed passage before selecting the action, and choose C whenever preparedness, ordinal, and the explicit timing condition all hold with reliable evidence. Retain B for genuinely unresolved timing, but do not treat modest pixel noise or an endpoint reversal as sufficient reason to disregard a well-supported within-window estimate. Keep the existing preparation recognition and point-free menu selection rules.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "motion_history",
+      "edits": [
+       {
+        "modify_from": "e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]",
+        "modify_to": "Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "motion_history",
+      "edits": [
+       {
+        "modify_from": "e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]",
+        "modify_to": "Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable motion-based estimate places the next target passage approximately 35 or fewer recording time units away.",
+      "modify_to": "For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable crossing-time calculation gives 0 < estimated remaining arrival time <= 35 recording time units. An estimate above 35 is outside the launch window; do not round it into the window."
+     },
+     {
+      "modify_from": "A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp.",
+      "modify_to": "Calculate the next crossing timestamp before choosing C. First check the combined timestamped evidence for repeated motion: matching positions and directions across cycles can establish a period. When recurrence is established, interpolate earlier crossings of the currently visible target x between their bracketing samples and advance those crossing times by whole periods. Use the earliest predicted crossing strictly after the current timestamp, considering both crossing directions. Prefer this observed recurrence over a conflicting rough velocity estimate. If recurrence is not yet established, fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the combined timestamped evidence, allowing for pixel noise, and solve for its earliest crossing of the currently visible target x strictly after the current timestamp. If neither method reliably establishes whether arrival is within the launch window, select B."
+     },
+     {
+      "modify_from": "If the hand is prepared, updated passage_count=N-1, and the evidence reliably places the remaining arrival time within approximately 35 recording time units, select C.",
+      "modify_to": "If the hand is prepared, updated passage_count=N-1, and the evidence reliably establishes 0 < estimated remaining arrival time <= 35 recording time units, select C."
+     },
+     {
+      "modify_from": "When the cube is moving away from the target after the preceding crossing, estimate the next crossing by including both the remaining travel to the endpoint and the return travel to the target.",
+      "modify_to": "When the cube is moving away from the target after the preceding crossing, calculate the next crossing by including both the remaining travel to the endpoint and the return travel to the target; distance to the target divided by current speed is not a valid arrival estimate in this situation."
+     }
+    ],
+    "refused": "The episode-specific timestamps, periods, and positions are not added as worked triggers. The recurrence calculation and explicit arrival-time inequality cover those cases without introducing episode-specific exceptions. No memory fields or observation-retention transitions are changed."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 26,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "passage_count": 1,
+     "last_side": 1,
+     "motion_history": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "field passage_count, POLICY PROMPT\n  While waiting to stop the cube on its fourth arrival, the final observation showed the cube changing from the smaller-x side to the larger-x side. The policy correctly selected B but retained count 2 instead of writing the annotated count 3 because it read the cube's y component as x. This is a PREDICTABILITY failure in coordinate extraction, not a change to passage semantics. Explicitly extract cube_x and target_x from the SECOND component of their respective [y, x] positions before computing any side. Start with the incoming count and last_side, process newly shown observations chronologically, and increment once whenever the nonzero sign of cube_x minus target_x opposes the preceding nonzero sign. Equality does not increment the count. For example, cube [116, 141] and target [121, 134] give a positive side; with incoming side -1 and count 2, write 3. Continue counting during preparation and waiting, without counting predicted motion or recounting retained history.\n\nfield last_side, POLICY PROMPT\n  While waiting for the fourth arrival, a visible crossing to the larger-x side was missed because the policy used the first coordinate of the cube position. It selected B correctly but wrote -1 rather than the annotated 1. This breaks PREDICTABILITY. Explicitly define x as the SECOND component of every [y, x] position for both cube and target. Carry the incoming last_side through newly shown observations chronologically, replacing it with each observed nonzero sign of cube_x minus target_x; retain it at exact equality and initialize to 0 when no nonzero side exists. Write the final observed side, never the expected outcome of the selected command. For example, cube [116, 141] and target [121, 134] require last_side=1.\n\nfield motion_history, POLICY PROMPT\n  During a wait for the fourth arrival, the policy correctly selected B but appended the cube's y value as cube_x in its final history sample, whereas the annotation retained its actual x value. This breaks PREDICTABILITY and corrupts the evidence used for later timing. State explicitly that each cube_x measurement is the SECOND component of the observed cube [y, x] position, never the first component. Preserve incoming history and append newly shown execution samples chronologically, including the final observation, with one entry per timestamp; exclude demonstrations and predicted outcomes. For example, an observation at time 303 of cube [116, 141] appends {'time': 303, 'cube_x': 141}. Keep the existing list serialization with single-quoted keys ordered 'time' then 'cube_x'.\n\nrefused\n  The remaining failure was a B response when a prepared hand was waiting for the fourth passage, the updated count was 3, and repeated motion supported a next crossing inside the press-launch window. The policy reported no missing information. The existing policy prompt for subgoal already requires C in this situation: matching positions and directions established a period of about 240 recording time units, and interpolating the earlier return crossing at target x=135 between samples (176, 145) and (192, 113) gives time 181. Advancing by one period predicts time 421, about 28 units after the current time 393. This satisfies the existing mandatory 0 < remaining time <= 35 rule. Thus the incorrect B response does not establish a SUFFICIENCY defect or justify another timing clause or memory field. No annotation changes are needed either: the existing annotations already use the correct x components and crossing semantics.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "passage_count",
+      "edits": [
+       {
+        "modify_from": "Compute the sign of cube x minus target x.",
+        "modify_to": "Extract cube_x and target_x from the SECOND component of the cube's and target's respective [y, x] positions, never the first component. Compute the sign of cube_x minus target_x."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "last_side",
+      "edits": [
+       {
+        "modify_from": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger.",
+        "modify_to": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. Extract x from the SECOND component of each observed [y, x] position for both cube and target, never the first component. Starting with incoming last_side, or 0 for empty memory, process newly shown execution observations chronologically and replace the working side with each nonzero sign of cube_x minus target_x."
+       }
+      ],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "motion_history",
+      "edits": [
+       {
+        "modify_from": "Write only observed timestamps and cube x measurements, never predicted positions or command outcomes.",
+        "modify_to": "Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Extract every cube_x measurement from the SECOND component of the observed cube [y, x] position, never the first component."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "No additional timing clause or memory field is committed for the remaining B-versus-C error. The existing recurrence calculation and mandatory preparedness, ordinal, and 0 < remaining arrival time <= 35 conjunction already require C on the reported evidence. Episode-specific coordinates and timestamps are not added; the second-component extraction rule covers the coordinate failures generally. Annotation semantics, history retention, and canonical serialization remain unchanged."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    14,
+    20,
+    25,
+    43,
+    99
+   ],
+   "verified_of_all": 0.8695652173913043,
+   "subgoal_verified": 0.8695652173913043,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Start in A: move to the top of the visible button to prepare. Select A whenever the hand is not yet in the prepared position. The prepared pose in these observations has the wrist above the button, height approximately 0.15, and closed fingers; do not mistake the wrist's image position for the fingertips' contact point. Once prepared, choose between B and C using the updated passage_count and the requested ordinal N from the goal. C must be initiated before the requested passage because button pressing takes approximately 25–35 recording time units. If passage_count equals N-1 and the next target passage is approximately 35 or fewer time units away, select C. Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant. In particular, an endpoint turnaround can already be the press-launch time for a fast cube. The final shown decisions in episodes 23 and 32 are such turnarounds; those in episodes 66, 94, and 99 show motion toward the requested next passage. Select B while fewer than N-1 passages have completed, or while the requested next passage remains farther away than this lead window. Reevaluate after every B; remaining static can span several passages, so update memory from every shown frame. None of these menu options requires a supplied point; A and C concern the visible button. If motion timing is uncertain, default to B while refining the estimate from the next observations, rather than pressing on the wrong ordinal. If already stopped at the requested target, remain static. For other uncovered situations, prepare with A if necessary, otherwise remain static with B.",
+    "fields": [
+     {
+      "name": "passage_count",
+      "description": "Start at 0 for empty memory, otherwise use the incoming passage_count. Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears. Include observations during A and B, and count multiple crossings within one decision interval separately. Write the resulting count, without adding any predicted future passage from the command being selected. e.g. 2",
+      "annotation": "The number of completed target-center passages by the cube up to and including this decision's final observation. Count passages in both directions, including during preparation; do not count proximity alone. A passage occurs when cube x minus target x changes sign along the continuous motion. Initialize to 0. The values by decision step are: episode 23: 0,1,2,3,4; episode 32: 0,1,2,3,4; episode 66: 0,0,1,1; episode 94: 0,0,1,2,2; episode 99: 0,0,1,1. e.g. 2"
+     },
+     {
+      "name": "last_side",
+      "description": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1",
+      "annotation": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    2,
+    38,
+    66,
+    93
+   ],
+   "verified_of_all": 0.8823529411764706,
+   "subgoal_verified": 0.8823529411764706,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Select A, move to the top of the visible button to prepare, only when the observed hand is not already prepared. Recognize a closed gripper with wrist height approximately 0.15 (including 0.154–0.155), wrist roughly 34–36 image units above the button, and a small horizontal offset as already prepared. This configuration takes precedence over apparent wrist/button image-center misalignment: the wrist is not the fingertips' contact point. Do not select A merely because those image centers differ. Once prepared, choose between B and C using the updated passage_count and the requested ordinal N from the goal. C must be initiated before the requested passage because button pressing takes approximately 25–35 recording time units. For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable motion-based estimate places the next target passage approximately 35 or fewer recording time units away. The count alone never authorizes C. Select B if passage_count is less than N-1, or if it equals N-1 but the estimated next passage is outside this window or its timing is uncertain. Estimate the upcoming arrival from the chronological cube motion shown at this step, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the current interval's timestamped cube positions and finds its next crossing of the visible target x; do not extrapolate a near-zero endpoint velocity as constant. When the cube is moving away from the target after the preceding crossing, estimate the next crossing by including both the remaining travel to the endpoint and the return travel to the target. Slowing down or nearing an endpoint does not by itself authorize C. A fast endpoint turnaround can nevertheless be the press-launch time if the estimated next crossing is within the lead window and passage_count equals N-1; do not require that the cube already be moving toward the target. Select B while fewer than N-1 passages have completed, or while the requested next passage remains farther away than this lead window. Reevaluate after every B; remaining static can span several passages, so update memory from every shown frame. None of these menu options requires a supplied point; A and C concern the visible button. If motion timing is uncertain, default to B while refining the estimate from the next observations, rather than pressing on the wrong ordinal. If already stopped at the requested target, remain static. For other uncovered situations, prepare with A if necessary, otherwise remain static with B.",
+    "fields": [
+     {
+      "name": "passage_count",
+      "description": "Start at 0 for empty memory, otherwise use the incoming passage_count. Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears. Include observations during A and B, and count multiple crossings within one decision interval separately. Write the resulting count, without adding any predicted future passage from the command being selected. e.g. 2",
+      "annotation": "The number of completed target-center passages by the cube up to and including this decision's final observation. Count passages in both directions, including during preparation; do not count proximity alone. A passage occurs when cube x minus target x changes sign along the continuous motion. Initialize to 0. The values by decision step are: episode 23: 0,1,2,3,4; episode 32: 0,1,2,3,4; episode 66: 0,0,1,1; episode 94: 0,0,1,2,2; episode 99: 0,0,1,1. e.g. 2"
+     },
+     {
+      "name": "last_side",
+      "description": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1",
+      "annotation": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    14,
+    26,
+    39,
+    80,
+    95
+   ],
+   "verified_of_all": 0.9565217391304348,
+   "subgoal_verified": 0.9565217391304348,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Select A, move to the top of the visible button to prepare, only when the observed hand is not already prepared. Recognize a closed gripper with wrist height approximately 0.15 (including 0.154–0.155), wrist roughly 34–36 image units above the button, and a small horizontal offset as already prepared. This configuration takes precedence over apparent wrist/button image-center misalignment: the wrist is not the fingertips' contact point. Do not select A merely because those image centers differ. Once prepared, choose between B and C using the updated passage_count and the requested ordinal N from the goal. C must be initiated before the requested passage because button pressing takes approximately 25–35 recording time units. For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable motion-based estimate places the next target passage approximately 35 or fewer recording time units away. The count alone never authorizes C. Select B if passage_count is less than N-1, or if it equals N-1 but the estimated next passage is outside this window or its timing is uncertain. Estimate the upcoming arrival using incoming motion_history together with all newly shown execution observations, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Do not extrapolate a near-zero endpoint velocity as constant or interpret two identical endpoint positions as evidence that the cube has permanently stopped. Apply the existing conjunction of preparedness, updated passage_count=N-1, and an estimated next crossing within approximately 35 recording time units to this combined evidence. Choose B if that crossing is farther away or the combined evidence remains genuinely insufficient; endpoint proximity alone still never authorizes C. Update crossing counts only from newly shown observations, never by recounting retained history. When the cube is moving away from the target after the preceding crossing, estimate the next crossing by including both the remaining travel to the endpoint and the return travel to the target. Slowing down or nearing an endpoint does not by itself authorize C. A fast endpoint turnaround can nevertheless be the press-launch time if the estimated next crossing is within the lead window and passage_count equals N-1; do not require that the cube already be moving toward the target. Select B while fewer than N-1 passages have completed, or while the requested next passage remains farther away than this lead window. Reevaluate after every B; remaining static can span several passages, so update memory from every shown frame. None of these menu options requires a supplied point; A and C concern the visible button. If motion timing is uncertain, default to B while refining the estimate from the next observations, rather than pressing on the wrong ordinal. If already stopped at the requested target, remain static. For other uncovered situations, prepare with A if necessary, otherwise remain static with B.",
+    "fields": [
+     {
+      "name": "passage_count",
+      "description": "Start at 0 for empty memory, otherwise use the incoming passage_count. Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears. Include observations during A and B, and count multiple crossings within one decision interval separately. Write the resulting count, without adding any predicted future passage from the command being selected. e.g. 2",
+      "annotation": "The number of completed target-center passages by the cube up to and including this decision's final observation. Count passages in both directions, including during preparation; do not count proximity alone. A passage occurs when cube x minus target x changes sign along the continuous motion. Initialize to 0. The values by decision step are: episode 23: 0,1,2,3,4; episode 32: 0,1,2,3,4; episode 66: 0,0,1,1; episode 94: 0,0,1,2,2; episode 99: 0,0,1,1. e.g. 2"
+     },
+     {
+      "name": "last_side",
+      "description": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1",
+      "annotation": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1"
+     },
+     {
+      "name": "motion_history",
+      "description": "With empty memory, start with an empty ordered list; otherwise preserve incoming motion_history. Append all newly shown execution observations chronologically, including the final observation, keeping only one sample for any repeated timestamp. Exclude demonstration observations. Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Use the combined incoming history and newly shown execution observations to estimate motion for subgoal selection. Do not recount retained history when updating passage_count: that update still uses only newly shown observations and incoming last_side. Each history entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]",
+      "annotation": "An ordered list of timestamped cube x observations from execution up to and including this decision's final observation. At the first decision, record all execution observations shown, including the initial execution observation; exclude demonstration observations. At each later decision, preserve previous entries and append newly shown execution observations chronologically, keeping only one sample for any repeated timestamp. Never include future observations or predicted command outcomes. Each entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    66,
+    68,
+    72,
+    77,
+    83
+   ],
+   "verified_of_all": 0.8076923076923077,
+   "subgoal_verified": 0.8846153846153846,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Select A, move to the top of the visible button to prepare, only when the observed hand is not already prepared. Recognize a closed gripper with wrist height approximately 0.15 (including 0.154–0.155), wrist roughly 34–36 image units above the button, and a small horizontal offset as already prepared. This configuration takes precedence over apparent wrist/button image-center misalignment: the wrist is not the fingertips' contact point. Do not select A merely because those image centers differ. Once prepared, choose between B and C using the updated passage_count and the requested ordinal N from the goal. C must be initiated before the requested passage because button pressing takes approximately 25–35 recording time units. For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable motion-based estimate places the next target passage approximately 35 or fewer recording time units away. The count alone never authorizes C. Select B if passage_count is less than N-1, or if it equals N-1 but the estimated next passage is outside this window or its timing is uncertain. Estimate the upcoming arrival using incoming motion_history together with all newly shown execution observations, accounting for slowing and reversal at endpoints. A useful estimate fits smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to this combined timestamped evidence, allowing for pixel noise, and finds its next crossing of the currently visible target x after the current timestamp. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Do not extrapolate a near-zero endpoint velocity as constant or interpret two identical endpoint positions as evidence that the cube has permanently stopped. From the combined timestamped evidence, estimate the next target-crossing timestamp and subtract the current timestamp to obtain the remaining arrival time. Apply this calculation after an observed reversal as well as during approach to or departure from an endpoint; retain earlier travel and reversal evidence in the estimate. If the hand is prepared, updated passage_count=N-1, and the evidence reliably places the remaining arrival time within approximately 35 recording time units, select C. This conjunction requires C, rather than merely permitting it. Choose B if the crossing is farther away or the combined evidence genuinely cannot establish whether it is within the window; endpoint proximity alone still never authorizes C. Update crossing counts only from newly shown observations, never by recounting retained history. When the cube is moving away from the target after the preceding crossing, estimate the next crossing by including both the remaining travel to the endpoint and the return travel to the target. Slowing down or nearing an endpoint does not by itself authorize C. A fast endpoint turnaround can nevertheless be the press-launch time if the estimated next crossing is within the lead window and passage_count equals N-1; do not require that the cube already be moving toward the target. Select B while fewer than N-1 passages have completed, or while the requested next passage remains farther away than this lead window. Reevaluate after every B; remaining static can span several passages, so update memory from every shown frame. None of these menu options requires a supplied point; A and C concern the visible button. Use the timing-uncertainty fallback to B only when the combined motion evidence genuinely cannot establish whether arrival is within the lead window. Pixel noise or modest uncertainty in the exact crossing timestamp does not justify waiting when the well-supported arrival estimates lie wholly within that window and the preparedness and ordinal conditions hold; select C in that case. Otherwise refine the estimate from the next observations rather than pressing on the wrong ordinal. If already stopped at the requested target, remain static. For other uncovered situations, prepare with A if necessary, otherwise remain static with B.",
+    "fields": [
+     {
+      "name": "passage_count",
+      "description": "Start at 0 for empty memory, otherwise use the incoming passage_count. Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears. Include observations during A and B, and count multiple crossings within one decision interval separately. Write the resulting count, without adding any predicted future passage from the command being selected. e.g. 2",
+      "annotation": "The number of completed target-center passages by the cube up to and including this decision's final observation. Count passages in both directions, including during preparation; do not count proximity alone. A passage occurs when cube x minus target x changes sign along the continuous motion. Initialize to 0. The values by decision step are: episode 23: 0,1,2,3,4; episode 32: 0,1,2,3,4; episode 66: 0,0,1,1; episode 94: 0,0,1,2,2; episode 99: 0,0,1,1. e.g. 2"
+     },
+     {
+      "name": "last_side",
+      "description": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1",
+      "annotation": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1"
+     },
+     {
+      "name": "motion_history",
+      "description": "With empty memory, start with an empty ordered list; otherwise preserve incoming motion_history. Append all newly shown execution observations chronologically, including the final observation, keeping only one sample for any repeated timestamp. Exclude demonstration observations. Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Use the combined incoming history and newly shown execution observations to estimate motion for subgoal selection. Do not recount retained history when updating passage_count: that update still uses only newly shown observations and incoming last_side. Each history entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]",
+      "annotation": "An ordered list of timestamped cube x observations from execution up to and including this decision's final observation. At the first decision, record all execution observations shown, including the initial execution observation; exclude demonstration observations. At each later decision, preserve previous entries and append newly shown execution observations chronologically, keeping only one sample for any repeated timestamp. Never include future observations or predicted command outcomes. Each entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. e.g. [{\"time\":0,\"cube_x\":47},{\"time\":16,\"cube_x\":80},{\"time\":32,\"cube_x\":147}]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    34,
+    36,
+    41,
+    60,
+    88
+   ],
+   "verified_of_all": 0.9230769230769231,
+   "subgoal_verified": 0.9615384615384616,
+   "variables": {
+    "task": "StopCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     23,
+     32,
+     66,
+     94,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Select A, move to the top of the visible button to prepare, only when the observed hand is not already prepared. Recognize a closed gripper with wrist height approximately 0.15 (including 0.154–0.155), wrist roughly 34–36 image units above the button, and a small horizontal offset as already prepared. This configuration takes precedence over apparent wrist/button image-center misalignment: the wrist is not the fingertips' contact point. Do not select A merely because those image centers differ. Once prepared, choose between B and C using the updated passage_count and the requested ordinal N from the goal. C must be initiated before the requested passage because button pressing takes approximately 25–35 recording time units. For a prepared hand, select C only when both conditions hold: the updated passage_count equals N-1, and a reliable crossing-time calculation gives 0 < estimated remaining arrival time <= 35 recording time units. An estimate above 35 is outside the launch window; do not round it into the window. The count alone never authorizes C. Select B if passage_count is less than N-1, or if it equals N-1 but the estimated next passage is outside this window or its timing is uncertain. Estimate the upcoming arrival using incoming motion_history together with all newly shown execution observations, accounting for slowing and reversal at endpoints. Calculate the next crossing timestamp before choosing C. First check the combined timestamped evidence for repeated motion: matching positions and directions across cycles can establish a period. When recurrence is established, interpolate earlier crossings of the currently visible target x between their bracketing samples and advance those crossing times by whole periods. Use the earliest predicted crossing strictly after the current timestamp, considering both crossing directions. Prefer this observed recurrence over a conflicting rough velocity estimate. If recurrence is not yet established, fit smooth periodic motion x(t)=a+b*cos(w*t)+c*sin(w*t) to the combined timestamped evidence, allowing for pixel noise, and solve for its earliest crossing of the currently visible target x strictly after the current timestamp. If neither method reliably establishes whether arrival is within the launch window, select B. Earlier travel and reversal evidence must continue to inform the estimate when the newest interval is short or nearly stationary. Do not extrapolate a near-zero endpoint velocity as constant or interpret two identical endpoint positions as evidence that the cube has permanently stopped. From the combined timestamped evidence, estimate the next target-crossing timestamp and subtract the current timestamp to obtain the remaining arrival time. Apply this calculation after an observed reversal as well as during approach to or departure from an endpoint; retain earlier travel and reversal evidence in the estimate. If the hand is prepared, updated passage_count=N-1, and the evidence reliably establishes 0 < estimated remaining arrival time <= 35 recording time units, select C. This conjunction requires C, rather than merely permitting it. Choose B if the crossing is farther away or the combined evidence genuinely cannot establish whether it is within the window; endpoint proximity alone still never authorizes C. Update crossing counts only from newly shown observations, never by recounting retained history. When the cube is moving away from the target after the preceding crossing, calculate the next crossing by including both the remaining travel to the endpoint and the return travel to the target; distance to the target divided by current speed is not a valid arrival estimate in this situation. Slowing down or nearing an endpoint does not by itself authorize C. A fast endpoint turnaround can nevertheless be the press-launch time if the estimated next crossing is within the lead window and passage_count equals N-1; do not require that the cube already be moving toward the target. Select B while fewer than N-1 passages have completed, or while the requested next passage remains farther away than this lead window. Reevaluate after every B; remaining static can span several passages, so update memory from every shown frame. None of these menu options requires a supplied point; A and C concern the visible button. Use the timing-uncertainty fallback to B only when the combined motion evidence genuinely cannot establish whether arrival is within the lead window. Pixel noise or modest uncertainty in the exact crossing timestamp does not justify waiting when the well-supported arrival estimates lie wholly within that window and the preparedness and ordinal conditions hold; select C in that case. Otherwise refine the estimate from the next observations rather than pressing on the wrong ordinal. If already stopped at the requested target, remain static. For other uncovered situations, prepare with A if necessary, otherwise remain static with B.",
+    "fields": [
+     {
+      "name": "passage_count",
+      "description": "Start at 0 for empty memory, otherwise use the incoming passage_count. Process all newly shown observations chronologically, starting with incoming last_side as the preceding side. Compute the sign of cube x minus target x. Each nonzero sign opposite to the preceding nonzero side increments the count once; then update the working side. Ignore exact equality until a nonzero side appears. Include observations during A and B, and count multiple crossings within one decision interval separately. Write the resulting count, without adding any predicted future passage from the command being selected. e.g. 2",
+      "annotation": "The number of completed target-center passages by the cube up to and including this decision's final observation. Count passages in both directions, including during preparation; do not count proximity alone. A passage occurs when cube x minus target x changes sign along the continuous motion. Initialize to 0. The values by decision step are: episode 23: 0,1,2,3,4; episode 32: 0,1,2,3,4; episode 66: 0,0,1,1; episode 94: 0,0,1,2,2; episode 99: 0,0,1,1. e.g. 2"
+     },
+     {
+      "name": "last_side",
+      "description": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1",
+      "annotation": "The cube's most recently observed nonzero side of the target center, represented as -1 when cube x is smaller than target x and 1 when it is larger. If exactly equal, retain the preceding nonzero side; use 0 if none has yet been observed. Record the side at the decision's final observation, not the side expected after its selected command. e.g. -1"
+     },
+     {
+      "name": "motion_history",
+      "description": "With empty memory, start with an empty ordered list; otherwise preserve incoming motion_history. Append all newly shown execution observations chronologically, including the final observation, keeping only one sample for any repeated timestamp. Exclude demonstration observations. Write only observed timestamps and cube x measurements, never predicted positions or command outcomes. Use the combined incoming history and newly shown execution observations to estimate motion for subgoal selection. Do not recount retained history when updating passage_count: that update still uses only newly shown observations and incoming last_side. Each history entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]",
+      "annotation": "An ordered list of timestamped cube x observations from execution up to and including this decision's final observation. At the first decision, record all execution observations shown, including the initial execution observation; exclude demonstration observations. At each later decision, preserve previous entries and append newly shown execution observations chronologically, keeping only one sample for any repeated timestamp. Never include future observations or predicted command outcomes. Each entry contains a timestamp and a scalar cube x measurement, not a spatial coordinate pair. Serialize the field as list text with single-quoted keys, key order 'time' then 'cube_x', and one space after each colon and comma. Do not include extra outer quotation marks within the value. Use [] for an empty list. This representation does not change the observations retained. e.g. [{'time': 0, 'cube_x': 47}, {'time': 16, 'cube_x': 80}, {'time': 32, 'cube_x': 147}]"
+     }
+    ]
+   }
+  }
+ ]
+}

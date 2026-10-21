@@ -1,0 +1,94 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "target_containers",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  1,
+  16,
+  62,
+  66,
+  89
+ ],
+ "scored": 5,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "target_containers": 0,
+  "picks_done": 0
+ },
+ "field_errors": {
+  "target_containers": {
+   "in": 0,
+   "sole": 0
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "target_containers": "read at no step of 5",
+  "picks_done": "read at no step of 5"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 5,
+ "critique": "field picks_done, ANNOTATOR PROMPT\n  DELETE. In every episode the goal names one cube and the episode ends at the first decision step, the moment the robot is commanded to pick up that container. No later decision step exists, so the count is written once as 0 and never read. It breaks NECESSITY: nothing in the goal or the steps ever needs a pick count. Remove the field entirely.\n\nfield target_containers, ANNOTATOR PROMPT\n  KEEP, simplified. Holds the demonstration position of the container that came down over the cube named in the goal: the container whose coordinates lie within a few pixels of where that cube sat before the containers appeared. One entry per cube named in the goal (one in every episode seen), in goal order. Written at the first decision step from the demonstration steps and never changed. It is kept because the demonstration is shown only at the first decision step; should any later decision step occur (the pick not yet achieved), the target can be recovered from nowhere else. e.g. [[92, 87]]\n\nfield picks_done, POLICY PROMPT\n  DELETE. Do not write this field. The task ends when the container hiding the named cube has been picked up, so there is no count to keep.\n\nfield target_containers, POLICY PROMPT\n  At the first decision step (memory empty, demonstration steps shown): find the cube whose color the goal names in the demonstration steps before the containers appear, then after the containers appear take the container listed within a few pixels of that cube's position, and write that container's position as the single entry. At any later step copy the carried-in list unchanged. e.g. [[92, 87]]\n\nthe policy prompt for subgoal\n  The rules that counted targets, compared picks_done to N, and chose B (put down) when holding a container are to be removed; no episode ever reaches a put-down, and picks_done no longer exists. The instruction becomes one rule. Rule A (pick up): at the first decision step, when the gripper is raised out of frame with fingers fully open and the memory is empty, identify from the demonstration steps the cube whose color the goal names, take the container that appeared within a few pixels of that cube's position, and choose A pointing at that container with y reduced by about 3 pixels and x unchanged (container [92, 87] gives point [89, 86]). At any later decision step where the gripper is not holding a container (fingers fully open or gripper raised out of frame), choose A again pointing at the first entry of target_containers, adjusted the same way, or at the visible container nearest that stored position if it has drifted. If the gripper is holding a container (fingers partly closed, about 40-60% open, gripper raised), the task is complete; if asked anyway, choose B. Keep the fallback: when a situation matches no rule, choose A at the first entry of target_containers.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The rules that counted targets, compared picks_done to N, and chose B (put down) when holding a container are to be removed; no episode ever reaches a put-down, and picks_done no longer exists. The instruction becomes one rule. Rule A (pick up): at the first decision step, when the gripper is raised out of frame with fingers fully open and the memory is empty, identify from the demonstration steps the cube whose color the goal names, take the container that appeared within a few pixels of that cube's position, and choose A pointing at that container with y reduced by about 3 pixels and x unchanged (container [92, 87] gives point [89, 86]). At any later decision step where the gripper is not holding a container (fingers fully open or gripper raised out of frame), choose A again pointing at the first entry of target_containers, adjusted the same way, or at the visible container nearest that stored position if it has drifted. If the gripper is holding a container (fingers partly closed, about 40-60% open, gripper raised), the task is complete; if asked anyway, choose B. Keep the fallback: when a situation matches no rule, choose A at the first entry of target_containers.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "picks_done",
+    "description": "DELETE. Do not write this field. The task ends when the container hiding the named cube has been picked up, so there is no count to keep."
+   },
+   {
+    "field": "target_containers",
+    "description": "At the first decision step (memory empty, demonstration steps shown): find the cube whose color the goal names in the demonstration steps before the containers appear, then after the containers appear take the container listed within a few pixels of that cube's position, and write that container's position as the single entry. At any later step copy the carried-in list unchanged. e.g. [[92, 87]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "picks_done",
+    "description": "DELETE. In every episode the goal names one cube and the episode ends at the first decision step, the moment the robot is commanded to pick up that container. No later decision step exists, so the count is written once as 0 and never read. It breaks NECESSITY: nothing in the goal or the steps ever needs a pick count. Remove the field entirely."
+   },
+   {
+    "field": "target_containers",
+    "description": "KEEP, simplified. Holds the demonstration position of the container that came down over the cube named in the goal: the container whose coordinates lie within a few pixels of where that cube sat before the containers appeared. One entry per cube named in the goal (one in every episode seen), in goal order. Written at the first decision step from the demonstration steps and never changed. It is kept because the demonstration is shown only at the first decision step; should any later decision step occur (the pick not yet achieved), the target can be recovered from nowhere else. e.g. [[92, 87]]"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": []
+}

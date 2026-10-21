@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "target_containers",
+  "put_down_count"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  0,
+  14,
+  17,
+  48,
+  50
+ ],
+ "scored": 7,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.8571428571428571,
+ "memory_verified": 0.8571428571428571,
+ "reads": {
+  "target_containers": 1,
+  "put_down_count": 1
+ },
+ "field_errors": {
+  "target_containers": {
+   "in": 1,
+   "sole": 1
+  },
+  "put_down_count": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.14285714285714285,
+ "verified_of_all": 0.8571428571428571,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 7,
+ "critique": "field target_containers, ANNOTATOR PROMPT\n  Same field, same meaning: ordered list of container positions [y, x], one per cube named in the goal, each the last-demonstration-frame position of the container that ends up hiding that cube. The filling procedure has to make shuffle-counting explicit, because a demonstration can contain two separate shuffles of the same pair of containers, separated by one or more frames in which every container is back at a slot; the policy treated all off-slot frames as a single shuffle and so recorded the container's position after the first swap only, pointing at the wrong container at the first decision step. This breaks PREDICTABILITY (the written value differs from the value the procedure yields). Replace step (3) with: scan the frames after the first container frame and split them into runs; a run is a maximal block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels, however their positions change inside the block); a run ends at the first following frame in which every container is at a slot. Each run is exactly one shuffle, and it swaps the slots of the two containers whose slots are empty during that run. List the runs in order, apply the swaps in order, and only then read off the named container's slot. Two runs of the same pair cancel (odd number of runs of a pair = swapped, even = back where they started). Then step (4) as before: the entry is the named container's slot after all swaps, written with that slot's coordinates in the last demonstration frame. Never changes afterwards. e.g. [[101, 139]]\n\nfield target_containers, POLICY PROMPT\n  Same field, same meaning and format. Rewrite step (3) so the policy counts shuffles one by one instead of treating every off-slot frame as part of one shuffle: after the first container frame, walk the frames in order and keep a running slot assignment. A SHUFFLE is a maximal run of consecutive frames in which two containers are off their slots (well over 10 pixels); it ENDS at the first later frame where all containers are again at slots. At that ending frame, swap the slots of the two containers whose slots were empty during the run. Then keep walking: if a later frame again shows two containers off their slots, that is a NEW shuffle, even if it is the same two slots as before, and it swaps them again when it ends. Write out the list of shuffles (e.g. 'shuffle 1: slots P and Q, frames 80-96, ends 112; shuffle 2: slots P and Q, frames 128-144, ends 160') before computing the answer. Two shuffles of the same pair put them back where they started; three put them swapped again. Only after all shuffles are applied, take the named container's slot and write it with the coordinates listed for that slot in the last demonstration frame. Keep the existing warnings: never assume a container returns to its own starting slot, never pick the container nearest the cube's original position in the last frame. Worked example to add: cube at [103, 138]; containers first rest at [91, 78], [100, 139], [104, 178]; the cube's container is at slot [100, 139]; frames 80 and 96 show the [100, 139] and [104, 178] containers off their slots, frame 112 shows all at slots (shuffle 1: those two swap, cube's container now at slot [104, 178]); frames 128 and 144 again show the same two slots empty, frame 160 all at slots (shuffle 2: they swap back, cube's container at slot [100, 139]); last frame lists that slot as [101, 139]; entry [[101, 139]]. e.g. [[101, 139]]",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_containers",
+    "description": "Same field, same meaning and format. Rewrite step (3) so the policy counts shuffles one by one instead of treating every off-slot frame as part of one shuffle: after the first container frame, walk the frames in order and keep a running slot assignment. A SHUFFLE is a maximal run of consecutive frames in which two containers are off their slots (well over 10 pixels); it ENDS at the first later frame where all containers are again at slots. At that ending frame, swap the slots of the two containers whose slots were empty during the run. Then keep walking: if a later frame again shows two containers off their slots, that is a NEW shuffle, even if it is the same two slots as before, and it swaps them again when it ends. Write out the list of shuffles (e.g. 'shuffle 1: slots P and Q, frames 80-96, ends 112; shuffle 2: slots P and Q, frames 128-144, ends 160') before computing the answer. Two shuffles of the same pair put them back where they started; three put them swapped again. Only after all shuffles are applied, take the named container's slot and write it with the coordinates listed for that slot in the last demonstration frame. Keep the existing warnings: never assume a container returns to its own starting slot, never pick the container nearest the cube's original position in the last frame. Worked example to add: cube at [103, 138]; containers first rest at [91, 78], [100, 139], [104, 178]; the cube's container is at slot [100, 139]; frames 80 and 96 show the [100, 139] and [104, 178] containers off their slots, frame 112 shows all at slots (shuffle 1: those two swap, cube's container now at slot [104, 178]); frames 128 and 144 again show the same two slots empty, frame 160 all at slots (shuffle 2: they swap back, cube's container at slot [100, 139]); last frame lists that slot as [101, 139]; entry [[101, 139]]. e.g. [[101, 139]]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_containers",
+    "description": "Same field, same meaning: ordered list of container positions [y, x], one per cube named in the goal, each the last-demonstration-frame position of the container that ends up hiding that cube. The filling procedure has to make shuffle-counting explicit, because a demonstration can contain two separate shuffles of the same pair of containers, separated by one or more frames in which every container is back at a slot; the policy treated all off-slot frames as a single shuffle and so recorded the container's position after the first swap only, pointing at the wrong container at the first decision step. This breaks PREDICTABILITY (the written value differs from the value the procedure yields). Replace step (3) with: scan the frames after the first container frame and split them into runs; a run is a maximal block of consecutive frames in which two containers are away from their slots (off by well over 10 pixels, however their positions change inside the block); a run ends at the first following frame in which every container is at a slot. Each run is exactly one shuffle, and it swaps the slots of the two containers whose slots are empty during that run. List the runs in order, apply the swaps in order, and only then read off the named container's slot. Two runs of the same pair cancel (odd number of runs of a pair = swapped, even = back where they started). Then step (4) as before: the entry is the named container's slot after all swaps, written with that slot's coordinates in the last demonstration frame. Never changes afterwards. e.g. [[101, 139]]"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    0,
+    "exec",
+    168
+   ],
+   "memory_in": "target_containers=; put_down_count=",
+   "answered": "A: pick up the container at [103, 177]",
+   "recorded": "A: pick up the container at [97, 140]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It should have told me to count shuffle episodes explicitly: each run of consecutive frames with two containers off their slots is one shuffle, and it ENDS at the first frame where all containers are back at slots; a later run of off-slot frames is a NEW shuffle even if it is the same pair. Here t=80-96 was one shuffle of slots [100,139]/[104,178] (green's container moved to [103,177]), t=112 all back, then t=128-144 was a SECOND shuffle of the same pair (moving it back to [101,139]), t=160 all back. The instruction should say: count the shuffles involving the named container's slot and swap on each one (odd count = swapped, even count = back at original slot), listing each shuffle as a separate episode rather than treating all off-slot frames as one shuffle. The resulting entry is [101,139] as listed in the last frame.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

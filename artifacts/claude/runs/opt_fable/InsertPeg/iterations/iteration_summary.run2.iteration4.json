@@ -1,0 +1,85 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "grasp_point",
+  "insert_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  51,
+  63,
+  85,
+  89
+ ],
+ "scored": 10,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "grasp_point": 0,
+  "insert_side": 5
+ },
+ "field_errors": {
+  "grasp_point": {
+   "in": 0,
+   "sole": 0
+  },
+  "insert_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "grasp_point": "read at no step of 10"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field grasp_point, ANNOTATOR PROMPT\n  DELETE this field. It was annotated at every first decision step with the [y, x] of the peg end the demonstration gripper closed on, and carried unchanged. Across every episode the field was read at no step: at the first decision step the memory is empty and the demonstration steps are in front of the policy, so the grasp point is computed directly from the demonstration frame where the gripper is lowest and the fingers first drop to about 22-25% open; at every later decision step a peg end is already 'held in the gripper' and the only choice left is the insertion side, which insert_side settles. No step in these episodes shows a dropped or failed pick, so no later step ever needs the point back. The field fails NECESSITY: the one step that needs the fact (the first) has it from the demonstration shown at that same step. Only insert_side remains in the memory.\n\nfield grasp_point, POLICY PROMPT\n  DELETE this field. Do not write it at the first decision step and do not carry it. The grasp point for subgoal A is read directly from the demonstration steps shown at the first decision step (the frame where the gripper is at its lowest height, about 0.01-0.03, and the fingers have just gone from 100% open to about 22-25% open; take the peg head or peg tail entry nearest the gripper in that frame and point at that same end's coordinates in the start-of-execution scene). After that step nothing in the episode needs the point again, because the next decision step already shows a peg end held in the gripper. The memory consists of insert_side alone, written at the first decision step and copied unchanged afterwards.\n\nthe policy prompt for subgoal\n  The situation across all episodes is the same: the goal asks to grasp the demonstrated end of the demonstrated peg and insert it from the demonstrated side; the first decision step shows the demonstration and an empty scene with the gripper raised, and the recorded subgoal is A pointing at the demonstrated end; the second decision step shows a peg end held in the gripper raised at about 0.2 height, and the recorded subgoal is B or C according to insert_side. The policy chose these correctly, but it did so without ever reading grasp_point, so the instruction carries a field it never uses (NECESSITY). Rule 1 should stay but be reworded so that the point for A is derived at that step from the demonstration frame itself (lowest gripper height, fingers just closed to about 22-25%, nearest peg head or peg tail entry, taken at its start-of-execution coordinates), with no reference to writing or reading grasp_point; only insert_side is written at this step. Rule 2 stays unchanged: a peg end 'is held in the gripper' means the pick is done; choose B if insert_side is right and C if insert_side is left. Rule 3, which re-picks at a stored grasp_point after a failed or dropped pick, should be removed: no episode shows that situation and the field it reads no longer exists. Rule 4's fallback should no longer mention grasp_point: if nothing is held and the demonstration is not shown, choose A pointing at the peg end nearest the aperture box; if something is held, choose B when insert_side is right or unknown and C when insert_side is left. Carry insert_side forward unchanged.\n\nrefused\n  No step was reported as failed by the policy, so there is nothing to refuse from step reports. The only item acted on is the carried-and-never-read field grasp_point, which is dropped rather than kept: the one argument for keeping it would be a re-grasp after a dropped peg, but no episode in this minibatch contains such a step, and every episode ends with the peg held at the second decision step, so the field decides nothing anywhere in the data.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The situation across all episodes is the same: the goal asks to grasp the demonstrated end of the demonstrated peg and insert it from the demonstrated side; the first decision step shows the demonstration and an empty scene with the gripper raised, and the recorded subgoal is A pointing at the demonstrated end; the second decision step shows a peg end held in the gripper raised at about 0.2 height, and the recorded subgoal is B or C according to insert_side. The policy chose these correctly, but it did so without ever reading grasp_point, so the instruction carries a field it never uses (NECESSITY). Rule 1 should stay but be reworded so that the point for A is derived at that step from the demonstration frame itself (lowest gripper height, fingers just closed to about 22-25%, nearest peg head or peg tail entry, taken at its start-of-execution coordinates), with no reference to writing or reading grasp_point; only insert_side is written at this step. Rule 2 stays unchanged: a peg end 'is held in the gripper' means the pick is done; choose B if insert_side is right and C if insert_side is left. Rule 3, which re-picks at a stored grasp_point after a failed or dropped pick, should be removed: no episode shows that situation and the field it reads no longer exists. Rule 4's fallback should no longer mention grasp_point: if nothing is held and the demonstration is not shown, choose A pointing at the peg end nearest the aperture box; if something is held, choose B when insert_side is right or unknown and C when insert_side is left. Carry insert_side forward unchanged.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "grasp_point",
+    "description": "DELETE this field. Do not write it at the first decision step and do not carry it. The grasp point for subgoal A is read directly from the demonstration steps shown at the first decision step (the frame where the gripper is at its lowest height, about 0.01-0.03, and the fingers have just gone from 100% open to about 22-25% open; take the peg head or peg tail entry nearest the gripper in that frame and point at that same end's coordinates in the start-of-execution scene). After that step nothing in the episode needs the point again, because the next decision step already shows a peg end held in the gripper. The memory consists of insert_side alone, written at the first decision step and copied unchanged afterwards."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "grasp_point",
+    "description": "DELETE this field. It was annotated at every first decision step with the [y, x] of the peg end the demonstration gripper closed on, and carried unchanged. Across every episode the field was read at no step: at the first decision step the memory is empty and the demonstration steps are in front of the policy, so the grasp point is computed directly from the demonstration frame where the gripper is lowest and the fingers first drop to about 22-25% open; at every later decision step a peg end is already 'held in the gripper' and the only choice left is the insertion side, which insert_side settles. No step in these episodes shows a dropped or failed pick, so no later step ever needs the point back. The field fails NECESSITY: the one step that needs the fact (the first) has it from the demonstration shown at that same step. Only insert_side remains in the memory."
+   }
+  ],
+  "refused": "No step was reported as failed by the policy, so there is nothing to refuse from step reports. The only item acted on is the carried-and-never-read field grasp_point, which is dropped rather than kept: the one argument for keeping it would be a re-grasp after a dropped peg, but no episode in this minibatch contains such a step, and every episode ends with the peg held at the second decision step, so the field decides nothing anywhere in the data."
+ },
+ "critiques": []
+}

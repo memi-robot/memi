@@ -1,0 +1,125 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "target_anchor",
+  "completed_cycles"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  43,
+  50,
+  53,
+  73,
+  74
+ ],
+ "scored": 23,
+ "failed": 3,
+ "subgoal_wrong": 3,
+ "memory_wrong": 3,
+ "subgoal_verified": 0.8695652173913043,
+ "memory_verified": 0.8695652173913043,
+ "reads": {
+  "target_anchor": 6,
+  "completed_cycles": 9
+ },
+ "field_errors": {
+  "target_anchor": {
+   "in": 2,
+   "sole": 2
+  },
+  "completed_cycles": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.13043478260869565,
+ "verified_of_all": 0.8695652173913043,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 2,
+ "decisions": 23,
+ "critique": "field target_anchor, POLICY PROMPT\n  When asked to repeat the demonstrated pick-up, the policy selected the cube occupying the original grasp location after the demonstration's cubes had exchanged positions. This happened both for one exchange and for two successive exchanges with different partners. The annotated anchor identified the demonstrated cube at its final location instead. The general instruction to use trajectory continuity did not make that identity assignment sufficiently predictable, breaking PREDICTABILITY and consequently SUFFICIENCY for the first pick-up. Keep target_anchor as the demonstrated cube's visible center in the initial execution scene, initialized from the demonstration and then copied unchanged. Make the tracking procedure explicit: identify the grasped cube at closure and lift, follow it through release, then track each moving pair through its intermediate samples until it settles. Match trajectories across the whole exchange, not by independently choosing the nearest point at each sample or by matching occupied start and end locations. The two cubes can restore the same set of occupied positions while exchanging identities. Carry the resulting target identity into the next exchange; an exchange involving its new location and a third location moves it onward, rather than returning it to its original location. For example, a target released at [128, 126] follows [124, 123], [111, 102], and [93, 111] to [88, 116], while its partner takes the lower endpoint: write [88, 116]. Similarly, a target starting at [90, 91] follows [87, 95], [87, 116], and [100, 119] to the vicinity of [105, 121], then follows [93, 142] and [102, 166] to [107, 174]. Write [107, 174], not the original location. These illustrate how to resolve visible trajectories, not episode-specific lookup rules.\n\nfield completed_cycles, POLICY PROMPT\n  When the goal required two execution cycles, the final put-down descended with a partially closed hand, showed only 67% opening at table height, and then retreated fully open. Transient object reports described an airborne cube. The policy retained completed_cycles=1 and selected another pick-up, whereas the annotated count was 2 and finishing was required. The existing 88–99% example was interpreted as a required table-height opening range, breaking PREDICTABILITY and consequently SUFFICIENCY. Keep this field as the number of completed execution pick-up-and-put-down cycles, initialized to 0 and incremented once at the decision following a completed put-down, never when choosing it. Replace the apparent opening threshold with a sequence-based criterion: descent in a grasp posture to table height followed by opening and fully open retreat establishes completion. The table-height sample may show only partial opening, such as 67%, or still show the grasp opening if the release occurs between samples and the next sample shows a fully open hand beginning retreat. No sample at 88–99% opening is required. A fully open retreat after this descent takes precedence over lingering held or airborne object reports. Preserve the exclusion of demonstration actions and internal releases or retries in an interval ending in a raised grasp posture. For example, an incoming count of 1 becomes 2 after such a completed release.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_anchor",
+    "description": "When asked to repeat the demonstrated pick-up, the policy selected the cube occupying the original grasp location after the demonstration's cubes had exchanged positions. This happened both for one exchange and for two successive exchanges with different partners. The annotated anchor identified the demonstrated cube at its final location instead. The general instruction to use trajectory continuity did not make that identity assignment sufficiently predictable, breaking PREDICTABILITY and consequently SUFFICIENCY for the first pick-up. Keep target_anchor as the demonstrated cube's visible center in the initial execution scene, initialized from the demonstration and then copied unchanged. Make the tracking procedure explicit: identify the grasped cube at closure and lift, follow it through release, then track each moving pair through its intermediate samples until it settles. Match trajectories across the whole exchange, not by independently choosing the nearest point at each sample or by matching occupied start and end locations. The two cubes can restore the same set of occupied positions while exchanging identities. Carry the resulting target identity into the next exchange; an exchange involving its new location and a third location moves it onward, rather than returning it to its original location. For example, a target released at [128, 126] follows [124, 123], [111, 102], and [93, 111] to [88, 116], while its partner takes the lower endpoint: write [88, 116]. Similarly, a target starting at [90, 91] follows [87, 95], [87, 116], and [100, 119] to the vicinity of [105, 121], then follows [93, 142] and [102, 166] to [107, 174]. Write [107, 174], not the original location. These illustrate how to resolve visible trajectories, not episode-specific lookup rules."
+   },
+   {
+    "field": "completed_cycles",
+    "description": "When the goal required two execution cycles, the final put-down descended with a partially closed hand, showed only 67% opening at table height, and then retreated fully open. Transient object reports described an airborne cube. The policy retained completed_cycles=1 and selected another pick-up, whereas the annotated count was 2 and finishing was required. The existing 88–99% example was interpreted as a required table-height opening range, breaking PREDICTABILITY and consequently SUFFICIENCY. Keep this field as the number of completed execution pick-up-and-put-down cycles, initialized to 0 and incremented once at the decision following a completed put-down, never when choosing it. Replace the apparent opening threshold with a sequence-based criterion: descent in a grasp posture to table height followed by opening and fully open retreat establishes completion. The table-height sample may show only partial opening, such as 67%, or still show the grasp opening if the release occurs between samples and the next sample shows a fully open hand beginning retreat. No sample at 88–99% opening is required. A fully open retreat after this descent takes precedence over lingering held or airborne object reports. Preserve the exclusion of demonstration actions and internal releases or retries in an interval ending in a raised grasp posture. For example, an incoming count of 1 becomes 2 after such a completed release."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    43,
+    "exec",
+    480
+   ],
+   "memory_in": "target_anchor=[72, 182]; completed_cycles=1",
+   "answered": "A: pick up the cube at [71, 183]",
+   "recorded": "C: press the button to finish",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Clarify that a release also counts when the only table-height sample shows 67% finger opening, as at t=448, followed by 100% opening during retreat at t=464–480. A table-height sample at 88–99% opening is not required. This interval completes a put-down, so completed_cycles must increase from 1 to 2 despite the transient airborne cube reports.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    53,
+    "exec",
+    271
+   ],
+   "memory_in": "target_anchor=; completed_cycles=",
+   "answered": "A: pick up the cube at [125, 127]",
+   "recorded": "A: pick up the cube at [90, 117]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The trajectory-continuity instruction did not settle the identity through this exchange: the grasped cube moves from [128, 126] through [124, 123] at t=208, [111, 102] at t=224, and [93, 111] at t=240 to [88, 116] at t=256. The policy prompt should make clear that these samples constitute one exchange, not a return to the lower position [125, 127], so target_anchor must be [88, 116].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    74,
+    "exec",
+    321
+   ],
+   "memory_in": "target_anchor=; completed_cycles=",
+   "answered": "A: pick up the cube at [89, 91]",
+   "recorded": "A: pick up the cube at [109, 175]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The trajectory-continuity instruction needed a concrete connection for these exchanges: the demonstrated cube moves from [90, 91] through [87, 95], [87, 116], and [100, 119] to [105, 121], then through [93, 142] and [102, 166] to [107, 174]. Thus write target_anchor=[107, 174], not the cube now occupying its original location [89, 91].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

@@ -1,0 +1,437 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "RouteStick",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   0,
+   19,
+   58,
+   86,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+  "fields": [
+   {
+    "name": "demo_moves",
+    "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. First fix the target slots from the first demonstration frame (the highlighted target plus every listed target; slots are spaced roughly 30 px or more apart in x). Then walk through the demonstration frames and, at every frame, assign the highlighted target to the nearest slot; every frame where the highlighted target is assigned to a different slot than in the previous frame ends one leg and starts the next, so the number of letters is exactly the number of such slot changes. A slot change always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target with coordinate jitter and nothing has changed; do not count it. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame; a visited target means a visited slot. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one. For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']",
+    "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Targets are identified by slot, not by exact coordinates: the set of target slots is fixed for the episode (the slots are spaced roughly 30 px or more apart in x), and each frame's highlighted target is whichever slot it is nearest to. The highlighted target has changed only when it is assigned to a different slot than in the previous frame, which shows as a jump of tens of pixels to where a non-highlighted target sat; a highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg. Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then take the leg's frames: exactly the demonstration frames whose single highlighted target is the leg's starting target, after the frame where that target first became highlighted (for the first leg that opening frame is the very first demonstration frame, so its frames run from the second frame up to the first change) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare the gripper's y with that cube's y in the same frame (the cube may shift a few pixels when brushed): gripper y smaller than the cube's y means it passed the backward side, larger the forward side. The gripper's y relative to the new target and its travel in the next leg are irrelevant. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']"
+   },
+   {
+    "name": "legs_done",
+    "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+    "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+   }
+  ]
+ },
+ "initial": {
+  "task": "RouteStick",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   0,
+   19,
+   58,
+   86,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+  "fields": [
+   {
+    "name": "demo_moves",
+    "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+    "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. e.g. [\"A\", \"B\", \"A\", \"D\"]"
+   },
+   {
+    "name": "legs_done",
+    "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+    "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 20,
+    "subgoal_wrong": 0,
+    "memory_wrong": 2,
+    "memory_only": 2,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "demo_moves": 2,
+     "legs_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field demo_moves, ANNOTATOR PROMPT\n  Holds the ordered list of menu letters, one per leg of the demonstration, written at the first decision step and copied unchanged afterwards; written as a Python-style list with single quotes, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']. The failure: a demonstration in which the gripper shuttles back and forth several times between the same two neighbouring targets (highlight going 108->81->108->81->108->81->108->138) was annotated with seven letters, but a policy reading the same video wrote only five, dropping the short return legs; the subgoal it chose was still right, so this breaks PREDICTABILITY of demo_moves. The rule must say explicitly: a leg is counted at EVERY change of the highlighted target, so the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited and legs of only a few frames; never merge or skip a leg because the gripper comes back to where it was. A frame that shows two targets highlighted at once is the frame at which the new target becomes highlighted: the leg ends there and the next leg starts there. The last demonstration frame may itself show the final highlight change and that change still counts as a leg. For the side letter, use the gripper frames strictly between the two highlight changes of that leg and compare their y with the y of the stick lying between the two targets. The list equals the recorded subgoal sequence of the episode, one letter per decision step.\n\nfield demo_moves, POLICY PROMPT\n  At the first decision step (empty memory carried in) build the list from the demonstration steps and write it as a single-quoted list, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A'] (single quotes, comma and space, never double quotes). First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's is the end of one leg and the start of the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly listed target is the new one. Then for each leg: new target x smaller than previous target x means RIGHT, larger means LEFT; gripper y in the frames between the two change frames smaller than the y of the stick between the two targets means BACKWARD, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the carried-in list unchanged, in the same single-quoted form. Failure that motivates this: on a video where the gripper shuttled back and forth between two adjacent targets the policy dropped the short return legs and wrote five letters instead of seven (PREDICTABILITY), and on another video it wrote the right letters but with double quotes so the value did not match (PREDICTABILITY).\n\nrefused\n  Nothing refused; both reports are passed on. The subgoal instruction stays as it is: at both failed steps the chosen subgoal (the first letter of the list) was correct, and across the minibatch demo_moves[legs_done] with legs_done incremented at every decision step after the first matches every recorded subgoal.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "demo_moves",
+      "edits": [
+       {
+        "modify_from": "A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target).",
+        "modify_to": "A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one."
+       },
+       {
+        "modify_from": "Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets",
+        "modify_to": "Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets"
+       },
+       {
+        "modify_from": "e.g. [\"A\", \"B\", \"A\", \"D\"]",
+        "modify_to": "Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "demo_moves",
+      "edits": [
+       {
+        "modify_from": "A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target).",
+        "modify_to": "First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one."
+       },
+       {
+        "modify_from": "Gripper y at the middle frames of the leg smaller than",
+        "modify_to": "Gripper y in the frames strictly between the two change frames of the leg smaller than"
+       },
+       {
+        "modify_from": "At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+        "modify_to": "At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing refused. The subgoal instruction stays as it is, since every recorded subgoal matched demo_moves[legs_done]. The quoting form is fixed on both sides at once (single quotes) so the annotator and the policy write the same value, rather than only telling the policy to use single quotes."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 16,
+    "subgoal_wrong": 1,
+    "memory_wrong": 2,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "demo_moves": 2,
+     "legs_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "field demo_moves, ANNOTATOR PROMPT\n  Keep the field as is (ordered list of menu letters, one per leg of the demonstration, written at the first decision step and copied unchanged afterwards, e.g. ['B', 'D', 'D', 'D', 'A']) but make the leg-frame assignment and the reference-stick choice exact, because two first-step memories were wrong for the same reason: the policy inspected the wrong frames of the demonstration. In one episode the first leg (gripper swinging forward around the rightmost stick to reach the next target) was read as backward because the frames belonging to the first leg were not clearly stated to start at the very first demonstration frame; in another, a short leg that returned to a target already visited was read from frames after its closing change frame, i.e. from the next leg, which lay on the opposite side. Both break PREDICTABILITY: the annotated list and the policy's list were two answers to one field at one step, and the wrong list then produced a wrong first subgoal. State the rule as: a leg's frames are exactly the demonstration frames whose single highlighted target is the leg's STARTING target, taken after the frame where that target first became highlighted (for the first leg, the first demonstration frame is that opening frame, so its frames are every following frame up to the first frame where another target is highlighted) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target; compare gripper y in each of the leg's frames with that cube's y in the same frame (the cube may shift a few pixels when the gripper brushes it; the comparison still holds). Gripper y larger than the cube's y in those frames means FORWARD, smaller means BACKWARD; the gripper's y relative to the new target, and its direction of travel in the next leg, are irrelevant. Direction: new target x smaller than the starting target x is RIGHT, larger is LEFT. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. Write one letter per highlighted-target change, including returns to a previously visited target and a change visible only in the last frame.\n\nfield demo_moves, POLICY PROMPT\n  At the first decision step (memory carried in empty) build the list from the demonstration by this procedure and no other. (1) Write down, frame by frame, the highlighted target; every frame where it differs from the previous frame is a change frame, and the number of letters is the number of change frames (count returns to an already visited target, legs only a few frames long, and a change that appears only in the last frame; a frame with two highlighted targets is a change frame whose new target is the newly highlighted one). (2) For each leg, the leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. (3) The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed). Gripper y larger than the cube's y means FORWARD, smaller means BACKWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side. (4) New target x smaller than the starting target x is RIGHT, larger is LEFT. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the carried-in list unchanged. Write it single-quoted with comma and space, never double quotes, e.g. ['B', 'C', 'A'].",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "demo_moves",
+      "edits": [
+       {
+        "modify_from": "Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side.",
+        "modify_to": "Then take the leg's frames: exactly the demonstration frames whose single highlighted target is the leg's starting target, after the frame where that target first became highlighted (for the first leg that opening frame is the very first demonstration frame, so its frames run from the second frame up to the first change) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare the gripper's y with that cube's y in the same frame (the cube may shift a few pixels when brushed): gripper y smaller than the cube's y means it passed the backward side, larger the forward side. The gripper's y relative to the new target and its travel in the next leg are irrelevant."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "demo_moves",
+      "edits": [
+       {
+        "modify_from": "Gripper y in the frames strictly between the two change frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD.",
+        "modify_to": "The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing refused. The report's exact leg-frame assignment and reference-stick choice are committed on both sides in the same words, replacing only the vaguer 'frames strictly between the two highlight changes' clause; the round-1 counting rule (one letter per highlight change, returns and short legs included, two-target frame as change frame) and the single-quote form are left intact. The subgoal instruction is unchanged: the one wrong subgoal followed from the wrong list, and demo_moves[legs_done] still matches every recorded subgoal once the list is right."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 16,
+    "subgoal_wrong": 0,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "demo_moves": 1,
+     "legs_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field demo_moves, ANNOTATOR PROMPT\n  The failure occurred at the first decision step, where the policy builds the whole list from the demonstration. Across the demonstration frames the highlighted target's coordinates drift by one to three pixels while it is still the same target (the target slots themselves jitter: a slot listed at one position in one frame appears a pixel or two away in the next). The policy treated such a drift as the highlighted target moving to a new target and inserted an extra leg, producing a five-letter list where the recorded subgoals had four. This breaks PREDICTABILITY: the rule defines a leg boundary as 'a different target becomes highlighted' without saying how a different target is told from the same target whose coordinates wobbled. The field keeps holding the ordered list of menu letters, one per leg, written at the first decision step and copied unchanged afterwards, e.g. ['C', 'B', 'B', 'B']. Change the definition of a leg boundary: the highlighted target has changed only when its position jumps to the slot of a target that was listed as a non-highlighted target in the previous frame, i.e. to a position tens of pixels away in x (the target slots are spaced roughly 30 px or more apart). A highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg. Identify targets by slot, not by exact coordinates: the set of target slots is fixed for the episode, and each frame's highlighted target is whichever slot it is nearest to. Everything else about the rule (two-target change frame, counting returns to a visited slot, the leg's frames, the reference cube, the side test, the letter table) stays as it is, stated in terms of slots.\n\nfield demo_moves, POLICY PROMPT\n  Same situation: at the first decision step the policy listed the highlighted target at every demonstration frame and counted every coordinate difference as a change, so a one-to-three-pixel wobble of the same highlighted target became an extra leg and an extra letter. The instruction says 'every frame where the highlighted target differs from the previous frame's ends one leg' without saying that targets jitter by a few pixels from frame to frame. Add, in terms the policy can check from the frames: first fix the target slots from the first demonstration frame (the highlighted target plus every listed target; the slots are spaced roughly 30 px or more apart in x). Then at each frame assign the highlighted target to the nearest slot. A leg ends only when the highlighted target is assigned to a different slot than in the previous frame, which always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target and nothing has changed; do not count it. Then proceed exactly as before: two-target frames are change frames, returns to an already-visited slot count, the leg's frames are those strictly after the opening frame and strictly before the closing change frame, the reference cube is the one whose x lies between the two slots, the side is read from gripper y versus that cube's y, LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. Example value: ['C', 'B', 'B', 'B']. Copy the list unchanged at every later step.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "demo_moves",
+      "edits": [
+       {
+        "modify_from": "A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one.",
+        "modify_to": "A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Targets are identified by slot, not by exact coordinates: the set of target slots is fixed for the episode (the slots are spaced roughly 30 px or more apart in x), and each frame's highlighted target is whichever slot it is nearest to. The highlighted target has changed only when it is assigned to a different slot than in the previous frame, which shows as a jump of tens of pixels to where a non-highlighted target sat; a highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "demo_moves",
+      "edits": [
+       {
+        "modify_from": "First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes.",
+        "modify_to": "First fix the target slots from the first demonstration frame (the highlighted target plus every listed target; slots are spaced roughly 30 px or more apart in x). Then walk through the demonstration frames and, at every frame, assign the highlighted target to the nearest slot; every frame where the highlighted target is assigned to a different slot than in the previous frame ends one leg and starts the next, so the number of letters is exactly the number of such slot changes. A slot change always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target with coordinate jitter and nothing has changed; do not count it."
+       },
+       {
+        "modify_from": "even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame.",
+        "modify_to": "even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame; a visited target means a visited slot."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing refused. The slot-based identification of the highlighted target is added on both sides in the same terms, as a definition of what counts as a change; the round-1 counting rule (every change counts, returns and short legs and last-frame changes included, two-target frame is the change frame) and the round-2 leg-frame and reference-cube rules are kept unchanged and now read in terms of slots. The subgoal instruction is untouched: no subgoal was wrong this round, and demo_moves[legs_done] still matches the recorded subgoals once the list is right."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 3,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    44,
+    76,
+    79,
+    85,
+    86
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. A leg runs from one highlighted target to the first frame where a different target is highlighted (the gripper has reached the next target). For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y at the middle frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. e.g. [\"A\", \"B\", \"A\", \"D\"]",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y at the middle of the leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. e.g. [\"A\", \"B\", \"A\", \"D\"]"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    2,
+    32,
+    40,
+    65,
+    85
+   ],
+   "verified_of_all": 0.875,
+   "subgoal_verified": 0.9375,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one. For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. Gripper y in the frames strictly between the two change frames of the leg smaller than the y of the stick (cube) between the two targets means it passed the BACKWARD side, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then look at the gripper's y in the frames strictly between the two highlight changes of that leg against the y of the stick (cube) it passed between the two targets: smaller y means it passed the backward side, larger y the forward side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    2,
+    48,
+    75,
+    79,
+    80
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one. For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then take the leg's frames: exactly the demonstration frames whose single highlighted target is the leg's starting target, after the frame where that target first became highlighted (for the first leg that opening frame is the very first demonstration frame, so its frames run from the second frame up to the first change) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare the gripper's y with that cube's y in the same frame (the cube may shift a few pixels when brushed): gripper y smaller than the cube's y means it passed the backward side, larger the forward side. The gripper's y relative to the new target and its travel in the next leg are irrelevant. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    8,
+    17,
+    18,
+    40,
+    70
+   ],
+   "verified_of_all": 0.9375,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's ends one leg and starts the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one. For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then take the leg's frames: exactly the demonstration frames whose single highlighted target is the leg's starting target, after the frame where that target first became highlighted (for the first leg that opening frame is the very first demonstration frame, so its frames run from the second frame up to the first change) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare the gripper's y with that cube's y in the same frame (the cube may shift a few pixels when brushed): gripper y smaller than the cube's y means it passed the backward side, larger the forward side. The gripper's y relative to the new target and its travel in the next leg are irrelevant. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    10,
+    22,
+    38,
+    73
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "RouteStick",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     0,
+     19,
+     58,
+     86,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts with the first letter of demo_moves. At every decision step, first update the memory as instructed (demo_moves from the demonstration at the first step, legs_done = carried-in legs_done + 1 at later steps, 0 at the first), then issue the subgoal demo_moves[legs_done] (zero-based). So at the first decision step issue demo_moves[0], at the second demo_moves[1], and so on. No option needs a point. The letters mean: A = move to the nearest left target (larger x) passing on the backward side (smaller y) of the stick; B = nearest right target (smaller x) passing on the forward side (larger y); C = nearest left target passing on the forward side; D = nearest right target passing on the backward side. If legs_done is beyond the end of demo_moves, or demo_moves is missing, re-derive what you can: if the demonstration is visible, rebuild the list from it; otherwise repeat the last letter in demo_moves, and if there is none, issue A.",
+    "fields": [
+     {
+      "name": "demo_moves",
+      "description": "If the memory carried in is empty (first decision step), read the DEMONSTRATION STEPS and write one menu letter per leg, in order. First fix the target slots from the first demonstration frame (the highlighted target plus every listed target; slots are spaced roughly 30 px or more apart in x). Then walk through the demonstration frames and, at every frame, assign the highlighted target to the nearest slot; every frame where the highlighted target is assigned to a different slot than in the previous frame ends one leg and starts the next, so the number of letters is exactly the number of such slot changes. A slot change always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target with coordinate jitter and nothing has changed; do not count it. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame; a visited target means a visited slot. A frame with two targets highlighted at once is the change frame: the newly highlighted target is the new one. For each leg: new target x smaller than the previous target x means RIGHT, larger means LEFT. The leg's frames are the frames AFTER its opening frame and BEFORE its closing change frame whose single highlighted target is the leg's starting target. For the first leg the opening frame is the very first demonstration frame, so its frames are the second frame onward until the first change. Never use frames at or after the closing change frame; those belong to the next leg and are often on the opposite side of the stick. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare gripper y with that cube's y in the same frame (the cube may shift slightly when brushed): gripper y smaller than the cube's y means it passed the BACKWARD side, larger means FORWARD. Do not compare the gripper with the new target's y and do not let the gripper's movement in the following leg decide the side. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the list carried in unchanged. Write the list single-quoted with comma and space between letters, never with double quotes. e.g. ['A', 'B', 'A', 'D']",
+      "annotation": "The ordered list of menu letters, one per leg of the demonstration video, written at the first decision step and copied unchanged at every later step. A leg runs from one highlighted target to the moment a different target becomes highlighted (the gripper has reached the next target). Count one leg at EVERY change of the highlighted target: the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited, legs lasting only a few frames, and a change that appears only in the last demonstration frame; never merge or skip a leg because the gripper comes back to where it was. A frame showing two targets highlighted at once is the change frame: the leg ends there and the next leg starts there, the newly highlighted target being the new one. Targets are identified by slot, not by exact coordinates: the set of target slots is fixed for the episode (the slots are spaced roughly 30 px or more apart in x), and each frame's highlighted target is whichever slot it is nearest to. The highlighted target has changed only when it is assigned to a different slot than in the previous frame, which shows as a jump of tens of pixels to where a non-highlighted target sat; a highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg. Letter for a leg: compare the x of the new target with the x of the previous target; smaller x is RIGHT, larger x is LEFT. Then take the leg's frames: exactly the demonstration frames whose single highlighted target is the leg's starting target, after the frame where that target first became highlighted (for the first leg that opening frame is the very first demonstration frame, so its frames run from the second frame up to the first change) and before the first frame in which the next target appears highlighted (a two-target frame is that closing frame and is excluded). Frames at or after the closing change frame belong to the following leg, never to this one. The reference stick is the one cube whose x lies between the x of the starting target and the x of the new target. In each of the leg's frames compare the gripper's y with that cube's y in the same frame (the cube may shift a few pixels when brushed): gripper y smaller than the cube's y means it passed the backward side, larger the forward side. The gripper's y relative to the new target and its travel in the next leg are irrelevant. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. The list has as many letters as legs in the demonstration, and it equals the sequence of recorded subgoals of the episode. Written as a single-quoted list, comma and space between letters, never double quotes. e.g. ['A', 'B', 'A', 'D']"
+     },
+     {
+      "name": "legs_done",
+      "description": "Write 0 if the memory carried in is empty (first decision step). Otherwise write the carried-in legs_done plus 1, because every decision step after the first shows one completed execution leg (the gripper moved and a different target became highlighted). e.g. 1",
+      "annotation": "Number of execution legs the robot has completed so far, i.e. the index of the decision step counting from zero: 0 at the first decision step, 1 at the second, 2 at the third, and so on. It is the index into demo_moves of the subgoal to issue now. e.g. 1"
+     }
+    ]
+   }
+  }
+ ]
+}

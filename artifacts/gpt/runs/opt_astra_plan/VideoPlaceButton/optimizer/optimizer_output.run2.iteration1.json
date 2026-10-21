@@ -1,0 +1,116 @@
+{
+ "episodes": [
+  19,
+  21,
+  72,
+  79,
+  83
+ ],
+ "user_chars": 14539,
+ "usage": {
+  "prompt_tokens": 5280,
+  "completion_tokens": 889,
+  "total_tokens": 6169,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 2985,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "choose B, dropping onto the target selected by pre_press_target.",
+    "modify_to": "choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position."
+   },
+   {
+    "modify_from": "Match the remembered point to the corresponding visible target and point within that target, or use the remembered point if it is occluded.",
+    "modify_to": "Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "pre_press_target",
+    "edits": [
+     {
+      "modify_from": "When memory is empty and the demonstration is shown, locate the button press by the closed gripper descending onto the button and its depression. Find the instruction's cube's last completed target placement before that event; if the cube is hidden during the press, use its preceding release and resting position. Match that target to the execution-start scene and write its visible center as [y, x]. Ignore subsequent cube placements when selecting the target.",
+      "modify_to": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "pre_press_target",
+    "edits": [
+     {
+      "modify_from": "Store the [y, x] center of the target on which the instruction's cube rested immediately before the demonstration button press. Identify it from the last completed placement before that press, not from later placements or the cube's final position. Use the selected target's center in the execution-start scene, matching it through the demonstration despite occlusion and small centroid shifts.",
+      "modify_to": "Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location."
+     },
+     {
+      "modify_from": "For episodes 7, 31, 47, 52, and 89 respectively, the values at both decision steps are [126, 145], [115, 152], [80, 162], [101, 163], and [76, 104].",
+      "modify_to": "If the selected target cannot be identified, write \"unknown\"."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "No requested general correction is omitted. Do not replace a selected target's execution-start center with its earlier placement location, or infer before/after identity from location alone: the selected physical target must be tracked through later movements and exchanges. No episode-specific coordinate corrections or additional memory fields are added."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "pre_press_target",
+    "edits": [
+     {
+      "modify_from": "Store the [y, x] center of the target on which the instruction's cube rested immediately before the demonstration button press. Identify it from the last completed placement before that press, not from later placements or the cube's final position. Use the selected target's center in the execution-start scene, matching it through the demonstration despite occlusion and small centroid shifts.",
+      "modify_to": "Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location."
+     },
+     {
+      "modify_from": "For episodes 7, 31, 47, 52, and 89 respectively, the values at both decision steps are [126, 145], [115, 152], [80, 162], [101, 163], and [76, 104].",
+      "modify_to": "If the selected target cannot be identified, write \"unknown\"."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "pre_press_target",
+    "edits": [
+     {
+      "modify_from": "When memory is empty and the demonstration is shown, locate the button press by the closed gripper descending onto the button and its depression. Find the instruction's cube's last completed target placement before that event; if the cube is hidden during the press, use its preceding release and resting position. Match that target to the execution-start scene and write its visible center as [y, x]. Ignore subsequent cube placements when selecting the target.",
+      "modify_to": "Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x]."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "choose B, dropping onto the target selected by pre_press_target.",
+    "modify_to": "choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position."
+   },
+   {
+    "modify_from": "Match the remembered point to the corresponding visible target and point within that target, or use the remembered point if it is occluded.",
+    "modify_to": "Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded."
+   }
+  ],
+  "refused": "No requested general correction is omitted. Do not replace a selected target's execution-start center with its earlier placement location, or infer before/after identity from location alone: the selected physical target must be tracked through later movements and exchanges. No episode-specific coordinate corrections or additional memory fields are added."
+ },
+ "not_applied": [],
+ "refused": "No requested general correction is omitted. Do not replace a selected target's execution-start center with its earlier placement location, or infer before/after identity from location alone: the selected physical target must be tracked through later movements and exchanges. No episode-specific coordinate corrections or additional memory fields are added.",
+ "text": "{\n  \"annotator_prompt\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"pre_press_target\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Store the [y, x] center of the target on which the instruction's cube rested immediately before the demonstration button press. Identify it from the last completed placement before that press, not from later placements or the cube's final position. Use the selected target's center in the execution-start scene, matching it through the demonstration despite occlusion and small centroid shifts.\",\n          \"modify_to\": \"Despite its legacy name, store the [y, x] execution-start center of the physical target selected by the instruction. For 'right before' the demonstration button press, select the named cube's last completed target placement before that press. For 'right after', select its first completed target placement after that press, not its unchanged resting position immediately after button contact. Identify completed placements from release and subsequent resting evidence. Follow the selected physical target through the remaining demonstration, including target movements and exchanges, and use its center in the execution-start scene. Do not substitute another target that later occupies its earlier location.\"\n        },\n        {\n          \"modify_from\": \"For episodes 7, 31, 47, 52, and 89 respectively, the values at both decision steps are [126, 145], [115, 152], [80, 162], [101, 163], and [76, 104].\",\n          \"modify_to\": \"If the selected target cannot be identified, write \\\"unknown\\\".\"\n        }\n      ]\n    }\n  ],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"pre_press_target\",\n      \"edits\": [\n        {\n          \"modify_from\": \"When memory is empty and the demonstration is shown, locate the button press by the closed gripper descending onto the button and its depression. Find the instruction's cube's last completed target placement before that event; if the cube is hidden during the press, use its preceding release and resting position. Match that target to the execution-start scene and write its visible center as [y, x]. Ignore subsequent cube placements when selecting the target.\",\n          \"modify_to\": \"Despite its legacy name, this field holds the instruction-selected destination. When memory is empty and the demonstration is shown, locate the button press from closed-gripper descent onto the button and contact or depression evidence, allowing temporary button occlusion. Read the temporal relation from the goal: for 'before', select the named cube's last completed target placement before the press; for 'after', select its first completed target placement after the press, not its unchanged resting position immediately after button contact. Recognize completed placements from release and subsequent resting evidence, not an isolated held label or centroid. If the cube is hidden during the press, use the visible placement evidence on the requested side of the press. Follow the selected physical target through the remainder of the demonstration, including movements and exchanges; do not substitute a target that later occupies its old location. Write the selected target's execution-start center as [y, x].\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"choose B, dropping onto the target selected by pre_press_target.\",\n      \"modify_to\": \"choose B, dropping onto the physical target identified by the instruction-selected value of pre_press_target. The goal's before/after selection and tracking through demonstration target movements must already have been completed at the first decision step; do not reconstruct or reinterpret that history from the current cube position.\"\n    },\n    {\n      \"modify_from\": \"Match the remembered point to the corresponding visible target and point within that target, or use the remembered point if it is occluded.\",\n      \"modify_to\": \"Match the stored execution-start point to the corresponding visible target and point within that target, or use the remembered point if it is occluded.\"\n    }\n  ],\n  \"refused\": \"No requested general correction is omitted. Do not replace a selected target's execution-start center with its earlier placement location, or infer before/after identity from location alone: the selected physical target must be tracked through later movements and exchanges. No episode-specific coordinate corrections or additional memory fields are added.\"\n}"
+}

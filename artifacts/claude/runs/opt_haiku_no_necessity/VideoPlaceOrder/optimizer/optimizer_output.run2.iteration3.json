@@ -1,0 +1,177 @@
+{
+ "episodes": [
+  3,
+  39,
+  57,
+  73,
+  92
+ ],
+ "user_chars": 54414,
+ "usage": {
+  "prompt_tokens": 20922,
+  "completion_tokens": 3239,
+  "prompt_tokens_details": {
+   "cached_tokens": 3214,
+   "cache_write_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 390
+  }
+ },
+ "reasoning": "I need to figure out which JSON edits to make for the annotator prompt and memory policy around demo_placements and goal_target—specifically adding the real-carry entry condition, excluding artifacts, and concretely defining the stable set within the existing release/entry description.\n\nFor the goal_target rule, I want to sharpen the logic so it applies to any single frame, even when the overall layout appears unchanged: matching positions mean no movement, while two unmatched positions identify the movers who swap places. I'll apply the same clarification to the policy memory side and draft the exact quoted edits.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "a release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper'; decide by nearest match within a few pixels which target of the STABLE demo target set (the four positions that stay the same through the demo) the cube now rests on,",
+      "modify_to": "first find the STABLE target set: the four target positions listed in the demo frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]); every entry you write is one of those four positions, to the pixel. A release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper', and it counts only if it ends a real carry: frames labelled held with the gripper raised (height about 0.15) and the cube moving away from where it last rested, then the gripper lowered to table height and the fingers opening. A frame with fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (it happens right after a button press, where the fingers were 0% open) and is NOT a placement; a re-grasp that lifts and sets the cube back on the same target without resting elsewhere is NOT a placement either. For each counted release decide by nearest match within a few pixels which stable target the cube now rests on,"
+     },
+     {
+      "modify_from": "Never write values from the opening frames, from release frames, or from the final parked frames.",
+      "modify_to": "Never write values from the opening frames, from release frames, or from the final parked frames, even if they differ from the stable position by only a pixel or two; a target never gets two entries for one carry."
+     },
+     {
+      "modify_from": "e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]",
+      "modify_to": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "If every parked frame lists the same four positions as the stable set within a few pixels, nothing moved: write the target listed in the scene at the start of execution nearest the ordinal entry. If some parked frame lists positions matching no stable target, exactly two stable targets are missing from it: those two are the movers, and they swap places, each ending at the other's original spot.",
+      "modify_to": "Check each parked frame one at a time. Only if EVERY parked frame lists the same four positions as the stable set within a few pixels did nothing move: then write the target listed in the scene at the start of execution nearest the ordinal entry. If ANY single parked frame lists a position matching no stable target within a few pixels, the two stable targets absent from that frame are the movers, and they have swapped places, each ending at the other's original spot. Apply this even if the last parked frames and the scene at the start of execution again list four positions within a few pixels of the stable set: a swap ends with the movers on each other's old spots, so an unchanged-looking final layout is NOT evidence that nothing moved."
+     },
+     {
+      "modify_from": "e.g. entry 2 is [99, 167]; a parked frame lacks both [99, 167] and [99, 88] and shows two new positions, so the other mover is [99, 88]; the execution scene lists [99, 90]; goal_target = [99, 90]",
+      "modify_to": "e.g. entry 3 is [143, 116]; one middle parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116], though the final frames look like the stable set again; the other mover is [116, 101]; the execution scene lists [116, 100]; goal_target = [116, 100]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before; the entry is the position of the target closest to the cube's resting spot right after that release,",
+      "modify_to": "A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before, and it produces an entry only when it ends a real carry: a run of frames in which the cube is labelled held with the gripper raised (height about 0.15) and the cube's position moves away from the spot where it last rested, followed by the gripper lowering to table height and the fingers opening. A frame with the fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (typically right after a button press where the fingers were 0% open) and produces no entry; a re-grasp that lifts the cube and sets it back on the same target without the cube having rested anywhere else produces no entry either. The entry is the position of the target closest to the cube's resting spot right after the release,"
+     },
+     {
+      "modify_from": "the four target positions exactly as listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens there).",
+      "modify_to": "the four target positions exactly as listed in the demonstration frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]). Every entry is one of those four positions, to the pixel, never a position read from a release frame, an opening frame or a parked frame, even if it differs by only a pixel or two."
+     },
+     {
+      "modify_from": "e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]",
+      "modify_to": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "If every parked frame lists the same four positions as the stable set (within a few pixels), no target moved: goal_target is the target listed in the first execution frame nearest the ordinal entry. If some parked frame lists positions that match no stable target, exactly two stable targets are missing from that frame: those two are the movers, and they exchange places, each ending where the other began.",
+      "modify_to": "Take the parked frames one at a time. Only if EVERY parked frame lists the same four positions as the stable set (within a few pixels) did no target move: goal_target is then the target listed in the first execution frame nearest the ordinal entry. If ANY single parked frame lists a position that matches no stable target within a few pixels, the two stable targets absent from that frame are the movers and they exchange places, each ending where the other began. This holds even when the last parked frames and the first execution frame again list four positions within a few pixels of the stable set: a swap ends with the movers standing on each other's original spots, so an unchanged-looking final layout is not evidence that nothing moved."
+     },
+     {
+      "modify_from": "e.g. entry 1 is [137, 103]; a parked frame lacks both [137, 103] and [101, 169] and lists two new positions, so the movers are [137, 103] and [101, 169]; the first execution frame lists [101, 166] nearest the other mover's stable spot; goal_target = [101, 166]",
+      "modify_to": "e.g. entry 3 is [143, 116]; one parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116], though the final frames list [116, 100] and [141, 117] again; the movers are [116, 101] and [143, 116]; the first execution frame lists [116, 100] nearest the other mover's stable spot; goal_target = [116, 100]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The report's two extra flat statements ('the same target never appears twice in a row' and 'at most as many entries as distinct carries') stay out, as the report itself recommends: they follow from the real-carry entry condition now written, and as prohibitions they would misfire on a demonstration where the cube is carried away, rested elsewhere and carried back to the same target. The subgoal instruction is left unchanged, as the report found it sufficient once goal_target is right. The swap rule from round 2 is kept and only sharpened to test parked frames one at a time; it does not revert to round 1's frame-by-frame tracking."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before; the entry is the position of the target closest to the cube's resting spot right after that release,",
+      "modify_to": "A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before, and it produces an entry only when it ends a real carry: a run of frames in which the cube is labelled held with the gripper raised (height about 0.15) and the cube's position moves away from the spot where it last rested, followed by the gripper lowering to table height and the fingers opening. A frame with the fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (typically right after a button press where the fingers were 0% open) and produces no entry; a re-grasp that lifts the cube and sets it back on the same target without the cube having rested anywhere else produces no entry either. The entry is the position of the target closest to the cube's resting spot right after the release,"
+     },
+     {
+      "modify_from": "the four target positions exactly as listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens there).",
+      "modify_to": "the four target positions exactly as listed in the demonstration frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]). Every entry is one of those four positions, to the pixel, never a position read from a release frame, an opening frame or a parked frame, even if it differs by only a pixel or two."
+     },
+     {
+      "modify_from": "e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]",
+      "modify_to": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "If every parked frame lists the same four positions as the stable set (within a few pixels), no target moved: goal_target is the target listed in the first execution frame nearest the ordinal entry. If some parked frame lists positions that match no stable target, exactly two stable targets are missing from that frame: those two are the movers, and they exchange places, each ending where the other began.",
+      "modify_to": "Take the parked frames one at a time. Only if EVERY parked frame lists the same four positions as the stable set (within a few pixels) did no target move: goal_target is then the target listed in the first execution frame nearest the ordinal entry. If ANY single parked frame lists a position that matches no stable target within a few pixels, the two stable targets absent from that frame are the movers and they exchange places, each ending where the other began. This holds even when the last parked frames and the first execution frame again list four positions within a few pixels of the stable set: a swap ends with the movers standing on each other's original spots, so an unchanged-looking final layout is not evidence that nothing moved."
+     },
+     {
+      "modify_from": "e.g. entry 1 is [137, 103]; a parked frame lacks both [137, 103] and [101, 169] and lists two new positions, so the movers are [137, 103] and [101, 169]; the first execution frame lists [101, 166] nearest the other mover's stable spot; goal_target = [101, 166]",
+      "modify_to": "e.g. entry 3 is [143, 116]; one parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116], though the final frames list [116, 100] and [141, 117] again; the movers are [116, 101] and [143, 116]; the first execution frame lists [116, 100] nearest the other mover's stable spot; goal_target = [116, 100]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "demo_placements",
+    "edits": [
+     {
+      "modify_from": "a release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper'; decide by nearest match within a few pixels which target of the STABLE demo target set (the four positions that stay the same through the demo) the cube now rests on,",
+      "modify_to": "first find the STABLE target set: the four target positions listed in the demo frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]); every entry you write is one of those four positions, to the pixel. A release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper', and it counts only if it ends a real carry: frames labelled held with the gripper raised (height about 0.15) and the cube moving away from where it last rested, then the gripper lowered to table height and the fingers opening. A frame with fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (it happens right after a button press, where the fingers were 0% open) and is NOT a placement; a re-grasp that lifts and sets the cube back on the same target without resting elsewhere is NOT a placement either. For each counted release decide by nearest match within a few pixels which stable target the cube now rests on,"
+     },
+     {
+      "modify_from": "Never write values from the opening frames, from release frames, or from the final parked frames.",
+      "modify_to": "Never write values from the opening frames, from release frames, or from the final parked frames, even if they differ from the stable position by only a pixel or two; a target never gets two entries for one carry."
+     },
+     {
+      "modify_from": "e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]",
+      "modify_to": "e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "goal_target",
+    "edits": [
+     {
+      "modify_from": "If every parked frame lists the same four positions as the stable set within a few pixels, nothing moved: write the target listed in the scene at the start of execution nearest the ordinal entry. If some parked frame lists positions matching no stable target, exactly two stable targets are missing from it: those two are the movers, and they swap places, each ending at the other's original spot.",
+      "modify_to": "Check each parked frame one at a time. Only if EVERY parked frame lists the same four positions as the stable set within a few pixels did nothing move: then write the target listed in the scene at the start of execution nearest the ordinal entry. If ANY single parked frame lists a position matching no stable target within a few pixels, the two stable targets absent from that frame are the movers, and they have swapped places, each ending at the other's original spot. Apply this even if the last parked frames and the scene at the start of execution again list four positions within a few pixels of the stable set: a swap ends with the movers on each other's old spots, so an unchanged-looking final layout is NOT evidence that nothing moved."
+     },
+     {
+      "modify_from": "e.g. entry 2 is [99, 167]; a parked frame lacks both [99, 167] and [99, 88] and shows two new positions, so the other mover is [99, 88]; the execution scene lists [99, 90]; goal_target = [99, 90]",
+      "modify_to": "e.g. entry 3 is [143, 116]; one middle parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116], though the final frames look like the stable set again; the other mover is [116, 101]; the execution scene lists [116, 100]; goal_target = [116, 100]"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [],
+  "refused": "The report's two extra flat statements ('the same target never appears twice in a row' and 'at most as many entries as distinct carries') stay out, as the report itself recommends: they follow from the real-carry entry condition now written, and as prohibitions they would misfire on a demonstration where the cube is carried away, rested elsewhere and carried back to the same target. The subgoal instruction is left unchanged, as the report found it sufficient once goal_target is right. The swap rule from round 2 is kept and only sharpened to test parked frames one at a time; it does not revert to round 1's frame-by-frame tracking."
+ },
+ "not_applied": [],
+ "refused": "The report's two extra flat statements ('the same target never appears twice in a row' and 'at most as many entries as distinct carries') stay out, as the report itself recommends: they follow from the real-carry entry condition now written, and as prohibitions they would misfire on a demonstration where the cube is carried away, rested elsewhere and carried back to the same target. The subgoal instruction is left unchanged, as the report found it sufficient once goal_target is right. The swap rule from round 2 is kept and only sharpened to test parked frames one at a time; it does not revert to round 1's frame-by-frame tracking.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"demo_placements\", \"edits\": [{\"modify_from\": \"A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before; the entry is the position of the target closest to the cube's resting spot right after that release,\", \"modify_to\": \"A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before, and it produces an entry only when it ends a real carry: a run of frames in which the cube is labelled held with the gripper raised (height about 0.15) and the cube's position moves away from the spot where it last rested, followed by the gripper lowering to table height and the fingers opening. A frame with the fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (typically right after a button press where the fingers were 0% open) and produces no entry; a re-grasp that lifts the cube and sets it back on the same target without the cube having rested anywhere else produces no entry either. The entry is the position of the target closest to the cube's resting spot right after the release,\"}, {\"modify_from\": \"the four target positions exactly as listed in the last demonstration frames before the final centre release (the frames just before the gripper carries the cube to about [82, 127] and opens there).\", \"modify_to\": \"the four target positions exactly as listed in the demonstration frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]). Every entry is one of those four positions, to the pixel, never a position read from a release frame, an opening frame or a parked frame, even if it differs by only a pixel or two.\"}, {\"modify_from\": \"e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]\", \"modify_to\": \"e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]\"}]}, {\"kind\": \"modify\", \"field\": \"goal_target\", \"edits\": [{\"modify_from\": \"If every parked frame lists the same four positions as the stable set (within a few pixels), no target moved: goal_target is the target listed in the first execution frame nearest the ordinal entry. If some parked frame lists positions that match no stable target, exactly two stable targets are missing from that frame: those two are the movers, and they exchange places, each ending where the other began.\", \"modify_to\": \"Take the parked frames one at a time. Only if EVERY parked frame lists the same four positions as the stable set (within a few pixels) did no target move: goal_target is then the target listed in the first execution frame nearest the ordinal entry. If ANY single parked frame lists a position that matches no stable target within a few pixels, the two stable targets absent from that frame are the movers and they exchange places, each ending where the other began. This holds even when the last parked frames and the first execution frame again list four positions within a few pixels of the stable set: a swap ends with the movers standing on each other's original spots, so an unchanged-looking final layout is not evidence that nothing moved.\"}, {\"modify_from\": \"e.g. entry 1 is [137, 103]; a parked frame lacks both [137, 103] and [101, 169] and lists two new positions, so the movers are [137, 103] and [101, 169]; the first execution frame lists [101, 166] nearest the other mover's stable spot; goal_target = [101, 166]\", \"modify_to\": \"e.g. entry 3 is [143, 116]; one parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116], though the final frames list [116, 100] and [141, 117] again; the movers are [116, 101] and [143, 116]; the first execution frame lists [116, 100] nearest the other mover's stable spot; goal_target = [116, 100]\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"demo_placements\", \"edits\": [{\"modify_from\": \"a release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper'; decide by nearest match within a few pixels which target of the STABLE demo target set (the four positions that stay the same through the demo) the cube now rests on,\", \"modify_to\": \"first find the STABLE target set: the four target positions listed in the demo frames where the goal-named cube is held raised and carried toward the image centre just before the final centre release (cube left near [82, 127]); every entry you write is one of those four positions, to the pixel. A release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper', and it counts only if it ends a real carry: frames labelled held with the gripper raised (height about 0.15) and the cube moving away from where it last rested, then the gripper lowered to table height and the fingers opening. A frame with fingers partly open (~39-46%) and the cube labelled held at table height on the very spot it already rested on, with no raised carry before it, is an artifact (it happens right after a button press, where the fingers were 0% open) and is NOT a placement; a re-grasp that lifts and sets the cube back on the same target without resting elsewhere is NOT a placement either. For each counted release decide by nearest match within a few pixels which stable target the cube now rests on,\"}, {\"modify_from\": \"Never write values from the opening frames, from release frames, or from the final parked frames.\", \"modify_to\": \"Never write values from the opening frames, from release frames, or from the final parked frames, even if they differ from the stable position by only a pixel or two; a target never gets two entries for one carry.\"}, {\"modify_from\": \"e.g. [[99, 88], [99, 167], [141, 133], [79, 90]]\", \"modify_to\": \"e.g. releases on [107, 166], then [125, 119], then [97, 88], then a button press, a spurious 39%-open frame over [97, 88], then the centre carry: [[107, 166], [125, 119], [97, 88]]\"}]}, {\"kind\": \"modify\", \"field\": \"goal_target\", \"edits\": [{\"modify_from\": \"If every parked frame lists the same four positions as the stable set within a few pixels, nothing moved: write the target listed in the scene at the start of execution nearest the ordinal entry. If some parked frame lists positions matching no stable target, exactly two stable targets are missing from it: those two are the movers, and they swap places, each ending at the other's original spot.\", \"modify_to\": \"Check each parked frame one at a time. Only if EVERY parked frame lists the same four positions as the stable set within a few pixels did nothing move: then write the target listed in the scene at the start of execution nearest the ordinal entry. If ANY single parked frame lists a position matching no stable target within a few pixels, the two stable targets absent from that frame are the movers, and they have swapped places, each ending at the other's original spot. Apply this even if the last parked frames and the scene at the start of execution again list four positions within a few pixels of the stable set: a swap ends with the movers on each other's old spots, so an unchanged-looking final layout is NOT evidence that nothing moved.\"}, {\"modify_from\": \"e.g. entry 2 is [99, 167]; a parked frame lacks both [99, 167] and [99, 88] and shows two new positions, so the other mover is [99, 88]; the execution scene lists [99, 90]; goal_target = [99, 90]\", \"modify_to\": \"e.g. entry 3 is [143, 116]; one middle parked frame lists [113, 127] and [148, 85] and lacks [116, 101] and [143, 116], though the final frames look like the stable set again; the other mover is [116, 101]; the execution scene lists [116, 100]; goal_target = [116, 100]\"}]}], \"policy_prompt_for_subgoal\": [], \"refused\": \"The report's two extra flat statements ('the same target never appears twice in a row' and 'at most as many entries as distinct carries') stay out, as the report itself recommends: they follow from the real-carry entry condition now written, and as prohibitions they would misfire on a demonstration where the cube is carried away, rested elsewhere and carried back to the same target. The subgoal instruction is left unchanged, as the report found it sufficient once goal_target is right. The swap rule from round 2 is kept and only sharpened to test parked frames one at a time; it does not revert to round 1's frame-by-frame tracking.\"}"
+}

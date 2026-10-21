@@ -1,0 +1,77 @@
+{
+ "task": "PatternLock",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    33,
+    41,
+    54,
+    70,
+    86
+   ],
+   "verified_of_all": 0.875,
+   "subgoal_verified": 0.875
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    18,
+    41,
+    59,
+    63,
+    91
+   ],
+   "verified_of_all": 0.95,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    8,
+    56,
+    70,
+    72,
+    93
+   ],
+   "verified_of_all": 0.7272727272727273,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    7,
+    30,
+    35,
+    59,
+    60
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    21,
+    24,
+    60,
+    82,
+    88
+   ],
+   "verified_of_all": 0.9166666666666666,
+   "subgoal_verified": 0.9166666666666666
+  }
+ ],
+ "policy_prompt_for_subgoal": "First update remaining_moves exactly once according to the policy prompt for memory. Then return its head verbatim as choice, with point=null. Valid executable choices are the menu letters A through H, not their action descriptions. For example, an updated remaining_moves string of ['A'] requires choice=\"A\", point=null. The same head rule governs transitions from every subgoal: after a completed command, use the head of the updated suffix, including repeating the same option when two consecutive entries match. Do not choose a direction from highlights alone or remove the current head again after choosing it. At episode start, apply the same output rule to the head of the complete list extracted from the demonstration. If visual evidence is ambiguous later, continue to follow the stored list because the controller completes each command before the next decision. For an unexpected state with an empty list or an invalid head, return choice=\"A\", point=null as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+ "fields": [
+  {
+   "name": "remaining_moves",
+   "description": "When memory is empty and demonstration frames are present, read the entire demonstration chronologically and write its complete ordered list of target-to-target menu letters. Serialize remaining_moves as a list string with single-quoted menu letters separated by comma-space, for example ['B', 'F']; serialize the empty list as []. Read the incoming string as its ordered list of letters, apply the update rules below, and write the resulting list in this exact representation at every step. Identify the starting target and each successive reached target using highlight changes together with sustained wrist motion. Treat marker labels such as 'highlighted area' and 'highlighted target' as possible references to lattice targets: identify their lattice cells from their positions, not their label wording. Include the starting target as the source of the first transition, and assign both source and destination to lattice rows and columns before encoding each move. Highlights can retain the previous target, so do not interpret the displayed order of highlighted coordinates as travel order. Each neighboring-target transition is one move, even when consecutive transitions have the same direction. Ignore pauses and small coordinate fluctuations; exclude the reset into execution. Before encoding each direction, identify the source and destination targets' rows and columns in the target lattice. Use sustained wrist motion to establish travel order, not raw wrist displacement signs to classify directions. Targets in the same perspective-slanted column remain in that column despite a small image x displacement: a row change alone is forward or backward. A diagonal requires a change into an adjacent column as well as an adjacent row. Larger y means forward, smaller y backward, larger x left, and smaller x right. Encode forward A, backward B, left C, right D, forward-left E, forward-right F, backward-left G, backward-right H. At every later decision step with carried memory, the oracle has completed the preceding command: remove exactly the first entry of the incoming list and write the resulting suffix. This removal occurs once per decision, not once per observed frame or highlight change. Keep the new first entry in the written list because its command has not yet executed. If the incoming list is empty, retain []. If neither demonstration nor carried memory is available, write []. e.g. ['E', 'D', 'G', 'H']"
+  }
+ ],
+ "stage": "optimized"
+}

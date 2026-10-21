@@ -1,0 +1,92 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "remaining_targets"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  0,
+  14,
+  17,
+  48,
+  50
+ ],
+ "scored": 7,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.8571428571428571,
+ "memory_verified": 0.8571428571428571,
+ "reads": {
+  "remaining_targets": 3
+ },
+ "field_errors": {
+  "remaining_targets": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.14285714285714285,
+ "verified_of_all": 0.8571428571428571,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 7,
+ "critique": "field remaining_targets, ANNOTATOR PROMPT\n  When the goal requested the green-hidden container, two containers moved along opposite curved branches and settled at each other's starting locations. The policy selected the container at green's original location and wrote that location, whereas the correct target list contained the opposite endpoint. This is a PREDICTABILITY failure in initializing the identity-to-location assignment, not a need for another memory field. Clarify how to resolve a sampled curved exchange: follow each moving identity around the pair's midpoint through the intermediate frames to its final endpoint. Returning to the same unordered resting layout does not restore the identities. For example, the requested identity follows [114, 107] through [102, 114] and [98, 130] to [109, 143], so write [[109, 143]], not [[115, 108]]. The field remains an ordered list of final container locations for requested pickups not yet completed. Initialize it from the demonstration at the first decision; thereafter remove its head only at the decision showing that requested pickup successfully completed, and preserve it through release. Two separately completed exchanges of the same pair restore their original assignments.\n\nfield remaining_targets, POLICY PROMPT\n  In a demonstration requesting the green-hidden container, a curved exchange returned the occupied positions to their original layout but exchanged the identities. The policy initialized remaining_targets with green's original location and therefore selected the wrong container; the correct initialization used the opposite endpoint. This breaks PREDICTABILITY despite the demonstration containing the needed information. Make the existing continuous-motion instruction operational: identify the two moving containers while leaving stationary containers out of the association, estimate their midpoint, and follow each identity's successive displacement around that midpoint. Continue the observed rotational branch into the settling frame instead of assigning the endpoint by proximity to its starting position or by extending only its last straight-line displacement. For example, [114, 107] -> [102, 114] -> [98, 130] continues to [109, 143], yielding remaining_targets=[[109, 143]]. A later motion segment starting from the settled layout is a separate exchange; two completed exchanges of the same pair restore the assignment. Use this procedure only to initialize the ordered list when incoming memory is absent and the demonstration is present. Keep the existing updates: remove the head after execution visibly shows successful grasp and lift of that target, preserve the list after release, and never reinitialize an existing empty list or remove a target merely because its pickup is being selected.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_targets",
+    "description": "In a demonstration requesting the green-hidden container, a curved exchange returned the occupied positions to their original layout but exchanged the identities. The policy initialized remaining_targets with green's original location and therefore selected the wrong container; the correct initialization used the opposite endpoint. This breaks PREDICTABILITY despite the demonstration containing the needed information. Make the existing continuous-motion instruction operational: identify the two moving containers while leaving stationary containers out of the association, estimate their midpoint, and follow each identity's successive displacement around that midpoint. Continue the observed rotational branch into the settling frame instead of assigning the endpoint by proximity to its starting position or by extending only its last straight-line displacement. For example, [114, 107] -> [102, 114] -> [98, 130] continues to [109, 143], yielding remaining_targets=[[109, 143]]. A later motion segment starting from the settled layout is a separate exchange; two completed exchanges of the same pair restore the assignment. Use this procedure only to initialize the ordered list when incoming memory is absent and the demonstration is present. Keep the existing updates: remove the head after execution visibly shows successful grasp and lift of that target, preserve the list after release, and never reinitialize an existing empty list or remove a target merely because its pickup is being selected."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "remaining_targets",
+    "description": "When the goal requested the green-hidden container, two containers moved along opposite curved branches and settled at each other's starting locations. The policy selected the container at green's original location and wrote that location, whereas the correct target list contained the opposite endpoint. This is a PREDICTABILITY failure in initializing the identity-to-location assignment, not a need for another memory field. Clarify how to resolve a sampled curved exchange: follow each moving identity around the pair's midpoint through the intermediate frames to its final endpoint. Returning to the same unordered resting layout does not restore the identities. For example, the requested identity follows [114, 107] through [102, 114] and [98, 130] to [109, 143], so write [[109, 143]], not [[115, 108]]. The field remains an ordered list of final container locations for requested pickups not yet completed. Initialize it from the demonstration at the first decision; thereafter remove its head only at the decision showing that requested pickup successfully completed, and preserve it through release. Two separately completed exchanges of the same pair restore their original assignments."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    48,
+    "exec",
+    114
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [115, 108]",
+   "recorded": "A: pick up the container at [106, 145]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

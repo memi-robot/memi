@@ -1,0 +1,88 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "plan",
+  "moves_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  33,
+  41,
+  54,
+  70,
+  86
+ ],
+ "scored": 16,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9375,
+ "memory_verified": 1.0,
+ "reads": {
+  "plan": 11,
+  "moves_done": 11
+ },
+ "field_errors": {
+  "plan": {
+   "in": 0,
+   "sole": 0
+  },
+  "moves_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.0625,
+ "verified_of_all": 0.9375,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 16,
+ "critique": "the policy prompt for subgoal\n  The failure happened on a retrace task at a decision step after the first: the carried memory held the full plan and moves_done=1, the observed execution steps showed the gripper completing the second planned move (the newly highlighted target lit at the end of that move), and the recorded subgoal was the third plan letter. The policy instead repeated the second letter. It broke SUFFICIENCY in form only: the rule 'subgoal is plan[moves_done], where moves_done is the value written at THIS step' asked the policy to index by a value it had not yet written and to perform the increment in its head, and it indexed by the carried value instead. Replace that rule with one stated purely in terms of what is handed in. New rule: at the first decision step (memory empty, demonstration shown) the subgoal is plan[0] of the plan just built. At every later decision step the subgoal is plan[carried moves_done + 1]; equivalently, the execution steps shown just completed plan[carried moves_done], and that letter is never chosen again at this step. Keep the fallback: if carried moves_done + 1 is at or beyond the plan length, repeat the last plan letter. Drop the sentence that defines the index through 'the value written at THIS step'; the indexing must be independent of the memory the policy is simultaneously writing. The rest (no subgoal needs a point, never repeat or skip regardless of where the gripper ended, the no-demonstration fallback) stays.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The failure happened on a retrace task at a decision step after the first: the carried memory held the full plan and moves_done=1, the observed execution steps showed the gripper completing the second planned move (the newly highlighted target lit at the end of that move), and the recorded subgoal was the third plan letter. The policy instead repeated the second letter. It broke SUFFICIENCY in form only: the rule 'subgoal is plan[moves_done], where moves_done is the value written at THIS step' asked the policy to index by a value it had not yet written and to perform the increment in its head, and it indexed by the carried value instead. Replace that rule with one stated purely in terms of what is handed in. New rule: at the first decision step (memory empty, demonstration shown) the subgoal is plan[0] of the plan just built. At every later decision step the subgoal is plan[carried moves_done + 1]; equivalently, the execution steps shown just completed plan[carried moves_done], and that letter is never chosen again at this step. Keep the fallback: if carried moves_done + 1 is at or beyond the plan length, repeat the last plan letter. Drop the sentence that defines the index through 'the value written at THIS step'; the indexing must be independent of the memory the policy is simultaneously writing. The rest (no subgoal needs a point, never repeat or skip regardless of where the gripper ended, the no-demonstration fallback) stays.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    41,
+    "exec",
+    131
+   ],
+   "memory_in": "plan=[\"D\", \"D\", \"B\"]; moves_done=1",
+   "answered": "D: move right",
+   "recorded": "B: move backward",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The index rule was stated in terms of a value written at this same step, which I misread as the carried value: with carried moves_done=1 I chose plan[1]=D instead of plan[2]=B. It should state directly in terms of what is handed in: at any step after the first, the subgoal is plan[carried moves_done + 1]; plan[carried moves_done] is the move the observed execution steps just completed and must never be chosen again.",
+   "missing": ""
+  }
+ ]
+}

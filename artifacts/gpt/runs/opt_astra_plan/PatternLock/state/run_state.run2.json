@@ -1,0 +1,237 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "PatternLock",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   3,
+   10,
+   34,
+   97,
+   99
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point. The same head rule governs transitions from every subgoal: after a completed command, use the head of the updated suffix, including repeating the same option when two consecutive entries match. Do not choose a direction from highlights alone or remove the current head again after choosing it. At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers. If visual evidence is ambiguous later, continue to follow the stored list because the controller completes each command before the next decision. For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+  "fields": [
+   {
+    "name": "remaining_moves",
+    "description": "When memory is empty and demonstration frames are present, read the entire demonstration chronologically and write its complete ordered list of target-to-target menu letters. Identify the starting highlighted target and each successive reached target using highlight changes together with sustained wrist motion. Highlights can retain the previous target, so do not interpret the displayed order of highlighted coordinates as travel order. Each neighboring-target transition is one move, even when consecutive transitions have the same direction. Ignore pauses and small coordinate fluctuations; exclude the reset into execution. Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals. Larger y means forward, smaller y backward, larger x left, and smaller x right. Encode forward A, backward B, left C, right D, forward-left E, forward-right F, backward-left G, backward-right H. At every later decision step with carried memory, the oracle has completed the preceding command: remove exactly the first entry of the incoming list and write the resulting suffix. This removal occurs once per decision, not once per observed frame or highlight change. Keep the new first entry in the written list because its command has not yet executed. If the incoming list is empty, retain []. If neither demonstration nor carried memory is available, write []. e.g. [\"E\",\"D\",\"G\",\"H\"]",
+    "annotation": "An ordered list of menu letters for the demonstrated target-to-target moves not yet completed in execution, including the move to command at this decision step. Extract one move per demonstrated transition between neighboring targets; preserve consecutive identical moves and ignore pauses, image jitter, and the reset from demonstration to execution. At the first decision step store the complete list. At each subsequent decision step remove the one move completed since the preceding decision. Do not remove the move being selected at the current step. Episode 3 values at steps 1–4 are [\"E\",\"D\",\"G\",\"H\"], [\"D\",\"G\",\"H\"], [\"G\",\"H\"], [\"H\"]. Episode 10 values are [\"A\",\"H\",\"H\"], [\"H\",\"H\"], [\"H\"]. Episode 34 values are [\"A\",\"H\",\"D\",\"F\"], [\"H\",\"D\",\"F\"], [\"D\",\"F\"], [\"F\"]. Episode 97 values are [\"B\",\"H\",\"A\"], [\"H\",\"A\"], [\"A\"]. Episode 99 values are [\"D\",\"G\",\"B\",\"D\"], [\"G\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]. e.g. [\"E\",\"D\",\"G\",\"H\"]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "PatternLock",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   3,
+   10,
+   34,
+   97,
+   99
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point. The same head rule governs transitions from every subgoal: after a completed command, use the head of the updated suffix, including repeating the same option when two consecutive entries match. Do not choose a direction from highlights alone or remove the current head again after choosing it. At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers. If visual evidence is ambiguous later, continue to follow the stored list because the controller completes each command before the next decision. For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+  "fields": [
+   {
+    "name": "remaining_moves",
+    "description": "When memory is empty and demonstration frames are present, read the entire demonstration chronologically and write its complete ordered list of target-to-target menu letters. Identify the starting highlighted target and each successive reached target using highlight changes together with sustained wrist motion. Highlights can retain the previous target, so do not interpret the displayed order of highlighted coordinates as travel order. Each neighboring-target transition is one move, even when consecutive transitions have the same direction. Ignore pauses and small coordinate fluctuations; exclude the reset into execution. Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals. Larger y means forward, smaller y backward, larger x left, and smaller x right. Encode forward A, backward B, left C, right D, forward-left E, forward-right F, backward-left G, backward-right H. At every later decision step with carried memory, the oracle has completed the preceding command: remove exactly the first entry of the incoming list and write the resulting suffix. This removal occurs once per decision, not once per observed frame or highlight change. Keep the new first entry in the written list because its command has not yet executed. If the incoming list is empty, retain []. If neither demonstration nor carried memory is available, write []. e.g. [\"E\",\"D\",\"G\",\"H\"]",
+    "annotation": "An ordered list of menu letters for the demonstrated target-to-target moves not yet completed in execution, including the move to command at this decision step. Extract one move per demonstrated transition between neighboring targets; preserve consecutive identical moves and ignore pauses, image jitter, and the reset from demonstration to execution. At the first decision step store the complete list. At each subsequent decision step remove the one move completed since the preceding decision. Do not remove the move being selected at the current step. Episode 3 values at steps 1–4 are [\"E\",\"D\",\"G\",\"H\"], [\"D\",\"G\",\"H\"], [\"G\",\"H\"], [\"H\"]. Episode 10 values are [\"A\",\"H\",\"H\"], [\"H\",\"H\"], [\"H\"]. Episode 34 values are [\"A\",\"H\",\"D\",\"F\"], [\"H\",\"D\",\"F\"], [\"D\",\"F\"], [\"F\"]. Episode 97 values are [\"B\",\"H\",\"A\"], [\"H\",\"A\"], [\"A\"]. Episode 99 values are [\"D\",\"G\",\"B\",\"D\"], [\"G\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]. e.g. [\"E\",\"D\",\"G\",\"H\"]"
+   }
+  ]
+ },
+ "history": [],
+ "revisions": 0,
+ "quiet": 5,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    33,
+    41,
+    54,
+    70,
+    86
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point. The same head rule governs transitions from every subgoal: after a completed command, use the head of the updated suffix, including repeating the same option when two consecutive entries match. Do not choose a direction from highlights alone or remove the current head again after choosing it. At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers. If visual evidence is ambiguous later, continue to follow the stored list because the controller completes each command before the next decision. For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+    "fields": [
+     {
+      "name": "remaining_moves",
+      "description": "When memory is empty and demonstration frames are present, read the entire demonstration chronologically and write its complete ordered list of target-to-target menu letters. Identify the starting highlighted target and each successive reached target using highlight changes together with sustained wrist motion. Highlights can retain the previous target, so do not interpret the displayed order of highlighted coordinates as travel order. Each neighboring-target transition is one move, even when consecutive transitions have the same direction. Ignore pauses and small coordinate fluctuations; exclude the reset into execution. Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals. Larger y means forward, smaller y backward, larger x left, and smaller x right. Encode forward A, backward B, left C, right D, forward-left E, forward-right F, backward-left G, backward-right H. At every later decision step with carried memory, the oracle has completed the preceding command: remove exactly the first entry of the incoming list and write the resulting suffix. This removal occurs once per decision, not once per observed frame or highlight change. Keep the new first entry in the written list because its command has not yet executed. If the incoming list is empty, retain []. If neither demonstration nor carried memory is available, write []. e.g. [\"E\",\"D\",\"G\",\"H\"]",
+      "annotation": "An ordered list of menu letters for the demonstrated target-to-target moves not yet completed in execution, including the move to command at this decision step. Extract one move per demonstrated transition between neighboring targets; preserve consecutive identical moves and ignore pauses, image jitter, and the reset from demonstration to execution. At the first decision step store the complete list. At each subsequent decision step remove the one move completed since the preceding decision. Do not remove the move being selected at the current step. Episode 3 values at steps 1–4 are [\"E\",\"D\",\"G\",\"H\"], [\"D\",\"G\",\"H\"], [\"G\",\"H\"], [\"H\"]. Episode 10 values are [\"A\",\"H\",\"H\"], [\"H\",\"H\"], [\"H\"]. Episode 34 values are [\"A\",\"H\",\"D\",\"F\"], [\"H\",\"D\",\"F\"], [\"D\",\"F\"], [\"F\"]. Episode 97 values are [\"B\",\"H\",\"A\"], [\"H\",\"A\"], [\"A\"]. Episode 99 values are [\"D\",\"G\",\"B\",\"D\"], [\"G\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]. e.g. [\"E\",\"D\",\"G\",\"H\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    18,
+    41,
+    59,
+    63,
+    91
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point. The same head rule governs transitions from every subgoal: after a completed command, use the head of the updated suffix, including repeating the same option when two consecutive entries match. Do not choose a direction from highlights alone or remove the current head again after choosing it. At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers. If visual evidence is ambiguous later, continue to follow the stored list because the controller completes each command before the next decision. For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+    "fields": [
+     {
+      "name": "remaining_moves",
+      "description": "When memory is empty and demonstration frames are present, read the entire demonstration chronologically and write its complete ordered list of target-to-target menu letters. Identify the starting highlighted target and each successive reached target using highlight changes together with sustained wrist motion. Highlights can retain the previous target, so do not interpret the displayed order of highlighted coordinates as travel order. Each neighboring-target transition is one move, even when consecutive transitions have the same direction. Ignore pauses and small coordinate fluctuations; exclude the reset into execution. Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals. Larger y means forward, smaller y backward, larger x left, and smaller x right. Encode forward A, backward B, left C, right D, forward-left E, forward-right F, backward-left G, backward-right H. At every later decision step with carried memory, the oracle has completed the preceding command: remove exactly the first entry of the incoming list and write the resulting suffix. This removal occurs once per decision, not once per observed frame or highlight change. Keep the new first entry in the written list because its command has not yet executed. If the incoming list is empty, retain []. If neither demonstration nor carried memory is available, write []. e.g. [\"E\",\"D\",\"G\",\"H\"]",
+      "annotation": "An ordered list of menu letters for the demonstrated target-to-target moves not yet completed in execution, including the move to command at this decision step. Extract one move per demonstrated transition between neighboring targets; preserve consecutive identical moves and ignore pauses, image jitter, and the reset from demonstration to execution. At the first decision step store the complete list. At each subsequent decision step remove the one move completed since the preceding decision. Do not remove the move being selected at the current step. Episode 3 values at steps 1–4 are [\"E\",\"D\",\"G\",\"H\"], [\"D\",\"G\",\"H\"], [\"G\",\"H\"], [\"H\"]. Episode 10 values are [\"A\",\"H\",\"H\"], [\"H\",\"H\"], [\"H\"]. Episode 34 values are [\"A\",\"H\",\"D\",\"F\"], [\"H\",\"D\",\"F\"], [\"D\",\"F\"], [\"F\"]. Episode 97 values are [\"B\",\"H\",\"A\"], [\"H\",\"A\"], [\"A\"]. Episode 99 values are [\"D\",\"G\",\"B\",\"D\"], [\"G\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]. e.g. [\"E\",\"D\",\"G\",\"H\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    8,
+    56,
+    70,
+    72,
+    93
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point. The same head rule governs transitions from every subgoal: after a completed command, use the head of the updated suffix, including repeating the same option when two consecutive entries match. Do not choose a direction from highlights alone or remove the current head again after choosing it. At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers. If visual evidence is ambiguous later, continue to follow the stored list because the controller completes each command before the next decision. For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+    "fields": [
+     {
+      "name": "remaining_moves",
+      "description": "When memory is empty and demonstration frames are present, read the entire demonstration chronologically and write its complete ordered list of target-to-target menu letters. Identify the starting highlighted target and each successive reached target using highlight changes together with sustained wrist motion. Highlights can retain the previous target, so do not interpret the displayed order of highlighted coordinates as travel order. Each neighboring-target transition is one move, even when consecutive transitions have the same direction. Ignore pauses and small coordinate fluctuations; exclude the reset into execution. Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals. Larger y means forward, smaller y backward, larger x left, and smaller x right. Encode forward A, backward B, left C, right D, forward-left E, forward-right F, backward-left G, backward-right H. At every later decision step with carried memory, the oracle has completed the preceding command: remove exactly the first entry of the incoming list and write the resulting suffix. This removal occurs once per decision, not once per observed frame or highlight change. Keep the new first entry in the written list because its command has not yet executed. If the incoming list is empty, retain []. If neither demonstration nor carried memory is available, write []. e.g. [\"E\",\"D\",\"G\",\"H\"]",
+      "annotation": "An ordered list of menu letters for the demonstrated target-to-target moves not yet completed in execution, including the move to command at this decision step. Extract one move per demonstrated transition between neighboring targets; preserve consecutive identical moves and ignore pauses, image jitter, and the reset from demonstration to execution. At the first decision step store the complete list. At each subsequent decision step remove the one move completed since the preceding decision. Do not remove the move being selected at the current step. Episode 3 values at steps 1–4 are [\"E\",\"D\",\"G\",\"H\"], [\"D\",\"G\",\"H\"], [\"G\",\"H\"], [\"H\"]. Episode 10 values are [\"A\",\"H\",\"H\"], [\"H\",\"H\"], [\"H\"]. Episode 34 values are [\"A\",\"H\",\"D\",\"F\"], [\"H\",\"D\",\"F\"], [\"D\",\"F\"], [\"F\"]. Episode 97 values are [\"B\",\"H\",\"A\"], [\"H\",\"A\"], [\"A\"]. Episode 99 values are [\"D\",\"G\",\"B\",\"D\"], [\"G\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]. e.g. [\"E\",\"D\",\"G\",\"H\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    7,
+    30,
+    35,
+    59,
+    60
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point. The same head rule governs transitions from every subgoal: after a completed command, use the head of the updated suffix, including repeating the same option when two consecutive entries match. Do not choose a direction from highlights alone or remove the current head again after choosing it. At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers. If visual evidence is ambiguous later, continue to follow the stored list because the controller completes each command before the next decision. For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+    "fields": [
+     {
+      "name": "remaining_moves",
+      "description": "When memory is empty and demonstration frames are present, read the entire demonstration chronologically and write its complete ordered list of target-to-target menu letters. Identify the starting highlighted target and each successive reached target using highlight changes together with sustained wrist motion. Highlights can retain the previous target, so do not interpret the displayed order of highlighted coordinates as travel order. Each neighboring-target transition is one move, even when consecutive transitions have the same direction. Ignore pauses and small coordinate fluctuations; exclude the reset into execution. Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals. Larger y means forward, smaller y backward, larger x left, and smaller x right. Encode forward A, backward B, left C, right D, forward-left E, forward-right F, backward-left G, backward-right H. At every later decision step with carried memory, the oracle has completed the preceding command: remove exactly the first entry of the incoming list and write the resulting suffix. This removal occurs once per decision, not once per observed frame or highlight change. Keep the new first entry in the written list because its command has not yet executed. If the incoming list is empty, retain []. If neither demonstration nor carried memory is available, write []. e.g. [\"E\",\"D\",\"G\",\"H\"]",
+      "annotation": "An ordered list of menu letters for the demonstrated target-to-target moves not yet completed in execution, including the move to command at this decision step. Extract one move per demonstrated transition between neighboring targets; preserve consecutive identical moves and ignore pauses, image jitter, and the reset from demonstration to execution. At the first decision step store the complete list. At each subsequent decision step remove the one move completed since the preceding decision. Do not remove the move being selected at the current step. Episode 3 values at steps 1–4 are [\"E\",\"D\",\"G\",\"H\"], [\"D\",\"G\",\"H\"], [\"G\",\"H\"], [\"H\"]. Episode 10 values are [\"A\",\"H\",\"H\"], [\"H\",\"H\"], [\"H\"]. Episode 34 values are [\"A\",\"H\",\"D\",\"F\"], [\"H\",\"D\",\"F\"], [\"D\",\"F\"], [\"F\"]. Episode 97 values are [\"B\",\"H\",\"A\"], [\"H\",\"A\"], [\"A\"]. Episode 99 values are [\"D\",\"G\",\"B\",\"D\"], [\"G\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]. e.g. [\"E\",\"D\",\"G\",\"H\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    21,
+    24,
+    60,
+    82,
+    88
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "First update remaining_moves according to the policy prompt for memory. If its head is A, command move forward; B, move backward; C, move left; D, move right; E, move forward-left; F, move forward-right; G, move backward-left; H, move backward-right. These options require no target point. The same head rule governs transitions from every subgoal: after a completed command, use the head of the updated suffix, including repeating the same option when two consecutive entries match. Do not choose a direction from highlights alone or remove the current head again after choosing it. At episode start, choose the first demonstrated move: E for episode 3, A for episodes 10 and 34, B for episode 97, and D for episode 99, as inferred from their demonstrations rather than episode identifiers. If visual evidence is ambiguous later, continue to follow the stored list because the controller completes each command before the next decision. For an unexpected state with an empty list or an invalid head, command A as a deterministic fallback; this is not a claimed continuation of the demonstrated pattern.",
+    "fields": [
+     {
+      "name": "remaining_moves",
+      "description": "When memory is empty and demonstration frames are present, read the entire demonstration chronologically and write its complete ordered list of target-to-target menu letters. Identify the starting highlighted target and each successive reached target using highlight changes together with sustained wrist motion. Highlights can retain the previous target, so do not interpret the displayed order of highlighted coordinates as travel order. Each neighboring-target transition is one move, even when consecutive transitions have the same direction. Ignore pauses and small coordinate fluctuations; exclude the reset into execution. Infer grid row and column changes rather than treating small perspective-induced x shifts during vertical motion as diagonals. Larger y means forward, smaller y backward, larger x left, and smaller x right. Encode forward A, backward B, left C, right D, forward-left E, forward-right F, backward-left G, backward-right H. At every later decision step with carried memory, the oracle has completed the preceding command: remove exactly the first entry of the incoming list and write the resulting suffix. This removal occurs once per decision, not once per observed frame or highlight change. Keep the new first entry in the written list because its command has not yet executed. If the incoming list is empty, retain []. If neither demonstration nor carried memory is available, write []. e.g. [\"E\",\"D\",\"G\",\"H\"]",
+      "annotation": "An ordered list of menu letters for the demonstrated target-to-target moves not yet completed in execution, including the move to command at this decision step. Extract one move per demonstrated transition between neighboring targets; preserve consecutive identical moves and ignore pauses, image jitter, and the reset from demonstration to execution. At the first decision step store the complete list. At each subsequent decision step remove the one move completed since the preceding decision. Do not remove the move being selected at the current step. Episode 3 values at steps 1–4 are [\"E\",\"D\",\"G\",\"H\"], [\"D\",\"G\",\"H\"], [\"G\",\"H\"], [\"H\"]. Episode 10 values are [\"A\",\"H\",\"H\"], [\"H\",\"H\"], [\"H\"]. Episode 34 values are [\"A\",\"H\",\"D\",\"F\"], [\"H\",\"D\",\"F\"], [\"D\",\"F\"], [\"F\"]. Episode 97 values are [\"B\",\"H\",\"A\"], [\"H\",\"A\"], [\"A\"]. Episode 99 values are [\"D\",\"G\",\"B\",\"D\"], [\"G\",\"B\",\"D\"], [\"B\",\"D\"], [\"D\"]. e.g. [\"E\",\"D\",\"G\",\"H\"]"
+     }
+    ]
+   }
+  }
+ ]
+}

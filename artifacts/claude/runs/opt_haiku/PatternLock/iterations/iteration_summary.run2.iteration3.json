@@ -1,0 +1,126 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "plan",
+  "moves_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  8,
+  56,
+  70,
+  72,
+  93
+ ],
+ "scored": 11,
+ "failed": 3,
+ "subgoal_wrong": 0,
+ "memory_wrong": 3,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.7272727272727273,
+ "reads": {
+  "plan": 6,
+  "moves_done": 6
+ },
+ "field_errors": {
+  "plan": {
+   "in": 3,
+   "sole": 3
+  },
+  "moves_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2727272727272727,
+ "verified_of_all": 0.7272727272727273,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 11,
+ "critique": "field plan, ANNOTATOR PROMPT\n  Situation: at the first decision step of every episode, with the demonstration shown and empty memory, the policy derived exactly the same sequence of letters as the annotation (for example C, G, B, H, or a single H, or G, G), but the annotated value was written as a single-quoted Python-style list (['C', 'G', 'B', 'H']) while the rule's own example shows a double-quoted JSON list. Failure: PREDICTABILITY, because the rule and the value actually filled in disagree on the serialization of the list, so identical content is counted as two different answers to one field. Change: fix one serialization and use it everywhere. The field holds the ordered list of menu letters the demonstration traces, built once at the first decision step and copied unchanged at every later step. Write it as a list of single-quoted letters with a space after each comma, exactly like ['E', 'D', 'G', 'H']; never double quotes, never bare letters. Also state explicitly that the start marker at demo t=0 may appear under the name 'highlighted area' instead of 'highlighted target' and is treated as the first highlighted position all the same. e.g. ['E', 'D', 'G', 'H']\n\nfield plan, POLICY PROMPT\n  Situation: at the first decision step, with the demonstration shown and empty memory, the policy built the correct letters but wrote them as a double-quoted JSON array because the instruction demanded that form, while the annotated memory uses single-quoted letters. Failure: PREDICTABILITY, the instruction asks for a different serialization than the one the annotation holds, so matching content is flagged as a mismatch. Change: the field still holds the ordered list of menu letters the demonstration traces, built once when the step shows DEMONSTRATION STEPS and the carried memory is empty, then copied exactly from the carried-in memory at every later step. Write it as a list of single-quoted letters with a space after each comma, exactly like ['E', 'D', 'G', 'H']; never double quotes, never bare letters. Add that the start marker at demo t=0 may be labelled 'highlighted area' rather than 'highlighted target'; use its coordinates as the starting highlighted position for the first dy/dx computation. e.g. ['E', 'D', 'G', 'H']",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "plan",
+    "description": "Situation: at the first decision step, with the demonstration shown and empty memory, the policy built the correct letters but wrote them as a double-quoted JSON array because the instruction demanded that form, while the annotated memory uses single-quoted letters. Failure: PREDICTABILITY, the instruction asks for a different serialization than the one the annotation holds, so matching content is flagged as a mismatch. Change: the field still holds the ordered list of menu letters the demonstration traces, built once when the step shows DEMONSTRATION STEPS and the carried memory is empty, then copied exactly from the carried-in memory at every later step. Write it as a list of single-quoted letters with a space after each comma, exactly like ['E', 'D', 'G', 'H']; never double quotes, never bare letters. Add that the start marker at demo t=0 may be labelled 'highlighted area' rather than 'highlighted target'; use its coordinates as the starting highlighted position for the first dy/dx computation. e.g. ['E', 'D', 'G', 'H']"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "plan",
+    "description": "Situation: at the first decision step of every episode, with the demonstration shown and empty memory, the policy derived exactly the same sequence of letters as the annotation (for example C, G, B, H, or a single H, or G, G), but the annotated value was written as a single-quoted Python-style list (['C', 'G', 'B', 'H']) while the rule's own example shows a double-quoted JSON list. Failure: PREDICTABILITY, because the rule and the value actually filled in disagree on the serialization of the list, so identical content is counted as two different answers to one field. Change: fix one serialization and use it everywhere. The field holds the ordered list of menu letters the demonstration traces, built once at the first decision step and copied unchanged at every later step. Write it as a list of single-quoted letters with a space after each comma, exactly like ['E', 'D', 'G', 'H']; never double quotes, never bare letters. Also state explicitly that the start marker at demo t=0 may appear under the name 'highlighted area' instead of 'highlighted target' and is treated as the first highlighted position all the same. e.g. ['E', 'D', 'G', 'H']"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    70,
+    "exec",
+    128
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "C: move left",
+   "recorded": "C: move left",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The plan content I wrote matches the recorded one exactly (C, G, B, H, moves_done 0); the only difference is quoting style: I wrote double-quoted letters as the instruction demands, the recorded value uses single quotes. The instruction and the annotator prompt disagree on the serialization form of the list; one of them should be changed so both write the same form (either both double-quoted JSON or both single-quoted Python-style).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    72,
+    "exec",
+    33
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "H: move backward-right",
+   "recorded": "H: move backward-right",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The disagreement is purely in quoting: I wrote [\"H\"] with double quotes exactly as the instruction demands, while the recorded value uses single quotes ['H']. The instruction should state the one serialization the annotator actually uses (or the comparison should treat ['H'] and [\"H\"] as the same value); otherwise the subgoal and plan content were fully determined from the demonstration (highlighted target moved from [102,127] to [82,103]: dy=-20 backward, dx=-24 right -> H).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    93,
+    "exec",
+    70
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "G: move backward-left",
+   "recorded": "G: move backward-left",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "nothing substantive: the plan content matched (G, G) and moves_done=0 matched. The only difference is quoting style: the instruction says to write double-quoted letters (\"G\") but the recorded value used single quotes ('G'). The policy prompt and the annotator prompt must agree on one quoting form so the comparison does not flag identical content as a mismatch.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

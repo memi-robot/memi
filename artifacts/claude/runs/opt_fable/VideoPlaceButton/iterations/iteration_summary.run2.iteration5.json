@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "cube_placed",
+  "goal_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  8,
+  46,
+  51,
+  72,
+  74
+ ],
+ "scored": 10,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9,
+ "memory_verified": 1.0,
+ "reads": {
+  "cube_placed": 5,
+  "goal_target": 5
+ },
+ "field_errors": {
+  "cube_placed": {
+   "in": 0,
+   "sole": 0
+  },
+  "goal_target": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1,
+ "verified_of_all": 0.9,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 10,
+ "critique": "field goal_target, ANNOTATOR PROMPT\n  Situation: the goal asked for the target right before the button press. In the demonstration the goal cube was placed on one target, the button was pressed, the cube was moved to a second target, then dropped on bare table; after that, during the final frames while the gripper sat parked at height 0.200, two of the listed targets moved frame by frame and ended up having exchanged positions. The rule as written took the execution-scene target entry nearest the demonstration resting position, so it recorded the target now sitting where the placement happened, while the recorded drop went to the target that had physically been under the cube and had since moved elsewhere. The memory held the wrong target, so the subgoal was wrong (PREDICTABILITY of the field and, through it, SUFFICIENCY). Change: goal_target holds the [y, x] in the execution scene of the physical target the chosen placement landed on, identified by tracking that target's listed entry from the placement frame to the last demonstration frame, matching each frame's entries to the previous frame's by nearest position (targets may drift a few pixels, vanish while occluded, and may move tens of pixels per frame during the final parked frames; a target that moves must be followed, not replaced by whichever entry ends up nearest the old spot). Written at the first decision step, never changed. Also: the goal cube may be red, blue or green. e.g. [119, 145]\n\nfield goal_target, POLICY PROMPT\n  Same failure: the policy derived the target from nearest pixel position in the execution scene and got the target that had moved into the placement spot rather than the one the cube was placed on. Change the first-step derivation: after choosing the placement frame (last placement before the press for 'before', first after it for 'after'; placements are releases with the cube within about 8 pixels of a listed target, bare-table drops ignored), note the listed target nearest the cube there, then follow that same entry forward through every remaining demonstration frame by nearest-position matching from one frame to the next, including the final frames where the gripper is parked at height 0.200 and the targets may move or swap places. Write the [y, x] of the execution-scene entry nearest that entry's position in the last demonstration frame. If no target moved in the final frames this gives the same answer as before. The goal cube may be red, blue or green; the color in the goal names it. Copy the value unchanged at every later step. e.g. [119, 145]\n\nthe policy prompt for subgoal\n  Rule 1 says the goal names one cube color 'red or blue'; it must say any color the goal names (red, blue or green) is the goal cube. Rule 1 should also state that goal_target is to be derived by following the placement target through any movement of targets in the final demonstration frames, as the memory instruction describes, and that the drop point in rule 2 is the current scene's target nearest that followed position, not the target nearest where the placement visually happened. No other rule changes.\n\nrefused\n  The failed step proposed matching the demonstration placement to the execution scene 'by layout order or relative arrangement' rather than by position; that is not what the episodes show. In the other episodes targets stay put and nearest-position mapping is correct; in the failed one the targets physically moved during the final parked frames, and following the moving entry frame by frame is what recovers the recorded target. The proposal about 'several placements of other-colored cubes preceding the press' is also dropped: in every demonstration only the goal cube is ever moved, so there is no such ambiguity.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Rule 1 says the goal names one cube color 'red or blue'; it must say any color the goal names (red, blue or green) is the goal cube. Rule 1 should also state that goal_target is to be derived by following the placement target through any movement of targets in the final demonstration frames, as the memory instruction describes, and that the drop point in rule 2 is the current scene's target nearest that followed position, not the target nearest where the placement visually happened. No other rule changes.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "goal_target",
+    "description": "Same failure: the policy derived the target from nearest pixel position in the execution scene and got the target that had moved into the placement spot rather than the one the cube was placed on. Change the first-step derivation: after choosing the placement frame (last placement before the press for 'before', first after it for 'after'; placements are releases with the cube within about 8 pixels of a listed target, bare-table drops ignored), note the listed target nearest the cube there, then follow that same entry forward through every remaining demonstration frame by nearest-position matching from one frame to the next, including the final frames where the gripper is parked at height 0.200 and the targets may move or swap places. Write the [y, x] of the execution-scene entry nearest that entry's position in the last demonstration frame. If no target moved in the final frames this gives the same answer as before. The goal cube may be red, blue or green; the color in the goal names it. Copy the value unchanged at every later step. e.g. [119, 145]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "goal_target",
+    "description": "Situation: the goal asked for the target right before the button press. In the demonstration the goal cube was placed on one target, the button was pressed, the cube was moved to a second target, then dropped on bare table; after that, during the final frames while the gripper sat parked at height 0.200, two of the listed targets moved frame by frame and ended up having exchanged positions. The rule as written took the execution-scene target entry nearest the demonstration resting position, so it recorded the target now sitting where the placement happened, while the recorded drop went to the target that had physically been under the cube and had since moved elsewhere. The memory held the wrong target, so the subgoal was wrong (PREDICTABILITY of the field and, through it, SUFFICIENCY). Change: goal_target holds the [y, x] in the execution scene of the physical target the chosen placement landed on, identified by tracking that target's listed entry from the placement frame to the last demonstration frame, matching each frame's entries to the previous frame's by nearest position (targets may drift a few pixels, vanish while occluded, and may move tens of pixels per frame during the final parked frames; a target that moves must be followed, not replaced by whichever entry ends up nearest the old spot). Written at the first decision step, never changed. Also: the goal cube may be red, blue or green. e.g. [119, 145]"
+   }
+  ],
+  "refused": "The failed step proposed matching the demonstration placement to the execution scene 'by layout order or relative arrangement' rather than by position; that is not what the episodes show. In the other episodes targets stay put and nearest-position mapping is correct; in the failed one the targets physically moved during the final parked frames, and following the moving entry frame by frame is what recovers the recorded target. The proposal about 'several placements of other-colored cubes preceding the press' is also dropped: in every demonstration only the goal cube is ever moved, so there is no such ambiguity."
+ },
+ "critiques": [
+  {
+   "step": [
+    51,
+    "exec",
+    880
+   ],
+   "memory_in": "cube_placed=no; goal_target=[136, 170]",
+   "answered": "B: drop onto at [136, 170]",
+   "recorded": "B: drop onto at [120, 146]",
+   "missing_from_memory": "goal_target carried in was [136, 170], but the recorded drop goes to the target at [119, 145] (recorded as [120, 146]). The memory needed to carry the fact that the target used in the demonstration right before the button press corresponds to the execution-scene target at [119, 145], not [136, 170]; the value it held did not identify that target.",
+   "missing_from_policy_prompt_for_memory": "The derivation of goal_target at the first step produced [136, 170] while the recorded drop target is [119, 145]; the instruction does not say how to map the demonstration placement onto the execution-scene target when demonstration and execution target layouts differ (match by which target in the layout order/relative arrangement, not by nearest pixel to the demo resting position), nor how to handle the 'last placement before the press' when several placements of other-colored cubes precede the press. It also only names red or blue cubes while this goal names the green cube.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "goal_target carried in was [136, 170], but the recorded drop goes to the target at [119, 145] (recorded as [120, 146]). The memory needed to carry the fact that the target used in the demonstration right before the button press corresponds to the execution-scene target at [119, 145], not [136, 170]; the value it held did not identify that target."
+  }
+ ]
+}

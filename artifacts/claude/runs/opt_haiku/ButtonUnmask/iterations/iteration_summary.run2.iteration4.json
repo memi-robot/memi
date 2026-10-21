@@ -1,0 +1,100 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "blue_cube_pos",
+  "green_cube_pos",
+  "red_cube_pos",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  26,
+  46,
+  78,
+  85
+ ],
+ "scored": 10,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 0,
+ "subgoal_verified": 0.9,
+ "memory_verified": 1.0,
+ "reads": {
+  "blue_cube_pos": 2,
+  "green_cube_pos": 1,
+  "red_cube_pos": 1,
+  "picks_done": 5
+ },
+ "field_errors": {
+  "blue_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "green_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "red_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1,
+ "verified_of_all": 0.9,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "the policy prompt for subgoal\n  Situation: the goal asked to press the button and then pick up the container hiding a named cube. The step shown was the one right after the button press: its execution frames opened with a frame that still showed the three loose cubes and no containers (the scene before the containers came down), then the containers dropped over the cubes, the gripper pressed the button and withdrew, and the scene at the decision step showed every container on the table with the gripper empty. The memory carried in held all three cube positions and picks_done=0. The policy applied Rule 1 to that first execution frame, saw loose cubes and no containers there, and chose A (press the button) again, where the recorded subgoal was B at the container over the named cube. This breaks SUFFICIENCY: the memory and the scene at the decision step did settle the choice, but the instruction never said which of the frames shown is the one the rules are evaluated on. Rule 1 as written ('if the step shows loose cubes and no containers') was read as 'if any frame shown has loose cubes'. What has to change: add, before the rules, a general clause that every condition in Rules 1-3 is evaluated on the scene at the decision step only, meaning the last frame shown, and earlier execution frames are ignored entirely; they only show the previous command being carried out. Rule 1 should be restated as: if the last frame shows loose cubes and no containers anywhere, choose A. Rule 2 should be restated as: if the last frame shows containers on the table and the gripper is not holding a container, the button has already been pressed (containers only appear after the press), so choose B at the container nearest the recorded position of the goal cube at position picks_done+1, and never choose A once containers are visible in the last frame, even if an earlier execution frame still showed loose cubes. Rule 3 likewise reads the last frame. The remaining content of Rules 2 and 3 and the unforeseen-situation clause stay as they are.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Situation: the goal asked to press the button and then pick up the container hiding a named cube. The step shown was the one right after the button press: its execution frames opened with a frame that still showed the three loose cubes and no containers (the scene before the containers came down), then the containers dropped over the cubes, the gripper pressed the button and withdrew, and the scene at the decision step showed every container on the table with the gripper empty. The memory carried in held all three cube positions and picks_done=0. The policy applied Rule 1 to that first execution frame, saw loose cubes and no containers there, and chose A (press the button) again, where the recorded subgoal was B at the container over the named cube. This breaks SUFFICIENCY: the memory and the scene at the decision step did settle the choice, but the instruction never said which of the frames shown is the one the rules are evaluated on. Rule 1 as written ('if the step shows loose cubes and no containers') was read as 'if any frame shown has loose cubes'. What has to change: add, before the rules, a general clause that every condition in Rules 1-3 is evaluated on the scene at the decision step only, meaning the last frame shown, and earlier execution frames are ignored entirely; they only show the previous command being carried out. Rule 1 should be restated as: if the last frame shows loose cubes and no containers anywhere, choose A. Rule 2 should be restated as: if the last frame shows containers on the table and the gripper is not holding a container, the button has already been pressed (containers only appear after the press), so choose B at the container nearest the recorded position of the goal cube at position picks_done+1, and never choose A once containers are visible in the last frame, even if an earlier execution frame still showed loose cubes. Rule 3 likewise reads the last frame. The remaining content of Rules 2 and 3 and the unforeseen-situation clause stay as they are.",
+  "policy_prompt_for_memory": [],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    26,
+    "exec",
+    123
+   ],
+   "memory_in": "blue_cube_pos=[80, 163]; green_cube_pos=[118, 85]; red_cube_pos=[111, 125]; picks_done=0",
+   "answered": "A: press the button",
+   "recorded": "B: pick up the container at [106, 126]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "It did not say that Rules 1-3 are to be evaluated on the scene at the decision step only (the last frame shown, t=123), never on an earlier execution frame. The first execution frame here (t=16) still showed loose cubes and no containers, and I applied Rule 1 to it and chose A. It should state: ignore earlier execution frames; if the last frame shows containers on the table and the gripper empty, the button has already been pressed, so choose B at the container nearest the recorded position of the next goal cube (red_cube_pos=[111, 125] -> container at [109, 125]), and never choose A once containers are visible in the last frame.",
+   "missing": ""
+  }
+ ]
+}

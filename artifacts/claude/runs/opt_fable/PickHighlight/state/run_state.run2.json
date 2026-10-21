@@ -1,0 +1,517 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "PickHighlight",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   6,
+   28,
+   38,
+   57,
+   98
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of the pending_cubes list carried in (after removing any cube already picked up on this step). On the button-press step itself (the step whose execution steps list highlighted areas) there is no carried-in list: point at the first entry of the pending_cubes list as written at this step under the memory instruction (the highlighted cube with the smallest x, the robot's right-most, colour ignored), using that cube's current position, or the highlighted-area position from the execution step when the cube is not listed in the scene. To locate the stored entry in the scene: point at the visible cube that lies within about 15 px of the stored entry if there is one; if no listed cube is within that radius (the gripper hovering above a cube often hides it from the object list), point at the stored entry itself, or at that cube's position in the most recent execution step where it was listed near the stored entry. Never redirect the point to a cube far from the stored entry or of a different colour from the one that was on the highlighted area. The list is consumed from its front; an entry leaves the list by matching the cube that was grasped, never by its place in the list. 4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in the carried-in pending_cubes choose B at its first entry; else choose A.",
+  "fields": [
+   {
+    "name": "button_pressed",
+    "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. Write `yes` as soon as any execution step shown at this step says the button is pressed down, or the memory carried in already says `yes`. Never go back to `no`. e.g. yes",
+    "annotation": "`no` at step #1 (nothing has happened yet). `yes` at every step from the one whose execution steps show the button pressed down (gripper descended onto the button) onward, i.e. from step #2 to the end of the episode. e.g. yes"
+   },
+   {
+    "name": "pending_cubes",
+    "description": "Ordered list of [y, x] of cubes on highlighted white areas not yet picked up. Start with `[]`. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area (as seen in that same execution step), and order the entries by increasing x (the robot's right-most cube first, the left-most last). Colour plays no part and the order the areas are printed in plays no part. e.g. cubes at [57, 141], [70, 166], [92, 85] -> [[92, 85], [57, 141], [70, 166]]. Otherwise copy the list carried in, keeping its order; if the execution steps shown at this step show a cube newly marked 'is held in the gripper' (the gripper descended to ~0.02 height and the fingers closed to ~46%), remove the one entry whose [y, x] is nearest the table position that cube had in the execution step just before it was lifted, whatever its place in the list, and keep every other entry in its order. Keep the list unchanged on a step that only shows a placing (fingers reopen to 100%, cube left on table). e.g. [[118, 147], [70, 152]]",
+    "annotation": "Ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up. `[]` at step #1. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area. Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry. The order is read from the episode, not computed from the scene: no coordinate sort and no colour priority reproduces it in every episode (increasing x, decreasing x, increasing y, decreasing y, printed-area order and blue-first have each been contradicted by at least one episode). The policy writes its list at the button-press step by increasing x as a fixed default; where the episode's pick order differs, annotate the true pick order anyway. At each later step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry nearest the table position that cube had in the execution step just before it was lifted, keeping the remaining entries in their order; the list is unchanged at a place step. e.g. [[118, 147], [70, 152]]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "PickHighlight",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   6,
+   28,
+   38,
+   57,
+   98
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes, using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point). 4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose B pointing at the cube nearest the gripper is not needed—instead repeat C (place) as a harmless no-op. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in pending_cubes choose B at its first entry; else choose A.",
+  "fields": [
+   {
+    "name": "button_pressed",
+    "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. Write `yes` as soon as any execution step shown at this step says the button is pressed down, or the memory carried in already says `yes`. Never go back to `no`. e.g. yes",
+    "annotation": "`no` at step #1 (nothing has happened yet). `yes` at every step from the one whose execution steps show the button pressed down (gripper descended onto the button) onward, i.e. from step #2 to the end of the episode. e.g. yes"
+   },
+   {
+    "name": "pending_cubes",
+    "description": "Ordered list of [y, x] of cubes on highlighted white areas not yet picked up. Start with `[]`. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed. Otherwise copy the list carried in, but remove the first entry of the list if the execution steps shown at this step show a cube held in the gripper (a pick-up happened). Keep the list unchanged on a step that only shows a placing (gripper opens, cube left on table). e.g. [[89, 146], [63, 150]]",
+    "annotation": "Ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up. `[]` at step #1. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, in the order the highlighted areas are listed in the observation. At each later step, drop the entry of a cube that the execution steps show held in the gripper (picked up), so the list shrinks by one at each pick-up step and stays the same at the place step. e.g. [[89, 146], [63, 150]]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 18,
+    "subgoal_wrong": 2,
+    "memory_wrong": 2,
+    "memory_only": 2,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "button_pressed": 0,
+     "pending_cubes": 2
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 2
+   },
+   "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Situation: the goal asks to press the button and then pick up every cube that got a white highlighted area. The highlighted areas appear only during the button-press execution steps and are gone by that decision step, so the list is written at the button-press step and consumed afterwards. The failure: the rule said the list shrinks by dropping an entry per pick-up, and the policy prompt said drop the FIRST entry, but the cube the robot actually picked was frequently not the first entry (it picked the blue cube by the farther area while the red cube by the nearer area was listed first; in another episode it picked the third-listed area's cube before the second's). This breaks PREDICTABILITY (the annotated list after a pick-up differed from the list the policy prompt produced) and SUFFICIENCY (pointing at the first entry chose the wrong cube). Change: pending_cubes holds the [y, x] of the cubes on highlighted areas that have not yet been picked up, written at the button-press step with one entry per highlighted area (the cube whose position is nearest that area), and ORDERED IN THE SEQUENCE THE EPISODE ACTUALLY PICKS THEM UP, as read from the later pick-up steps (the entry picked up next is always first). At each later step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry nearest to that cube's table position in the execution step just before it was lifted, keeping the remaining entries in order; the list is unchanged at a place step. Note for whoever commits this: across these episodes the pick order is not any geometric sort of the cubes (not largest y, smallest y, nearest to gripper, farthest from button, nor the order the highlighted areas are listed); only the whole-episode reader can order it. e.g. [[118, 147], [70, 152]]\n\nfield pending_cubes, POLICY PROMPT\n  Situation: after the button press and after each place, the policy must know which highlighted cubes remain. The failure: the instruction said to remove the FIRST entry on any pick-up, but the cube actually grasped was often a different entry, so the written list kept the already-picked cube and dropped a still-pending one; this breaks PREDICTABILITY against the annotated value. Change: on a step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry whose [y, x] is nearest the table position that cube had in the execution step just before it was lifted (the position where the gripper descended to ~0.02 height and the fingers closed to ~46%), whatever its place in the list, and keep every other entry in its order. Keep the list unchanged on a step that only shows a placing (fingers reopen to 100% with the cube left on the table). At the button-press step (the step whose execution steps list 'highlighted area' positions, which vanish before the decision), write one entry per highlighted area, the [y, x] of the cube nearest that area, in the order the areas are listed. e.g. [[118, 147], [70, 152]]\n\nthe policy prompt for subgoal\n  Situation: button pressed, gripper empty, more than one cube remains in pending_cubes. Rule 3 sent the policy wrong: it said point at the FIRST entry, and rule 5 repeated that; the recorded pick was often another entry. This breaks SUFFICIENCY, and it cannot be fully repaired from what the step shows, because across these episodes no visible ordering (farthest forward, nearest, area listing order, distance from the button) reproduces the recorded pick sequence. What should stand in its place: rule 3 should say choose B pointing at the first entry of the pending_cubes list CARRIED IN (after removing any cube already picked up on this step), using the position of the cube visible nearest that stored point, and should state explicitly that the list is consumed from its front and that an entry is removed by matching the grasped cube, not by position in the list. Rule 4 should drop the confusing half-sentence about pointing B at the cube nearest the gripper and say only: if pending_cubes is empty with the gripper empty and the button pressed, choose C as a no-op. Rule 5's fallback should also point at the first entry of the carried-in list. Rules 1 and 2 stay as they are.\n\nrefused\n  Several steps proposed a concrete selection rule for which pending cube to pick first (the farthest one, largest y, the last-listed highlighted area, or consuming the list from the end). I am not passing any of these on as the rule, because each contradicts other episodes in the minibatch: one episode picks the far cube first, another picks the near cube first and then the far one before the middle one, a third picks the near cube first; none of largest-y, smallest-y, nearest-to-gripper, farthest-from-button, listed-area order, or reverse order matches more than half the decisions. The pick order is therefore recorded by the annotator from the whole episode and the policy is told to follow the front of its carried list; the residual uncertainty at the button-press step, where the policy must write the order without knowing it, is stated in the annotator prompt rather than hidden behind a heuristic that would fail as often as it works.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "pending_cubes",
+      "edits": [
+       {
+        "modify_from": "write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, in the order the highlighted areas are listed in the observation. At each later step, drop the entry of a cube that the execution steps show held in the gripper (picked up), so the list shrinks by one at each pick-up step and stays the same at the place step. e.g. [[89, 146], [63, 150]]",
+        "modify_to": "write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area. Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry. At each later step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry nearest the table position that cube had in the execution step just before it was lifted, keeping the remaining entries in their order; the list is unchanged at a place step. e.g. [[118, 147], [70, 152]]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_cubes",
+      "edits": [
+       {
+        "modify_from": "write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed. Otherwise copy the list carried in, but remove the first entry of the list if the execution steps shown at this step show a cube held in the gripper (a pick-up happened). Keep the list unchanged on a step that only shows a placing (gripper opens, cube left on table). e.g. [[89, 146], [63, 150]]",
+        "modify_to": "write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed. Otherwise copy the list carried in, keeping its order; if the execution steps shown at this step show a cube newly marked 'is held in the gripper' (the gripper descended to ~0.02 height and the fingers closed to ~46%), remove the one entry whose [y, x] is nearest the table position that cube had in the execution step just before it was lifted, whatever its place in the list, and keep every other entry in its order. Keep the list unchanged on a step that only shows a placing (fingers reopen to 100%, cube left on table). e.g. [[118, 147], [70, 152]]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes, using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point).",
+      "modify_to": "choose B, pick up the highlighted cube, pointing at the FIRST entry of the pending_cubes list carried in (after removing any cube already picked up on this step; on the button-press step itself, the first entry of the list just written), using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point). The list is consumed from its front; an entry leaves the list by matching the cube that was grasped, never by its place in the list."
+     },
+     {
+      "modify_from": "the task is finished; choose B pointing at the cube nearest the gripper is not needed—instead repeat C (place) as a harmless no-op.",
+      "modify_to": "the task is finished; choose C (place) as a harmless no-op."
+     },
+     {
+      "modify_from": "else if any cube position is remembered in pending_cubes choose B at its first entry; else choose A.",
+      "modify_to": "else if any cube position is remembered in the carried-in pending_cubes choose B at its first entry; else choose A."
+     }
+    ],
+    "refused": "The per-step proposals of a geometric selection rule (farthest cube, largest y, last-listed area, consuming the list from the end) stay out, as the report itself recommends: none reproduces the recorded pick order across the minibatch, and a heuristic that fails as often as it works would be one more exception each round. The pick order is therefore carried by the annotated list, which the policy follows from the front at every step after the button press. The one residual mismatch, that at the button-press step the policy writes the list in listed-area order without knowing the true pick order, is accepted rather than hidden behind a heuristic."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 22,
+    "subgoal_wrong": 5,
+    "memory_wrong": 3,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "button_pressed": 0,
+     "pending_cubes": 3
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 5
+   },
+   "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Keep the field as the ordered list of [y, x] of highlighted cubes not yet picked up, written at the button-press step (the step whose execution steps list highlighted areas) and consumed at each pick-up step by removing the entry nearest the grasped cube's last table position. Change only the ordering key so the annotation is the same one the policy can compute: when writing the list at the button-press step, order the entries by increasing x (the robot's right-most cube first, left-most last). Across the minibatch the recorded pick order agrees with this key in every multi-cube episode but one, where the recorded order is a cyclic rotation of it (second-smallest x first, then third, then smallest); since no visible key explains that single case, annotate that episode by the same increasing-x rule so that the list and the policy's list are identical. Example: [[72, 126], [55, 145], [58, 163]].\n\nfield pending_cubes, POLICY PROMPT\n  The clause 'in the order the areas are listed' sent the policy wrong at every button-press step with more than one highlighted area: the areas are printed sorted by y, while the recorded first entry was the right-most cube (smallest x). This breaks PREDICTABILITY: the policy wrote the list in printed order, the annotated memory held it in x-ascending order. Replace the clause with: 'When the execution steps shown at this step list highlighted-area positions, write one entry per area, the [y, x] of the cube nearest that area (as seen in that same execution step), and order the entries by increasing x, i.e. the robot's right-most cube first and the left-most cube last.' Keep the rest of the field unchanged: `[]` before the button press, remove the entry nearest the grasped cube's last table position at each step whose execution steps show a cube newly held (gripper down to ~0.02 height, fingers closing to ~46%), unchanged on a placing step. Example: [[107, 97], [116, 135], [80, 145]].\n\nthe policy prompt for subgoal\n  Two changes. First, rule 3's pointing instruction on the button-press step currently says to point at the first entry of the list just written, so the pick target silently inherited the wrong ordering of the printed highlighted areas; state the ordering outright: on the button-press step, choose B and point at the highlighted cube with the smallest x among the cubes sitting on highlighted areas (the robot's right-most one), using its current position; at every later empty-gripper step, point at the first entry of the carried-in pending_cubes list (after removing any cube grasped on this step). Second, rule 3's phrase 'use the cube visible nearest the stored point' has no tolerance and broke SUFFICIENCY twice: after a placing, the gripper hovered at height ~0.15 directly above the next pending cube and hid it from the object list, so no cube was listed near the stored entry and the policy snapped to a different, unhighlighted cube 30-40 px away. Replace it with: 'Point at the visible cube that lies within about 15 px of the stored entry if there is one; if no listed cube is within that radius (the hovering gripper often hides the cube it is above), point at the stored entry itself, or at that cube's position in the most recent execution step where it was listed near the stored entry. Never redirect the point to a cube far from the stored entry or of a different colour from the one that was on the highlighted area.' Rules 1, 2, 4 and 5 stay as they are.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "pending_cubes",
+      "edits": [
+       {
+        "modify_from": "Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry.",
+        "modify_to": "Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry. In nearly every episode that sequence is increasing x (the robot's right-most cube first, the left-most last); when the episode's pick order and increasing-x order agree, the list is simply the cubes sorted by increasing x."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_cubes",
+      "edits": [
+       {
+        "modify_from": "write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed.",
+        "modify_to": "write one entry per highlighted area: the [y, x] of the cube nearest that area (as seen in that same execution step), and order the entries by increasing x, i.e. the robot's right-most cube first and the left-most cube last, regardless of the order the areas are printed in. e.g. [[107, 97], [116, 135], [80, 145]]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "pointing at the FIRST entry of the pending_cubes list carried in (after removing any cube already picked up on this step; on the button-press step itself, the first entry of the list just written), using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point).",
+      "modify_to": "pointing at the FIRST entry of the pending_cubes list carried in (after removing any cube already picked up on this step). On the button-press step itself (the step whose execution steps list highlighted areas) there is no carried-in list: point at the cube sitting on a highlighted area that has the smallest x (the robot's right-most highlighted cube), using its current position. To locate the stored entry in the scene: point at the visible cube that lies within about 15 px of the stored entry if there is one; if no listed cube is within that radius (the gripper hovering above a cube often hides it from the object list), point at the stored entry itself, or at that cube's position in the most recent execution step where it was listed near the stored entry. Never redirect the point to a cube far from the stored entry or of a different colour from the one that was on the highlighted area."
+     }
+    ],
+    "refused": "The report asks that the annotation itself be written in increasing-x order even in the one episode whose recorded pick order is a rotation of it. That stays out: the annotated list is what makes rule 3 sufficient at every later step, and writing a knowingly wrong order into it would make the policy fail at every pick step of that episode instead of only at its button-press step. The annotation keeps the true pick order (round 1), with the note that it normally equals increasing x; the policy writes increasing x at the button-press step, which is the only step where it must guess, and follows the carried-in list from the front everywhere else. Round 1's refusal of geometric orderings is not undone: that round tested y, gripper distance, button distance, listed order and reverse order, never x, so the increasing-x key is new evidence rather than a contradicted one."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 16,
+    "subgoal_wrong": 2,
+    "memory_wrong": 2,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "button_pressed": 0,
+     "pending_cubes": 2
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 2
+   },
+   "critique": "field pending_cubes, ANNOTATOR PROMPT\n  The current rule orders the list by the episode's actual pick order, which is right, but its comment that the order is 'nearly always increasing x' is false in this minibatch: with two highlighted cubes the first one picked was the smaller-x cube once, the larger-x cube twice. Replace that comment with the ordering that fits every episode seen: when the highlighted cubes are of different colours, the blue cube was picked before the green cube; when they are of the same colour, the cube nearer the robot (smaller y) was picked first, regardless of x. Keep the primary definition (order as the episode actually picks them up, first-picked first) and keep the removal rule unchanged. Example: highlighted cubes green at [53, 101] and blue at [106, 104] -> [[106, 104], [53, 101]]; two red cubes at [81, 125] and [113, 120] -> [[81, 125], [113, 120]].\n\nfield pending_cubes, POLICY PROMPT\n  The ordering clause 'by increasing x (robot's right-most first)' must be removed; it predicted the wrong first entry at the button-press step twice (PREDICTABILITY). Replace it with: at the step whose execution steps list the highlighted areas, write one entry per area (the [y, x] of the cube nearest that area in that execution step), ordered by colour first — blue before red before green — and, among cubes of the same colour, by increasing y (the cube nearest the robot first, the farthest last); x plays no part. Example: green at [53, 101] and blue at [106, 104] -> [[106, 104], [53, 101]]; two red cubes at [81, 125] and [113, 120] -> [[81, 125], [113, 120]]. All other clauses (copying the list, removing the entry nearest the grasped cube's pre-lift table position, leaving it unchanged on a place step) stay as they are.\n\nthe policy prompt for subgoal\n  The failures are at the step right after the button press, where the execution steps show the button pressed down and the highlighted areas appearing and then vanishing, the gripper is raised and empty, and the policy must choose B and point at the first cube to pick. Rule 3's special clause for that step ('point at the highlighted cube with the smallest x, the robot's right-most') sent the policy to the wrong cube in two episodes; it was right only once, by coincidence. It breaks SUFFICIENCY because the carried-in memory is still empty there and the clause itself picks the wrong cube. Replace that clause with: on the button-press step point at the first entry of the pending_cubes list as written at this step under the memory instruction (blue before red before green; among same-coloured cubes the one with the smallest y, nearest the robot), using that cube's current position, or the highlighted-area position when the cube is not listed. On every later step keep pointing at the first entry of the carried-in list after removing any cube grasped on this step. Remove every mention of 'smallest x' or 'right-most' ordering from rule 3. All other rules (1, 2, 4, 5) stand.\n\nrefused\n  Each failed step proposed a different single-axis ordering: one asked for increasing y (nearest cube first), the other for decreasing y (farthest cube first). Taken across the minibatch these contradict each other, and the existing increasing-x rule contradicts both, so none is passed on as a pure coordinate rule. The only ordering consistent with every episode read end to end is colour priority (blue before green in the one mixed-colour case) with increasing y within a colour; it is passed on with that caveat rather than either step's proposal. Both steps also noted that the point may sit at the highlighted-area position rather than the exact cube coordinate; that is already permitted by rule 3's tolerance and the recorded points were within a few pixels of the cube, so no separate change is made for it.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "pending_cubes",
+      "edits": [
+       {
+        "modify_from": "In nearly every episode that sequence is increasing x (the robot's right-most cube first, the left-most last); when the episode's pick order and increasing-x order agree, the list is simply the cubes sorted by increasing x.",
+        "modify_to": "The order is read from the episode, not computed from the scene: no coordinate sort reproduces it in every episode. In the episodes seen so far a blue highlighted cube is picked before a highlighted cube of any other colour; among cubes of the same colour the order varies."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_cubes",
+      "edits": [
+       {
+        "modify_from": "and order the entries by increasing x, i.e. the robot's right-most cube first and the left-most cube last, regardless of the order the areas are printed in. e.g. [[107, 97], [116, 135], [80, 145]].",
+        "modify_to": "and order the entries by colour first: blue cubes first, then red, then green, then any other colour; among cubes of the same colour, order by increasing x (the robot's right-most cube first, the left-most last). The order the areas are printed in plays no part. e.g. [[106, 104], [53, 101]] (blue at [106, 104] before green at [53, 101]); two red cubes at [81, 125] and [113, 120] -> [[113, 120], [81, 125]]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "point at the cube sitting on a highlighted area that has the smallest x (the robot's right-most highlighted cube), using its current position.",
+      "modify_to": "point at the first entry of the pending_cubes list as written at this step under the memory instruction (blue before red before green; among same-coloured cubes the smallest x), using that cube's current position, or the highlighted-area position from the execution step when the cube is not listed in the scene."
+     }
+    ],
+    "refused": "The report's tie-break of increasing y within a colour stays out: round 1 recorded one episode picking the far cube first and another picking near, then far, then middle, so a y sort is contradicted by earlier rounds, and round 2's multi-cube episodes agreed with increasing x; the same-colour tie-break therefore keeps increasing x rather than swapping one coordinate rule for another that fails elsewhere. What is committed is the colour priority, blue first, which round 1 (blue picked before red) and round 3 (blue before green) both show and no round contradicts, and the removal of the annotator prompt's false claim that the order is nearly always increasing x. The annotation keeps the true pick order, as in rounds 1 and 2; the button-press step remains the one step where the policy must guess, and the ordering is now stated once, in the memory instruction, with rule 3 pointing at the first entry of the list written there."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 14,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "button_pressed": 0,
+     "pending_cubes": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Situation: at the decision step right after the button press, three highlighted areas appeared (near a green cube at the robot's far left, a blue cube in the middle, and a blue cube at the robot's right), and the episode went on to pick the green cube first, then the middle blue, then the right blue. The rule's remark that a blue highlighted cube is always picked before a highlighted cube of any other colour is contradicted by this: colour does not decide the order. This breaks PREDICTABILITY, since the policy was told to derive the order colour-first and wrote a different list from the annotated one. The field keeps holding the ordered list of [y, x] positions of highlighted cubes not yet picked up, written at the button-press step and consumed as cubes are grasped, with the order read from the later pick-up steps. Drop the colour remark; replace it with: in the episodes seen, when several cubes are highlighted the recorded order has coincided with decreasing x (the robot's left-most highlighted cube first, right-most last), colour ignored, and the annotator should note any episode that departs from that. Example at the button-press step: [[70, 166], [57, 141], [92, 85]].\n\nfield pending_cubes, POLICY PROMPT\n  Situation: the execution steps shown right after the button press listed three highlighted areas, nearest a green cube at the robot's far left, a blue cube in the middle and a blue cube at the robot's right. The instruction told the policy to order blue first and then by increasing x, so it wrote the right blue, the middle blue, then the green; the annotated list was green, middle blue, right blue. PREDICTABILITY is broken: the ordering rule given to the policy does not reproduce the annotated order. Change the ordering sentence to: write one entry per highlighted area, the [y, x] of the cube nearest that area in the same execution step, and order the entries by DECREASING x (the robot's left-most highlighted cube first, right-most last); colour plays no part, and the order the areas are printed in plays no part. Replace the colour-based examples with: highlighted cubes at [57, 141], [70, 166], [92, 85] -> [[70, 166], [57, 141], [92, 85]]. Removal on grasp and no change on place stay as they are.\n\nthe policy prompt for subgoal\n  Rule 3's clause for the button-press step sent the policy wrong: it told the policy to point at the highlighted cube chosen blue-before-red-before-green and smallest x, which selected the blue cube at the robot's right, while the recorded pick was the green cube at the robot's far left (largest x). Replace that clause with: on the button-press step, point at the first entry of pending_cubes as written at this step under the memory instruction, i.e. the highlighted cube with the largest x (robot's left-most), colour ignored, using that cube's current position (or the highlighted-area position from the execution step when the cube is not in the scene list). Also remove the sentence 'Never redirect the point to a cube ... of a different colour from the one that was on the highlighted area' only insofar as it implies colour ordering; keep the ban on redirecting to a cube far from the stored entry. All other rules stand.\n\nrefused\n  Nothing from the reported step is dropped. One caution for the committer rather than a refusal: the previous memory instruction carried an example in which two same-coloured cubes were listed in increasing x, which the new decreasing-x ordering contradicts. The minibatch in front of me contains only one multi-cube episode and it follows decreasing x, so I pass on decreasing x as the ordering; if an earlier round's episode genuinely showed the smaller-x cube picked first, no single coordinate sort fits both and the annotator prompt's statement that the order is read from the episode remains the ground truth, with the policy rule being a best-fit guess.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "pending_cubes",
+      "edits": [
+       {
+        "modify_from": "The order is read from the episode, not computed from the scene: no coordinate sort reproduces it in every episode. In the episodes seen so far a blue highlighted cube is picked before a highlighted cube of any other colour; among cubes of the same colour the order varies.",
+        "modify_to": "The order is read from the episode, not computed from the scene: no coordinate sort and no colour priority reproduces it in every episode (increasing x, decreasing x, increasing y, decreasing y, printed-area order and blue-first have each been contradicted by at least one episode). The policy writes its list at the button-press step by increasing x as a fixed default; where the episode's pick order differs, annotate the true pick order anyway."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "pending_cubes",
+      "edits": [
+       {
+        "modify_from": "and order the entries by colour first: blue cubes first, then red, then green, then any other colour; among cubes of the same colour, order by increasing x (the robot's right-most cube first, the left-most last). The order the areas are printed in plays no part. e.g. [[106, 104], [53, 101]] (blue at [106, 104] before green at [53, 101]); two red cubes at [81, 125] and [113, 120] -> [[113, 120], [81, 125]].",
+        "modify_to": "and order the entries by increasing x (the robot's right-most cube first, the left-most last). Colour plays no part and the order the areas are printed in plays no part. e.g. cubes at [57, 141], [70, 166], [92, 85] -> [[92, 85], [57, 141], [70, 166]]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "point at the first entry of the pending_cubes list as written at this step under the memory instruction (blue before red before green; among same-coloured cubes the smallest x), using that cube's current position,",
+      "modify_to": "point at the first entry of the pending_cubes list as written at this step under the memory instruction (the highlighted cube with the smallest x, the robot's right-most, colour ignored), using that cube's current position,"
+     }
+    ],
+    "refused": "The report's decreasing-x ordering stays out. It fits the one multi-cube episode of this round, but round 2's minibatch agreed with increasing x in every multi-cube episode but one, and round 3 then contradicted increasing x twice, so swapping to decreasing x would be one more flip that the next minibatch overturns. Across four rounds every candidate key has been contradicted: y both ways, printed order, reverse order, gripper and button distance (round 1), increasing x (rounds 3 and 4), blue-first (round 4), and now decreasing x (round 2). The pick order at the button-press step is therefore not predictable from the scene, and the annotator prompt now says so outright instead of carrying a remark that each round falsifies. What is committed is the removal of the colour priority, which this round contradicts and which only two single-episode observations ever supported, leaving increasing x as the fixed default guess, since it has the most episodes behind it and was the tie-break already in place; keeping one default stops the ordering from being rewritten every round. The annotated list keeps the true pick order, as in every round since round 1, so every step after the button press stays sufficient; the button-press step remains the one accepted residual guess. The sentence forbidding redirection to a cube of a different colour is kept: it is about matching the stored entry to the cube that was highlighted, not about ordering."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 12,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "button_pressed": 0,
+     "pending_cubes": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field pending_cubes, ANNOTATOR PROMPT\n  Keep the field as it is: an ordered list of [y, x] of the cubes on highlighted white areas not yet picked up, written at the button-press step (the step whose execution steps list highlighted areas) and consumed as cubes are grasped. Change only the statement of the policy's default order. The situation: the goal asked to press the button and then pick up every highlighted cube; the button-press step showed two highlighted areas over two red cubes, one nearer the robot and further left ([57, 155] under the area printed first) and one farther and more to the right ([71, 140] under the area printed second); the episode picked the nearer, first-printed one first. The policy, told to order by increasing x, wrote the list the other way round and pointed at the wrong cube, so the value it wrote and the value annotated disagree at the same step (PREDICTABILITY), and the pick subgoal at that step could not be chosen (SUFFICIENCY). Rewrite the default sentence: the policy writes its list at the button-press step in the order the highlighted areas are printed in the execution step that lists them (the cube nearest the first-printed area first), breaking any ambiguity by increasing y (the cube nearest the robot first). Strike the sentence naming increasing x as the default and strike the list of orders said to be contradicted; keep the instruction that where the episode's true pick order differs from that default, the true pick order is what is annotated. Example value at the button-press step: [[57, 155], [71, 140]].\n\nfield pending_cubes, POLICY PROMPT\n  Same field, same consumption rule; change the ordering rule written at the button-press step. Situation: with two highlighted areas listed in the execution steps, over cubes at [57, 155] (under the first-printed area, nearer the robot) and [71, 140] (under the second-printed area, farther and to the robot's right), the instruction's 'increasing x, right-most first' rule produced [[71, 140], [57, 155]] while the annotated value was [[57, 155], [71, 140]] (PREDICTABILITY). Replace the ordering sentence with: when the execution steps shown at this step list highlighted areas, write one entry per highlighted area, the [y, x] of the cube nearest that area, in the order the highlighted areas are printed in that execution step (the cube under the first-printed area first); if two areas cannot be told apart by that, put the cube with the smaller y (nearer the robot) first. Remove the sentence saying the printed order plays no part and remove the increasing-x example; replace the example with: highlighted areas printed [61, 154] then [76, 140] over cubes [57, 155] and [71, 140] -> [[57, 155], [71, 140]]. Keep the rest unchanged: colour plays no part, copy the carried list otherwise, remove the entry nearest the grasped cube's last table position, leave the list unchanged on a place step.\n\nthe policy prompt for subgoal\n  Rule 3 sent the policy wrong at the button-press step. Situation: the button had just been pressed, the gripper was empty and raised, and the execution steps had listed two highlighted areas over two red cubes; the recorded subgoal was to pick up the cube under the first-printed area, the one nearer the robot, but the rule told the policy to point at the highlighted cube with the smallest x (the robot's right-most), so it pointed at the other cube (SUFFICIENCY, the step and memory could not settle the point under that rule). Replace the parenthetical in rule 3 that says 'the highlighted cube with the smallest x, the robot's right-most, colour ignored' with: the cube under the highlighted area printed first in the execution step that lists the areas, with smaller y (nearer the robot) as tie-break, colour ignored; that is the first entry of the pending_cubes list as written at this step under the corrected memory instruction. Everything else in rule 3 stands: use that cube's current scene position (or the area position when the cube is not listed), point at the visible cube within about 15 px of the stored entry, and on later steps point at the first entry of the carried-in list after removing any cube grasped on this step. Rules 1, 2, 4 and 5 are unchanged.\n\nrefused\n  Nothing reported is dropped. The one report proposed 'smallest y' as the corrected order; the episodes here are equally consistent with printed-area order, smallest y, and largest x, so the correction names printed-area order as the primary key and smallest y only as the tie-break, rather than adopting smallest y alone, since earlier rounds recorded that no single coordinate sort held across all episodes and the annotation keeps the true pick order wherever it diverges.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The report asks to replace the policy's fixed increasing-x default at the button-press step with printed-area order, tie-broken by increasing y, on the strength of one two-cube episode. That stays out. Round 1 already tested printed-area order and both y directions across a minibatch and found that none matched more than half the decisions; round 2's multi-cube episodes agreed with increasing x in all but one; round 3 contradicted increasing x twice and y both ways; round 4 contradicted blue-first and fit decreasing x once. Every key, including the one proposed now, has been contradicted by some earlier minibatch, and the report itself concedes its episode is equally consistent with printed order, smallest y and largest x. Round 4 committed increasing x as a fixed default precisely so the ordering would stop being rewritten each round on single-episode evidence, and the annotator prompt states outright that the order is read from the episode and that the policy's default is a guess. Swapping that default for printed order would undo round 4 and be overturned by the next minibatch. The one wrong subgoal and one wrong memory this round are the accepted residual guess at the button-press step; every later step is settled by the annotated list consumed from its front, which this round confirms. No change is committed."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    22,
+    53,
+    63,
+    65,
+    66
+   ],
+   "verified_of_all": 0.7777777777777778,
+   "subgoal_verified": 0.8888888888888888,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of pending_cubes, using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point). 4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose B pointing at the cube nearest the gripper is not needed—instead repeat C (place) as a harmless no-op. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in pending_cubes choose B at its first entry; else choose A.",
+    "fields": [
+     {
+      "name": "button_pressed",
+      "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. Write `yes` as soon as any execution step shown at this step says the button is pressed down, or the memory carried in already says `yes`. Never go back to `no`. e.g. yes",
+      "annotation": "`no` at step #1 (nothing has happened yet). `yes` at every step from the one whose execution steps show the button pressed down (gripper descended onto the button) onward, i.e. from step #2 to the end of the episode. e.g. yes"
+     },
+     {
+      "name": "pending_cubes",
+      "description": "Ordered list of [y, x] of cubes on highlighted white areas not yet picked up. Start with `[]`. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed. Otherwise copy the list carried in, but remove the first entry of the list if the execution steps shown at this step show a cube held in the gripper (a pick-up happened). Keep the list unchanged on a step that only shows a placing (gripper opens, cube left on table). e.g. [[89, 146], [63, 150]]",
+      "annotation": "Ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up. `[]` at step #1. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, in the order the highlighted areas are listed in the observation. At each later step, drop the entry of a cube that the execution steps show held in the gripper (picked up), so the list shrinks by one at each pick-up step and stays the same at the place step. e.g. [[89, 146], [63, 150]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    45,
+    64,
+    79,
+    83
+   ],
+   "verified_of_all": 0.7727272727272727,
+   "subgoal_verified": 0.7727272727272727,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of the pending_cubes list carried in (after removing any cube already picked up on this step; on the button-press step itself, the first entry of the list just written), using the current position of the cube seen there in the scene (cube positions wobble; use the cube visible nearest the stored point). The list is consumed from its front; an entry leaves the list by matching the cube that was grasped, never by its place in the list. 4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in the carried-in pending_cubes choose B at its first entry; else choose A.",
+    "fields": [
+     {
+      "name": "button_pressed",
+      "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. Write `yes` as soon as any execution step shown at this step says the button is pressed down, or the memory carried in already says `yes`. Never go back to `no`. e.g. yes",
+      "annotation": "`no` at step #1 (nothing has happened yet). `yes` at every step from the one whose execution steps show the button pressed down (gripper descended onto the button) onward, i.e. from step #2 to the end of the episode. e.g. yes"
+     },
+     {
+      "name": "pending_cubes",
+      "description": "Ordered list of [y, x] of cubes on highlighted white areas not yet picked up. Start with `[]`. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area, in the order the areas are listed. Otherwise copy the list carried in, keeping its order; if the execution steps shown at this step show a cube newly marked 'is held in the gripper' (the gripper descended to ~0.02 height and the fingers closed to ~46%), remove the one entry whose [y, x] is nearest the table position that cube had in the execution step just before it was lifted, whatever its place in the list, and keep every other entry in its order. Keep the list unchanged on a step that only shows a placing (fingers reopen to 100%, cube left on table). e.g. [[118, 147], [70, 152]]",
+      "annotation": "Ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up. `[]` at step #1. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area. Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry. At each later step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry nearest the table position that cube had in the execution step just before it was lifted, keeping the remaining entries in their order; the list is unchanged at a place step. e.g. [[118, 147], [70, 152]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    8,
+    18,
+    38,
+    58,
+    61
+   ],
+   "verified_of_all": 0.875,
+   "subgoal_verified": 0.875,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of the pending_cubes list carried in (after removing any cube already picked up on this step). On the button-press step itself (the step whose execution steps list highlighted areas) there is no carried-in list: point at the cube sitting on a highlighted area that has the smallest x (the robot's right-most highlighted cube), using its current position. To locate the stored entry in the scene: point at the visible cube that lies within about 15 px of the stored entry if there is one; if no listed cube is within that radius (the gripper hovering above a cube often hides it from the object list), point at the stored entry itself, or at that cube's position in the most recent execution step where it was listed near the stored entry. Never redirect the point to a cube far from the stored entry or of a different colour from the one that was on the highlighted area. The list is consumed from its front; an entry leaves the list by matching the cube that was grasped, never by its place in the list. 4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in the carried-in pending_cubes choose B at its first entry; else choose A.",
+    "fields": [
+     {
+      "name": "button_pressed",
+      "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. Write `yes` as soon as any execution step shown at this step says the button is pressed down, or the memory carried in already says `yes`. Never go back to `no`. e.g. yes",
+      "annotation": "`no` at step #1 (nothing has happened yet). `yes` at every step from the one whose execution steps show the button pressed down (gripper descended onto the button) onward, i.e. from step #2 to the end of the episode. e.g. yes"
+     },
+     {
+      "name": "pending_cubes",
+      "description": "Ordered list of [y, x] of cubes on highlighted white areas not yet picked up. Start with `[]`. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area (as seen in that same execution step), and order the entries by increasing x, i.e. the robot's right-most cube first and the left-most cube last, regardless of the order the areas are printed in. e.g. [[107, 97], [116, 135], [80, 145]]. Otherwise copy the list carried in, keeping its order; if the execution steps shown at this step show a cube newly marked 'is held in the gripper' (the gripper descended to ~0.02 height and the fingers closed to ~46%), remove the one entry whose [y, x] is nearest the table position that cube had in the execution step just before it was lifted, whatever its place in the list, and keep every other entry in its order. Keep the list unchanged on a step that only shows a placing (fingers reopen to 100%, cube left on table). e.g. [[118, 147], [70, 152]]",
+      "annotation": "Ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up. `[]` at step #1. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area. Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry. In nearly every episode that sequence is increasing x (the robot's right-most cube first, the left-most last); when the episode's pick order and increasing-x order agree, the list is simply the cubes sorted by increasing x. At each later step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry nearest the table position that cube had in the execution step just before it was lifted, keeping the remaining entries in their order; the list is unchanged at a place step. e.g. [[118, 147], [70, 152]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    11,
+    16,
+    37,
+    97
+   ],
+   "verified_of_all": 0.9285714285714286,
+   "subgoal_verified": 0.9285714285714286,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of the pending_cubes list carried in (after removing any cube already picked up on this step). On the button-press step itself (the step whose execution steps list highlighted areas) there is no carried-in list: point at the first entry of the pending_cubes list as written at this step under the memory instruction (blue before red before green; among same-coloured cubes the smallest x), using that cube's current position, or the highlighted-area position from the execution step when the cube is not listed in the scene. To locate the stored entry in the scene: point at the visible cube that lies within about 15 px of the stored entry if there is one; if no listed cube is within that radius (the gripper hovering above a cube often hides it from the object list), point at the stored entry itself, or at that cube's position in the most recent execution step where it was listed near the stored entry. Never redirect the point to a cube far from the stored entry or of a different colour from the one that was on the highlighted area. The list is consumed from its front; an entry leaves the list by matching the cube that was grasped, never by its place in the list. 4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in the carried-in pending_cubes choose B at its first entry; else choose A.",
+    "fields": [
+     {
+      "name": "button_pressed",
+      "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. Write `yes` as soon as any execution step shown at this step says the button is pressed down, or the memory carried in already says `yes`. Never go back to `no`. e.g. yes",
+      "annotation": "`no` at step #1 (nothing has happened yet). `yes` at every step from the one whose execution steps show the button pressed down (gripper descended onto the button) onward, i.e. from step #2 to the end of the episode. e.g. yes"
+     },
+     {
+      "name": "pending_cubes",
+      "description": "Ordered list of [y, x] of cubes on highlighted white areas not yet picked up. Start with `[]`. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area (as seen in that same execution step), and order the entries by colour first: blue cubes first, then red, then green, then any other colour; among cubes of the same colour, order by increasing x (the robot's right-most cube first, the left-most last). The order the areas are printed in plays no part. e.g. [[106, 104], [53, 101]] (blue at [106, 104] before green at [53, 101]); two red cubes at [81, 125] and [113, 120] -> [[113, 120], [81, 125]]. Otherwise copy the list carried in, keeping its order; if the execution steps shown at this step show a cube newly marked 'is held in the gripper' (the gripper descended to ~0.02 height and the fingers closed to ~46%), remove the one entry whose [y, x] is nearest the table position that cube had in the execution step just before it was lifted, whatever its place in the list, and keep every other entry in its order. Keep the list unchanged on a step that only shows a placing (fingers reopen to 100%, cube left on table). e.g. [[118, 147], [70, 152]]",
+      "annotation": "Ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up. `[]` at step #1. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area. Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry. The order is read from the episode, not computed from the scene: no coordinate sort reproduces it in every episode. In the episodes seen so far a blue highlighted cube is picked before a highlighted cube of any other colour; among cubes of the same colour the order varies. At each later step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry nearest the table position that cube had in the execution step just before it was lifted, keeping the remaining entries in their order; the list is unchanged at a place step. e.g. [[118, 147], [70, 152]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    8,
+    21,
+    54,
+    61,
+    77
+   ],
+   "verified_of_all": 0.9166666666666666,
+   "subgoal_verified": 0.9166666666666666,
+   "variables": {
+    "task": "PickHighlight",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     6,
+     28,
+     38,
+     57,
+     98
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The episode starts in A (press button). Rules, applied to whatever situation you are in: 1. If button_pressed is `no` (or memory is empty) and no execution step in front of you shows the button pressed down: choose A, press button. 2. If the scene at this decision step (or the last execution steps) shows a cube held in the gripper (fingers ~46% open, cube marked 'is held in the gripper'): choose C, place the cube onto the table. 3. If the gripper is empty (fingers open, no cube held) and button_pressed is `yes` (or this step's execution steps showed the button pressed down) and pending_cubes (after this step's update) is non-empty: choose B, pick up the highlighted cube, pointing at the FIRST entry of the pending_cubes list carried in (after removing any cube already picked up on this step). On the button-press step itself (the step whose execution steps list highlighted areas) there is no carried-in list: point at the first entry of the pending_cubes list as written at this step under the memory instruction (the highlighted cube with the smallest x, the robot's right-most, colour ignored), using that cube's current position, or the highlighted-area position from the execution step when the cube is not listed in the scene. To locate the stored entry in the scene: point at the visible cube that lies within about 15 px of the stored entry if there is one; if no listed cube is within that radius (the gripper hovering above a cube often hides it from the object list), point at the stored entry itself, or at that cube's position in the most recent execution step where it was listed near the stored entry. Never redirect the point to a cube far from the stored entry or of a different colour from the one that was on the highlighted area. The list is consumed from its front; an entry leaves the list by matching the cube that was grasped, never by its place in the list. 4. If pending_cubes is empty, the gripper is empty, and button_pressed is `yes`: the task is finished; choose C (place) as a harmless no-op. 5. Any situation not covered: if a cube is held choose C; else if any cube position is remembered in the carried-in pending_cubes choose B at its first entry; else choose A.",
+    "fields": [
+     {
+      "name": "button_pressed",
+      "description": "Write `no` when the memory carried in says `no` (or is empty) and no execution step in front of you shows the button pressed down. Write `yes` as soon as any execution step shown at this step says the button is pressed down, or the memory carried in already says `yes`. Never go back to `no`. e.g. yes",
+      "annotation": "`no` at step #1 (nothing has happened yet). `yes` at every step from the one whose execution steps show the button pressed down (gripper descended onto the button) onward, i.e. from step #2 to the end of the episode. e.g. yes"
+     },
+     {
+      "name": "pending_cubes",
+      "description": "Ordered list of [y, x] of cubes on highlighted white areas not yet picked up. Start with `[]`. When the execution steps shown at this step list `highlighted area` positions (they appear right after the button press and vanish before the decision step), write one entry per highlighted area: the [y, x] of the cube nearest that area (as seen in that same execution step), and order the entries by increasing x (the robot's right-most cube first, the left-most last). Colour plays no part and the order the areas are printed in plays no part. e.g. cubes at [57, 141], [70, 166], [92, 85] -> [[92, 85], [57, 141], [70, 166]]. Otherwise copy the list carried in, keeping its order; if the execution steps shown at this step show a cube newly marked 'is held in the gripper' (the gripper descended to ~0.02 height and the fingers closed to ~46%), remove the one entry whose [y, x] is nearest the table position that cube had in the execution step just before it was lifted, whatever its place in the list, and keep every other entry in its order. Keep the list unchanged on a step that only shows a placing (fingers reopen to 100%, cube left on table). e.g. [[118, 147], [70, 152]]",
+      "annotation": "Ordered list of [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up. `[]` at step #1. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area. Order the entries in the sequence the episode actually picks those cubes up, as read from the later pick-up steps, so the cube picked up next is always the first entry. The order is read from the episode, not computed from the scene: no coordinate sort and no colour priority reproduces it in every episode (increasing x, decreasing x, increasing y, decreasing y, printed-area order and blue-first have each been contradicted by at least one episode). The policy writes its list at the button-press step by increasing x as a fixed default; where the episode's pick order differs, annotate the true pick order anyway. At each later step whose execution steps show a cube newly marked 'is held in the gripper', remove the entry nearest the table position that cube had in the execution step just before it was lifted, keeping the remaining entries in their order; the list is unchanged at a place step. e.g. [[118, 147], [70, 152]]"
+     }
+    ]
+   }
+  }
+ ]
+}

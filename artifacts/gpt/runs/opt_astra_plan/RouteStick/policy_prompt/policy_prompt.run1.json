@@ -1,0 +1,23 @@
+{
+ "task": "RouteStick",
+ "run": 1,
+ "stage": "init",
+ "initialized_on": [
+  0,
+  19,
+  58,
+  86,
+  99
+ ],
+ "seed": 7,
+ "provider": "openai",
+ "model": "gpt-6-astra",
+ "reasoning_effort": "low",
+ "policy_prompt_for_subgoal": "First update remaining_path according to the policy prompt for memory. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point. Initial subgoals decoded from the demonstrations are B for episode 0, A for episode 19, D for episode 58, A for episode 86, and A for episode 99. Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. If an unexpected situation nevertheless requires a menu answer, or the demonstration cannot be decoded, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is only a deterministic fallback, not an additional demonstrated move.",
+ "fields": [
+  {
+   "name": "remaining_path",
+   "description": "When memory is empty and demonstration frames are present, decode all demonstration traversals and write their menu letters in chronological order. Segment at arrivals at adjacent target sites, using highlight changes together with wrist arrival; merge small coordinate fluctuations and temporary double highlights into the same target identity. Preserve every repeated traversal and reversal. Destination x larger than departure x is robot-left, and smaller x is robot-right. Determine the arc from intermediate wrist positions relative to the line joining the wrist resting positions at the departure and arrival sites: image-upper leftward is A, image-lower rightward is B, image-lower leftward is C, and image-upper rightward is D. Do not confuse the wrist with the attached stick endpoint or treat the wrist's offset from target coordinates as evidence of arc direction. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. e.g. [\"A\",\"B\",\"A\",\"D\"]"
+  }
+ ]
+}

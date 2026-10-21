@@ -1,0 +1,92 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "visits_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  6,
+  31,
+  48,
+  58,
+  64
+ ],
+ "scored": 35,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9714285714285714,
+ "memory_verified": 0.9714285714285714,
+ "reads": {
+  "visits_done": 30
+ },
+ "field_errors": {
+  "visits_done": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.02857142857142857,
+ "verified_of_all": 0.9714285714285714,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 35,
+ "critique": "field visits_done, ANNOTATOR PROMPT\n  Number of target arrivals completed so far with the cube held. It is 0 at the first step and through the step that ends the pick-up. It increases by exactly 1 at every decision step whose final scene shows the cube held in the gripper AND a highlighted target in the scene (every step that ends a 'move to the top of the target' subgoal). It does not depend on what the earlier execution frames of that step showed: a step whose first execution frame already shows the highlight (because the arrival was quick) still counts as one arrival. It does not change at the step that ends the put-down (cube on the table, fingers fully open) or at the press-button step. Reason for the change: the old rule keyed the increment on the highlight being absent in the first execution frame of the step, but when the robot arrives within a frame or two, every shown frame already carries the highlight, so the policy kept the old count and the subgoal was then chosen from the wrong parity (PREDICTABILITY). e.g. 3\n\nfield visits_done, POLICY PROMPT\n  Carry in the previous value (start at 0 on the first step, where memory is empty). Add 1 if and only if the scene at this decision step (the last frame shown) shows the cube 'held in the gripper' AND a 'highlighted target' is listed in that scene. Do NOT look at the earlier execution frames of this step; it does not matter whether they already showed the highlight. If the cube is not held in the scene (put-down ended, fingers fully open, cube resting on the table) or no highlighted target is listed (pick-up just ended), keep the carried-in value unchanged. Write the updated value; it is the value the subgoal rules read. e.g. 3\n\nthe policy prompt for subgoal\n  The failure: with the cube held and the right-side target just reached (highlight already present in every frame of the short step), the policy carried in 0, did not increment, and rule 2 then gave it two contradictory answers: the carried-in parity (0, even) said point at the right-side target, while the clause 'point at the target that is NOT currently highlighted' said the left-side one. It chose the already-highlighted right-side target; the recorded subgoal was the left-side target. This is a SUFFICIENCY failure caused by rule 2 reading the carried-in count instead of the count written at this step. Replace rules 2 and 3 as follows. First compute this step's updated visits_done (the memory you write at this step, per the memory instruction). Rule 2: if the cube is held and updated visits_done < REQ, choose B and point at the target that is NOT highlighted in the current scene (its listed coordinates); when neither target is highlighted (right after the pick-up), point at the right-side target, the one with the smaller x. Drop the parity clause entirely; the non-highlighted target is the whole rule. Rule 3: if the cube is held and updated visits_done >= REQ, choose C. Rule 4 unchanged but also read the updated value: cube not held, fingers fully open, gripper raised, visits_done >= REQ, choose D. Rule 1 unchanged. In the fallback sentence, keep 'when the cube is held, choose B at the target that is not highlighted', and state once that every comparison with REQ and every parity in this document refers to the updated visits_done written at this step, never to the carried-in value.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "The failure: with the cube held and the right-side target just reached (highlight already present in every frame of the short step), the policy carried in 0, did not increment, and rule 2 then gave it two contradictory answers: the carried-in parity (0, even) said point at the right-side target, while the clause 'point at the target that is NOT currently highlighted' said the left-side one. It chose the already-highlighted right-side target; the recorded subgoal was the left-side target. This is a SUFFICIENCY failure caused by rule 2 reading the carried-in count instead of the count written at this step. Replace rules 2 and 3 as follows. First compute this step's updated visits_done (the memory you write at this step, per the memory instruction). Rule 2: if the cube is held and updated visits_done < REQ, choose B and point at the target that is NOT highlighted in the current scene (its listed coordinates); when neither target is highlighted (right after the pick-up), point at the right-side target, the one with the smaller x. Drop the parity clause entirely; the non-highlighted target is the whole rule. Rule 3: if the cube is held and updated visits_done >= REQ, choose C. Rule 4 unchanged but also read the updated value: cube not held, fingers fully open, gripper raised, visits_done >= REQ, choose D. Rule 1 unchanged. In the fallback sentence, keep 'when the cube is held, choose B at the target that is not highlighted', and state once that every comparison with REQ and every parity in this document refers to the updated visits_done written at this step, never to the carried-in value.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "visits_done",
+    "description": "Carry in the previous value (start at 0 on the first step, where memory is empty). Add 1 if and only if the scene at this decision step (the last frame shown) shows the cube 'held in the gripper' AND a 'highlighted target' is listed in that scene. Do NOT look at the earlier execution frames of this step; it does not matter whether they already showed the highlight. If the cube is not held in the scene (put-down ended, fingers fully open, cube resting on the table) or no highlighted target is listed (pick-up just ended), keep the carried-in value unchanged. Write the updated value; it is the value the subgoal rules read. e.g. 3"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "visits_done",
+    "description": "Number of target arrivals completed so far with the cube held. It is 0 at the first step and through the step that ends the pick-up. It increases by exactly 1 at every decision step whose final scene shows the cube held in the gripper AND a highlighted target in the scene (every step that ends a 'move to the top of the target' subgoal). It does not depend on what the earlier execution frames of that step showed: a step whose first execution frame already shows the highlight (because the arrival was quick) still counts as one arrival. It does not change at the step that ends the put-down (cube on the table, fingers fully open) or at the press-button step. Reason for the change: the old rule keyed the increment on the highlight being absent in the first execution frame of the step, but when the robot arrives within a frame or two, every shown frame already carries the highlight, so the policy kept the old count and the subgoal was then chosen from the wrong parity (PREDICTABILITY). e.g. 3"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    31,
+    "exec",
+    132
+   ],
+   "memory_in": "visits_done=0",
+   "answered": "B: move to the top of the target at [80, 81]",
+   "recorded": "B: move to the top of the target at [94, 193]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The increment condition required the highlighted target to be absent or different in the first execution frame shown, but here the first execution frame (t=128) already showed the right-side target [80, 81] highlighted while the cube was held, so I kept 0 even though this was the arrival at the first target. The instruction should say: increment visits_done whenever the cube is held and a highlighted target is shown whose side matches the carried-in parity (carried value even -> highlighted target is the smaller-x right-side one; odd -> the larger-x left-side one), regardless of whether earlier frames of this step already showed the highlight.",
+   "missing_from_policy_prompt_for_subgoal": "Rule 2 told me to use the carried-in visits_done parity (0 is even -> right-side target [80, 81]) while also saying 'point at the target that is NOT currently highlighted' ([93, 192]); these conflicted here. It should state that the parity is taken from the UPDATED visits_done written at this step (after the increment), or simply that with the cube held one always points at the target that is not currently highlighted.",
+   "missing": ""
+  }
+ ]
+}

@@ -1,0 +1,112 @@
+{
+ "run": 2,
+ "iteration": 3,
+ "fields": [
+  "target_cube",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  5,
+  8,
+  16,
+  57,
+  93
+ ],
+ "scored": 29,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.9310344827586207,
+ "memory_verified": 0.9310344827586207,
+ "reads": {
+  "target_cube": 16,
+  "picks_done": 24
+ },
+ "field_errors": {
+  "target_cube": {
+   "in": 2,
+   "sole": 2
+  },
+  "picks_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.06896551724137931,
+ "verified_of_all": 0.9310344827586207,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 2,
+ "decisions": 29,
+ "critique": "field target_cube, ANNOTATOR PROMPT\n  SITUATION: at the first decision step the demonstration showed one cube being picked and put back, then a shuffle in which two cubes left their spots, crossed in mid-table, and settled. The annotated value followed the picked cube to its partner's old spot, but the arc-matching wording left the midpoint of the swap ambiguous (both settle positions were plausible continuations of the picked cube's path), so a reader could send the picked cube back to its own spot. Later in the episode, after a put-down, the execution steps showed the held cube with drifting mid-air 'lifted off the table' readings, then the gripper lowered to table height and reopened, then the released cube missing from the list for one frame while the gripper rose over it; the value was annotated as the cube that reappeared under the gripper, but the rule did not say how to pick it out. BREAKS: PREDICTABILITY (the chain description admitted two readings of one swap, and the put-down case named the released cube without saying how to locate it). CHANGE: keep the field as the current table position [y, x] of the cube the demonstration picked. Replace the arc-matching chain with the exchange rule: a swap is a stretch of demonstration frames during which exactly two listed positions leave their resting spots and, when they settle, those same two spots are occupied again; the two movers have EXCHANGED spots, so if the labelled cube was one of the movers it now rests on the OTHER mover's starting spot (never its own), and if it was not a mover it stays where it is. Apply this swap by swap until the last demonstration frame; two consecutive swaps of the same pair put the labelled cube back where it started, a second swap with a different pair moves it again or leaves it alone. Arc continuity may be used only to confirm which of the two movers is which, never to send a mover back to its own spot. The value is the labelled spot as listed in the scene at the start of execution. At later decision steps: if the execution steps show the gripper descend to about height 0.02 with fingers partly closed and then reopen to about 100% at that height, the released cube is the listed cube nearest the gripper's own [y, x] at that reopen frame, read in the scene at this decision step (it may be absent from the list for a frame or two while the gripper rises over it; that is occlusion, and the other listed cubes are not it); mid-air 'held in the gripper' and 'lifted off the table' coordinates are never used to locate it. Otherwise the value is the listed cube within about 10 px of the previous value, or the previous value unchanged if none is listed. Example: [91, 134].\n\nfield target_cube, POLICY PROMPT\n  SITUATION: at the first decision step (memory empty) the policy watched the demonstration pick a cube, put it back, and then a shuffle in which that cube and another left their spots, crossed, and settled; the policy matched the picked cube back to its own starting spot and pointed at the wrong cube. At a later step, after a put-down, the policy located the released cube by the drifting mid-air 'lifted off the table' reading and by the only cube listed during a one-frame occlusion, and so switched the target to the other cube. BREAKS: PREDICTABILITY (the written value differed from the annotated one because the instruction's arc-matching step was ambiguous at the crossing point, and it never said how to find the released cube). CHANGE: the field holds the current table position [y, x] of the cube the demonstration picked. At the first decision step: identify the picked cube by the listed cube nearest the gripper's own [y, x] at the frame where the gripper is lowest (height about 0.02) and the fingers first read about 46%; confirm with the 'held in the gripper' line that follows. Then go through the shuffle one swap at a time. A swap is a run of frames in which exactly two listed positions leave their resting spots and, when the list is still again, the same two spots are filled again: the two movers have EXCHANGED spots. If the picked cube was one of the two movers, it is now on the OTHER mover's starting spot, never back on its own. If it was not a mover, it stays put. Repeat for every swap to the last demonstration frame (two consecutive swaps of the same pair return it; a swap of a different pair moves it elsewhere or leaves it alone). Do not use mid-crossing frames to decide; they are only to tell that a swap is happening. Write the position of that spot as listed in the scene at the start of execution. At later decision steps: if the execution steps shown include a frame where the gripper is at about height 0.02 and the fingers reopen to about 100% (a put-down), the released cube is the listed cube in the scene at this decision step that lies nearest the gripper's own [y, x] at that reopen frame; write that position. If it is absent from the list for a frame while the gripper rises, that is occlusion, not a sign that another listed cube is it; never locate it from 'held in the gripper' or 'lifted off the table' coordinates, which drift in mid-air. Otherwise write the listed position within about 10 px of the carried value, or copy the carried value if none is listed. Example: [91, 134].",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_cube",
+    "description": "SITUATION: at the first decision step (memory empty) the policy watched the demonstration pick a cube, put it back, and then a shuffle in which that cube and another left their spots, crossed, and settled; the policy matched the picked cube back to its own starting spot and pointed at the wrong cube. At a later step, after a put-down, the policy located the released cube by the drifting mid-air 'lifted off the table' reading and by the only cube listed during a one-frame occlusion, and so switched the target to the other cube. BREAKS: PREDICTABILITY (the written value differed from the annotated one because the instruction's arc-matching step was ambiguous at the crossing point, and it never said how to find the released cube). CHANGE: the field holds the current table position [y, x] of the cube the demonstration picked. At the first decision step: identify the picked cube by the listed cube nearest the gripper's own [y, x] at the frame where the gripper is lowest (height about 0.02) and the fingers first read about 46%; confirm with the 'held in the gripper' line that follows. Then go through the shuffle one swap at a time. A swap is a run of frames in which exactly two listed positions leave their resting spots and, when the list is still again, the same two spots are filled again: the two movers have EXCHANGED spots. If the picked cube was one of the two movers, it is now on the OTHER mover's starting spot, never back on its own. If it was not a mover, it stays put. Repeat for every swap to the last demonstration frame (two consecutive swaps of the same pair return it; a swap of a different pair moves it elsewhere or leaves it alone). Do not use mid-crossing frames to decide; they are only to tell that a swap is happening. Write the position of that spot as listed in the scene at the start of execution. At later decision steps: if the execution steps shown include a frame where the gripper is at about height 0.02 and the fingers reopen to about 100% (a put-down), the released cube is the listed cube in the scene at this decision step that lies nearest the gripper's own [y, x] at that reopen frame; write that position. If it is absent from the list for a frame while the gripper rises, that is occlusion, not a sign that another listed cube is it; never locate it from 'held in the gripper' or 'lifted off the table' coordinates, which drift in mid-air. Otherwise write the listed position within about 10 px of the carried value, or copy the carried value if none is listed. Example: [91, 134]."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "target_cube",
+    "description": "SITUATION: at the first decision step the demonstration showed one cube being picked and put back, then a shuffle in which two cubes left their spots, crossed in mid-table, and settled. The annotated value followed the picked cube to its partner's old spot, but the arc-matching wording left the midpoint of the swap ambiguous (both settle positions were plausible continuations of the picked cube's path), so a reader could send the picked cube back to its own spot. Later in the episode, after a put-down, the execution steps showed the held cube with drifting mid-air 'lifted off the table' readings, then the gripper lowered to table height and reopened, then the released cube missing from the list for one frame while the gripper rose over it; the value was annotated as the cube that reappeared under the gripper, but the rule did not say how to pick it out. BREAKS: PREDICTABILITY (the chain description admitted two readings of one swap, and the put-down case named the released cube without saying how to locate it). CHANGE: keep the field as the current table position [y, x] of the cube the demonstration picked. Replace the arc-matching chain with the exchange rule: a swap is a stretch of demonstration frames during which exactly two listed positions leave their resting spots and, when they settle, those same two spots are occupied again; the two movers have EXCHANGED spots, so if the labelled cube was one of the movers it now rests on the OTHER mover's starting spot (never its own), and if it was not a mover it stays where it is. Apply this swap by swap until the last demonstration frame; two consecutive swaps of the same pair put the labelled cube back where it started, a second swap with a different pair moves it again or leaves it alone. Arc continuity may be used only to confirm which of the two movers is which, never to send a mover back to its own spot. The value is the labelled spot as listed in the scene at the start of execution. At later decision steps: if the execution steps show the gripper descend to about height 0.02 with fingers partly closed and then reopen to about 100% at that height, the released cube is the listed cube nearest the gripper's own [y, x] at that reopen frame, read in the scene at this decision step (it may be absent from the list for a frame or two while the gripper rises over it; that is occlusion, and the other listed cubes are not it); mid-air 'held in the gripper' and 'lifted off the table' coordinates are never used to locate it. Otherwise the value is the listed cube within about 10 px of the previous value, or the previous value unchanged if none is listed. Example: [91, 134]."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    8,
+    "exec",
+    270
+   ],
+   "memory_in": "target_cube=; picks_done=",
+   "answered": "A: pick up the cube at [127, 129]",
+   "recorded": "A: pick up the cube at [92, 135]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "At this first decision step the chain was ambiguous at the arc's midpoint: the picked cube went [129,128] -> [127,127] -> [110,112] (t=224), and from there both t=240 positions [96,123] and [122,139] are plausible continuations, so I matched it back toward its own spot. The instruction should state plainly that a shuffle swap is two cubes circling each other, so within one swap (from the frame where two cubes first move until they settle) each moving cube always ends on the OTHER cube's starting spot and never returns to its own; i.e. the picked cube at [129,128] and the cube at [91,134] exchanged places and the picked cube therefore ends at [91,132], with the cube now at [127,129] being the other one.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    8,
+    "exec",
+    441
+   ],
+   "memory_in": "target_cube=[91, 132]; picks_done=1",
+   "answered": "A: pick up the cube at [128, 127]",
+   "recorded": "A: pick up the cube at [91, 137]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say how to locate the released cube in the scene at this decision step: it is the listed cube nearest the gripper's own [y, x] at the release frame (here gripper at [91, 136] when fingers reopened at height 0.017, so the cube at [91, 134]), not the cube nearest the 'lifted off the table' reading ([113, 126], which is a mid-air position that drifts toward the other cube at [128, 127]). It also did not say that the released cube can be absent from the list for a frame while the gripper rises over it (t=432 lists only [128, 127]) and reappears next frame; that absence is occlusion, not evidence that the remaining listed cube is the released one.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

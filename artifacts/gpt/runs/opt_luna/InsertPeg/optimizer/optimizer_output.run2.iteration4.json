@@ -1,0 +1,92 @@
+{
+ "episodes": [
+  2,
+  51,
+  63,
+  85,
+  89
+ ],
+ "user_chars": 18810,
+ "usage": {
+  "prompt_tokens": 6175,
+  "completion_tokens": 816,
+  "total_tokens": 6991,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 3880,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "At this first decision, use the visible demonstration to identify the peg that moves with the gripper after closure, trace it back to its pre-grasp position, and determine whether its head or tail was grasped. Match that peg to the reset execution scene and point to that same endpoint, using its current visible position rather than a shifted or occluded centroid during demonstration contact.",
+    "modify_to": "At this first decision, identify the demonstrated peg by gripper closure followed by sustained co-motion during the initial lift. Determine whether its head or tail was grasped from that closure and lift, and trace that endpoint back to its unobscured pre-contact position. Continuous motion evidence overrides a conflicting late held-object label on an endpoint that stayed stationary; such a label must not change the identified peg or grasp end. Match the identified peg and endpoint to the reset execution scene and point to that endpoint's current visible position, not a shifted or occluded centroid during demonstration contact."
+   },
+   {
+    "modify_from": "Episode 1 selects the tail of the peg with head near [124, 204], targeting approximately [116, 211]; episode 15 selects the head near [127, 75], targeting [128, 76]; episode 33 selects the head near [132, 190], targeting [133, 190]; episode 54 selects the head near [72, 158], targeting [73, 159]; episode 60 selects the head near [87, 146], targeting [88, 147]. These points identify endpoints, not universal fixed coordinates.",
+    "modify_to": ""
+   },
+   {
+    "modify_from": "Explicit held-object observations or closure followed by the peg moving with the raised hand establish a successful grasp; the wrist being outside the frame does not imply an empty hand.",
+    "modify_to": "Accept an explicit held-object label as evidence of a successful grasp only when consistent with the observed motion. Closure followed by sustained co-motion of the peg with the raised hand is sufficient evidence of a successful grasp, even when the wrist later leaves the frame. A conflicting label on a stationary endpoint does not override that evidence, and the wrist being outside the frame does not imply an empty hand."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "insertion_side",
+    "edits": [
+     {
+      "modify_from": "Track the carried peg and its gripper, not stationary pegs, and compare the carried peg's approach position with the box's x coordinate. Approaching from larger x toward smaller x establishes \"left\"; approaching from smaller x toward larger x establishes \"right\". These labels are robot-relative, not camera-relative.",
+      "modify_to": "Identify the carried peg by gripper closure followed by sustained co-motion during the initial lift, and track that peg and its gripper into the final approach. Continuous motion evidence overrides conflicting held-object labels on stationary pegs. Compare the carried peg/gripper's x position on the approach side with the box's x coordinate: x greater than box x means \"left\"; x less than box x means \"right\". Classify the side from which it approaches, not the direction of motion: motion toward smaller x from larger x is insertion from robot-left, not robot-right. These labels are robot-relative, not camera-relative."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "No additional peg or grasp-end memory field, annotation change, or coordinate-specific correction is committed. The demonstration supplies the pickup identity and endpoint when needed, and the subsequent grasp is observable. Points selecting the same object and endpoint need not match identical pixels. The earlier requirements to exclude pickup and high transport from side extraction, use the last unoccluded approach, and retain the side unchanged remain intact."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "insertion_side",
+    "edits": [
+     {
+      "modify_from": "Track the carried peg and its gripper, not stationary pegs, and compare the carried peg's approach position with the box's x coordinate. Approaching from larger x toward smaller x establishes \"left\"; approaching from smaller x toward larger x establishes \"right\". These labels are robot-relative, not camera-relative.",
+      "modify_to": "Identify the carried peg by gripper closure followed by sustained co-motion during the initial lift, and track that peg and its gripper into the final approach. Continuous motion evidence overrides conflicting held-object labels on stationary pegs. Compare the carried peg/gripper's x position on the approach side with the box's x coordinate: x greater than box x means \"left\"; x less than box x means \"right\". Classify the side from which it approaches, not the direction of motion: motion toward smaller x from larger x is insertion from robot-left, not robot-right. These labels are robot-relative, not camera-relative."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "At this first decision, use the visible demonstration to identify the peg that moves with the gripper after closure, trace it back to its pre-grasp position, and determine whether its head or tail was grasped. Match that peg to the reset execution scene and point to that same endpoint, using its current visible position rather than a shifted or occluded centroid during demonstration contact.",
+    "modify_to": "At this first decision, identify the demonstrated peg by gripper closure followed by sustained co-motion during the initial lift. Determine whether its head or tail was grasped from that closure and lift, and trace that endpoint back to its unobscured pre-contact position. Continuous motion evidence overrides a conflicting late held-object label on an endpoint that stayed stationary; such a label must not change the identified peg or grasp end. Match the identified peg and endpoint to the reset execution scene and point to that endpoint's current visible position, not a shifted or occluded centroid during demonstration contact."
+   },
+   {
+    "modify_from": "Episode 1 selects the tail of the peg with head near [124, 204], targeting approximately [116, 211]; episode 15 selects the head near [127, 75], targeting [128, 76]; episode 33 selects the head near [132, 190], targeting [133, 190]; episode 54 selects the head near [72, 158], targeting [73, 159]; episode 60 selects the head near [87, 146], targeting [88, 147]. These points identify endpoints, not universal fixed coordinates.",
+    "modify_to": ""
+   },
+   {
+    "modify_from": "Explicit held-object observations or closure followed by the peg moving with the raised hand establish a successful grasp; the wrist being outside the frame does not imply an empty hand.",
+    "modify_to": "Accept an explicit held-object label as evidence of a successful grasp only when consistent with the observed motion. Closure followed by sustained co-motion of the peg with the raised hand is sufficient evidence of a successful grasp, even when the wrist later leaves the frame. A conflicting label on a stationary endpoint does not override that evidence, and the wrist being outside the frame does not imply an empty hand."
+   }
+  ],
+  "refused": "No additional peg or grasp-end memory field, annotation change, or coordinate-specific correction is committed. The demonstration supplies the pickup identity and endpoint when needed, and the subsequent grasp is observable. Points selecting the same object and endpoint need not match identical pixels. The earlier requirements to exclude pickup and high transport from side extraction, use the last unoccluded approach, and retain the side unchanged remain intact."
+ },
+ "not_applied": [],
+ "refused": "No additional peg or grasp-end memory field, annotation change, or coordinate-specific correction is committed. The demonstration supplies the pickup identity and endpoint when needed, and the subsequent grasp is observable. Points selecting the same object and endpoint need not match identical pixels. The earlier requirements to exclude pickup and high transport from side extraction, use the last unoccluded approach, and retain the side unchanged remain intact.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"insertion_side\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Track the carried peg and its gripper, not stationary pegs, and compare the carried peg's approach position with the box's x coordinate. Approaching from larger x toward smaller x establishes \\\"left\\\"; approaching from smaller x toward larger x establishes \\\"right\\\". These labels are robot-relative, not camera-relative.\",\n          \"modify_to\": \"Identify the carried peg by gripper closure followed by sustained co-motion during the initial lift, and track that peg and its gripper into the final approach. Continuous motion evidence overrides conflicting held-object labels on stationary pegs. Compare the carried peg/gripper's x position on the approach side with the box's x coordinate: x greater than box x means \\\"left\\\"; x less than box x means \\\"right\\\". Classify the side from which it approaches, not the direction of motion: motion toward smaller x from larger x is insertion from robot-left, not robot-right. These labels are robot-relative, not camera-relative.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"At this first decision, use the visible demonstration to identify the peg that moves with the gripper after closure, trace it back to its pre-grasp position, and determine whether its head or tail was grasped. Match that peg to the reset execution scene and point to that same endpoint, using its current visible position rather than a shifted or occluded centroid during demonstration contact.\",\n      \"modify_to\": \"At this first decision, identify the demonstrated peg by gripper closure followed by sustained co-motion during the initial lift. Determine whether its head or tail was grasped from that closure and lift, and trace that endpoint back to its unobscured pre-contact position. Continuous motion evidence overrides a conflicting late held-object label on an endpoint that stayed stationary; such a label must not change the identified peg or grasp end. Match the identified peg and endpoint to the reset execution scene and point to that endpoint's current visible position, not a shifted or occluded centroid during demonstration contact.\"\n    },\n    {\n      \"modify_from\": \"Episode 1 selects the tail of the peg with head near [124, 204], targeting approximately [116, 211]; episode 15 selects the head near [127, 75], targeting [128, 76]; episode 33 selects the head near [132, 190], targeting [133, 190]; episode 54 selects the head near [72, 158], targeting [73, 159]; episode 60 selects the head near [87, 146], targeting [88, 147]. These points identify endpoints, not universal fixed coordinates.\",\n      \"modify_to\": \"\"\n    },\n    {\n      \"modify_from\": \"Explicit held-object observations or closure followed by the peg moving with the raised hand establish a successful grasp; the wrist being outside the frame does not imply an empty hand.\",\n      \"modify_to\": \"Accept an explicit held-object label as evidence of a successful grasp only when consistent with the observed motion. Closure followed by sustained co-motion of the peg with the raised hand is sufficient evidence of a successful grasp, even when the wrist later leaves the frame. A conflicting label on a stationary endpoint does not override that evidence, and the wrist being outside the frame does not imply an empty hand.\"\n    }\n  ],\n  \"refused\": \"No additional peg or grasp-end memory field, annotation change, or coordinate-specific correction is committed. The demonstration supplies the pickup identity and endpoint when needed, and the subsequent grasp is observable. Points selecting the same object and endpoint need not match identical pixels. The earlier requirements to exclude pickup and high transport from side extraction, use the last unoccluded approach, and retain the side unchanged remain intact.\"\n}"
+}

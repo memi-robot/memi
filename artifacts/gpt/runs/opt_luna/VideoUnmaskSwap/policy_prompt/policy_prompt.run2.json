@@ -1,0 +1,77 @@
+{
+ "task": "VideoUnmaskSwap",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 5,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    2,
+    28,
+    31,
+    67,
+    79
+   ],
+   "verified_of_all": 0.6923076923076923,
+   "subgoal_verified": 0.7692307692307693
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    33,
+    57,
+    61,
+    70,
+    92
+   ],
+   "verified_of_all": 0.8888888888888888,
+   "subgoal_verified": 0.8888888888888888
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    0,
+    14,
+    17,
+    48,
+    50
+   ],
+   "verified_of_all": 0.8571428571428571,
+   "subgoal_verified": 0.8571428571428571
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    4,
+    47,
+    50,
+    55,
+    62
+   ],
+   "verified_of_all": 0.7777777777777778,
+   "subgoal_verified": 0.8888888888888888
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    0,
+    2,
+    17,
+    60,
+    75
+   ],
+   "verified_of_all": 0.6666666666666666,
+   "subgoal_verified": 0.8888888888888888
+  }
+ ],
+ "policy_prompt_for_subgoal": "Apply the memory update before choosing the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container identified by its first location. Point inside that container in the current image, using its visible center or another interior grasp point; small centroid shifts do not change identity. After execution shows a successful grasp and lift, the hand is holding a container. If remaining_targets is still nonempty, choose B to put down the held container before attempting the next target. After the release sequence leaves the hand open and empty, choose A at the first remaining target. A completed last requested pickup finishes the task; do not deliberately put that last container down as part of the goal. Do not infer an empty hand solely from stationary container detections: use the closing, lifting, and release observations. For an unexpected additional decision or an otherwise unmatched situation, choose B if the hand appears to hold a container; otherwise choose A at the closest visible container to the first remaining location. If that list is empty or no target can be located, choose B as the conservative menu fallback rather than inventing a new target.",
+ "fields": [
+  {
+   "name": "remaining_targets",
+   "description": "Initialize only when incoming memory is absent and the demonstration is shown. Associate each requested cube with the container placed over it. Within this demonstration-bearing decision, maintain a temporary identity-to-resting-position assignment for every container, giving unrequested and extra containers distinct temporary identities too. Initialize this assignment at the covering layout and process all subsequent movements chronologically, partitioning the demonstration into movement intervals bounded by settled layouts. For each interval, identify the departing resting positions from the visible intermediate motion, excluding stationary containers from the moving pair. This assignment is temporary computation, not an additional persistent memory field. Use continuous motion and direction through intermediate frames to assign endpoints; never reset identities at a resting layout or infer them from nearest original positions or detection-list order. Carry each identity along its intermediate trajectory through the final settling segment. For sparsely sampled curved motion, a change of direction does not itself mark another exchange: continue the same identity along that branch to its resting endpoint, rather than rematching the endpoint to an initial position. To resolve a curved exchange of two containers, identify the moving pair and exclude stationary containers from that pair's endpoint association. Estimate the pair's midpoint across successive frames and follow each identity's displacement around it. Assign the two settling endpoints jointly by continuing their observed rotational branches; do not assign an endpoint by proximity to that identity's starting position or by extrapolating only its last straight-line displacement. When the moving pair settles, commit both endpoint assignments before processing the next movement. Check each interval for exchange completion using the intermediate trajectories through settling. When they establish a completed exchange between two resting positions, jointly assign the identity previously at each departing position to the opposite resting endpoint, exactly once. Nearly identical unordered occupied positions before and after the interval do not negate this swap. Do not override the committed assignment by subsequently matching endpoints to initial positions. Keep every identity outside that moving pair at its committed position. Identify the participants in the next movement from visible departures and intermediate motion using this updated assignment, never the original cube-to-position association. Apply each later exchange to the current assignment, including exchanges involving extra containers or a different pair. After all movements have been processed, verify every requested identity's final assignment against the committed interval updates, including targets not selected by the current command and targets that exchanged with extra containers. For each requested identity, use its last committed endpoint, or its covering location if it never moved; later intervals in which it was stationary leave that endpoint unchanged. Then look up all requested identities in the final assignment to construct remaining_targets in goal order. Count a second exchange only when subsequent motion shows the pair exchanging endpoints again. A pair departing two resting positions and settling at the opposite endpoints completes one exchange. Neither the intermediate crossing nor the return of the unordered set of occupied positions counts as another exchange. Only a second complete exchange of that same pair restores its original assignment; exchanges involving a different pair do not cancel the first. Write the final container centers as an ordered list of [y, x] locations in goal order, including the target being selected now. Do not include unrequested containers in the list. An existing remaining_targets value of [] is completed memory, not absent memory, and must not trigger initialization. With existing memory, remove the first entry only when the execution frames shown at this decision show the hand descending to that target, closing around a container, and lifting with fingers still partly open around it. The observed successful grasps finish near 46% opening at raised height; unchanged reported container centers do not negate that grasp evidence. A release sequence, with descent followed by opening and withdrawal, leaves the list unchanged. Otherwise preserve the incoming list. Never remove an entry in anticipation of the command chosen now. e.g. [[121, 102]]"
+  }
+ ],
+ "stage": "optimized"
+}

@@ -1,0 +1,413 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoPlaceOrder",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   18,
+   22,
+   46,
+   49,
+   60
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: Whether the cube is held is decided from the fingers and gripper at the scene of this decision step alone, never from the cube's own line: the cube IS held whenever the fingers are ~46% open (any partly closed value, not ~100%) and the gripper is raised (height above ~0.1), even if the cube line lacks the words 'held in the gripper' or still reports its old table coordinates; the execution steps leading to that scene show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. 1. If the goal-named cube is NOT held (fingers ~100% open): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open and gripper raised, by the test above): choose B, drop onto, pointing at the target listed in the scene at this decision step whose position is closest to goal_target from memory, using that target's coordinates exactly as listed in this step's scene rather than the memory value (targets wobble by a few pixels between frames). If goal_target is unknown, apply rule 4. 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but goal_target is unknown, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+  "fields": [
+   {
+    "name": "goal_target",
+    "description": "At the first decision step (demonstration frames are shown and the carried memory is empty), follow this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, right after frames in which the goal-named cube was carried (its line read 'held in the gripper' with the gripper raised). (3) Its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame, where all four targets are listed. (4) Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. (5) Number what is left 1, 2, 3, 4 earliest first and write the [y, x] of the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). Count forward from the earliest placement only, never backward from the most recent one; a button press between placements does not restart the count. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]; 'first' gives [99, 90]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [139, 124]",
+    "annotation": "The single target position, in [y, x], on which the goal-named cube (the colour named in the goal instruction) is to be dropped. Written at step #1, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. Fill it by this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (anything between ~45% and ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, in the frames right after the goal-named cube was carried (its line read 'held in the gripper' while the gripper was raised). (3) The placement's target is the listed target closest to where the cube then rests, with its coordinates copied from the last demonstration frame, where all four targets are listed. (4) Discard the final placement of the demonstration, the one that leaves the cube near [82, 127] with no target within ~15 pixels; discard button presses (fingers 0%, no cube carried); ignore a carried cube that momentarily loses its 'held' label while the gripper stays raised. (5) Number the remaining placements 1, 2, 3, 4 in the order they occur, earliest = 1, and write the target of the placement whose number the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). The ordinal always counts forward from the earliest placement, never backward from the most recent one, and a button press between placements does not restart the count. Example: placements in order onto targets near [99, 90], [100, 163], [141, 133], [79, 90], then the centre set-down; goal 'second' gives the last-frame listing of the second one, e.g. [98, 166]; goal 'first' gives [99, 90]. e.g. [139, 124]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoPlaceOrder",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   18,
+   22,
+   46,
+   49,
+   60
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: 1. If the cube named in the goal instruction is NOT held (fingers ~100% open, gripper raised or empty, cube resting on the table): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open, gripper raised to height ~0.15, cube listed as held or at the gripper position): choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4). 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but memory is empty and no list can be derived, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+  "fields": [
+   {
+    "name": "demo_placements",
+    "description": "At the first decision step (the one that shows DEMONSTRATION STEPS and the memory is empty), scan the demo frames for the cube whose colour the goal instruction names, and write the ordered list of target positions, in [y, x], where it was released: a release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper'; record the target whose position (read from a demo frame listing all four targets, such as the last demo frame) is closest to where the cube now rests. Skip the demo's final release near the image centre (cube left around [82, 127] with no target there), skip the cube's starting spot, and skip button presses (fingers 0% open, no cube held). At every later step, copy the carried-in value unchanged. Empty list if no demonstration frames are shown and nothing is carried in. e.g. [[116, 163], [75, 163]]",
+    "annotation": "Ordered list of target positions, in [y, x], on which the goal-named cube (the colour named in the goal instruction) was released during the DEMONSTRATION, in the order the releases happened. A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before; the entry is the position of the target closest to the cube's resting spot right after that release, taken from a demo frame where all four targets are visible (e.g. the last demo frame). Do NOT include the demo's final release near the image centre (cube left around [82, 127], no target there), do not include the cube's starting spot, do not include button presses, and do not include a release that is onto the same target the cube was just lifted from if no target lies under the cube. Written at step #1 (the only step that shows the demonstration) and copied unchanged at every later step. Empty list only if no demonstration was shown. e.g. [[116, 163], [75, 163]]"
+   },
+   {
+    "name": "goal_target",
+    "description": "At the first decision step, after writing demo_placements, take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point. At every later step copy the carried-in value unchanged. unknown if demo_placements is empty. e.g. [116, 163]",
+    "annotation": "The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4. Written at step #1 from the demonstration and copied unchanged afterwards. unknown before the demonstration has been seen. e.g. [116, 163]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 4,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "demo_placements": 0,
+     "goal_target": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 3
+   },
+   "critique": "field demo_placements, ANNOTATOR PROMPT\n  DELETE this field. It was carried at every step and read at none: the only fact the execution needs is the single target the goal's ordinal picks, and that is already held by goal_target. Fold the release-counting into goal_target's own description (below) so the list exists only as a working step at the first decision step and is never carried.\n\nfield goal_target, ANNOTATOR PROMPT\n  Holds the single target position, in [y, x], on which the goal-named cube is to be dropped. Written at the first decision step, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. To fill it, list every release of the goal-named cube in the demonstration in ascending frame time: a release is a frame where the fingers go from ~46% (or any partly closed value) to ~100% open while the goal-named cube was marked 'held in the gripper' in the frames just before, and the entry is the target closest to the cube's resting spot in the frames right after that release, with the target's position taken from a frame where all four targets are listed. Exclude the last release of the demonstration, which sets the cube down at the image centre near [82, 127] where no target lies; exclude button presses (fingers 0% open, no cube held); do not treat a frame where the cube merely loses its 'held' label while the gripper is raised as a release. Then take the goal ordinal ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) from that chronological list. e.g. [107, 86]\n\nfield demo_placements, POLICY PROMPT\n  DELETE this field. Do not write it. Its content is used only once, at the first decision step, to compute goal_target, and is never read afterwards.\n\nfield goal_target, POLICY PROMPT\n  At the first decision step (demonstration frames are shown and the carried memory is empty), scan the demonstration frames in ascending t for the cube whose colour the goal instruction names. Each time the fingers open from a partly closed value (~46%) to ~100% in a frame after frames where that cube was 'held in the gripper', that is one release; its target is the one closest to where the cube rests in the frames right after the release, read from a frame listing all four targets (the demo's last frames do). Skip button presses (fingers 0% open, no cube held) and skip the demonstration's final release, which leaves the cube near the image centre around [82, 127] with no target under it. Number the remaining releases earliest first, take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4), and write that target's [y, x]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [107, 86]\n\nthe policy prompt for subgoal\n  Rule 1 and rule 2 decide 'held' from the cube's label and finger opening, and that sent the policy wrong at the decision step after the pick-up: the scene at that step shows the gripper raised to height ~0.15 with the fingers ~46% open, but the goal-named cube is listed at its old table position without the words 'is held in the gripper', so neither rule matched and the policy chose A again instead of B. Replace the held test in rules 1 and 2 with this: the cube IS held whenever the fingers at the decision step are ~46% open (not ~100%) and the gripper is raised (height above ~0.1), regardless of whether the cube line carries the 'held' label or still reports the old table coordinates; the execution steps leading to that scene will show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. In that held case choose B, drop onto. Rule 2 should also say where to point: at the target listed in the current scene that is closest to goal_target (targets wobble by a few pixels between frames), and if goal_target is unknown, fall back to rule 4. Rule 2's clause about deriving the point from demo_placements must go, since that field no longer exists. Rules 3 and 4 stand. Rule 1 stands for the first decision step, where the fingers are 100% open and the gripper is raised out of frame.\n\nrefused\n  Four steps at the drop decision reported that goal_target was wrong and asked that the policy prompt insist on chronological ordering of the demonstration releases (or, in one case, that the memory be checkable against the scene). I am not passing the ordering demand on as a fix, because across this minibatch no single ordering reproduces the recorded drops: in two episodes the recorded target is the ordinal-th release counted earliest first, in two others it is the ordinal-th release counted latest first, and in one the recorded drop is onto a target the demonstration never placed the cube on at all. The reports contradict each other, and a rule written to satisfy one would break another; the chronological definition is kept as the stated rule because it is the plain reading of the goal and fits the cases that fit anything. The request to add a way to 'override' a goal_target in the scene is refused as well: nothing in the execution scene reveals which target the demonstration used, so the memory is the only source and cannot be checked against the step. The only reliable fault across these steps was the held-cube test and the pointing rule, which are passed on above.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "delete",
+      "field": "demo_placements",
+      "edits": [],
+      "description": ""
+     },
+     {
+      "kind": "modify",
+      "field": "goal_target",
+      "edits": [
+       {
+        "modify_from": "The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4. Written at step #1 from the demonstration and copied unchanged afterwards. unknown before the demonstration has been seen. e.g. [116, 163]",
+        "modify_to": "The single target position, in [y, x], on which the goal-named cube (the colour named in the goal instruction) is to be dropped. Written at step #1, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. To fill it, list every release of the goal-named cube in the demonstration in ascending frame time: a release is a frame where the fingers go from a partly closed value (~46%) to ~100% open while the goal-named cube was marked 'held in the gripper' in the frames just before, and its entry is the target closest to the cube's resting spot in the frames right after that release, with the target's position taken from a frame where all four targets are listed (e.g. the last demo frame). Exclude the last release of the demonstration, which sets the cube down near the image centre around [82, 127] where no target lies; exclude button presses (fingers 0% open, no cube held); do not treat a frame where the cube merely loses its 'held' label while the gripper is raised as a release. Number the remaining releases earliest first and take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). e.g. [107, 86]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "goal_target",
+      "edits": [
+       {
+        "modify_from": "At the first decision step, after writing demo_placements, take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point. At every later step copy the carried-in value unchanged. unknown if demo_placements is empty. e.g. [116, 163]",
+        "modify_to": "At the first decision step (demonstration frames are shown and the carried memory is empty), scan the demonstration frames in ascending t for the cube whose colour the goal instruction names. Each time the fingers open from a partly closed value (~46%) to ~100% in a frame after frames where that cube was 'held in the gripper', that is one release; its target is the one closest to where the cube rests in the frames right after the release, read from a frame listing all four targets (the demo's last frames do). Skip button presses (fingers 0% open, no cube held), skip the demonstration's final release, which leaves the cube near the image centre around [82, 127] with no target under it, and do not count a frame where the cube merely loses its 'held' label while the gripper stays raised. Number the remaining releases earliest first, take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4), and write that target's [y, x]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [107, 86]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "1. If the cube named in the goal instruction is NOT held (fingers ~100% open, gripper raised or empty, cube resting on the table): choose A,",
+      "modify_to": "Whether the cube is held is decided from the fingers and gripper at the scene of this decision step alone, never from the cube's own line: the cube IS held whenever the fingers are ~46% open (any partly closed value, not ~100%) and the gripper is raised (height above ~0.1), even if the cube line lacks the words 'held in the gripper' or still reports its old table coordinates; the execution steps leading to that scene show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. 1. If the goal-named cube is NOT held (fingers ~100% open): choose A,"
+     },
+     {
+      "modify_from": "2. If the goal-named cube IS held (fingers ~46% open, gripper raised to height ~0.15, cube listed as held or at the gripper position): choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4).",
+      "modify_to": "2. If the goal-named cube IS held (fingers ~46% open and gripper raised, by the test above): choose B, drop onto, pointing at the target listed in the current scene whose position is closest to goal_target from memory (targets wobble by a few pixels between frames). If goal_target is unknown, apply rule 4."
+     },
+     {
+      "modify_from": "(e.g. the cube is held but memory is empty and no list can be derived, or the cube is not visible)",
+      "modify_to": "(e.g. the cube is held but goal_target is unknown, or the cube is not visible)"
+     }
+    ],
+    "refused": "The requests from the drop steps to re-order the demonstration releases (latest-first, or any other order) or to make goal_target checkable against the execution scene stay out. The report itself shows the minibatch gives no single ordering that reproduces all recorded drops (two fit earliest-first, two fit latest-first, one fits none), so any re-ordering trades one failure for another, and the execution scene carries nothing that identifies the demonstrated target, so there is nothing to check the memory against. Chronological earliest-first ordering stays as the stated rule. What is committed is the held test on fingers and gripper height, the pointing rule on the scene's nearest target to goal_target, and the removal of demo_placements, which was carried at every step and read at none."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 2,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "goal_target": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 2
+   },
+   "critique": "field goal_target, ANNOTATOR PROMPT\n  The field keeps its meaning (the [y, x] of the target on which the goal-named cube is to be dropped, written at the first decision step from the demonstration and copied unchanged afterwards), but the filling went wrong once and must be stated so it cannot: in a demonstration with four placements on four targets followed by a button press and the final centre set-down, the annotator wrote the target of the second-most-recent placement where the rule said the second-earliest, so the policy, which followed the rule as written, carried a different value for the same step (PREDICTABILITY broken by the annotation, not by the policy). Rewrite the counting as an explicit procedure: (1) walk the demonstration frames in ascending t; (2) a placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (anything between ~45% and ~95%, since the low frame may already read 67%, 80% or 93%) to ~100% open, in the frames right after the goal-named cube was carried (the cube line read 'held in the gripper' while the gripper was raised); (3) its target is the listed target closest to where the cube then rests, with the coordinates copied from the last demonstration frame, where all four targets are listed; (4) discard the final placement of the demonstration, the one that leaves the cube near [82, 127] with no target within ~15 pixels; discard button presses (fingers 0%, no cube carried); ignore a carried cube momentarily losing its 'held' label while the gripper stays raised; (5) number the remaining placements 1, 2, 3, 4 in the order they occur, earliest = 1, and write the target of the placement whose number the goal's ordinal names. The ordinal never counts backwards from the most recent placement. Example: placements in order onto targets near [99, 90], [100, 163], [141, 133], [79, 90], then the centre set-down; goal 'second' gives [98, 166] (the last-frame listing of the second one), goal 'first' gives [99, 90]. e.g. [139, 124]\n\nfield goal_target, POLICY PROMPT\n  Same procedure, written for the first decision step where the demonstration frames are shown and the carried memory is empty: list, in ascending t, every frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open right after frames in which the goal-named cube was carried ('held in the gripper' with the gripper raised). Each such frame is one placement; its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame (all four targets listed). Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. Number what is left 1, 2, 3, 4 earliest first, and write the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, ...). Count forward from the earliest placement only, never backward from the most recent one. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]. At every later step copy the carried value unchanged. e.g. [139, 124]\n\nthe policy prompt for subgoal\n  No rule sent the policy wrong: at every failed step with the cube held the policy applied rule 2 correctly to the goal_target it carried, and at the first decision step it chose A on the cube as rule 1 says. One small clarification to rule 2: when choosing B, point at the exact coordinates of the listed target nearest goal_target as they appear in the scene at this decision step; a point one or two pixels off that listing is still correct, since targets wobble, and the recorded points are sometimes one pixel from the listing. No rule is added or removed.\n\nrefused\n  Two reports asked for the counting to be changed so that, in one demonstration with two placements and a button press between them, 'first' resolves to the later placement, and in another with four placements 'second' resolves to the earliest one. These two demands contradict each other (one wants the most recent placement, the other the earliest) and both contradict the three other episodes in the minibatch, where 'first' is confirmed as the earliest placement in demonstrations with two or three placements and a button press at various positions. No single counting rule fits all five recorded drops, so the earliest-first rule, which fits three of five, is kept and only made unambiguous. The report that 'first' should be read backwards from the most recent placement is likewise dropped: it was offered because the annotation at that step had itself been filled backwards, against the rule, and that annotation error is what the rule rewrite corrects. The suggestion that a hidden or covered target identifies the placement is not needed: the target coordinates are to be read from the last demonstration frame, where all four are listed.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "goal_target",
+      "edits": [
+       {
+        "modify_from": "To fill it, list every release of the goal-named cube in the demonstration in ascending frame time: a release is a frame where the fingers go from a partly closed value (~46%) to ~100% open while the goal-named cube was marked 'held in the gripper' in the frames just before, and its entry is the target closest to the cube's resting spot in the frames right after that release, with the target's position taken from a frame where all four targets are listed (e.g. the last demo frame). Exclude the last release of the demonstration, which sets the cube down near the image centre around [82, 127] where no target lies; exclude button presses (fingers 0% open, no cube held); do not treat a frame where the cube merely loses its 'held' label while the gripper is raised as a release. Number the remaining releases earliest first and take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). e.g. [107, 86]",
+        "modify_to": "Fill it by this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (anything between ~45% and ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, in the frames right after the goal-named cube was carried (its line read 'held in the gripper' while the gripper was raised). (3) The placement's target is the listed target closest to where the cube then rests, with its coordinates copied from the last demonstration frame, where all four targets are listed. (4) Discard the final placement of the demonstration, the one that leaves the cube near [82, 127] with no target within ~15 pixels; discard button presses (fingers 0%, no cube carried); ignore a carried cube that momentarily loses its 'held' label while the gripper stays raised. (5) Number the remaining placements 1, 2, 3, 4 in the order they occur, earliest = 1, and write the target of the placement whose number the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). The ordinal always counts forward from the earliest placement, never backward from the most recent one, and a button press between placements does not restart the count. Example: placements in order onto targets near [99, 90], [100, 163], [141, 133], [79, 90], then the centre set-down; goal 'second' gives the last-frame listing of the second one, e.g. [98, 166]; goal 'first' gives [99, 90]. e.g. [139, 124]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "goal_target",
+      "edits": [
+       {
+        "modify_from": "scan the demonstration frames in ascending t for the cube whose colour the goal instruction names. Each time the fingers open from a partly closed value (~46%) to ~100% in a frame after frames where that cube was 'held in the gripper', that is one release; its target is the one closest to where the cube rests in the frames right after the release, read from a frame listing all four targets (the demo's last frames do). Skip button presses (fingers 0% open, no cube held), skip the demonstration's final release, which leaves the cube near the image centre around [82, 127] with no target under it, and do not count a frame where the cube merely loses its 'held' label while the gripper stays raised. Number the remaining releases earliest first, take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4), and write that target's [y, x]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [107, 86]",
+        "modify_to": "follow this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, right after frames in which the goal-named cube was carried (its line read 'held in the gripper' with the gripper raised). (3) Its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame, where all four targets are listed. (4) Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. (5) Number what is left 1, 2, 3, 4 earliest first and write the [y, x] of the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). Count forward from the earliest placement only, never backward from the most recent one; a button press between placements does not restart the count. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]; 'first' gives [99, 90]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [139, 124]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "pointing at the target listed in the current scene whose position is closest to goal_target from memory (targets wobble by a few pixels between frames).",
+      "modify_to": "pointing at the target listed in the scene at this decision step whose position is closest to goal_target from memory, using that target's coordinates exactly as listed in this step's scene rather than the memory value (targets wobble by a few pixels between frames)."
+     }
+    ],
+    "refused": "The two requests to change the counting so that 'first' names the later of two placements separated by a button press, and so that 'second' names the earliest of four placements, stay out: they contradict each other and the other three episodes of this round, and they are the same latest-first demand refused in round 1 for the same reason, that no single ordering fits every recorded drop while earliest-first fits the most. Reading the ordinal backwards from the most recent placement is refused as well; it was proposed only because the annotation at that step had itself been filled backwards, and the explicit forward-counting procedure now committed on both sides removes that ambiguity. The suggestion that a hidden or covered target identifies a placement is not adopted, since coordinates are read from the last demonstration frame where all four targets are listed. The held test and pointing rule from round 1 stand; rule 2 is only clarified to use the scene's listed coordinates."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 2,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "goal_target": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 2
+   },
+   "critique": "refused\n  Two steps reported the same thing: at the second decision step, with the goal-named cube just grasped and raised, the policy dropped onto the target that the carried-in goal_target named, and the recorded drop was onto a different target. Both steps concluded that the ordinal procedure in the first-step rule had numbered the placements wrongly and asked for it to be sharpened (re-grasps near the same target, cubes resting between two targets, non-goal-cube placements). I checked those demonstrations end to end and none of those ambiguities exists in them: every placement is a clean set-down of the goal-named cube within a few pixels of one listed target, no other cube is ever moved, and the final centre set-down and the button press are already excluded. The forward count the rule prescribes was applied exactly as written and produced the annotated values. What the recorded drops in those two episodes actually match is the opposite convention: the ordinal counted backward from the most recent placement before the centre set-down (a four-placement demonstration where 'third' resolved to the second placement from the start, and a two-placement demonstration where 'second' resolved to the first). But the three other episodes of this minibatch, which the policy answered correctly, follow the forward count and contradict the backward one (a three-placement demonstration where 'first' is the earliest placement, not the latest; a two-placement demonstration with a button press between them where 'second' is the later placement). Two episodes with identical structure, one placement, a button press, a second placement, then the centre set-down, carry opposite recorded answers for 'second'. No rule stated in terms of what the demonstration frames show fits all five; the only feature separating the backward-counting episodes from the forward-counting ones is the presence of distractor cubes of other colours on the table, which I do not believe is a real cause and will not write into the rule. Changing the procedure to a backward count would fix these two steps and break the three that currently pass, and the current rule's explicit 'never backward' clause shows this reversal has already been weighed once. So the annotator prompt, the policy prompt for memory and the policy prompt for subgoal all stay as they are; the two reports are dropped as contradicting the majority of the minibatch rather than revealing a missing or unclear condition.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing is committed this round. The report asks for nothing beyond what it already refused: the two failed drop steps fit a backward count of the demonstration placements, and the three passing steps fit the forward count the rule now prescribes. That is the same split seen in round 1 (two forward, two backward, one onto a target never placed on) and round 2 (three forward, two otherwise). Reversing the count, or adding a clause keyed on the presence of distractor cubes, would trade the passing steps for the failing ones and undo the explicit forward-counting procedure committed in round 2, so neither is adopted. The forward count remains the stated rule because it is the plain reading of the goal and fits the most recorded drops in every round so far. One note for the annotator in later rounds rather than an edit now: the recurring mismatch, including the round-1 drop onto a target the demonstration never used, suggests the ordinal may index something other than placement order (for example a property of the targets themselves or of the whole demonstration rather than of the goal-named cube's releases). If a later minibatch shows one feature of the demonstration frames that separates the two conventions, that is the rule to write; a feature the report itself does not believe is a cause is not written in."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 2,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "goal_target": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 2
+   },
+   "critique": "refused\n  Two steps reported the same thing and are answered together. Both were second decision steps on a goal naming the 'first' target: the robot had just lifted the goal-named cube from the centre of the table (fingers partly closed, gripper raised), the memory carried goal_target as the target of the earliest demonstration placement, and the policy chose 'drop onto' that target. The recorded subgoal instead dropped onto a target that the goal-named cube was never set down on anywhere in the demonstration: in both demonstrations the cube was placed on exactly two targets (an earlier one, then a later one after the button press) before the final centre set-down, and the recorded drop went to one of the two targets the cube never visited. The policy proposed that the procedure for finding the earliest placement is wrong or skips an early set-down. I read both demonstrations frame by frame and there is no earlier placement to find: the gripper descends once to the cube, carries it on a straight path and releases it on the target the memory names; no set-down, hidden or otherwise, occurs near the recorded target at any time. The same forward-counting procedure gives exactly the recorded answer in the other three episodes of this minibatch, including one that also asks for the 'first' target and one with three placements. Rewriting the rule to produce the recorded target in the two failed steps would require naming a placement that the demonstration does not show, and would break the three episodes that currently agree. The memory the policy wrote at those steps equals the annotated memory, so PREDICTABILITY holds, and the subgoal it chose follows from that memory and the scene, so the documents settled the step as far as the demonstration allows; the disagreement is between the recorded answer and the demonstration itself. Nothing is passed on; all three documents stay as they are.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing is committed this round. The report asks for nothing, and the two failed steps are the same mismatch seen in every round so far: the policy wrote the memory the rule prescribes, the annotator wrote the same value, and the subgoal followed from it; the recorded drop went to a target the forward count of the goal-named cube's demonstration placements does not name, and this time to a target the cube was never set down on at all (as once in round 1). The proposal from the failed steps, that an early set-down was skipped, was checked against the frames and found false, so no change to the placement-detection procedure is warranted; sharpening it would be a clause for a case the demonstration does not contain. Reversing the count to latest-first is refused for the fourth time: it fixed two and broke three in rounds 1 to 3 and would not explain this round's drops onto never-visited targets. Keying the rule on distractor cubes is refused again, as the round-3 report did not believe it was a cause. What the accumulated rounds now show is that the ordinal in the goal does not consistently index the order of the goal-named cube's releases: across four rounds the recorded target has been the ordinal-th placement forward, the ordinal-th placement backward, and a target the cube never touched. That pattern is a wrong hypothesis about what the ordinal names, not a wrong placement count, and no edit stated in terms of placements can settle it. The rule is left standing because it still fits the most recorded drops, and because a replacement needs a feature I cannot infer without the episodes. The annotator in the next round should, for each failed drop, record what else distinguishes the recorded target in the demonstration frames and in the first-step scene: its order in the scene's target listing, its position relative to the others (e.g. nearest to the robot, leftmost), whether any other cube or the button was set on or near it, and the order in which targets were first approached or covered by anything, so that one feature common to every recorded drop can be written as the rule for goal_target."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 4,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    23,
+    39,
+    51,
+    66,
+    87
+   ],
+   "verified_of_all": 0.6,
+   "subgoal_verified": 0.6,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: 1. If the cube named in the goal instruction is NOT held (fingers ~100% open, gripper raised or empty, cube resting on the table): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open, gripper raised to height ~0.15, cube listed as held or at the gripper position): choose B, drop onto, pointing at goal_target from memory. If goal_target is unknown but demo_placements is non-empty, point at the entry of demo_placements selected by the ordinal in the goal instruction (first=1, second=2, third=3, fourth=4). 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but memory is empty and no list can be derived, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+    "fields": [
+     {
+      "name": "demo_placements",
+      "description": "At the first decision step (the one that shows DEMONSTRATION STEPS and the memory is empty), scan the demo frames for the cube whose colour the goal instruction names, and write the ordered list of target positions, in [y, x], where it was released: a release is a frame where the fingers open from ~46% to ~100% right after frames where that cube was 'held in the gripper'; record the target whose position (read from a demo frame listing all four targets, such as the last demo frame) is closest to where the cube now rests. Skip the demo's final release near the image centre (cube left around [82, 127] with no target there), skip the cube's starting spot, and skip button presses (fingers 0% open, no cube held). At every later step, copy the carried-in value unchanged. Empty list if no demonstration frames are shown and nothing is carried in. e.g. [[116, 163], [75, 163]]",
+      "annotation": "Ordered list of target positions, in [y, x], on which the goal-named cube (the colour named in the goal instruction) was released during the DEMONSTRATION, in the order the releases happened. A release is a frame where the fingers go from ~46% open to ~100% open while that cube was 'held in the gripper' just before; the entry is the position of the target closest to the cube's resting spot right after that release, taken from a demo frame where all four targets are visible (e.g. the last demo frame). Do NOT include the demo's final release near the image centre (cube left around [82, 127], no target there), do not include the cube's starting spot, do not include button presses, and do not include a release that is onto the same target the cube was just lifted from if no target lies under the cube. Written at step #1 (the only step that shows the demonstration) and copied unchanged at every later step. Empty list only if no demonstration was shown. e.g. [[116, 163], [75, 163]]"
+     },
+     {
+      "name": "goal_target",
+      "description": "At the first decision step, after writing demo_placements, take the ordinal in the goal instruction ('first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4) and write that entry of demo_placements as a [y, x] point. At every later step copy the carried-in value unchanged. unknown if demo_placements is empty. e.g. [116, 163]",
+      "annotation": "The single target position, in [y, x], that the goal instruction's ordinal picks out of demo_placements: 'first' = entry 1, 'second' = entry 2, 'third' = entry 3, 'fourth' = entry 4. Written at step #1 from the demonstration and copied unchanged afterwards. unknown before the demonstration has been seen. e.g. [116, 163]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    27,
+    63,
+    84,
+    85,
+    93
+   ],
+   "verified_of_all": 0.7,
+   "subgoal_verified": 0.8,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: Whether the cube is held is decided from the fingers and gripper at the scene of this decision step alone, never from the cube's own line: the cube IS held whenever the fingers are ~46% open (any partly closed value, not ~100%) and the gripper is raised (height above ~0.1), even if the cube line lacks the words 'held in the gripper' or still reports its old table coordinates; the execution steps leading to that scene show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. 1. If the goal-named cube is NOT held (fingers ~100% open): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open and gripper raised, by the test above): choose B, drop onto, pointing at the target listed in the current scene whose position is closest to goal_target from memory (targets wobble by a few pixels between frames). If goal_target is unknown, apply rule 4. 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but goal_target is unknown, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+    "fields": [
+     {
+      "name": "goal_target",
+      "description": "At the first decision step (demonstration frames are shown and the carried memory is empty), scan the demonstration frames in ascending t for the cube whose colour the goal instruction names. Each time the fingers open from a partly closed value (~46%) to ~100% in a frame after frames where that cube was 'held in the gripper', that is one release; its target is the one closest to where the cube rests in the frames right after the release, read from a frame listing all four targets (the demo's last frames do). Skip button presses (fingers 0% open, no cube held), skip the demonstration's final release, which leaves the cube near the image centre around [82, 127] with no target under it, and do not count a frame where the cube merely loses its 'held' label while the gripper stays raised. Number the remaining releases earliest first, take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4), and write that target's [y, x]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [107, 86]",
+      "annotation": "The single target position, in [y, x], on which the goal-named cube (the colour named in the goal instruction) is to be dropped. Written at step #1, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. To fill it, list every release of the goal-named cube in the demonstration in ascending frame time: a release is a frame where the fingers go from a partly closed value (~46%) to ~100% open while the goal-named cube was marked 'held in the gripper' in the frames just before, and its entry is the target closest to the cube's resting spot in the frames right after that release, with the target's position taken from a frame where all four targets are listed (e.g. the last demo frame). Exclude the last release of the demonstration, which sets the cube down near the image centre around [82, 127] where no target lies; exclude button presses (fingers 0% open, no cube held); do not treat a frame where the cube merely loses its 'held' label while the gripper is raised as a release. Number the remaining releases earliest first and take the entry the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). e.g. [107, 86]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    39,
+    57,
+    73,
+    92
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.8,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: Whether the cube is held is decided from the fingers and gripper at the scene of this decision step alone, never from the cube's own line: the cube IS held whenever the fingers are ~46% open (any partly closed value, not ~100%) and the gripper is raised (height above ~0.1), even if the cube line lacks the words 'held in the gripper' or still reports its old table coordinates; the execution steps leading to that scene show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. 1. If the goal-named cube is NOT held (fingers ~100% open): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open and gripper raised, by the test above): choose B, drop onto, pointing at the target listed in the scene at this decision step whose position is closest to goal_target from memory, using that target's coordinates exactly as listed in this step's scene rather than the memory value (targets wobble by a few pixels between frames). If goal_target is unknown, apply rule 4. 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but goal_target is unknown, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+    "fields": [
+     {
+      "name": "goal_target",
+      "description": "At the first decision step (demonstration frames are shown and the carried memory is empty), follow this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, right after frames in which the goal-named cube was carried (its line read 'held in the gripper' with the gripper raised). (3) Its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame, where all four targets are listed. (4) Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. (5) Number what is left 1, 2, 3, 4 earliest first and write the [y, x] of the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). Count forward from the earliest placement only, never backward from the most recent one; a button press between placements does not restart the count. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]; 'first' gives [99, 90]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [139, 124]",
+      "annotation": "The single target position, in [y, x], on which the goal-named cube (the colour named in the goal instruction) is to be dropped. Written at step #1, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. Fill it by this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (anything between ~45% and ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, in the frames right after the goal-named cube was carried (its line read 'held in the gripper' while the gripper was raised). (3) The placement's target is the listed target closest to where the cube then rests, with its coordinates copied from the last demonstration frame, where all four targets are listed. (4) Discard the final placement of the demonstration, the one that leaves the cube near [82, 127] with no target within ~15 pixels; discard button presses (fingers 0%, no cube carried); ignore a carried cube that momentarily loses its 'held' label while the gripper stays raised. (5) Number the remaining placements 1, 2, 3, 4 in the order they occur, earliest = 1, and write the target of the placement whose number the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). The ordinal always counts forward from the earliest placement, never backward from the most recent one, and a button press between placements does not restart the count. Example: placements in order onto targets near [99, 90], [100, 163], [141, 133], [79, 90], then the centre set-down; goal 'second' gives the last-frame listing of the second one, e.g. [98, 166]; goal 'first' gives [99, 90]. e.g. [139, 124]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    17,
+    31,
+    77,
+    78,
+    85
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: Whether the cube is held is decided from the fingers and gripper at the scene of this decision step alone, never from the cube's own line: the cube IS held whenever the fingers are ~46% open (any partly closed value, not ~100%) and the gripper is raised (height above ~0.1), even if the cube line lacks the words 'held in the gripper' or still reports its old table coordinates; the execution steps leading to that scene show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. 1. If the goal-named cube is NOT held (fingers ~100% open): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open and gripper raised, by the test above): choose B, drop onto, pointing at the target listed in the scene at this decision step whose position is closest to goal_target from memory, using that target's coordinates exactly as listed in this step's scene rather than the memory value (targets wobble by a few pixels between frames). If goal_target is unknown, apply rule 4. 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but goal_target is unknown, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+    "fields": [
+     {
+      "name": "goal_target",
+      "description": "At the first decision step (demonstration frames are shown and the carried memory is empty), follow this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, right after frames in which the goal-named cube was carried (its line read 'held in the gripper' with the gripper raised). (3) Its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame, where all four targets are listed. (4) Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. (5) Number what is left 1, 2, 3, 4 earliest first and write the [y, x] of the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). Count forward from the earliest placement only, never backward from the most recent one; a button press between placements does not restart the count. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]; 'first' gives [99, 90]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [139, 124]",
+      "annotation": "The single target position, in [y, x], on which the goal-named cube (the colour named in the goal instruction) is to be dropped. Written at step #1, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. Fill it by this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (anything between ~45% and ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, in the frames right after the goal-named cube was carried (its line read 'held in the gripper' while the gripper was raised). (3) The placement's target is the listed target closest to where the cube then rests, with its coordinates copied from the last demonstration frame, where all four targets are listed. (4) Discard the final placement of the demonstration, the one that leaves the cube near [82, 127] with no target within ~15 pixels; discard button presses (fingers 0%, no cube carried); ignore a carried cube that momentarily loses its 'held' label while the gripper stays raised. (5) Number the remaining placements 1, 2, 3, 4 in the order they occur, earliest = 1, and write the target of the placement whose number the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). The ordinal always counts forward from the earliest placement, never backward from the most recent one, and a button press between placements does not restart the count. Example: placements in order onto targets near [99, 90], [100, 163], [141, 133], [79, 90], then the centre set-down; goal 'second' gives the last-frame listing of the second one, e.g. [98, 166]; goal 'first' gives [99, 90]. e.g. [139, 124]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    23,
+    40,
+    54,
+    59,
+    84
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.8,
+   "variables": {
+    "task": "VideoPlaceOrder",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     18,
+     22,
+     46,
+     49,
+     60
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "An episode starts in subgoal A (pick up the cube). Rules, applied to whatever the step shows: Whether the cube is held is decided from the fingers and gripper at the scene of this decision step alone, never from the cube's own line: the cube IS held whenever the fingers are ~46% open (any partly closed value, not ~100%) and the gripper is raised (height above ~0.1), even if the cube line lacks the words 'held in the gripper' or still reports its old table coordinates; the execution steps leading to that scene show the gripper descending to the cube, the fingers closing from ~100% to ~46%, and the gripper rising. The cube is NOT held only when the fingers are ~100% open. 1. If the goal-named cube is NOT held (fingers ~100% open): choose A, pick up the cube, pointing at the current position of the goal-named cube as shown in the scene at this decision step (typically near [82, 127] at the start of execution). This is always the case at the first decision step. 2. If the goal-named cube IS held (fingers ~46% open and gripper raised, by the test above): choose B, drop onto, pointing at the target listed in the scene at this decision step whose position is closest to goal_target from memory, using that target's coordinates exactly as listed in this step's scene rather than the memory value (targets wobble by a few pixels between frames). If goal_target is unknown, apply rule 4. 3. Never choose C (press the button); the button is part of the demonstration only, not of the task. 4. If the situation matches no rule (e.g. the cube is held but goal_target is unknown, or the cube is not visible): if a cube is held, drop onto the target nearest the image centre; otherwise choose A pointing at the goal-named cube's last visible position. After a drop has been completed the episode is over; if asked again, repeat rule 1 or 2 as the scene dictates.",
+    "fields": [
+     {
+      "name": "goal_target",
+      "description": "At the first decision step (demonstration frames are shown and the carried memory is empty), follow this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (~45% to ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, right after frames in which the goal-named cube was carried (its line read 'held in the gripper' with the gripper raised). (3) Its target is the listed target closest to where the cube rests in the following frames, with coordinates taken from the last demonstration frame, where all four targets are listed. (4) Drop the demonstration's final placement (cube left near [82, 127], no target within ~15 pixels), drop button presses (fingers 0%, no cube carried), and do not count a carried cube that briefly loses its 'held' label while the gripper stays raised. (5) Number what is left 1, 2, 3, 4 earliest first and write the [y, x] of the target of the placement the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). Count forward from the earliest placement only, never backward from the most recent one; a button press between placements does not restart the count. Example: placements near [99, 90], [100, 163], [141, 133], [79, 90] then the centre set-down; 'second' gives the last-frame coordinates of the second, e.g. [98, 166]; 'first' gives [99, 90]. At every later step copy the carried-in value unchanged. unknown only if no demonstration frames are shown and nothing is carried in. e.g. [139, 124]",
+      "annotation": "The single target position, in [y, x], on which the goal-named cube (the colour named in the goal instruction) is to be dropped. Written at step #1, the only step that shows the demonstration, and copied unchanged at every later step; unknown before the demonstration has been seen. Fill it by this procedure and no other: (1) walk the demonstration frames in ascending t. (2) A placement is a frame where the gripper is low (height below ~0.07) and the fingers go from a partly closed value (anything between ~45% and ~95%; the low frame itself may read 67%, 80% or 93%) to ~100% open, in the frames right after the goal-named cube was carried (its line read 'held in the gripper' while the gripper was raised). (3) The placement's target is the listed target closest to where the cube then rests, with its coordinates copied from the last demonstration frame, where all four targets are listed. (4) Discard the final placement of the demonstration, the one that leaves the cube near [82, 127] with no target within ~15 pixels; discard button presses (fingers 0%, no cube carried); ignore a carried cube that momentarily loses its 'held' label while the gripper stays raised. (5) Number the remaining placements 1, 2, 3, 4 in the order they occur, earliest = 1, and write the target of the placement whose number the goal's ordinal names ('first' = 1, 'second' = 2, 'third' = 3, 'fourth' = 4). The ordinal always counts forward from the earliest placement, never backward from the most recent one, and a button press between placements does not restart the count. Example: placements in order onto targets near [99, 90], [100, 163], [141, 133], [79, 90], then the centre set-down; goal 'second' gives the last-frame listing of the second one, e.g. [98, 166]; goal 'first' gives [99, 90]. e.g. [139, 124]"
+     }
+    ]
+   }
+  }
+ ]
+}

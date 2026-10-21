@@ -1,0 +1,93 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "target_containers",
+  "put_down_count"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  4,
+  47,
+  50,
+  55,
+  62
+ ],
+ "scored": 9,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.8888888888888888,
+ "memory_verified": 0.8888888888888888,
+ "reads": {
+  "target_containers": 2,
+  "put_down_count": 3
+ },
+ "field_errors": {
+  "target_containers": {
+   "in": 1,
+   "sole": 1
+  },
+  "put_down_count": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1111111111111111,
+ "verified_of_all": 0.8888888888888888,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 9,
+ "critique": "field target_containers, POLICY PROMPT\n  Situation: the goal named two cubes (green first, then red) and the demonstration contained three shuffles, the last two of which moved the same pair of slots, with the final shuffle's off-slot frames sitting just before the closing frames of the demonstration. The annotated memory listed the green cube's container at the slot it started in, because the pair swapped twice and came back. The policy counted only the first two shuffles, stopped walking the frames before the end, and wrote the green container at the slot of the second shuffle's partner. This breaks PREDICTABILITY: the recorded value and the policy's value differ at the same step although the step shows everything needed. Change: the field keeps the same content (ordered list of [y, x] slot positions from the last demonstration frame, one per named cube, in goal order, written once at the first decision step and copied unchanged afterward), but the procedure must be made exhaustive and mechanical. Require the policy to go through EVERY container frame after the first one, up to and including the last demonstration frame, and to label each frame with either 'all at slots' or 'slots P and Q empty' before doing anything else; it must not stop at the first frame where everything is at slots, and must not stop before reaching the last frame. Then group consecutive 'empty' frames into runs; each run is one shuffle, and the number of runs is the number of shuffles, however many there are (one, two, three or more) and whether or not the same pair repeats. Then keep an explicit slot assignment table (which container is at which slot) and apply the runs one by one in time order, each time swapping the two containers whose slots were empty in that run, writing the table after every swap. Only after the last run is applied read off the named container's slot and write it with the last frame's coordinates for that slot. State the parity check as a cross-check, not a substitute: for the named container's pair, an even number of runs of that pair returns it to where it was before those runs, an odd number leaves it swapped; if the table and the parity check disagree, recount the runs. Add a worked example with three shuffles where the second and third involve the same two slots and the third's off-slot frames are the two frames right before the final frames, so that the named container ends back at its original slot. Example value: [[81, 129], [129, 145]]",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "target_containers",
+    "description": "Situation: the goal named two cubes (green first, then red) and the demonstration contained three shuffles, the last two of which moved the same pair of slots, with the final shuffle's off-slot frames sitting just before the closing frames of the demonstration. The annotated memory listed the green cube's container at the slot it started in, because the pair swapped twice and came back. The policy counted only the first two shuffles, stopped walking the frames before the end, and wrote the green container at the slot of the second shuffle's partner. This breaks PREDICTABILITY: the recorded value and the policy's value differ at the same step although the step shows everything needed. Change: the field keeps the same content (ordered list of [y, x] slot positions from the last demonstration frame, one per named cube, in goal order, written once at the first decision step and copied unchanged afterward), but the procedure must be made exhaustive and mechanical. Require the policy to go through EVERY container frame after the first one, up to and including the last demonstration frame, and to label each frame with either 'all at slots' or 'slots P and Q empty' before doing anything else; it must not stop at the first frame where everything is at slots, and must not stop before reaching the last frame. Then group consecutive 'empty' frames into runs; each run is one shuffle, and the number of runs is the number of shuffles, however many there are (one, two, three or more) and whether or not the same pair repeats. Then keep an explicit slot assignment table (which container is at which slot) and apply the runs one by one in time order, each time swapping the two containers whose slots were empty in that run, writing the table after every swap. Only after the last run is applied read off the named container's slot and write it with the last frame's coordinates for that slot. State the parity check as a cross-check, not a substitute: for the named container's pair, an even number of runs of that pair returns it to where it was before those runs, an odd number leaves it swapped; if the table and the parity check disagree, recount the runs. Add a worked example with three shuffles where the second and third involve the same two slots and the third's off-slot frames are the two frames right before the final frames, so that the named container ends back at its original slot. Example value: [[81, 129], [129, 145]]"
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    47,
+    "exec",
+    216
+   ],
+   "memory_in": "target_containers=; put_down_count=",
+   "answered": "A: pick up the container at [98, 174]",
+   "recorded": "A: pick up the container at [76, 130]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The procedure was there but I misapplied it: the demonstration has three shuffles (t=80-96 of slots [98,174]/[129,145]; t=128-144 of slots [79,129]/[98,174]; t=176-192 again of slots [79,129]/[98,174]) and I stopped after the second, leaving the green container at [98,174] instead of swapping it back at t=208. The instruction should require listing every run of off-slot frames up to the last frame before computing, and state the parity rule per slot pair explicitly: count the shuffles involving the named container's current slot; an even count for a pair returns both to their original slots, an odd count leaves them swapped. It should also stress that frames right before the final frame (t=176, t=192) still count as a shuffle.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

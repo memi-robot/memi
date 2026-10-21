@@ -1,0 +1,306 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoUnmask",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   4,
+   7,
+   17,
+   30,
+   93
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Apply the memory update from the observations before selecting the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container corresponding to the first point in remaining_targets. For any A selection, match a visible container to the first remaining point only if its center is within 15 image-coordinate units of that point, or direct tracking evidence in the current execution frames establishes that it is the same container displaced from that location. Point inside the matched container. If no such match exists, treat the target as temporarily undetected and point at the remembered point. A recent detection near that point followed by disappearance does not justify switching to another container. When a completed pickup leaves a container held and another target remains, choose B to put down the container. A raised hand with fingers maintaining partial closure after grasp and lift is evidence of holding, even if object detections still report the old container center, provided no subsequent release is observed. When execution shows the fingers opening fully followed by hand retreat with the fingers remaining fully open, treat the release as complete and the hand as empty, even if an object detection still describes a container as lifted. This release evidence takes priority over conflicting object detections and the held-container fallback. With remaining_targets nonempty, choose A on the container corresponding to its first point; do not select the previously picked container again merely because it is still visible. Completion of the last requested pickup satisfies the goal, so no further command is needed unless another decision is requested. For an unexpected extra decision with no targets remaining, choose B as the available release action. For ambiguous or otherwise uncovered situations with remaining_targets nonempty, choose B if the observations indicate a held container and no subsequent release is observed; a lifted-container report alone cannot establish holding in the presence of an observed release. Otherwise choose A using the target-matching rule above; never substitute a distant visible container merely because it is the nearest detection to the first remaining point. Do not infer hidden cube colors from current container appearance.",
+  "fields": [
+   {
+    "name": "remaining_targets",
+    "description": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location. Write the ordered list of those containers' centers as [y, x] points, excluding distractors. With existing memory, inspect the execution frames for a completed pickup of the first listed container: the hand approaches its location, closes to a nonzero grasp opening, and rises with the grasp maintained. On that observed completed pickup, remove the first entry exactly once. A static container detection at the old location does not negate the observed grasp-and-lift sequence. Do not remove an entry merely because you are now selecting A, because a container is already held without a new pickup, or because the hand releases a container. Preserve all other entries and their coordinates, including across put-down execution. e.g. [[81, 95], [66, 143]]",
+    "annotation": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. At the first decision step, associate each requested cube color with the container that covered its location in the demonstration, and list those container centers in the order requested. Ignore containers covering unrequested colors and empty distractors. Remove the first entry at the first decision step showing that its container has been successfully grasped and lifted, not at the step choosing the pickup. Putting a container down does not restore its entry. Otherwise preserve the list and its coordinates. Thus episode 7 has [[81, 95], [66, 143]] at step 1 and [[66, 143]] at both steps 2 and 3. The initial lists for episodes 4, 17, 30, and 93 are respectively [[84, 156]], [[95, 156]], [[125, 126]], and [[70, 108]]. e.g. [[81, 95], [66, 143]]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoUnmask",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   4,
+   7,
+   17,
+   30,
+   93
+  ],
+  "seed": 7,
+  "provider": "openai",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Apply the memory update from the observations before selecting the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container corresponding to the first point in remaining_targets. Select the current visible container at that remembered location, allowing small centroid shifts, and point inside it; the point need not equal the demonstrated center exactly. When a completed pickup leaves a container held and another target remains, choose B to put down the container. A raised hand with fingers maintaining a nonzero grasp opening after closure and lift is evidence of holding, even if object detections still report the old container center. When put-down execution shows release and the hand is empty, choose A on the first remaining target; do not select the previously picked container again merely because it is still visible. Completion of the last requested pickup satisfies the goal, so no further command is needed unless another decision is requested. For an unexpected extra decision with no targets remaining, choose B as the available release action. For ambiguous or otherwise uncovered situations, choose B if the observations indicate a held container; otherwise choose A on the visible container nearest the first remaining point. If that container is temporarily occluded, use its remembered point. Do not infer hidden cube colors from current container appearance.",
+  "fields": [
+   {
+    "name": "remaining_targets",
+    "description": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location. Write the ordered list of those containers' centers as [y, x] points, excluding distractors. With existing memory, inspect the execution frames for a completed pickup of the first listed container: the hand approaches its location, closes to a nonzero grasp opening, and rises with the grasp maintained. On that observed completed pickup, remove the first entry exactly once. A static container detection at the old location does not negate the observed grasp-and-lift sequence. Do not remove an entry merely because you are now selecting A, because a container is already held without a new pickup, or because the hand releases a container. Preserve all other entries and their coordinates, including across put-down execution. e.g. [[81, 95], [66, 143]]",
+    "annotation": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. At the first decision step, associate each requested cube color with the container that covered its location in the demonstration, and list those container centers in the order requested. Ignore containers covering unrequested colors and empty distractors. Remove the first entry at the first decision step showing that its container has been successfully grasped and lifted, not at the step choosing the pickup. Putting a container down does not restore its entry. Otherwise preserve the list and its coordinates. Thus episode 7 has [[81, 95], [66, 143]] at step 1 and [[66, 143]] at both steps 2 and 3. The initial lists for episodes 4, 17, 30, and 93 are respectively [[84, 156]], [[95, 156]], [[125, 126]], and [[70, 108]]. e.g. [[81, 95], [66, 143]]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 13,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "the policy prompt for subgoal\n  The failure occurred while executing a goal to pick up the container hiding the red cube and then the container hiding the blue cube. After the first pickup, put-down execution showed the fingers opening fully and remaining fully open as the hand retreated upward, but the final observation still described a container as lifted off the table. The memory correctly contained only the second target, remaining_targets=[[141, 78]]. The policy chose B instead of A on that remaining target. This breaks SUFFICIENCY: the policy prompt did not clearly resolve conflicting release evidence and lifted-container detection, allowing its held-container fallback to override a completed release. Strengthen the put-down transition rule: observed finger opening to full release followed by hand retreat with the fingers remaining fully open establishes that the hand is empty and the put-down is complete, even if an object detection still describes a container as lifted. When remaining_targets is nonempty, choose A on the container corresponding to its first point. Give this release rule priority over the held-container fallback. Restrict that fallback so a lifted-container report alone cannot establish holding in the presence of an observed release; retain grasp-and-lift evidence with maintained partial closure as evidence of holding when no subsequent release is observed. No other subgoal rules need removal or replacement.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "A raised hand with fingers maintaining a nonzero grasp opening after closure and lift is evidence of holding, even if object detections still report the old container center.",
+      "modify_to": "A raised hand with fingers maintaining partial closure after grasp and lift is evidence of holding, even if object detections still report the old container center, provided no subsequent release is observed."
+     },
+     {
+      "modify_from": "When put-down execution shows release and the hand is empty, choose A on the first remaining target; do not select the previously picked container again merely because it is still visible.",
+      "modify_to": "When execution shows the fingers opening fully followed by hand retreat with the fingers remaining fully open, treat the release as complete and the hand as empty, even if an object detection still describes a container as lifted. This release evidence takes priority over conflicting object detections and the held-container fallback. With remaining_targets nonempty, choose A on the container corresponding to its first point; do not select the previously picked container again merely because it is still visible."
+     },
+     {
+      "modify_from": "For ambiguous or otherwise uncovered situations, choose B if the observations indicate a held container; otherwise choose A on the visible container nearest the first remaining point.",
+      "modify_to": "For ambiguous or otherwise uncovered situations with remaining_targets nonempty, choose B if the observations indicate a held container and no subsequent release is observed; a lifted-container report alone cannot establish holding in the presence of an observed release. Otherwise choose A on the visible container nearest the first remaining point."
+     }
+    ],
+    "refused": ""
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 11,
+    "subgoal_wrong": 2,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "remaining_targets": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 1
+   },
+   "critique": "the policy prompt for subgoal\n  For a goal requesting two hidden cubes in order, the first container had been picked up and released, and remaining_targets correctly held only [[85, 163]]. The second target was visible near that point early in the current execution frames but absent from the final detections. The policy selected a different visible container at [121, 178]. The unrestricted nearest-visible-container fallback conflicts with the instruction to use the remembered point when the target is occluded, breaking SUFFICIENCY by allowing a distractor to replace the remembered target. Remove the unrestricted nearest-visible-container fallback. Match a visible container to the first remaining point only when it is locally consistent with that target: for these observations, require its center to be within 15 image-coordinate units of the remembered point, or require direct tracking evidence in the current frames establishing the same container's displacement. If no such match exists, treat the target as temporarily undetected and select A at the remembered point, not at a distant visible container. A recent detection near the remembered point followed by disappearance supports this undetected-target rule; it does not justify switching objects. Preserve the existing grasp, release, and memory-update rules.\n\nrefused\n  In another two-target task, the current frames showed the first container grasped with a nonzero partial opening and lifted while that opening remained maintained, with no subsequent release. The policy correctly removed the first target from remaining_targets but incorrectly chose A for the second target instead of B to release the held container. No missing information or document defect was reported. The existing policy prompt for subgoal already explicitly requires B when a completed pickup leaves a container held and another target remains, and explicitly accepts maintained partial closure during lift despite unchanged container detections. This is a failure to apply an already sufficient rule, not a reason to add memory or change its transitions.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Select the current visible container at that remembered location, allowing small centroid shifts, and point inside it; the point need not equal the demonstrated center exactly.",
+      "modify_to": "For any A selection, match a visible container to the first remaining point only if its center is within 15 image-coordinate units of that point, or direct tracking evidence in the current execution frames establishes that it is the same container displaced from that location. Point inside the matched container. If no such match exists, treat the target as temporarily undetected and point at the remembered point. A recent detection near that point followed by disappearance does not justify switching to another container."
+     },
+     {
+      "modify_from": "Otherwise choose A on the visible container nearest the first remaining point. If that container is temporarily occluded, use its remembered point.",
+      "modify_to": "Otherwise choose A using the target-matching rule above; never substitute a distant visible container merely because it is the nearest detection to the first remaining point."
+     }
+    ],
+    "refused": "No memory changes or additional held-container transition clauses are committed. The reported choice of A after a maintained grasp and lift without subsequent release violates the existing explicit rule requiring B while another target remains; it does not reveal missing information or a missing transition. The earlier release-priority rule remains unchanged."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 2,
+ "quiet": 2,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    7,
+    23,
+    27,
+    38,
+    63
+   ],
+   "verified_of_all": 0.9230769230769231,
+   "subgoal_verified": 0.9230769230769231,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update from the observations before selecting the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container corresponding to the first point in remaining_targets. Select the current visible container at that remembered location, allowing small centroid shifts, and point inside it; the point need not equal the demonstrated center exactly. When a completed pickup leaves a container held and another target remains, choose B to put down the container. A raised hand with fingers maintaining a nonzero grasp opening after closure and lift is evidence of holding, even if object detections still report the old container center. When put-down execution shows release and the hand is empty, choose A on the first remaining target; do not select the previously picked container again merely because it is still visible. Completion of the last requested pickup satisfies the goal, so no further command is needed unless another decision is requested. For an unexpected extra decision with no targets remaining, choose B as the available release action. For ambiguous or otherwise uncovered situations, choose B if the observations indicate a held container; otherwise choose A on the visible container nearest the first remaining point. If that container is temporarily occluded, use its remembered point. Do not infer hidden cube colors from current container appearance.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location. Write the ordered list of those containers' centers as [y, x] points, excluding distractors. With existing memory, inspect the execution frames for a completed pickup of the first listed container: the hand approaches its location, closes to a nonzero grasp opening, and rises with the grasp maintained. On that observed completed pickup, remove the first entry exactly once. A static container detection at the old location does not negate the observed grasp-and-lift sequence. Do not remove an entry merely because you are now selecting A, because a container is already held without a new pickup, or because the hand releases a container. Preserve all other entries and their coordinates, including across put-down execution. e.g. [[81, 95], [66, 143]]",
+      "annotation": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. At the first decision step, associate each requested cube color with the container that covered its location in the demonstration, and list those container centers in the order requested. Ignore containers covering unrequested colors and empty distractors. Remove the first entry at the first decision step showing that its container has been successfully grasped and lifted, not at the step choosing the pickup. Putting a container down does not restore its entry. Otherwise preserve the list and its coordinates. Thus episode 7 has [[81, 95], [66, 143]] at step 1 and [[66, 143]] at both steps 2 and 3. The initial lists for episodes 4, 17, 30, and 93 are respectively [[84, 156]], [[95, 156]], [[125, 126]], and [[70, 108]]. e.g. [[81, 95], [66, 143]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    1,
+    28,
+    29,
+    44,
+    51
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update from the observations before selecting the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container corresponding to the first point in remaining_targets. Select the current visible container at that remembered location, allowing small centroid shifts, and point inside it; the point need not equal the demonstrated center exactly. When a completed pickup leaves a container held and another target remains, choose B to put down the container. A raised hand with fingers maintaining partial closure after grasp and lift is evidence of holding, even if object detections still report the old container center, provided no subsequent release is observed. When execution shows the fingers opening fully followed by hand retreat with the fingers remaining fully open, treat the release as complete and the hand as empty, even if an object detection still describes a container as lifted. This release evidence takes priority over conflicting object detections and the held-container fallback. With remaining_targets nonempty, choose A on the container corresponding to its first point; do not select the previously picked container again merely because it is still visible. Completion of the last requested pickup satisfies the goal, so no further command is needed unless another decision is requested. For an unexpected extra decision with no targets remaining, choose B as the available release action. For ambiguous or otherwise uncovered situations with remaining_targets nonempty, choose B if the observations indicate a held container and no subsequent release is observed; a lifted-container report alone cannot establish holding in the presence of an observed release. Otherwise choose A on the visible container nearest the first remaining point. If that container is temporarily occluded, use its remembered point. Do not infer hidden cube colors from current container appearance.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location. Write the ordered list of those containers' centers as [y, x] points, excluding distractors. With existing memory, inspect the execution frames for a completed pickup of the first listed container: the hand approaches its location, closes to a nonzero grasp opening, and rises with the grasp maintained. On that observed completed pickup, remove the first entry exactly once. A static container detection at the old location does not negate the observed grasp-and-lift sequence. Do not remove an entry merely because you are now selecting A, because a container is already held without a new pickup, or because the hand releases a container. Preserve all other entries and their coordinates, including across put-down execution. e.g. [[81, 95], [66, 143]]",
+      "annotation": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. At the first decision step, associate each requested cube color with the container that covered its location in the demonstration, and list those container centers in the order requested. Ignore containers covering unrequested colors and empty distractors. Remove the first entry at the first decision step showing that its container has been successfully grasped and lifted, not at the step choosing the pickup. Putting a container down does not restore its entry. Otherwise preserve the list and its coordinates. Thus episode 7 has [[81, 95], [66, 143]] at step 1 and [[66, 143]] at both steps 2 and 3. The initial lists for episodes 4, 17, 30, and 93 are respectively [[84, 156]], [[95, 156]], [[125, 126]], and [[70, 108]]. e.g. [[81, 95], [66, 143]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    3,
+    22,
+    39,
+    44,
+    63
+   ],
+   "verified_of_all": 0.8181818181818182,
+   "subgoal_verified": 0.8181818181818182,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update from the observations before selecting the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container corresponding to the first point in remaining_targets. Select the current visible container at that remembered location, allowing small centroid shifts, and point inside it; the point need not equal the demonstrated center exactly. When a completed pickup leaves a container held and another target remains, choose B to put down the container. A raised hand with fingers maintaining partial closure after grasp and lift is evidence of holding, even if object detections still report the old container center, provided no subsequent release is observed. When execution shows the fingers opening fully followed by hand retreat with the fingers remaining fully open, treat the release as complete and the hand as empty, even if an object detection still describes a container as lifted. This release evidence takes priority over conflicting object detections and the held-container fallback. With remaining_targets nonempty, choose A on the container corresponding to its first point; do not select the previously picked container again merely because it is still visible. Completion of the last requested pickup satisfies the goal, so no further command is needed unless another decision is requested. For an unexpected extra decision with no targets remaining, choose B as the available release action. For ambiguous or otherwise uncovered situations with remaining_targets nonempty, choose B if the observations indicate a held container and no subsequent release is observed; a lifted-container report alone cannot establish holding in the presence of an observed release. Otherwise choose A on the visible container nearest the first remaining point. If that container is temporarily occluded, use its remembered point. Do not infer hidden cube colors from current container appearance.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location. Write the ordered list of those containers' centers as [y, x] points, excluding distractors. With existing memory, inspect the execution frames for a completed pickup of the first listed container: the hand approaches its location, closes to a nonzero grasp opening, and rises with the grasp maintained. On that observed completed pickup, remove the first entry exactly once. A static container detection at the old location does not negate the observed grasp-and-lift sequence. Do not remove an entry merely because you are now selecting A, because a container is already held without a new pickup, or because the hand releases a container. Preserve all other entries and their coordinates, including across put-down execution. e.g. [[81, 95], [66, 143]]",
+      "annotation": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. At the first decision step, associate each requested cube color with the container that covered its location in the demonstration, and list those container centers in the order requested. Ignore containers covering unrequested colors and empty distractors. Remove the first entry at the first decision step showing that its container has been successfully grasped and lifted, not at the step choosing the pickup. Putting a container down does not restore its entry. Otherwise preserve the list and its coordinates. Thus episode 7 has [[81, 95], [66, 143]] at step 1 and [[66, 143]] at both steps 2 and 3. The initial lists for episodes 4, 17, 30, and 93 are respectively [[84, 156]], [[95, 156]], [[125, 126]], and [[70, 108]]. e.g. [[81, 95], [66, 143]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    2,
+    14,
+    26,
+    27
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update from the observations before selecting the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container corresponding to the first point in remaining_targets. For any A selection, match a visible container to the first remaining point only if its center is within 15 image-coordinate units of that point, or direct tracking evidence in the current execution frames establishes that it is the same container displaced from that location. Point inside the matched container. If no such match exists, treat the target as temporarily undetected and point at the remembered point. A recent detection near that point followed by disappearance does not justify switching to another container. When a completed pickup leaves a container held and another target remains, choose B to put down the container. A raised hand with fingers maintaining partial closure after grasp and lift is evidence of holding, even if object detections still report the old container center, provided no subsequent release is observed. When execution shows the fingers opening fully followed by hand retreat with the fingers remaining fully open, treat the release as complete and the hand as empty, even if an object detection still describes a container as lifted. This release evidence takes priority over conflicting object detections and the held-container fallback. With remaining_targets nonempty, choose A on the container corresponding to its first point; do not select the previously picked container again merely because it is still visible. Completion of the last requested pickup satisfies the goal, so no further command is needed unless another decision is requested. For an unexpected extra decision with no targets remaining, choose B as the available release action. For ambiguous or otherwise uncovered situations with remaining_targets nonempty, choose B if the observations indicate a held container and no subsequent release is observed; a lifted-container report alone cannot establish holding in the presence of an observed release. Otherwise choose A using the target-matching rule above; never substitute a distant visible container merely because it is the nearest detection to the first remaining point. Do not infer hidden cube colors from current container appearance.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location. Write the ordered list of those containers' centers as [y, x] points, excluding distractors. With existing memory, inspect the execution frames for a completed pickup of the first listed container: the hand approaches its location, closes to a nonzero grasp opening, and rises with the grasp maintained. On that observed completed pickup, remove the first entry exactly once. A static container detection at the old location does not negate the observed grasp-and-lift sequence. Do not remove an entry merely because you are now selecting A, because a container is already held without a new pickup, or because the hand releases a container. Preserve all other entries and their coordinates, including across put-down execution. e.g. [[81, 95], [66, 143]]",
+      "annotation": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. At the first decision step, associate each requested cube color with the container that covered its location in the demonstration, and list those container centers in the order requested. Ignore containers covering unrequested colors and empty distractors. Remove the first entry at the first decision step showing that its container has been successfully grasped and lifted, not at the step choosing the pickup. Putting a container down does not restore its entry. Otherwise preserve the list and its coordinates. Thus episode 7 has [[81, 95], [66, 143]] at step 1 and [[66, 143]] at both steps 2 and 3. The initial lists for episodes 4, 17, 30, and 93 are respectively [[84, 156]], [[95, 156]], [[125, 126]], and [[70, 108]]. e.g. [[81, 95], [66, 143]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    1,
+    16,
+    62,
+    66,
+    89
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoUnmask",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     4,
+     7,
+     17,
+     30,
+     93
+    ],
+    "seed": 7,
+    "provider": "openai",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Apply the memory update from the observations before selecting the subgoal. Each episode starts with A: with the hand empty and remaining_targets nonempty, pick up the container corresponding to the first point in remaining_targets. For any A selection, match a visible container to the first remaining point only if its center is within 15 image-coordinate units of that point, or direct tracking evidence in the current execution frames establishes that it is the same container displaced from that location. Point inside the matched container. If no such match exists, treat the target as temporarily undetected and point at the remembered point. A recent detection near that point followed by disappearance does not justify switching to another container. When a completed pickup leaves a container held and another target remains, choose B to put down the container. A raised hand with fingers maintaining partial closure after grasp and lift is evidence of holding, even if object detections still report the old container center, provided no subsequent release is observed. When execution shows the fingers opening fully followed by hand retreat with the fingers remaining fully open, treat the release as complete and the hand as empty, even if an object detection still describes a container as lifted. This release evidence takes priority over conflicting object detections and the held-container fallback. With remaining_targets nonempty, choose A on the container corresponding to its first point; do not select the previously picked container again merely because it is still visible. Completion of the last requested pickup satisfies the goal, so no further command is needed unless another decision is requested. For an unexpected extra decision with no targets remaining, choose B as the available release action. For ambiguous or otherwise uncovered situations with remaining_targets nonempty, choose B if the observations indicate a held container and no subsequent release is observed; a lifted-container report alone cannot establish holding in the presence of an observed release. Otherwise choose A using the target-matching rule above; never substitute a distant visible container merely because it is the nearest detection to the first remaining point. Do not infer hidden cube colors from current container appearance.",
+    "fields": [
+     {
+      "name": "remaining_targets",
+      "description": "With empty incoming memory, read the requested colors in goal order and use the demonstration to match each cube to the container placed over its location. Write the ordered list of those containers' centers as [y, x] points, excluding distractors. With existing memory, inspect the execution frames for a completed pickup of the first listed container: the hand approaches its location, closes to a nonzero grasp opening, and rises with the grasp maintained. On that observed completed pickup, remove the first entry exactly once. A static container detection at the old location does not negate the observed grasp-and-lift sequence. Do not remove an entry merely because you are now selecting A, because a container is already held without a new pickup, or because the hand releases a container. Preserve all other entries and their coordinates, including across put-down execution. e.g. [[81, 95], [66, 143]]",
+      "annotation": "An ordered list of [y, x] container locations for the pickups requested by the goal that have not yet been completed. At the first decision step, associate each requested cube color with the container that covered its location in the demonstration, and list those container centers in the order requested. Ignore containers covering unrequested colors and empty distractors. Remove the first entry at the first decision step showing that its container has been successfully grasped and lifted, not at the step choosing the pickup. Putting a container down does not restore its entry. Otherwise preserve the list and its coordinates. Thus episode 7 has [[81, 95], [66, 143]] at step 1 and [[66, 143]] at both steps 2 and 3. The initial lists for episodes 4, 17, 30, and 93 are respectively [[84, 156]], [[95, 156]], [[125, 126]], and [[70, 108]]. e.g. [[81, 95], [66, 143]]"
+     }
+    ]
+   }
+  }
+ ]
+}

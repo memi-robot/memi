@@ -1,0 +1,133 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "blue_cube_pos",
+  "green_cube_pos",
+  "red_cube_pos",
+  "picks_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  9,
+  43,
+  48,
+  60,
+  80
+ ],
+ "scored": 12,
+ "failed": 3,
+ "subgoal_wrong": 0,
+ "memory_wrong": 3,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.75,
+ "reads": {
+  "blue_cube_pos": 1,
+  "green_cube_pos": 2,
+  "red_cube_pos": 3,
+  "picks_done": 5
+ },
+ "field_errors": {
+  "blue_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "green_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "red_cube_pos": {
+   "in": 0,
+   "sole": 0
+  },
+  "picks_done": {
+   "in": 3,
+   "sole": 3
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.25,
+ "verified_of_all": 0.75,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 12,
+ "critique": "field picks_done, POLICY PROMPT\n  Situation: at the very first decision step the scene showed the three loose cubes and no containers, the goal asked to press the button first, the policy correctly chose to press the button and correctly wrote the three cube positions, but it left picks_done blank because the instruction says 'Start at 0' and then 'copy the carried-in value', and the carried-in value was empty. The annotated memory held 0 there. This breaks PREDICTABILITY: the annotation and the policy prompt gave two different answers to one field at one step. The field must hold the count of container pick-ups completed so far, as a number, never blank. Replace the wording with: if the carried-in picks_done is empty (nothing was carried in, as at the first decision step), treat it as 0 and write 0 explicitly at this step. Otherwise start from the carried-in number. Then, if any execution step shown at this decision step reports a container held in the gripper, write that number plus 1; if not, write that number unchanged. It never changes when the container is put down. Example value at the first decision step: 0; after one container has been lifted: 1.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "picks_done",
+    "description": "Situation: at the very first decision step the scene showed the three loose cubes and no containers, the goal asked to press the button first, the policy correctly chose to press the button and correctly wrote the three cube positions, but it left picks_done blank because the instruction says 'Start at 0' and then 'copy the carried-in value', and the carried-in value was empty. The annotated memory held 0 there. This breaks PREDICTABILITY: the annotation and the policy prompt gave two different answers to one field at one step. The field must hold the count of container pick-ups completed so far, as a number, never blank. Replace the wording with: if the carried-in picks_done is empty (nothing was carried in, as at the first decision step), treat it as 0 and write 0 explicitly at this step. Otherwise start from the carried-in number. Then, if any execution step shown at this decision step reports a container held in the gripper, write that number plus 1; if not, write that number unchanged. It never changes when the container is put down. Example value at the first decision step: 0; after one container has been lifted: 1."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    43,
+    "exec",
+    0
+   ],
+   "memory_in": "blue_cube_pos=; green_cube_pos=; red_cube_pos=; picks_done=",
+   "answered": "A: press the button",
+   "recorded": "A: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The picks_done field says 'Start at 0' but does not say that when the carried-in value is empty (first decision step) the policy must explicitly write 0 as the field's value at that step, rather than leaving it blank; it should state: if the carried-in picks_done is empty, write 0 (plus 1 if a container was held in a shown execution step).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    48,
+    "exec",
+    0
+   ],
+   "memory_in": "blue_cube_pos=; green_cube_pos=; red_cube_pos=; picks_done=",
+   "answered": "A: press the button",
+   "recorded": "A: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "picks_done says 'Start at 0' but does not say that at the first decision step, when the carried-in value is empty, the policy must explicitly write 0 as the field's value (treat an empty carried-in picks_done as 0 and write '0' at this step; 'copy the carried-in value' on an empty field left it blank).",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    60,
+    "exec",
+    0
+   ],
+   "memory_in": "blue_cube_pos=; green_cube_pos=; red_cube_pos=; picks_done=",
+   "answered": "A: press the button",
+   "recorded": "A: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "picks_done says 'Start at 0' but did not say that when the carried-in value is empty (the first decision step) the policy must explicitly write 0 as a change, rather than leaving the field blank; it should state: if picks_done is carried in empty, write 0 at this step.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

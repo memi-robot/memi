@@ -1,0 +1,13 @@
+{
+ "task": "PickHighlight",
+ "fields": [
+  {
+   "name": "button_pressed",
+   "description": "`no` at step #1 (nothing has happened yet), written explicitly, never left blank. `yes` at every step from the one whose execution steps show the press onward, i.e. from step #2 to the end of the episode. The press is shown by EITHER of two signs: the button labelled pressed down, OR the gripper at the button's [y, x] (within a few pixels) at a height near 0.03 with fingers closed (0-2% open); the highlighted areas vanishing afterwards confirms it. Either sign alone is the press. Never reverts to `no`. e.g. yes"
+  },
+  {
+   "name": "pending_cubes",
+   "description": "Unordered set, written as a list, of the [y, x] positions of cubes that sit on highlighted white areas and have not yet been picked up; the order of entries carries no meaning and is never used to choose a cube. `[]` at step #1, written explicitly, never left blank. At the step whose execution steps show the highlighted areas (the button-press step, #2), write one entry per highlighted area: the [y, x] of the cube whose position is nearest that area, in the order the highlighted areas are listed in the observation. At each later step, drop the one entry whose stored [y, x] is nearest the cube that the execution steps show being picked up (gripper descends onto it with open fingers, closes, and the cube is then marked held), whatever its place in the list, and keep every other entry; the list shrinks by one at each pick-up step. A place step (first execution frame already shows the cube held, later frames show the fingers reopening and the cube resting on the table) leaves the list unchanged. An entry stays in the list even when its cube is not currently among the observed objects (it can be hidden by the arm); only a pick-up drops it. e.g. [[89, 146], [63, 150]]"
+  }
+ ]
+}

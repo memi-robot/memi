@@ -1,0 +1,26 @@
+{
+ "task": "ButtonUnmaskSwap",
+ "policy_prompt_for_subgoal": "Start every episode in A (press the first button). Apply the first matching rule, after updating memory for this step: 1. If the carried-in memory is empty and this step shows no execution frames (the very first decision step, gripper out of frame): A. 2. If buttons_pressed (after this step's update) is 1: B. A is executed at the first step only; at any step that shows execution frames, A has already been done, so if buttons_pressed is still 0 or 1 answer B (the frames showing the gripper lowered onto a button with closed fingers count as the first press). 3. If the scene at this decision step shows a container 'held in the gripper': D (put down the container). 4. If buttons_pressed is 2, nothing is held, and picked_colors is empty: C, pointing at the memory position (<color>_container) of the FIRST cube color named in the goal instruction (the one after 'hiding the'). Use the remembered container position, not the cube's original spot. 5. If buttons_pressed is 2, nothing is held, picked_colors has one entry, and the goal names a second cube ('another container hiding the ...'): C, pointing at the memory position of that SECOND color. This is the container that has not been lifted yet; do not point at the one just put down. 6. If every cube named in the goal is already in picked_colors and nothing is held: the task is done; answer D. Fallback: if the needed color's memory position is unknown, point C at the container reached by chaining frame by frame from that cube's last known position as the memory instruction describes (after a swap a different container stands on the old spot, so do not take the nearest one); if no rule fits at all, answer the next unfinished item in goal order (A, B, C, D).",
+ "fields": [
+  {
+   "name": "buttons_pressed",
+   "description": "Write 0 at the first step (empty carried-in memory, no execution frames). Otherwise write the carried-in count plus 1 if any execution frame shown says a button 'is pressed down' OR shows the gripper at a button's [y, x] (within a few pixels) at height below about 0.06 with fingers closed; otherwise the carried-in count. e.g. 1"
+  },
+  {
+   "name": "green_container",
+   "description": "[y, x] of the container hiding the green cube. At the first step, with empty memory, WRITE the green cube's [y, x] from the scene. When containers first appear, take the container standing on the carried-in position. At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame. Containers gliding around each other usually finish swapped, but trust the chain, not the assumption (one circling pass swaps them, two passes return them). Write the followed container's position in the last frame. If any frame shows the green cube itself (container lifted or 'held in the gripper'), write the cube's position in the last frame it is visible, and keep that cube position at later steps even once a container is lowered back over it. e.g. [109, 126]"
+  },
+  {
+   "name": "red_container",
+   "description": "[y, x] of the container hiding the red cube, kept exactly as green_container: write the red cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap); once the red cube is visible, its last visible position, kept after the container is set back down. e.g. [82, 152]"
+  },
+  {
+   "name": "blue_container",
+   "description": "[y, x] of the container hiding the blue cube, kept exactly as green_container: write the blue cube's position at the first step; take the container that covers it; chain smallest-displacement matches from the first frame shown to the last (trust the chain, not an assumed swap); once the blue cube is visible, its last visible position, kept after the container is set back down. e.g. [102, 79]"
+  },
+  {
+   "name": "picked_colors",
+   "description": "A JSON list with double-quoted strings; write [] explicitly at the first step and whenever empty. Carried-in list; append the color of a cube that appears visible beneath a lifted or 'held in the gripper' container among this step's frames, if that color is not already in the list. e.g. [\"green\"]"
+  }
+ ]
+}

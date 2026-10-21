@@ -1,0 +1,87 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "remaining_moves"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  21,
+  24,
+  60,
+  82,
+  88
+ ],
+ "scored": 12,
+ "failed": 1,
+ "subgoal_wrong": 1,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.9166666666666666,
+ "memory_verified": 0.9166666666666666,
+ "reads": {
+  "remaining_moves": 8
+ },
+ "field_errors": {
+  "remaining_moves": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.08333333333333333,
+ "verified_of_all": 0.9166666666666666,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 12,
+ "critique": "field remaining_moves, POLICY PROMPT\n  When retracing a demonstration consisting of one backward move along a perspective-slanted column, the starting marker was labeled 'highlighted area' rather than 'highlighted target'. The destination lay one row above it in the same column, with a small decrease in image x. The policy wrote ['G'] and selected backward-left, whereas the required memory was ['B']. No missing information was reported. This is a PREDICTABILITY failure in demonstration extraction, not a need for additional memory: the existing same-column rule already implies B, but should explicitly cover differently labeled starting markers. Clarify that 'highlighted area' and 'highlighted target' can both identify lattice targets. Assign both source and destination to lattice rows and columns before encoding the transition; never omit the source because its label says area. For example, a source near [102, 154] and destination near [82, 151] belong to the same rightmost image column, so their transition is backward B, not a diagonal. Small perspective-induced x shifts do not change column identity; backward-left G requires a destination in an adjacent larger-x column. Keep the existing field meaning and update timing: remaining_moves holds the ordered uncompleted demonstrated menu letters, including the current command; initialize from all demonstration transitions when demonstration frames are present with empty incoming memory, and remove exactly one leading entry at each later decision after oracle completion. Preserve the exact list-string format, for example ['B']. No additional field or change to annotations is needed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_moves",
+    "description": "When retracing a demonstration consisting of one backward move along a perspective-slanted column, the starting marker was labeled 'highlighted area' rather than 'highlighted target'. The destination lay one row above it in the same column, with a small decrease in image x. The policy wrote ['G'] and selected backward-left, whereas the required memory was ['B']. No missing information was reported. This is a PREDICTABILITY failure in demonstration extraction, not a need for additional memory: the existing same-column rule already implies B, but should explicitly cover differently labeled starting markers. Clarify that 'highlighted area' and 'highlighted target' can both identify lattice targets. Assign both source and destination to lattice rows and columns before encoding the transition; never omit the source because its label says area. For example, a source near [102, 154] and destination near [82, 151] belong to the same rightmost image column, so their transition is backward B, not a diagonal. Small perspective-induced x shifts do not change column identity; backward-left G requires a destination in an adjacent larger-x column. Keep the existing field meaning and update timing: remaining_moves holds the ordered uncompleted demonstrated menu letters, including the current command; initialize from all demonstration transitions when demonstration frames are present with empty incoming memory, and remove exactly one leading entry at each later decision after oracle completion. Preserve the exact list-string format, for example ['B']. No additional field or change to annotations is needed."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    88,
+    "exec",
+    32
+   ],
+   "memory_in": "remaining_moves=",
+   "answered": "G: move backward-left",
+   "recorded": "B: move backward",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

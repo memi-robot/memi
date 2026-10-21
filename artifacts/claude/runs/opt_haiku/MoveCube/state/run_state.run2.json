@@ -1,0 +1,365 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "MoveCube",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   30,
+   38,
+   56,
+   83,
+   96
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The menu options need no target point; if a point is demanded anyway, point at the object the option names (the cube for C, D, E; the stick for A; the target for B and E would be the cube's destination, but prefer the cube). An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it. Rules, applied in whatever situation the policy stands in: - If `method` is `push`: choose C (close gripper and push the cube to the target). This is the only subgoal for a push episode. In every rule below, what is in hand is read from the gripper in the scene at this decision step alone, never from memory: raised above about 0.10 with fingers at about 20-30% is the peg in hand, raised with fingers at about 40-60% is the cube in hand, fingers 100% open or about 0% is nothing in hand; the stick's or cube's listed coordinates staying unchanged and the absence of a held mark do not count against a grasp. - If `method` is `pick` and nothing is in hand: choose D (pick up the cube). - If `method` is `pick` and the cube is in hand: choose E (place the cube onto the target). - If `method` is `hook` and nothing is in hand: choose A (pick up the peg). - If `method` is `hook` and the peg is in hand: choose B (hook the cube to the target with the peg). If a situation has no rule: if `method` cannot be told, decide by what the scene shows - fingers partly closed with the cube raised means E, fingers closed to about 20-25% with the stick raised means B; otherwise if the demonstration showed the stick held choose A, if it showed the cube lifted choose D, and if neither choose C. Never choose E without the cube in hand and never choose B without the peg in hand, 'in hand' being judged by the finger opening and gripper height at this decision step as defined above, not by object coordinates.",
+  "fields": [
+   {
+    "name": "method",
+    "description": "The way the demonstration moved the cube. At the first decision step, read it from the demonstration steps: `pick` if the cube is marked as held in the gripper while the gripper is well above the table (height above about 0.08) with fingers partly closed (about 40-60% open) and the cube is then released over the target; `hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target; `push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held. At every later step copy the value carried in unchanged; never write `unknown` after the first step. e.g. hook",
+    "annotation": "The way the demonstration moved the cube, fixed at the first decision step from the demonstration steps and never changed afterwards. Write `pick` when the demonstration shows the cube marked as held in the gripper while the gripper rises well above the table (height above about 0.08) with fingers partly closed around it (about 40-60% open), and the cube is then released over the target. Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target. Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised. Same value at every step of the episode. e.g. hook"
+   }
+  ]
+ },
+ "initial": {
+  "task": "MoveCube",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   30,
+   38,
+   56,
+   83,
+   96
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The menu options need no target point; if a point is demanded anyway, point at the object the option names (the cube for C, D, E; the stick for A; the target for B and E would be the cube's destination, but prefer the cube). An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it. Rules, applied in whatever situation the policy stands in: - If `method` is `push`: choose C (close gripper and push the cube to the target). This is the only subgoal for a push episode. - If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube` (the execution steps just showed the fingers close to about 40-60% on the cube and the gripper rise): choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg` (the execution steps just showed the fingers close to about 20-25% on the stick and the gripper rise): choose B (hook the cube to the target with the peg). If a situation has no rule: if `method` cannot be told, decide by what the scene shows - fingers partly closed with the cube raised means E, fingers closed to about 20-25% with the stick raised means B; otherwise if the demonstration showed the stick held choose A, if it showed the cube lifted choose D, and if neither choose C. Never choose E without the cube in hand and never choose B without the peg in hand.",
+  "fields": [
+   {
+    "name": "method",
+    "description": "The way the demonstration moved the cube. At the first decision step, read it from the demonstration steps: `pick` if the cube is marked as held in the gripper while the gripper is well above the table (height above about 0.08) with fingers partly closed (about 40-60% open) and the cube is then released over the target; `hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target; `push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held. At every later step copy the value carried in unchanged; never write `unknown` after the first step. e.g. hook",
+    "annotation": "The way the demonstration moved the cube, fixed at the first decision step from the demonstration steps and never changed afterwards. Write `pick` when the demonstration shows the cube marked as held in the gripper while the gripper rises well above the table (height above about 0.08) with fingers partly closed around it (about 40-60% open), and the cube is then released over the target. Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target. Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised. Same value at every step of the episode. e.g. hook"
+   },
+   {
+    "name": "holding",
+    "description": "What the robot has in its fingers at this decision step. Write `none` at the first decision step (nothing has been executed yet). Write `cube` if the execution steps shown descend the gripper onto the cube, close the fingers to about 40-60%, and rise again with the fingers still partly closed. Write `peg` if the execution steps shown descend the gripper onto the stick, close the fingers to about 20-25%, and rise again with the fingers still closed. Write `none` if the fingers at this step are 100% open or closed to about 0%. If the execution steps show no grasp, copy the value carried in. e.g. peg",
+    "annotation": "What the robot has in its fingers at this decision step, judged from the execution steps shown. `none` at the first decision step and whenever the fingers are fully open or closed on nothing. `cube` once the execution steps show the gripper descend onto the cube, the fingers close to about 40-60% and the gripper rise again with the fingers still partly closed. `peg` once the execution steps show the gripper descend onto the stick, the fingers close to about 20-25% and the gripper rise again with the fingers still closed. Back to `none` once a later step shows the fingers reopen to 100%. e.g. peg"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 7,
+    "subgoal_wrong": 1,
+    "memory_wrong": 1,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "method": 0,
+     "holding": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 1,
+    "point_wrong": 0
+   },
+   "critique": "field holding, ANNOTATOR PROMPT\n  The failure happened at the second decision step of a hook episode: the execution steps showed the gripper fly down to table height (about 0.01) a dozen pixels from the stick's listed position, the fingers close from 100% to about 22%, and the gripper rise to about 0.19 with the fingers still at 22%. The stick's listed coordinates never changed during those execution steps and no 'is held in the gripper' mark appeared, because execution steps do not carry that mark and the stick's listed position goes stale once it is in the hand. The annotated value at that step was `peg`, but the rule only described the grasp by 'descend onto the stick', which the policy read as requiring the stick's coordinates to move or a held mark to appear, so it wrote `none` (PREDICTABILITY). The field keeps the same meaning: what the robot has in its fingers at this decision step. Rewrite the grasp events to be judged from the gripper trace alone, never from object coordinates or held marks: `peg` once the execution steps show the gripper at table height (below about 0.05) within about 20 px of the stick's listed position, the fingers going from 100% open to about 20-30%, and the gripper then rising (height above about 0.10) with the fingers still at about 20-30%; `cube` the same way but within about 20 px of the cube and with the fingers settling at about 40-60%; `none` at the first decision step, and whenever the scene at the decision step shows the fingers 100% open or closed to about 0%. State explicitly that the stick's or cube's listed position staying unchanged, and the absence of a held mark, are not evidence against a grasp. Equivalent shortcut: if the scene at the decision step shows the gripper raised above about 0.10 with fingers at about 20-30%, the value is `peg`; raised with fingers about 40-60%, `cube`. e.g. peg\n\nfield holding, POLICY PROMPT\n  Same failure: the policy, reading the execution steps after a peg grasp, saw the stick's coordinates unchanged and no held mark and concluded no grasp had happened, copying `none` where `peg` was required (PREDICTABILITY). Tell the policy that execution steps never carry an 'is held in the gripper' mark and that the stick's or cube's listed coordinates can stay frozen at their old place after it has been lifted, so a grasp is recognised only from the gripper line: gripper at table height (below about 0.05) within about 20 px of the stick's listed position, fingers going from 100% to about 20-30%, then the gripper rising above about 0.10 with fingers still at 20-30% means `peg`; the same near the cube with fingers at about 40-60% means `cube`. Simplest test, which the policy should apply first: look at the scene at the decision step itself; gripper raised above about 0.10 with fingers at about 20-30% means `peg`, raised with fingers at about 40-60% means `cube`, fingers 100% open or about 0% means `none`. `none` at the first decision step. e.g. peg\n\nthe policy prompt for subgoal\n  The rule that sent the policy wrong is the pair 'method hook and holding none choose A / method hook and holding peg choose B', because it reads `holding` as if it were a carried-in value, while at the decision step after the grasp the carried-in value is still `none` and the correct subgoal is B. The policy must decide by the value of `holding` it writes at this step, which is the state of the fingers in the scene in front of it, not by the memory carried in. Replace the hook rules with: if method is hook and the scene at this decision step shows the gripper raised with fingers at about 20-30% (the peg is in hand, regardless of whether the stick's listed coordinates moved or any held mark appears), choose B; if method is hook and the fingers are 100% open or about 0%, choose A. Likewise for pick: gripper raised with fingers at about 40-60% means E, fingers 100% open means D. Push stays C always. Keep the guard 'never B without the peg in hand, never E without the cube in hand', but define 'in hand' by the finger opening and height at the decision step, not by object coordinates.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "holding",
+      "edits": [
+       {
+        "modify_from": "`cube` once the execution steps show the gripper descend onto the cube, the fingers close to about 40-60% and the gripper rise again with the fingers still partly closed. `peg` once the execution steps show the gripper descend onto the stick, the fingers close to about 20-25% and the gripper rise again with the fingers still closed.",
+        "modify_to": "Judge a grasp from the gripper trace alone, never from object coordinates or held marks: execution steps carry no 'is held in the gripper' mark, and an object's listed position can stay frozen at its old place after it has been lifted, so an unchanged listed position and the absence of a held mark are not evidence against a grasp. `peg` once the execution steps show the gripper at table height (below about 0.05) within about 20 px of the stick's listed position, the fingers going from 100% open to about 20-30%, and the gripper then rising (height above about 0.10) with the fingers still at about 20-30%. `cube` the same way but within about 20 px of the cube's listed position and with the fingers settling at about 40-60%. Equivalent shortcut: if the scene at the decision step shows the gripper raised above about 0.10 with fingers at about 20-30%, the value is `peg`; raised with fingers at about 40-60%, `cube`."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "holding",
+      "edits": [
+       {
+        "modify_from": "Write `cube` if the execution steps shown descend the gripper onto the cube, close the fingers to about 40-60%, and rise again with the fingers still partly closed. Write `peg` if the execution steps shown descend the gripper onto the stick, close the fingers to about 20-25%, and rise again with the fingers still closed.",
+        "modify_to": "Apply this test first, on the scene at the decision step itself: gripper raised above about 0.10 with fingers at about 20-30% means `peg`; raised with fingers at about 40-60% means `cube`; fingers 100% open or about 0% means `none`. If that is unclear, read the gripper line of the execution steps, never object coordinates or held marks (execution steps carry no 'is held in the gripper' mark, and the stick's or cube's listed coordinates can stay frozen at their old place after it has been lifted, so neither is evidence against a grasp): gripper at table height (below about 0.05) within about 20 px of the stick's listed position, fingers going from 100% to about 20-30%, then the gripper rising above about 0.10 with fingers still at 20-30% means `peg`; the same near the cube with fingers settling at about 40-60% means `cube`."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "- If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube` (the execution steps just showed the fingers close to about 40-60% on the cube and the gripper rise): choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg` (the execution steps just showed the fingers close to about 20-25% on the stick and the gripper rise): choose B (hook the cube to the target with the peg).",
+      "modify_to": "In every rule below, `holding` means the value written for this decision step (the state of the fingers in the scene now), not the value carried in; the carried-in value is still `none` at the step right after a grasp. In-hand is read from the gripper alone: raised above about 0.10 with fingers at about 20-30% is the peg in hand, raised with fingers at about 40-60% is the cube in hand, fingers 100% open or about 0% is nothing in hand; the stick's or cube's listed coordinates staying unchanged and the absence of a held mark do not count against a grasp. - If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube`: choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg`: choose B (hook the cube to the target with the peg)."
+     },
+     {
+      "modify_from": "Never choose E without the cube in hand and never choose B without the peg in hand.",
+      "modify_to": "Never choose E without the cube in hand and never choose B without the peg in hand, 'in hand' being judged by the finger opening and gripper height at this decision step as defined above, not by object coordinates."
+     }
+    ],
+    "refused": "Nothing refused; this is the first round, so there is no earlier edit to protect. The report's proposals were committed in generalized form: holding on both sides is judged from the gripper trace with the scene-at-decision-step shortcut, and the subgoal rules keep their holding-based structure but state that holding is the value written at this step, rather than adding separate finger-state clauses per method."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 6,
+    "subgoal_wrong": 0,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "method": 0,
+     "holding": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field holding, ANNOTATOR PROMPT\n  DELETE this field. It was carried and never read. Everything it held is visible in the scene at the decision step itself: a gripper raised above about 0.10 with fingers at about 20-30% is the peg in hand, raised with fingers at about 40-60% is the cube in hand, fingers 100% open or about 0% is nothing in hand. In the episode where the robot picked up the peg and then stood with it raised, the subgoal to hook the cube was chosen from the raised gripper and 22% fingers in the current scene, not from the carried value, which was still `none` anyway because a value written at a step is only read at the step after it. The field therefore breaks NECESSITY: the current step always recovers the fact. The memory keeps only `method`, which is the one fact the first decision step shows and no later step recovers.\n\nfield holding, POLICY PROMPT\n  DELETE this field. The policy does not write or carry what is in the fingers; it reads that from the scene at each decision step when choosing the subgoal. The memory holds `method` only: fixed at the first decision step from the demonstration steps (`pick`, `hook` or `push`, by the existing tests) and copied unchanged at every later step. e.g. hook\n\nthe policy prompt for subgoal\n  Remove every reference to the `holding` memory field, including the clause that says `holding` means the value written for this decision step rather than the value carried in; that clause existed only because the carried value was always one step stale, which is the same fact showing the field is useless. In its place state the in-hand test directly on the scene at the decision step: the gripper raised above about 0.10 with fingers at about 20-30% means the peg is in hand; raised with fingers at about 40-60% means the cube is in hand; fingers 100% open or about 0% means nothing is in hand; the stick's or cube's listed coordinates staying at their old place and the absence of a held mark never count against a grasp. Then the rules read: `method` is `push` -> C, always. `method` is `pick` and nothing in hand -> D; `method` is `pick` and cube in hand -> E. `method` is `hook` and nothing in hand -> A; `method` is `hook` and peg in hand -> B. Keep the fallback for an unreadable `method` and the prohibitions on E without the cube in hand and B without the peg in hand, both judged by finger opening and gripper height in the current scene. Keep the note that menu options need no target point and, if one is demanded, to point at the object the option names.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "delete",
+      "field": "holding",
+      "edits": [],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "In every rule below, `holding` means the value written for this decision step (the state of the fingers in the scene now), not the value carried in; the carried-in value is still `none` at the step right after a grasp. In-hand is read from the gripper alone:",
+      "modify_to": "In every rule below, what is in hand is read from the gripper in the scene at this decision step alone, never from memory:"
+     },
+     {
+      "modify_from": "- If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube`: choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg`: choose B (hook the cube to the target with the peg).",
+      "modify_to": "- If `method` is `pick` and nothing is in hand: choose D (pick up the cube). - If `method` is `pick` and the cube is in hand: choose E (place the cube onto the target). - If `method` is `hook` and nothing is in hand: choose A (pick up the peg). - If `method` is `hook` and the peg is in hand: choose B (hook the cube to the target with the peg)."
+     }
+    ],
+    "refused": "Nothing refused. The report's deletion of `holding` is committed on both sides: the field was always one step stale when read and the scene at every decision step recovers the same fact, so it fails NECESSITY. This does not undo round 1, whose substance (judging in-hand from gripper height and finger opening in the current scene, not from object coordinates or held marks) stays in the subgoal instruction; only the detour through a memory field is removed. The memory now holds `method` alone, which is the one fact only the first decision step shows."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 2,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    0,
+    33,
+    75,
+    85,
+    90
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The menu options need no target point; if a point is demanded anyway, point at the object the option names (the cube for C, D, E; the stick for A; the target for B and E would be the cube's destination, but prefer the cube). An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it. Rules, applied in whatever situation the policy stands in: - If `method` is `push`: choose C (close gripper and push the cube to the target). This is the only subgoal for a push episode. - If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube` (the execution steps just showed the fingers close to about 40-60% on the cube and the gripper rise): choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg` (the execution steps just showed the fingers close to about 20-25% on the stick and the gripper rise): choose B (hook the cube to the target with the peg). If a situation has no rule: if `method` cannot be told, decide by what the scene shows - fingers partly closed with the cube raised means E, fingers closed to about 20-25% with the stick raised means B; otherwise if the demonstration showed the stick held choose A, if it showed the cube lifted choose D, and if neither choose C. Never choose E without the cube in hand and never choose B without the peg in hand.",
+    "fields": [
+     {
+      "name": "method",
+      "description": "The way the demonstration moved the cube. At the first decision step, read it from the demonstration steps: `pick` if the cube is marked as held in the gripper while the gripper is well above the table (height above about 0.08) with fingers partly closed (about 40-60% open) and the cube is then released over the target; `hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target; `push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held. At every later step copy the value carried in unchanged; never write `unknown` after the first step. e.g. hook",
+      "annotation": "The way the demonstration moved the cube, fixed at the first decision step from the demonstration steps and never changed afterwards. Write `pick` when the demonstration shows the cube marked as held in the gripper while the gripper rises well above the table (height above about 0.08) with fingers partly closed around it (about 40-60% open), and the cube is then released over the target. Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target. Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised. Same value at every step of the episode. e.g. hook"
+     },
+     {
+      "name": "holding",
+      "description": "What the robot has in its fingers at this decision step. Write `none` at the first decision step (nothing has been executed yet). Write `cube` if the execution steps shown descend the gripper onto the cube, close the fingers to about 40-60%, and rise again with the fingers still partly closed. Write `peg` if the execution steps shown descend the gripper onto the stick, close the fingers to about 20-25%, and rise again with the fingers still closed. Write `none` if the fingers at this step are 100% open or closed to about 0%. If the execution steps show no grasp, copy the value carried in. e.g. peg",
+      "annotation": "What the robot has in its fingers at this decision step, judged from the execution steps shown. `none` at the first decision step and whenever the fingers are fully open or closed on nothing. `cube` once the execution steps show the gripper descend onto the cube, the fingers close to about 40-60% and the gripper rise again with the fingers still partly closed. `peg` once the execution steps show the gripper descend onto the stick, the fingers close to about 20-25% and the gripper rise again with the fingers still closed. Back to `none` once a later step shows the fingers reopen to 100%. e.g. peg"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    6,
+    37,
+    51,
+    81,
+    99
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The menu options need no target point; if a point is demanded anyway, point at the object the option names (the cube for C, D, E; the stick for A; the target for B and E would be the cube's destination, but prefer the cube). An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it. Rules, applied in whatever situation the policy stands in: - If `method` is `push`: choose C (close gripper and push the cube to the target). This is the only subgoal for a push episode. - If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube` (the execution steps just showed the fingers close to about 40-60% on the cube and the gripper rise): choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg` (the execution steps just showed the fingers close to about 20-25% on the stick and the gripper rise): choose B (hook the cube to the target with the peg). If a situation has no rule: if `method` cannot be told, decide by what the scene shows - fingers partly closed with the cube raised means E, fingers closed to about 20-25% with the stick raised means B; otherwise if the demonstration showed the stick held choose A, if it showed the cube lifted choose D, and if neither choose C. Never choose E without the cube in hand and never choose B without the peg in hand.",
+    "fields": [
+     {
+      "name": "method",
+      "description": "The way the demonstration moved the cube. At the first decision step, read it from the demonstration steps: `pick` if the cube is marked as held in the gripper while the gripper is well above the table (height above about 0.08) with fingers partly closed (about 40-60% open) and the cube is then released over the target; `hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target; `push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held. At every later step copy the value carried in unchanged; never write `unknown` after the first step. e.g. hook",
+      "annotation": "The way the demonstration moved the cube, fixed at the first decision step from the demonstration steps and never changed afterwards. Write `pick` when the demonstration shows the cube marked as held in the gripper while the gripper rises well above the table (height above about 0.08) with fingers partly closed around it (about 40-60% open), and the cube is then released over the target. Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target. Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised. Same value at every step of the episode. e.g. hook"
+     },
+     {
+      "name": "holding",
+      "description": "What the robot has in its fingers at this decision step. Write `none` at the first decision step (nothing has been executed yet). Write `cube` if the execution steps shown descend the gripper onto the cube, close the fingers to about 40-60%, and rise again with the fingers still partly closed. Write `peg` if the execution steps shown descend the gripper onto the stick, close the fingers to about 20-25%, and rise again with the fingers still closed. Write `none` if the fingers at this step are 100% open or closed to about 0%. If the execution steps show no grasp, copy the value carried in. e.g. peg",
+      "annotation": "What the robot has in its fingers at this decision step, judged from the execution steps shown. `none` at the first decision step and whenever the fingers are fully open or closed on nothing. `cube` once the execution steps show the gripper descend onto the cube, the fingers close to about 40-60% and the gripper rise again with the fingers still partly closed. `peg` once the execution steps show the gripper descend onto the stick, the fingers close to about 20-25% and the gripper rise again with the fingers still closed. Back to `none` once a later step shows the fingers reopen to 100%. e.g. peg"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    15,
+    38,
+    43,
+    72,
+    73
+   ],
+   "verified_of_all": 0.8571428571428571,
+   "subgoal_verified": 0.8571428571428571,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The menu options need no target point; if a point is demanded anyway, point at the object the option names (the cube for C, D, E; the stick for A; the target for B and E would be the cube's destination, but prefer the cube). An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it. Rules, applied in whatever situation the policy stands in: - If `method` is `push`: choose C (close gripper and push the cube to the target). This is the only subgoal for a push episode. - If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube` (the execution steps just showed the fingers close to about 40-60% on the cube and the gripper rise): choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg` (the execution steps just showed the fingers close to about 20-25% on the stick and the gripper rise): choose B (hook the cube to the target with the peg). If a situation has no rule: if `method` cannot be told, decide by what the scene shows - fingers partly closed with the cube raised means E, fingers closed to about 20-25% with the stick raised means B; otherwise if the demonstration showed the stick held choose A, if it showed the cube lifted choose D, and if neither choose C. Never choose E without the cube in hand and never choose B without the peg in hand.",
+    "fields": [
+     {
+      "name": "method",
+      "description": "The way the demonstration moved the cube. At the first decision step, read it from the demonstration steps: `pick` if the cube is marked as held in the gripper while the gripper is well above the table (height above about 0.08) with fingers partly closed (about 40-60% open) and the cube is then released over the target; `hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target; `push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held. At every later step copy the value carried in unchanged; never write `unknown` after the first step. e.g. hook",
+      "annotation": "The way the demonstration moved the cube, fixed at the first decision step from the demonstration steps and never changed afterwards. Write `pick` when the demonstration shows the cube marked as held in the gripper while the gripper rises well above the table (height above about 0.08) with fingers partly closed around it (about 40-60% open), and the cube is then released over the target. Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target. Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised. Same value at every step of the episode. e.g. hook"
+     },
+     {
+      "name": "holding",
+      "description": "What the robot has in its fingers at this decision step. Write `none` at the first decision step (nothing has been executed yet). Write `cube` if the execution steps shown descend the gripper onto the cube, close the fingers to about 40-60%, and rise again with the fingers still partly closed. Write `peg` if the execution steps shown descend the gripper onto the stick, close the fingers to about 20-25%, and rise again with the fingers still closed. Write `none` if the fingers at this step are 100% open or closed to about 0%. If the execution steps show no grasp, copy the value carried in. e.g. peg",
+      "annotation": "What the robot has in its fingers at this decision step, judged from the execution steps shown. `none` at the first decision step and whenever the fingers are fully open or closed on nothing. `cube` once the execution steps show the gripper descend onto the cube, the fingers close to about 40-60% and the gripper rise again with the fingers still partly closed. `peg` once the execution steps show the gripper descend onto the stick, the fingers close to about 20-25% and the gripper rise again with the fingers still closed. Back to `none` once a later step shows the fingers reopen to 100%. e.g. peg"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    1,
+    12,
+    48,
+    52,
+    59
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The menu options need no target point; if a point is demanded anyway, point at the object the option names (the cube for C, D, E; the stick for A; the target for B and E would be the cube's destination, but prefer the cube). An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it. Rules, applied in whatever situation the policy stands in: - If `method` is `push`: choose C (close gripper and push the cube to the target). This is the only subgoal for a push episode. In every rule below, `holding` means the value written for this decision step (the state of the fingers in the scene now), not the value carried in; the carried-in value is still `none` at the step right after a grasp. In-hand is read from the gripper alone: raised above about 0.10 with fingers at about 20-30% is the peg in hand, raised with fingers at about 40-60% is the cube in hand, fingers 100% open or about 0% is nothing in hand; the stick's or cube's listed coordinates staying unchanged and the absence of a held mark do not count against a grasp. - If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube`: choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg`: choose B (hook the cube to the target with the peg). If a situation has no rule: if `method` cannot be told, decide by what the scene shows - fingers partly closed with the cube raised means E, fingers closed to about 20-25% with the stick raised means B; otherwise if the demonstration showed the stick held choose A, if it showed the cube lifted choose D, and if neither choose C. Never choose E without the cube in hand and never choose B without the peg in hand, 'in hand' being judged by the finger opening and gripper height at this decision step as defined above, not by object coordinates.",
+    "fields": [
+     {
+      "name": "method",
+      "description": "The way the demonstration moved the cube. At the first decision step, read it from the demonstration steps: `pick` if the cube is marked as held in the gripper while the gripper is well above the table (height above about 0.08) with fingers partly closed (about 40-60% open) and the cube is then released over the target; `hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target; `push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held. At every later step copy the value carried in unchanged; never write `unknown` after the first step. e.g. hook",
+      "annotation": "The way the demonstration moved the cube, fixed at the first decision step from the demonstration steps and never changed afterwards. Write `pick` when the demonstration shows the cube marked as held in the gripper while the gripper rises well above the table (height above about 0.08) with fingers partly closed around it (about 40-60% open), and the cube is then released over the target. Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target. Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised. Same value at every step of the episode. e.g. hook"
+     },
+     {
+      "name": "holding",
+      "description": "What the robot has in its fingers at this decision step. Write `none` at the first decision step (nothing has been executed yet). Apply this test first, on the scene at the decision step itself: gripper raised above about 0.10 with fingers at about 20-30% means `peg`; raised with fingers at about 40-60% means `cube`; fingers 100% open or about 0% means `none`. If that is unclear, read the gripper line of the execution steps, never object coordinates or held marks (execution steps carry no 'is held in the gripper' mark, and the stick's or cube's listed coordinates can stay frozen at their old place after it has been lifted, so neither is evidence against a grasp): gripper at table height (below about 0.05) within about 20 px of the stick's listed position, fingers going from 100% to about 20-30%, then the gripper rising above about 0.10 with fingers still at 20-30% means `peg`; the same near the cube with fingers settling at about 40-60% means `cube`. Write `none` if the fingers at this step are 100% open or closed to about 0%. If the execution steps show no grasp, copy the value carried in. e.g. peg",
+      "annotation": "What the robot has in its fingers at this decision step, judged from the execution steps shown. `none` at the first decision step and whenever the fingers are fully open or closed on nothing. Judge a grasp from the gripper trace alone, never from object coordinates or held marks: execution steps carry no 'is held in the gripper' mark, and an object's listed position can stay frozen at its old place after it has been lifted, so an unchanged listed position and the absence of a held mark are not evidence against a grasp. `peg` once the execution steps show the gripper at table height (below about 0.05) within about 20 px of the stick's listed position, the fingers going from 100% open to about 20-30%, and the gripper then rising (height above about 0.10) with the fingers still at about 20-30%. `cube` the same way but within about 20 px of the cube's listed position and with the fingers settling at about 40-60%. Equivalent shortcut: if the scene at the decision step shows the gripper raised above about 0.10 with fingers at about 20-30%, the value is `peg`; raised with fingers at about 40-60%, `cube`. Back to `none` once a later step shows the fingers reopen to 100%. e.g. peg"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    11,
+    57,
+    74,
+    84,
+    96
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "MoveCube",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     30,
+     38,
+     56,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The menu options need no target point; if a point is demanded anyway, point at the object the option names (the cube for C, D, E; the stick for A; the target for B and E would be the cube's destination, but prefer the cube). An episode starts at the first decision step with empty memory; first fill `method` from the demonstration steps, then choose by it. Rules, applied in whatever situation the policy stands in: - If `method` is `push`: choose C (close gripper and push the cube to the target). This is the only subgoal for a push episode. In every rule below, `holding` means the value written for this decision step (the state of the fingers in the scene now), not the value carried in; the carried-in value is still `none` at the step right after a grasp. In-hand is read from the gripper alone: raised above about 0.10 with fingers at about 20-30% is the peg in hand, raised with fingers at about 40-60% is the cube in hand, fingers 100% open or about 0% is nothing in hand; the stick's or cube's listed coordinates staying unchanged and the absence of a held mark do not count against a grasp. - If `method` is `pick` and `holding` is `none`: choose D (pick up the cube). - If `method` is `pick` and `holding` is `cube`: choose E (place the cube onto the target). - If `method` is `hook` and `holding` is `none`: choose A (pick up the peg). - If `method` is `hook` and `holding` is `peg`: choose B (hook the cube to the target with the peg). If a situation has no rule: if `method` cannot be told, decide by what the scene shows - fingers partly closed with the cube raised means E, fingers closed to about 20-25% with the stick raised means B; otherwise if the demonstration showed the stick held choose A, if it showed the cube lifted choose D, and if neither choose C. Never choose E without the cube in hand and never choose B without the peg in hand, 'in hand' being judged by the finger opening and gripper height at this decision step as defined above, not by object coordinates.",
+    "fields": [
+     {
+      "name": "method",
+      "description": "The way the demonstration moved the cube. At the first decision step, read it from the demonstration steps: `pick` if the cube is marked as held in the gripper while the gripper is well above the table (height above about 0.08) with fingers partly closed (about 40-60% open) and the cube is then released over the target; `hook` if the stick (peg) is marked as held in the gripper with fingers closed to about 20-25% and is dragged against the cube toward the target; `push` if the fingers close to about 0% at table height (height below about 0.04) and the cube slides to the target without ever being lifted or any stick being held. At every later step copy the value carried in unchanged; never write `unknown` after the first step. e.g. hook",
+      "annotation": "The way the demonstration moved the cube, fixed at the first decision step from the demonstration steps and never changed afterwards. Write `pick` when the demonstration shows the cube marked as held in the gripper while the gripper rises well above the table (height above about 0.08) with fingers partly closed around it (about 40-60% open), and the cube is then released over the target. Write `hook` when the demonstration shows the stick (peg) marked as held in the gripper, with fingers closed to about 20-25%, and the stick dragged against the cube toward the target. Write `push` when the demonstration shows the fingers closing to about 0% (closing on nothing) at table height (below about 0.04) and the cube then sliding to the target while the gripper never rises with it; neither cube nor stick is ever held while raised. Same value at every step of the episode. e.g. hook"
+     },
+     {
+      "name": "holding",
+      "description": "What the robot has in its fingers at this decision step. Write `none` at the first decision step (nothing has been executed yet). Apply this test first, on the scene at the decision step itself: gripper raised above about 0.10 with fingers at about 20-30% means `peg`; raised with fingers at about 40-60% means `cube`; fingers 100% open or about 0% means `none`. If that is unclear, read the gripper line of the execution steps, never object coordinates or held marks (execution steps carry no 'is held in the gripper' mark, and the stick's or cube's listed coordinates can stay frozen at their old place after it has been lifted, so neither is evidence against a grasp): gripper at table height (below about 0.05) within about 20 px of the stick's listed position, fingers going from 100% to about 20-30%, then the gripper rising above about 0.10 with fingers still at 20-30% means `peg`; the same near the cube with fingers settling at about 40-60% means `cube`. Write `none` if the fingers at this step are 100% open or closed to about 0%. If the execution steps show no grasp, copy the value carried in. e.g. peg",
+      "annotation": "What the robot has in its fingers at this decision step, judged from the execution steps shown. `none` at the first decision step and whenever the fingers are fully open or closed on nothing. Judge a grasp from the gripper trace alone, never from object coordinates or held marks: execution steps carry no 'is held in the gripper' mark, and an object's listed position can stay frozen at its old place after it has been lifted, so an unchanged listed position and the absence of a held mark are not evidence against a grasp. `peg` once the execution steps show the gripper at table height (below about 0.05) within about 20 px of the stick's listed position, the fingers going from 100% open to about 20-30%, and the gripper then rising (height above about 0.10) with the fingers still at about 20-30%. `cube` the same way but within about 20 px of the cube's listed position and with the fingers settling at about 40-60%. Equivalent shortcut: if the scene at the decision step shows the gripper raised above about 0.10 with fingers at about 20-30%, the value is `peg`; raised with fingers at about 40-60%, `cube`. Back to `none` once a later step shows the fingers reopen to 100%. e.g. peg"
+     }
+    ]
+   }
+  }
+ ]
+}

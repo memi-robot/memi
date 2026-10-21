@@ -1,0 +1,91 @@
+{
+ "episodes": [
+  1,
+  2,
+  38,
+  66,
+  93
+ ],
+ "user_chars": 22586,
+ "usage": {
+  "prompt_tokens": 10701,
+  "completion_tokens": 2748,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 10697
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 1251
+  }
+ },
+ "reasoning": "I'm checking the proposed peak_speed field and new motion classification against round 1's data—specifically the case with a 0.5 px/timestep outward drift that was answered C, to see if the rule requiring peak_speed ≥ 2.5 when rate is low would still hold up.\n\nI'm also noticing the policy memory description has a confusing clause about inferring frames from carried-in memory, since the previous decision step's scene isn't actually shown. I need to make sure the annotator prompt only considers consecutive frame pairs that are actually visible within each step, matching what the policy can realistically compute.\n\nNow I'm drafting the edit to the motion test passage, converting it to normalize the position change by number of timesteps rather than using raw pixel thresholds, so the turnaround/moving-away distinction scales properly regardless of frame spacing.\n\nI'm using peak_speed as a secondary check: a small positive outward rate combined with a high peak_speed means the cube is just a fast cube pausing at the turnaround, so it still counts as not moving away. I'm also updating the memory-update instruction to explicitly list crossings, cube_side, and peak_speed, and adjusting the related clause describing the \"not moving away\" case to match this new classification logic.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "first update memory as instructed, then decide using the updated crossings value and the cube motion in this step's frames:",
+    "modify_to": "first update memory as instructed (crossings, cube_side, peak_speed), then decide using the updated crossings and peak_speed values and the cube motion in this step's frames:"
+   },
+   {
+    "modify_from": "(2) Otherwise compute |cube_x - target_x| at each of the two frames. If it is decreasing, the cube is MOVING TOWARD the target. If it is equal, or increasing by only a small amount (fewer than about 5 px between the two frames, i.e. under about 1 px per timestep, which happens only at the far end of the swing where the cube is slowing to turn around), the cube is AT THE TURNAROUND, which counts as 'not moving away'. If it is increasing by more than that (the outward sweep after a crossing, where consecutive frames move about 7 px or more), it is MOVING AWAY.",
+    "modify_to": "(2) Otherwise compute |cube_x - target_x| at each of the two frames, take the change (later minus earlier) and divide by the number of timesteps between the two frames: this is the outward rate in px per timestep (negative if the distance shrank). Always divide by the timestep spacing; never judge by the raw pixel change between frames. If the outward rate is zero or negative, the cube is returning or stopped at the turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive but at most about 1 px per timestep AND the updated peak_speed in memory is at least about 2.5 px per timestep, the cube is a fast cube slowing at its turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive and peak_speed is below about 2.5 (a slow cube, which takes long to turn around, so wait until the distance is seen decreasing), or the outward rate is clearly above about 1 px per timestep whatever the peak_speed (still sweeping out), classify it as MOVING AWAY."
+   },
+   {
+    "modify_from": "Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is not moving away (moving toward the target, or stationary at the turnaround).",
+    "modify_to": "Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified NOT MOVING AWAY above (returning, stopped, or a fast cube drifting outward at no more than about 1 px per timestep)."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "peak_speed",
+    "edits": [],
+    "description": "Take the carried-in peak_speed (0 if memory is empty). For each pair of consecutive frames shown at this step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames. Do not pair any frame shown here with a frame from an earlier step. Write the largest of the carried-in value and all these per-pair speeds, rounded to one decimal. It never decreases. At the first step (one frame only) write 0. e.g. 3.8"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "add",
+    "field": "peak_speed",
+    "edits": [],
+    "description": "The fastest cube speed observed so far, in pixels of x per timestep. For every pair of consecutive frames shown at the same decision step (do not pair a frame with one shown at a different step), from step #1 up to and including this decision step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames; write the largest such value seen so far, rounded to one decimal. At step #1 there is only one frame, so write 0. The value never decreases; it grows only at a step whose shown frames contain a faster pair than any seen before. e.g. 3.8"
+   }
+  ],
+  "refused": "The three per-step criteria the report already set aside stay out: 'any outward increase means B' contradicts the two recorded presses at slow outward drift and the round-1 press at 0.5 px per timestep; a pure rate threshold without peak_speed contradicts the slow-cube wait; a deceleration test contradicts the same step. The report's wording of the peak_speed policy field, which told the policy to use a pair it cannot form, is not committed as written; both halves are defined over pairs of consecutive frames shown at the same step, so annotator and policy compute the same value. The round-1 rule that a side flip between the last two frames means MOVING AWAY and B is kept unchanged."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "add",
+    "field": "peak_speed",
+    "edits": [],
+    "description": "The fastest cube speed observed so far, in pixels of x per timestep. For every pair of consecutive frames shown at the same decision step (do not pair a frame with one shown at a different step), from step #1 up to and including this decision step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames; write the largest such value seen so far, rounded to one decimal. At step #1 there is only one frame, so write 0. The value never decreases; it grows only at a step whose shown frames contain a faster pair than any seen before. e.g. 3.8"
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "add",
+    "field": "peak_speed",
+    "edits": [],
+    "description": "Take the carried-in peak_speed (0 if memory is empty). For each pair of consecutive frames shown at this step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames. Do not pair any frame shown here with a frame from an earlier step. Write the largest of the carried-in value and all these per-pair speeds, rounded to one decimal. It never decreases. At the first step (one frame only) write 0. e.g. 3.8"
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "first update memory as instructed, then decide using the updated crossings value and the cube motion in this step's frames:",
+    "modify_to": "first update memory as instructed (crossings, cube_side, peak_speed), then decide using the updated crossings and peak_speed values and the cube motion in this step's frames:"
+   },
+   {
+    "modify_from": "(2) Otherwise compute |cube_x - target_x| at each of the two frames. If it is decreasing, the cube is MOVING TOWARD the target. If it is equal, or increasing by only a small amount (fewer than about 5 px between the two frames, i.e. under about 1 px per timestep, which happens only at the far end of the swing where the cube is slowing to turn around), the cube is AT THE TURNAROUND, which counts as 'not moving away'. If it is increasing by more than that (the outward sweep after a crossing, where consecutive frames move about 7 px or more), it is MOVING AWAY.",
+    "modify_to": "(2) Otherwise compute |cube_x - target_x| at each of the two frames, take the change (later minus earlier) and divide by the number of timesteps between the two frames: this is the outward rate in px per timestep (negative if the distance shrank). Always divide by the timestep spacing; never judge by the raw pixel change between frames. If the outward rate is zero or negative, the cube is returning or stopped at the turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive but at most about 1 px per timestep AND the updated peak_speed in memory is at least about 2.5 px per timestep, the cube is a fast cube slowing at its turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive and peak_speed is below about 2.5 (a slow cube, which takes long to turn around, so wait until the distance is seen decreasing), or the outward rate is clearly above about 1 px per timestep whatever the peak_speed (still sweeping out), classify it as MOVING AWAY."
+   },
+   {
+    "modify_from": "Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is not moving away (moving toward the target, or stationary at the turnaround).",
+    "modify_to": "Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified NOT MOVING AWAY above (returning, stopped, or a fast cube drifting outward at no more than about 1 px per timestep)."
+   }
+  ],
+  "refused": "The three per-step criteria the report already set aside stay out: 'any outward increase means B' contradicts the two recorded presses at slow outward drift and the round-1 press at 0.5 px per timestep; a pure rate threshold without peak_speed contradicts the slow-cube wait; a deceleration test contradicts the same step. The report's wording of the peak_speed policy field, which told the policy to use a pair it cannot form, is not committed as written; both halves are defined over pairs of consecutive frames shown at the same step, so annotator and policy compute the same value. The round-1 rule that a side flip between the last two frames means MOVING AWAY and B is kept unchanged."
+ },
+ "not_applied": [],
+ "refused": "The three per-step criteria the report already set aside stay out: 'any outward increase means B' contradicts the two recorded presses at slow outward drift and the round-1 press at 0.5 px per timestep; a pure rate threshold without peak_speed contradicts the slow-cube wait; a deceleration test contradicts the same step. The report's wording of the peak_speed policy field, which told the policy to use a pair it cannot form, is not committed as written; both halves are defined over pairs of consecutive frames shown at the same step, so annotator and policy compute the same value. The round-1 rule that a side flip between the last two frames means MOVING AWAY and B is kept unchanged.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"add\", \"field\": \"peak_speed\", \"description\": \"The fastest cube speed observed so far, in pixels of x per timestep. For every pair of consecutive frames shown at the same decision step (do not pair a frame with one shown at a different step), from step #1 up to and including this decision step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames; write the largest such value seen so far, rounded to one decimal. At step #1 there is only one frame, so write 0. The value never decreases; it grows only at a step whose shown frames contain a faster pair than any seen before. e.g. 3.8\"}],\n \"policy_prompt_for_memory\": [{\"kind\": \"add\", \"field\": \"peak_speed\", \"description\": \"Take the carried-in peak_speed (0 if memory is empty). For each pair of consecutive frames shown at this step, compute |cube_x(later) - cube_x(earlier)| divided by the number of timesteps between the two frames. Do not pair any frame shown here with a frame from an earlier step. Write the largest of the carried-in value and all these per-pair speeds, rounded to one decimal. It never decreases. At the first step (one frame only) write 0. e.g. 3.8\"}],\n \"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"first update memory as instructed, then decide using the updated crossings value and the cube motion in this step's frames:\", \"modify_to\": \"first update memory as instructed (crossings, cube_side, peak_speed), then decide using the updated crossings and peak_speed values and the cube motion in this step's frames:\"},\n  {\"modify_from\": \"(2) Otherwise compute |cube_x - target_x| at each of the two frames. If it is decreasing, the cube is MOVING TOWARD the target. If it is equal, or increasing by only a small amount (fewer than about 5 px between the two frames, i.e. under about 1 px per timestep, which happens only at the far end of the swing where the cube is slowing to turn around), the cube is AT THE TURNAROUND, which counts as 'not moving away'. If it is increasing by more than that (the outward sweep after a crossing, where consecutive frames move about 7 px or more), it is MOVING AWAY.\", \"modify_to\": \"(2) Otherwise compute |cube_x - target_x| at each of the two frames, take the change (later minus earlier) and divide by the number of timesteps between the two frames: this is the outward rate in px per timestep (negative if the distance shrank). Always divide by the timestep spacing; never judge by the raw pixel change between frames. If the outward rate is zero or negative, the cube is returning or stopped at the turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive but at most about 1 px per timestep AND the updated peak_speed in memory is at least about 2.5 px per timestep, the cube is a fast cube slowing at its turnaround: classify it as NOT MOVING AWAY. If the outward rate is positive and peak_speed is below about 2.5 (a slow cube, which takes long to turn around, so wait until the distance is seen decreasing), or the outward rate is clearly above about 1 px per timestep whatever the peak_speed (still sweeping out), classify it as MOVING AWAY.\"},\n  {\"modify_from\": \"Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is not moving away (moving toward the target, or stationary at the turnaround).\", \"modify_to\": \"Choose C 'press button to stop the cube' if crossings == N-1 AND the cube is classified NOT MOVING AWAY above (returning, stopped, or a fast cube drifting outward at no more than about 1 px per timestep).\"}\n ],\n \"refused\": \"The three per-step criteria the report already set aside stay out: 'any outward increase means B' contradicts the two recorded presses at slow outward drift and the round-1 press at 0.5 px per timestep; a pure rate threshold without peak_speed contradicts the slow-cube wait; a deceleration test contradicts the same step. The report's wording of the peak_speed policy field, which told the policy to use a pair it cannot form, is not committed as written; both halves are defined over pairs of consecutive frames shown at the same step, so annotator and policy compute the same value. The round-1 rule that a side flip between the last two frames means MOVING AWAY and B is kept unchanged.\"}"
+}

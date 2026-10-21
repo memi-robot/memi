@@ -1,0 +1,180 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "buttons_pressed",
+  "green_container",
+  "red_container",
+  "blue_container",
+  "picked_colors"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  10,
+  15,
+  36,
+  39,
+  47
+ ],
+ "scored": 23,
+ "failed": 5,
+ "subgoal_wrong": 1,
+ "memory_wrong": 5,
+ "subgoal_verified": 0.9565217391304348,
+ "memory_verified": 0.782608695652174,
+ "reads": {
+  "buttons_pressed": 18,
+  "green_container": 8,
+  "red_container": 5,
+  "blue_container": 5,
+  "picked_colors": 11
+ },
+ "field_errors": {
+  "buttons_pressed": {
+   "in": 0,
+   "sole": 0
+  },
+  "green_container": {
+   "in": 2,
+   "sole": 1
+  },
+  "red_container": {
+   "in": 2,
+   "sole": 1
+  },
+  "blue_container": {
+   "in": 3,
+   "sole": 1
+  },
+  "picked_colors": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.21739130434782608,
+ "verified_of_all": 0.782608695652174,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 23,
+ "critique": "field red_container, ANNOTATOR PROMPT\n  The value changes only through the frame-by-frame smallest-displacement chain from the previous step's written value; it never jumps to a different container. In one episode the red cube's container was chained through a circling pass to one of two stationary containers at the end of the press step, and at the next step, where neither of those two containers moved at all, the annotation switched to the other stationary container. That breaks PREDICTABILITY: the chain from the carried value through unmoving containers can only give the same container, so no reader of that step could produce the written value. The rule must state that when the tracked container does not move across a step, the field keeps that container's last-frame position (only jitter of a few pixels), and that a value may change containers only when a frame-to-frame link in the chain says so. The chain is confirmed reliable by every lift in the batch (the revealed cube always sat under the chained container), so the annotation must trust it even across a single sampled circling pass. Same discipline for green_container and blue_container. e.g. [127, 138]\n\nfield green_container, POLICY PROMPT\n  Say explicitly: at every step whose frames show containers, rewrite ALL THREE container fields, including colors the goal never names and containers that never moved. Twice a policy at the press step updated only the goal color and left the other two fields at the first-step cube positions, and once it left the unnamed color's field stale although its container had just swapped places in a circling pass; the annotated value was the chained container's last-frame position, so the step broke PREDICTABILITY. Procedure to state: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame nearest the carried value, even if that nearest one is 10–15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write the last-frame position. Add a worked example of the swap trap: carried [131,115]; first frame has [118,118] and [113,162], pick [118,118]; next frame [99,134], next [101,161]; final [101,161], while the OTHER container, which came from [113,162], now stands at [131,116], almost exactly the carried value. A container standing in the last frame at the carried position is NOT a reason to write that position; only the chain decides, and the chain here says the pair swapped. Conversely, when no container moves during a step, the chain returns the same container and the value stays. Cube-visible override unchanged. e.g. [133, 174]\n\nfield red_container, POLICY PROMPT\n  Same text as green_container: rewrite at every step with containers, even when red is not named in the goal and even when its container stood still (snap from the cube's original position to the container on it); chain from the first frame via nearest match, never from the carried value to the last frame; a last-frame container coinciding with the carried position is the swap trap, not a match. e.g. [101, 161]\n\nfield blue_container, POLICY PROMPT\n  Same text as green_container: rewrite at every step with containers, even when blue is not named in the goal; chain from the first frame via nearest match and smallest displacement per frame; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it. e.g. [103, 168]\n\nthe policy prompt for subgoal\n  No rule sent the policy wrong on its own; every wrong C point in the batch came from a memory field that was not chained, and the point then landed on the swapped-in container. Add one sentence to rules 4 and 5: the point for C is the <color>_container value written AT THIS STEP after the full chain (not the carried-in value), and if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point. Keep the fallback as is.\n\nrefused\n  One press step reported that its carried-in red_container was already wrong before the step, because the recorded value named the other stationary container. Reading the whole episode, the carried-in value was the correct chain result and the recorded value at that step was the annotation's own inconsistency, so this is not a missing memory fact and the memory fields do not change; it is answered as an annotation correction above. Also not passed on verbatim: the suggestion that a last-frame container coinciding with the carried-in position is itself 'evidence of a completed swap'. That is false when nothing moved (the coinciding container is then the same one); the instruction instead says that such a coincidence is neither for nor against and only the chain decides.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "No rule sent the policy wrong on its own; every wrong C point in the batch came from a memory field that was not chained, and the point then landed on the swapped-in container. Add one sentence to rules 4 and 5: the point for C is the <color>_container value written AT THIS STEP after the full chain (not the carried-in value), and if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point. Keep the fallback as is.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "green_container",
+    "description": "Say explicitly: at every step whose frames show containers, rewrite ALL THREE container fields, including colors the goal never names and containers that never moved. Twice a policy at the press step updated only the goal color and left the other two fields at the first-step cube positions, and once it left the unnamed color's field stale although its container had just swapped places in a circling pass; the annotated value was the chained container's last-frame position, so the step broke PREDICTABILITY. Procedure to state: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame nearest the carried value, even if that nearest one is 10–15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write the last-frame position. Add a worked example of the swap trap: carried [131,115]; first frame has [118,118] and [113,162], pick [118,118]; next frame [99,134], next [101,161]; final [101,161], while the OTHER container, which came from [113,162], now stands at [131,116], almost exactly the carried value. A container standing in the last frame at the carried position is NOT a reason to write that position; only the chain decides, and the chain here says the pair swapped. Conversely, when no container moves during a step, the chain returns the same container and the value stays. Cube-visible override unchanged. e.g. [133, 174]"
+   },
+   {
+    "field": "red_container",
+    "description": "Same text as green_container: rewrite at every step with containers, even when red is not named in the goal and even when its container stood still (snap from the cube's original position to the container on it); chain from the first frame via nearest match, never from the carried value to the last frame; a last-frame container coinciding with the carried position is the swap trap, not a match. e.g. [101, 161]"
+   },
+   {
+    "field": "blue_container",
+    "description": "Same text as green_container: rewrite at every step with containers, even when blue is not named in the goal; chain from the first frame via nearest match and smallest displacement per frame; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it. e.g. [103, 168]"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "red_container",
+    "description": "The value changes only through the frame-by-frame smallest-displacement chain from the previous step's written value; it never jumps to a different container. In one episode the red cube's container was chained through a circling pass to one of two stationary containers at the end of the press step, and at the next step, where neither of those two containers moved at all, the annotation switched to the other stationary container. That breaks PREDICTABILITY: the chain from the carried value through unmoving containers can only give the same container, so no reader of that step could produce the written value. The rule must state that when the tracked container does not move across a step, the field keeps that container's last-frame position (only jitter of a few pixels), and that a value may change containers only when a frame-to-frame link in the chain says so. The chain is confirmed reliable by every lift in the batch (the revealed cube always sat under the chained container), so the annotation must trust it even across a single sampled circling pass. Same discipline for green_container and blue_container. e.g. [127, 138]"
+   }
+  ],
+  "refused": "One press step reported that its carried-in red_container was already wrong before the step, because the recorded value named the other stationary container. Reading the whole episode, the carried-in value was the correct chain result and the recorded value at that step was the annotation's own inconsistency, so this is not a missing memory fact and the memory fields do not change; it is answered as an annotation correction above. Also not passed on verbatim: the suggestion that a last-frame container coinciding with the carried-in position is itself 'evidence of a completed swap'. That is false when nothing moved (the coinciding container is then the same one); the instruction instead says that such a coincidence is neither for nor against and only the chain decides."
+ },
+ "critiques": [
+  {
+   "step": [
+    10,
+    "exec",
+    114
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[101, 165]; red_container=[107, 118]; blue_container=[135, 172]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say explicitly that ALL three container fields must be rewritten at every step that shows containers, not only the color named in the goal: here green_container had to be chained [99,166]->[106,182]->[122,188]->[133,174] and written as [133,174], and red_container had to be snapped from the cube's original [107,118] to the container standing on it, [104,117], even though that container never moved. I updated only blue_container and left green and red at their first-step cube positions. A line such as 'update every <color>_container field at every step, including colors the goal does not name and containers that did not move; once containers are visible a field must always hold a container position from the last frame, never the original cube position' would have settled it.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    15,
+    "exec",
+    204
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[102, 183]; red_container=[125, 140]; blue_container=[128, 200]; picked_colors=[]",
+   "answered": "C: pick up the container at [128, 200]",
+   "recorded": "C: pick up the container at [125, 204]",
+   "missing_from_memory": "The carried-in red_container=[125, 140] pointed at the stationary container at [127, 138]; the recorded value [99, 125] names the other stationary container, which no frame in this step ever connects to [125, 140]. If the red cube really sits under [99, 125], the carried memory was already wrong before this step and nothing shown here could correct it.",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": "The carried-in red_container=[125, 140] pointed at the stationary container at [127, 138]; the recorded value [99, 125] names the other stationary container, which no frame in this step ever connects to [125, 140]. If the red cube really sits under [99, 125], the carried memory was already wrong before this step and nothing shown here could correct it."
+  },
+  {
+   "step": [
+    36,
+    "exec",
+    209
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[109, 84]; red_container=[131, 115]; blue_container=[101, 163]; picked_colors=[]",
+   "answered": "C: pick up the container at [131, 116]",
+   "recorded": "C: pick up the container at [98, 165]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did say to chain from the first frame, but it did not warn that the chain must be worked out explicitly here: carried red [131, 115] matches first-frame [118, 118] (not [113, 162]), which moves to [99, 134] at t=144 and then to [101, 161] at t=160, so red ends at [101, 161] and blue, chained from [113, 162] via [134, 147], ends at [131, 116]. A container standing at t=160 on almost exactly the carried-in red spot ([131, 116] vs [131, 115]) is the swapped blue container, not red; the instruction should state that a last-frame container coinciding with the carried-in position is evidence of a completed swap and must be ignored in favour of the frame-by-frame chain.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    47,
+    "exec",
+    114
+   ],
+   "memory_in": "buttons_pressed=0; green_container=[106, 168]; red_container=[107, 123]; blue_container=[126, 149]; picked_colors=[]",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say plainly that blue_container must be chained at this step like the other two even though blue is not named in the goal: the carried-in [126, 149] is a cube position, the container standing on it at the first frame (t=32) is [124, 150], and chaining smallest displacements through t=80 [111, 143], t=96 [101, 148], t=112 [103, 168] gives [103, 168] (the green and blue containers swapped in one circling pass). I left the field at the stale cube position; the instruction should state that at any step where containers are shown, every <color>_container field whose value is still a cube position must be replaced by the followed container's last-frame position, with no field exempt for colors absent from the goal.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    47,
+    "exec",
+    213
+   ],
+   "memory_in": "buttons_pressed=1; green_container=[125, 150]; red_container=[105, 121]; blue_container=[103, 168]; picked_colors=[]",
+   "answered": "C: pick up the container at [105, 122]",
+   "recorded": "C: pick up the container at [102, 124]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not warn that the first frame shown can already differ noticeably from the carried-in positions (here green [125,150] and blue [103,168] had no exact match at t=128, only [113,144] and [114,175] about 13 px away) and that the nearest-container match to the FIRST frame must still be made and then chained ([113,144]->[101,146]->[103,168] for green, [114,175]->[128,175]->[125,153] for blue) even when the carried-in position happens to coincide almost exactly with some container in the LAST frame; a worked example showing that a carried position reappearing in the last frame is a swap trap would have prevented matching straight to the last frame.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

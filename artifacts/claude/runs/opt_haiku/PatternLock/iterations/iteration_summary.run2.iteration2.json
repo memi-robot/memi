@@ -1,0 +1,107 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "plan",
+  "moves_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  18,
+  41,
+  59,
+  63,
+  91
+ ],
+ "scored": 20,
+ "failed": 2,
+ "subgoal_wrong": 0,
+ "memory_wrong": 2,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9,
+ "reads": {
+  "plan": 14,
+  "moves_done": 15
+ },
+ "field_errors": {
+  "plan": {
+   "in": 2,
+   "sole": 2
+  },
+  "moves_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1,
+ "verified_of_all": 0.9,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 20,
+ "critique": "field plan, POLICY PROMPT\n  Only the serialization has to change, not the content. The failures occurred at the first decision step of two episodes: the demonstration was shown, the policy chose the correct first subgoal and derived exactly the right ordered list of plan letters from the highlighted-target transitions, but wrote the list with single-quoted letters (['G', 'B', 'D']) while the annotated memory holds a JSON array with double-quoted letters ([\"G\", \"B\", \"D\"]). That is a PREDICTABILITY break on form alone: the same fact written two ways at one step. The field keeps holding the ordered list of menu letters, built once at the first decision step from the demonstration steps and copied unchanged at every later step; add to its description that the value must be written as a JSON array with double-quoted letters and a space after each comma, exactly like the example, never single quotes and never bare letters. Example value: [\"G\", \"B\", \"D\"].",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "plan",
+    "description": "Only the serialization has to change, not the content. The failures occurred at the first decision step of two episodes: the demonstration was shown, the policy chose the correct first subgoal and derived exactly the right ordered list of plan letters from the highlighted-target transitions, but wrote the list with single-quoted letters (['G', 'B', 'D']) while the annotated memory holds a JSON array with double-quoted letters ([\"G\", \"B\", \"D\"]). That is a PREDICTABILITY break on form alone: the same fact written two ways at one step. The field keeps holding the ordered list of menu letters, built once at the first decision step from the demonstration steps and copied unchanged at every later step; add to its description that the value must be written as a JSON array with double-quoted letters and a space after each comma, exactly like the example, never single quotes and never bare letters. Example value: [\"G\", \"B\", \"D\"]."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    18,
+    "exec",
+    91
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "G: move backward-left",
+   "recorded": "G: move backward-left",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The plan content matched exactly (G, B, D); the only disagreement was quoting style: I wrote ['G', 'B', 'D'] with single quotes while the recorded value uses JSON double quotes [\"G\", \"B\", \"D\"]. The policy prompt should state that the plan list must be written as a JSON array with double-quoted letters, exactly like its example [\"E\", \"D\", \"G\", \"H\"].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    132
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "D: move right",
+   "recorded": "D: move right",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The plan value matched the recorded one in content (['D','H','A','G'] vs [\"D\",\"H\",\"A\",\"G\"]); the only difference is quoting style. The instruction should state the exact serialization to write: a JSON list with double-quoted letters, e.g. [\"D\", \"H\", \"A\", \"G\"], never single quotes.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

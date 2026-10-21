@@ -1,0 +1,538 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "BinFill",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   8,
+   21,
+   60,
+   83,
+   96
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The goal instruction names how many cubes of which color(s) must go into the bin before the button is pressed (e.g. 'two blue cubes' or 'one red cube and three green cubes'). Apply these rules at every decision step, using the scene shown and the memory field `placed` as updated at this step. Rule 1 (holding): If the scene at this decision step shows a cube 'held in the gripper', choose B: put it into the bin. This holds whatever `placed` contains. Rule 2 (done): If no cube is held and, for every color named in the goal, the number of entries of that color in `placed` is at least the number the goal asks for, choose C: press the button. The episode ends there. Rule 3 (pick): If no cube is held and some goal color still has fewer entries in `placed` than required, choose A: pick up the cube, pointing at a cube of a color that is still needed. Where two colors are still needed, choose the color this way: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again (a color once started is finished before any other color is touched); only when the last-placed color is complete move to another needed color. If `placed` is empty, any needed color may be started; as the fixed default, start with the color of the first entry in `cubes` (as updated at this step) whose color is still needed. Do not choose the start color by required count or by a fixed color preference. Among the cubes of that color, point at the position of the first entry in `cubes` (as updated at this step) that has that color, with no distance condition of any kind; a cube is never skipped for being near the bin. If the scene at this decision step shows a detection of that color within about 10 px of that entry, point at that detection's center; if not (the arm may be covering it), point at the remembered position. The order of `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest or farthest from the bin, or the one with the smallest y. The target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step; a detection that has drifted a few pixels is still the same cube, so do not discard it, and never point at a detection lying within about 10 px of the bin center. At step #1 the first entry of `cubes` is the needed-color cube nearest the point 10 px to the larger-x side of the reported bin center, as ordered when `cubes` is filled. A point offset by a pixel or two from the detection center is acceptable; cubes of other colors are distractors and are never picked. Never point at the bin or the button. An episode starts in A at step #1: the gripper is raised out of the frame, `placed` is empty, so pick up a cube of a needed color. If a situation matches none of the rules (for example the fingers are closed but no cube is reported held, or no cube of a needed color is visible): if the fingers are partly closed treat it as holding and choose B; otherwise choose A pointing at the first entry of `cubes` whose color is still needed, and if `cubes` has no such entry, choose A pointing at any visible cube of a needed color, or failing that any visible cube. Never choose C unless Rule 2 is satisfied.",
+  "fields": [
+   {
+    "name": "placed",
+    "description": "Ordered list of the colors of the cubes that have been put into the bin so far, oldest first. When the carried-in memory is blank (the first decision step), write placed=[] explicitly: the field is always output as an explicit list, even when empty. Copy the carried-in list unchanged, except: if the execution steps shown at this step contain a frame with a cube 'held in the gripper' and the scene at this decision step shows the gripper open (about 100%) with no cube held, then the robot has just released a cube into the bin, so append that held cube's color once. Do not append when the step ends with a cube still held (that was a pick-up), when there are no execution steps (first step), or when the robot only pressed the button. Ignore cubes that appear or vanish on the table; only the held-then-released event counts. Write the list as a JSON array with double-quoted strings, never Python-style single quotes; the field is compared literally. e.g. [\"green\", \"green\"]",
+    "annotation": "Ordered list of the colors of the cubes that have been put into the bin so far, one entry per completed 'put it into the bin' subgoal, oldest first. The literal empty list [] at step #1, written explicitly and never left blank; at every later step the field is again an explicit list. At the decision step that directly follows an execution of B (the execution steps show a cube held in the gripper and then released over the bin, and the scene at the decision step shows the gripper open with nothing held), append the color of the cube that was held during that execution. Never append after a pick-up execution (one that ends with a cube held) and never after pressing the button. Count released cubes even if a cube of that color later appears somewhere on the table, since the bin is opaque and detections near it are unreliable. e.g. [\"green\", \"green\"]"
+   },
+   {
+    "name": "cubes",
+    "description": "Ordered list of the cubes of the goal colors on the table and not yet picked, oldest first, each as [color, [y, x]]. When the carried-in memory is blank (the first decision step), list every visible cube of a goal color ordered by distance to the point 10 px to the larger-x side of the reported bin center ([bin_y, bin_x + 10]), nearest first (ties: smaller y); do not order by the reported bin center itself. Otherwise copy the carried-in list and: remove an entry only if the execution steps shown at THIS step include the fingers closing (about 100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), match detections to entries ONE-TO-ONE in each frame: an entry takes the nearest detection within about 10 px and only that one, keeping its slot and taking that newest position; any further detection within 10 px of that entry but with no other unmatched entry within about 10 px is a new cube and is appended at the end, in order of first appearance; a detection about 10 px or more from every carried entry is a new cube and is appended likewise. Example: carried [[\"red\", [58, 160]]] and a frame showing red at [60, 163] and [67, 167] becomes [[\"red\", [60, 163]], [\"red\", [67, 167]]]. A cube reported 20 px or more from the bin center is a real table cube and is entered even if it showed up just after a release; a cube that vanishes for a frame or two because the arm covers it keeps its entry and is not re-added. Never reorder entries, never drop-and-re-append: the list order is the age order and nothing seen later changes it. Example of a refresh: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]] with a green reported at [68, 160] becomes [[\"blue\", [117, 71]], [\"green\", [68, 160]]]. Cubes of colors not named in the goal are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]]]",
+    "annotation": "Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. Age on the table is what the list preserves: a cube present at the start of the episode precedes every cube that appeared during execution, and among cubes that appeared during execution the earlier arrival precedes the later. At step #1 fill it with every visible cube of a goal color, ordered by distance to the reference point that lies 10 px to the larger-x side of the reported bin center (reference = [bin_y, bin_x + 10]; the bin's visible-pixel centroid sits to the robot's right of its true center), nearest first (ties: smaller y). The reported bin center itself is not the reference. At every later step copy the carried list, then (a) remove the entry of the cube that this step's own execution steps show the fingers closing on (opening dropping from about 100% to about 46%) and then reported 'held in the gripper'; when the execution steps open with a cube already held, remove nothing for it, since that removal was made at the previous step, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (matching is one-to-one per frame: each existing entry absorbs at most one detection, the nearest goal-color detection within about 10 px of its position, and that entry keeps its slot with only its position refreshed; a further detection in the same frame that lies within 10 px of an already-matched entry but has no unmatched entry within about 10 px is a new cube and is appended at its first appearance; a detection about 10 px or more from every entry is a different cube, not a drifted one; an entry is never dropped and re-appended; a cube briefly not reported because the arm covers it keeps its entry; a detection within about 10 px of the reported bin center is at the bin's position and is not a cube, whereas a detection 20 px or more from the bin center is a table cube and is appended even if it appeared right after a release; a detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one), and (c) refresh each remaining entry's position to its latest reported position. Cubes of colors the goal does not name are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "BinFill",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   8,
+   21,
+   60,
+   83,
+   96
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The goal instruction names how many cubes of which color(s) must go into the bin before the button is pressed (e.g. 'two blue cubes' or 'one red cube and three green cubes'). Apply these rules at every decision step, using the scene shown and the memory field `placed` as updated at this step. Rule 1 (holding): If the scene at this decision step shows a cube 'held in the gripper', choose B: put it into the bin. This holds whatever `placed` contains. Rule 2 (done): If no cube is held and, for every color named in the goal, the number of entries of that color in `placed` is at least the number the goal asks for, choose C: press the button. The episode ends there. Rule 3 (pick): If no cube is held and some goal color still has fewer entries in `placed` than required, choose A: pick up the cube, pointing at a cube of a color that is still needed. Where two colors are still needed, take the one with the larger remaining count (ties: either). Point at that cube's center as shown in the scene at this decision step. Prefer a cube of that color that was already visible at the same place in the earlier execution steps of this decision step (or, at step #1, simply any cube of that color), and avoid detections that flicker in and out or that lie on top of the bin's position; cubes of other colors are distractors and are never picked. Never point at the bin or the button. An episode starts in A at step #1: the gripper is raised out of the frame, `placed` is empty, so pick up a cube of a needed color. If a situation matches none of the rules (for example the fingers are closed but no cube is reported held, or no cube of a needed color is visible): if the fingers are partly closed treat it as holding and choose B; otherwise choose A pointing at the cube of a needed color nearest the gripper, and if none is visible at all, choose A pointing at any visible cube. Never choose C unless Rule 2 is satisfied.",
+  "fields": [
+   {
+    "name": "placed",
+    "description": "Ordered list of the colors of the cubes that have been put into the bin so far, oldest first. Start with an empty list when the memory is empty. Copy the carried-in list unchanged, except: if the execution steps shown at this step contain a frame with a cube 'held in the gripper' and the scene at this decision step shows the gripper open (about 100%) with no cube held, then the robot has just released a cube into the bin, so append that held cube's color once. Do not append when the step ends with a cube still held (that was a pick-up), when there are no execution steps (first step), or when the robot only pressed the button. Ignore cubes that appear or vanish on the table; only the held-then-released event counts. e.g. [\"green\", \"green\"]",
+    "annotation": "Ordered list of the colors of the cubes that have been put into the bin so far, one entry per completed 'put it into the bin' subgoal, oldest first. Empty list at step #1. At the decision step that directly follows an execution of B (the execution steps show a cube held in the gripper and then released over the bin, and the scene at the decision step shows the gripper open with nothing held), append the color of the cube that was held during that execution. Never append after a pick-up execution (one that ends with a cube held) and never after pressing the button. Count released cubes even if a cube of that color later appears somewhere on the table, since the bin is opaque and detections near it are unreliable. e.g. [\"green\", \"green\"]"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 37,
+    "subgoal_wrong": 9,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "placed": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 9
+   },
+   "critique": "field placed, ANNOTATOR PROMPT\n  No change to what it holds or when it changes. Only make the first-step value explicit: at the first decision step the field is written as the literal empty list [] (not left blank), and it stays an explicit list thereafter. Example: [] at the first step, [\"green\"] after the first release over the bin.\n\nfield placed, POLICY PROMPT\n  At the first decision step the carried-in memory is blank (no value at all). This counts as a write: the policy must output placed=[] explicitly so the field holds an empty list. The failure was PREDICTABILITY at the first step of an episode: the policy chose the right pick subgoal but wrote nothing for `placed`, because the instruction said 'start with an empty list' without saying that this is a value to be written. Otherwise the field is unchanged: copy the carried-in list, and append the held cube's color only when the execution steps shown contain a frame with a cube held in the gripper and the scene at this decision step shows the gripper fully open with nothing held. Example: [\"green\", \"green\", \"blue\"].\n\nthe policy prompt for subgoal\n  Every failure in this batch is a SUFFICIENCY failure of Rule 3 (pick) on which cube to point at; the memory was correct at every one of them and Rules 1 and 2 were never at fault. Two things in Rule 3 have to change. First, the color-ordering clause 'take the color with the larger remaining count' is wrong and must be removed. Across all episodes with two goal colors the robot finishes one color completely before touching the other: a goal of three blue and two green was done green, green, blue, blue, blue; a goal of two red and three green was done green, green, green, red, red; a goal of two red and one green was done red, red, green. So the rule must be: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again; only when the last-placed color is complete move to another needed color. Neither 'larger remaining count' nor 'larger total count' nor a fixed color preference explains which color is started first (the smaller-count color was started in one episode, the larger-count color in the other two), so the first color is not derivable from the goal; the instruction should say that when `placed` is empty any needed color may be started, and should name one deterministic default so the answer is at least fixed (e.g. the needed color with the larger required count, ties to the color listed first in the goal), while stressing that once a color is started it is finished before the other. Second, the clause 'simply any cube of that color' and the preference list (stable detection, not on the bin) leave the choice among several same-color cubes open, and the reports asked for a tie-break. I checked the recorded picks against the candidates: they are not the cube nearest the gripper, not the nearest to the bin, not the forward-most (largest y), not the nearest to the robot, not the first or last listed; none of these orders reproduces the recorded choices in more than a minority of steps, so the recorded cube appears to be fixed by the oracle's internal object order and not by anything the step shows. The instruction should therefore keep the hard constraints (never a cube of a non-needed color, never the bin or the button, prefer a detection present at the same place in every execution step of this decision step over one that appeared or moved mid-step) and then give one explicit deterministic tie-break so that the policy's answer is stable, stated as: among the remaining candidates of the chosen color take the one with the largest y, and on equal y the smallest x. It should also say that the point may be offset by a pixel or two from the listed detection center, which is acceptable. The fallback clauses and Rules 1 and 2 stay as they are.\n\nrefused\n  Several steps proposed specific spatial tie-breaks (nearest the bin, nearest the gripper, forward-most cube, nearest the workspace center, excluding the cube near the button) each derived from the single step the policy stood at. Each of them contradicts the recorded pick at other steps in the same episodes: the recorded cube is sometimes the nearest to the bin and sometimes the farthest, sometimes the forward-most and more often not, and the cube nearest the gripper is passed over in most pick steps. None of them is passed on as a rule that explains the data; one is kept only as an arbitrary deterministic default so the policy's output is stable. Likewise the proposals to order colors by total required count or by a fixed color preference are refused, since one episode starts with the smaller-count color and another with the larger, and green is started first in two episodes but red in the third; only 'finish the color most recently placed' holds across all of them.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "placed",
+      "edits": [
+       {
+        "modify_from": "Empty list at step #1.",
+        "modify_to": "The literal empty list [] at step #1, written explicitly and never left blank; at every later step the field is again an explicit list."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "placed",
+      "edits": [
+       {
+        "modify_from": "Start with an empty list when the memory is empty.",
+        "modify_to": "When the carried-in memory is blank (the first decision step), write placed=[] explicitly: the field is always output as an explicit list, even when empty."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Where two colors are still needed, take the one with the larger remaining count (ties: either).",
+      "modify_to": "Where two colors are still needed, choose the color this way: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again (a color once started is finished before any other color is touched); only when the last-placed color is complete move to another needed color. If `placed` is empty, any needed color may be started; as the fixed default, start the needed color with the larger required count, ties to the color named first in the goal instruction."
+     },
+     {
+      "modify_from": "Prefer a cube of that color that was already visible at the same place in the earlier execution steps of this decision step (or, at step #1, simply any cube of that color), and avoid detections that flicker in and out or that lie on top of the bin's position;",
+      "modify_to": "Among the cubes of that color, first discard any detection lying on top of the bin's position and prefer a detection present at the same place in every execution step of this decision step over one that appeared, vanished or moved mid-step (at step #1 all visible cubes of that color are candidates); if several candidates remain, take the one with the largest y, and on equal y the smallest x. A point offset by a pixel or two from the detection center is acceptable;"
+     }
+    ],
+    "refused": "The spatial tie-breaks proposed from single steps (nearest the bin, nearest the gripper, forward-most, nearest the workspace center, excluding the cube near the button) are not committed as rules, since the report checked each against the recorded picks and found each contradicted at other steps; the largest-y/smallest-x order is committed only as an arbitrary deterministic default to make the answer stable, not as an explanation of the data. Ordering colors by total required count or by a fixed color preference is refused because the episodes start with different colors; only 'finish the most recently placed color before starting another' holds across all of them, and a default for the empty-`placed` case is given purely to fix the output. Rules 1 and 2 and the fallback clauses are unchanged, as the report found them never at fault."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 33,
+    "subgoal_wrong": 7,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "placed": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 7
+   },
+   "critique": "field cubes, ANNOTATOR PROMPT\n  Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. It is the age order of cubes that decides which one is picked next, and age is not recoverable from a later step: across the minibatch every pick with several same-colored candidates went to the cube that had been on the table longest (the one present at the start, or the one that appeared earliest during an earlier execution), while nearest-to-gripper, nearest-to-bin and largest-y each explain some picks and contradict others. Fill it at step #1 with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step, copy the carried list, then (a) remove the entry of the cube that the execution steps show being lifted in the gripper, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (two detections within about 10 px are the same cube; a cube that is briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube), and (c) update each entry's position to its latest reported position. Ignore cubes of colors the goal does not name. Example: [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]. Write it as a JSON array with double-quoted color strings.\n\nfield cubes, POLICY PROMPT\n  Ordered list of the cubes of the goal colors on the table, oldest first, each as [color, [y, x]]. When the carried-in memory is blank, list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove the entry nearest the place where the execution steps show the gripper closing on and lifting a cube (within about 10 px); append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Cubes of colors not named in the goal are never entered. Example: [[\"blue\", [54, 118]], [\"blue\", [87, 181]]].\n\nfield placed, POLICY PROMPT\n  Unchanged in meaning. Add: write the list as a JSON array with double-quoted strings, e.g. [\"red\", \"green\"], never Python-style single quotes; the field is compared literally.\n\nthe policy prompt for subgoal\n  Rule 3's candidate selection ('prefer a detection present in every execution step, then largest y, then smallest x') is the rule that sent the policy wrong at every unsettled pick step; it fits none of the recorded picks with several same-colored cubes and must be removed. The individual steps proposed nearest-to-gripper, nearest-to-bin, nearest-to-button and newly-appeared-cube; each contradicts another step. What holds across all episodes is age: when several cubes of the needed color are on the table, the recorded pick is the one that has been there longest, i.e. a cube present at the start before any that appeared during execution, and among cubes that appeared during execution the one that appeared first. This breaks SUFFICIENCY, because age cannot be seen at the decision step; it is read from the new memory field `cubes`. Replace the selection with: the needed color is chosen as before (continue the color last appended to `placed` while it is still short; otherwise the needed color with the larger count, ties to the color named first); then point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene shows a detection of that color within about 10 px of that entry, point at the detection's center; if not (the arm may be covering it), point at the remembered position. Do not discard a detection for drifting by a few pixels between frames. At step #1 with an empty carried-in memory, the first entry is the needed-color cube nearest the bin's center, which is the step #1 entry order of `cubes`. Rules 1 and 2 and the fallback for an unmatched situation stay as they are, except that the fallback 'nearest the gripper' is replaced by 'first entry of `cubes` of a needed color, or any visible cube if the list is empty'.\n\nrefused\n  Several steps each proposed a different geometric criterion for choosing among same-colored cubes: nearest to the current gripper position, nearest to the bin, nearest to the button, smallest y, or the cube that newly appeared near where the released cube had been. Each one explains the step that reported it and is contradicted by at least one other recorded pick in the minibatch (for example the pick that went to the cube farthest from the gripper, and the pick that went to a cube farther from the bin than another candidate). They are not passed on separately; the single fact that fits all picks with several candidates is the cube's age on the table, now carried in `cubes`. One caveat is kept out of the instructions but stated here: for cubes already present at the start of an episode, no visible ordering fits every recorded first pick (nearest-to-bin fits all initial picks in one episode and misses the one in another, where the recorded pick was the red cube nearest the button instead); nearest-to-bin was chosen as the initial order because it fits more of the recorded picks, and the remaining first-step disagreement is left unresolved rather than papered over with a rule that contradicts the other episodes.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "add",
+      "field": "cubes",
+      "edits": [],
+      "description": "Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. Age on the table is what the list preserves: a cube present at the start of the episode precedes every cube that appeared during execution, and among cubes that appeared during execution the earlier arrival precedes the later. At step #1 fill it with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step copy the carried list, then (a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube), and (c) refresh each remaining entry's position to its latest reported position. Cubes of colors the goal does not name are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]"
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "add",
+      "field": "cubes",
+      "edits": [],
+      "description": "Ordered list of the cubes of the goal colors on the table and not yet picked, oldest first, each as [color, [y, x]]. When the carried-in memory is blank (the first decision step), list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it. Cubes of colors not named in the goal are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]]]"
+     },
+     {
+      "kind": "modify",
+      "field": "placed",
+      "edits": [
+       {
+        "modify_from": "e.g. [\"green\", \"green\"]",
+        "modify_to": "Write the list as a JSON array with double-quoted strings, never Python-style single quotes; the field is compared literally. e.g. [\"green\", \"green\"]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Point at that cube's center as shown in the scene at this decision step. Among the cubes of that color, first discard any detection lying on top of the bin's position and prefer a detection present at the same place in every execution step of this decision step over one that appeared, vanished or moved mid-step (at step #1 all visible cubes of that color are candidates); if several candidates remain, take the one with the largest y, and on equal y the smallest x. A point offset by a pixel or two from the detection center is acceptable;",
+      "modify_to": "Among the cubes of that color, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene at this decision step shows a detection of that color within about 10 px of that entry, point at that detection's center; if not (the arm may be covering it), point at the remembered position. Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position. At step #1 the first entry of `cubes` is the needed-color cube nearest the bin's center. A point offset by a pixel or two from the detection center is acceptable;"
+     },
+     {
+      "modify_from": "otherwise choose A pointing at the cube of a needed color nearest the gripper, and if none is visible at all, choose A pointing at any visible cube.",
+      "modify_to": "otherwise choose A pointing at the first entry of `cubes` whose color is still needed, and if `cubes` has no such entry, choose A pointing at any visible cube of a needed color, or failing that any visible cube."
+     }
+    ],
+    "refused": "The per-step geometric tie-breaks (nearest the gripper, nearest the bin, nearest the button, smallest y, the newly appeared cube) are again refused, as in round 1: each is contradicted by other recorded picks. The round-1 largest-y/smallest-x default is withdrawn, not restored, since it was committed only as an arbitrary stabilizer and both rounds find it fits a minority of picks; age order, which no later step can recover, replaces it as the one rule that fits every multi-candidate pick, which is why a new field is added rather than another visible criterion. The step #1 ordering of `cubes` by distance to the bin is committed as a deterministic default only; the report itself says no visible ordering fits every recorded first pick, so the remaining first-step disagreement is left open rather than patched with a clause that would contradict other episodes. The color-choice rule from round 1 (finish the last-placed color before starting another) is kept unchanged, as is the `placed` logic; only its output format is pinned to JSON double quotes."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 35,
+    "subgoal_wrong": 4,
+    "memory_wrong": 2,
+    "memory_only": 2,
+    "memory_only_unexplained": 1,
+    "fields": {
+     "placed": 0,
+     "cubes": 2
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 4
+   },
+   "critique": "field cubes, ANNOTATOR PROMPT\n  Keep the field as it is (ordered list of goal-color cubes on the table and not yet picked, oldest first, each as [color, [y, x]]), but make three points of its update explicit, because the policy's value diverged from the annotated one at pick-decision steps where a cube had appeared near the bin or had drifted a few pixels (PREDICTABILITY). (1) Removal: an entry is removed only at the step whose own execution steps show the fingers closing (opening dropping from 100% to about 46%) on a cube and that cube then reported as 'held in the gripper'; when the step's execution steps open with a cube already held, nothing is removed for it, since that was done at the previous step. (2) Matching: any detection of a goal color within about 10 px of an existing entry's position is that entry; it keeps its slot and only its position is refreshed to the latest report. An entry is never dropped and re-appended, and the list is never reordered. (3) Bin exclusion: 'at the bin's position' means within about 10 px of the reported bin center; a cube reported 20 px or more from the bin center is a table cube and is appended as a new entry in order of first appearance, even if it appeared right after a release. A detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one. Example value after one start cube was picked and two cubes appeared during execution: [[\"red\", [77, 139]], [\"red\", [119, 153]], [\"red\", [100, 66]]]\n\nfield cubes, POLICY PROMPT\n  Same field, same age order (oldest first, each as [color, [y, x]]). Write the update as: copy the carried-in list; remove an entry only if the execution steps shown at THIS step include the fingers closing (100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and must be entered even if it showed up just after a release. Never reorder, never drop-and-re-append, never enter colors the goal does not name. Example: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]], a green reported at [68, 160] refreshes the second entry in place, giving [[\"blue\", [117, 71]], [\"green\", [68, 160]]].\n\nthe policy prompt for subgoal\n  Rule 3 keeps its selection criterion: among cubes of the color to pick, point at the first entry of `cubes` (as updated at this step) that has that color; this is the oldest cube of that color on the table, and across these episodes the recorded picks follow it whenever cubes arrived at different times: a cube present at the start is taken before any cube that appeared later, and cubes that appeared during execution are taken in order of appearance. Add one sentence making this explicit and ruling out the alternatives the policy reached for: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step-1 tie-break among start cubes, which stays as written), or the one with the smallest y; the age order in `cubes` is the only criterion. Also state the pointing tolerance plainly: the target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step, and a point within one or two pixels of its center is correct, so a detection that has drifted a few pixels is still the same cube. No rule is removed.\n\nrefused\n  Several pick steps in one episode where five cubes of each goal color were all present from the start reported that the selection criterion was wrong, each proposing a different replacement: smallest y among visible cubes, nearest the gripper, nearest the button, or a memory field carrying the oracle's intended order. None of these is passed on. Each proposal fits the single step that made it and contradicts the others in the same episode (the pick that was nearest the gripper at one step was farthest at another; the one nearest the button at one step was not at the next; smallest y fits the blue picks but not the green ones), and the recorded order among those start cubes also does not follow distance to the bin. The oracle's order among several same-colored cubes that are all present at the first step is not recoverable from any scene or from anything the memory could have been told, so no rule can be written for it; the step-1 default (nearest the bin's center) stays as the fixed tie-break. In every other episode, where cubes of the goal color appeared one by one during execution, the recorded picks follow the age order already in the rule, so the age-order criterion is kept rather than replaced. One step that reported nothing missing, and one that reported only memory-wording issues, had chosen the correct cube within a pixel or two; their subgoal answers are counted as settled and only their memory discrepancies are addressed above.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "cubes",
+      "edits": [
+       {
+        "modify_from": "(a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper,",
+        "modify_to": "(a) remove the entry of the cube that this step's own execution steps show the fingers closing on (opening dropping from about 100% to about 46%) and then reported 'held in the gripper'; when the execution steps open with a cube already held, remove nothing for it, since that removal was made at the previous step,"
+       },
+       {
+        "modify_from": "(two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube)",
+        "modify_to": "(any goal-color detection within about 10 px of an existing entry's position is that entry: it keeps its slot and only its position is refreshed, and an entry is never dropped and re-appended; a cube briefly not reported because the arm covers it keeps its entry; a detection within about 10 px of the reported bin center is at the bin's position and is not a cube, whereas a detection 20 px or more from the bin center is a table cube and is appended even if it appeared right after a release; a detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one)"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "cubes",
+      "edits": [
+       {
+        "modify_from": "Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it.",
+        "modify_to": "Otherwise copy the carried-in list and: remove an entry only if the execution steps shown at THIS step include the fingers closing (about 100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and is entered even if it showed up just after a release; a cube that vanishes for a frame or two because the arm covers it keeps its entry and is not re-added. Never reorder entries, never drop-and-re-append: the list order is the age order and nothing seen later changes it. Example of a refresh: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]] with a green reported at [68, 160] becomes [[\"blue\", [117, 71]], [\"green\", [68, 160]]]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position.",
+      "modify_to": "The age order in `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step #1 tie-break among start cubes, below), or the one with the smallest y. The target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step; a detection that has drifted a few pixels is still the same cube, so do not discard it, and never point at a detection lying within about 10 px of the bin center."
+     }
+    ],
+    "refused": "The per-step proposals from the episode where five cubes of each goal color were present from the start (smallest y, nearest the gripper, nearest the button, or a memory field carrying the oracle's intended order) are refused, as in rounds 1 and 2: each fits one step and contradicts others in the same episode, and the oracle's order among start cubes is recoverable from nothing the scene or the memory could hold, so the step #1 default (nearest the bin's center) stays as a fixed tie-break only. No field is added for it. The age-order criterion committed in round 2 is kept, not replaced; this round only pins down the removal moment, the 10 px matching, and the bin-center exclusion so the policy's `cubes` matches the annotator's. The `placed` field and Rules 1 and 2 are untouched, as no report has found them at fault."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 29,
+    "subgoal_wrong": 4,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "placed": 0,
+     "cubes": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 4
+   },
+   "critique": "the policy prompt for subgoal\n  Two rules sent the policy wrong, both only in the episode whose goal named two colors (one red and three blue) with five cubes of each color on the table from the start. First, the step-one start rule. With `placed` empty the instruction said to start the needed color with the larger required count (blue), so the policy pointed at the blue cube nearest the bin; the recorded pick was the red cube nearest the bin, which is simply the first entry of `cubes` at step one. This breaks SUFFICIENCY: the information was in the step and the memory, the rule picked the wrong criterion. Replace the start-color default with: when `placed` is empty, point at the first entry of `cubes` whatever its color, provided that color is still needed (at step one that is the needed-color cube nearest the bin center, of any needed color). The 'finish the started color before switching' rule then governs every later pick exactly as written. Second, the same-color selection rule. The instruction says the first entry of `cubes` of the needed color is always the target. In that episode a blue cube sat about 36 px from the bin center for the whole episode and was never picked, even though it was the oldest blue entry; the recorded picks went to blue cubes well clear of the bin (about 58 to 94 px from the bin center) and the episode ended with the near-bin blue cube still on the table. This breaks SUFFICIENCY: the age rule alone selects a cube the oracle never takes. Add to Rule 3: a cube of the needed color whose remembered or detected position lies within about 40 px of the bin center is skipped as long as any other cube of that color lies farther from the bin; it is only chosen when it is the last cube of its color. Among the remaining cubes of the needed color, keep the existing order of `cubes` (oldest entry first) as the default, and keep the clause that distractor colors, the bin and the button are never pointed at. Rule 1 (holding), Rule 2 (done) and the fallback clause are unchanged.\n\nrefused\n  Three steps of the two-color episode reported that the oldest-entry criterion did not reproduce the recorded blue pick and each proposed a different replacement (nearest the current gripper, farthest from the bin, smallest y, last entry of the list). Checked across all four blue picks of that episode and the picks in the single-color episodes, none of those criteria holds: the nearest-gripper rule fails on the first blue pick, the farthest-from-bin rule fails on the second, the smallest-y rule fails on the first and on every single-color episode, and the age order is what every single-color episode followed. The one regularity shared by all failing steps is that the blue cube hugging the bin (about 36 px from its center) was never chosen, which is what the new skip clause carries. The residual order among the three blue cubes that were all 58 to 61 px from the bin is not settled by any position-based rule I can derive from these episodes and may be arbitrary on the oracle's side, so I pass on the age order as the default rather than invent a criterion that contradicts the other episodes. No memory field was reported lacking, and the memories the policy wrote matched the annotation at every failing step, so neither memory document changes.",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "If `placed` is empty, any needed color may be started; as the fixed default, start the needed color with the larger required count, ties to the color named first in the goal instruction.",
+      "modify_to": "If `placed` is empty, any needed color may be started; as the fixed default, start with the color of the first entry in `cubes` (as updated at this step) whose color is still needed and which is not set aside by the bin-proximity clause below; at step #1 that is the needed-color cube nearest the bin's center, of whichever needed color it is. Do not choose the start color by required count or by a fixed color preference."
+     },
+     {
+      "modify_from": "Among the cubes of that color, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color.",
+      "modify_to": "Among the cubes of that color, first set aside every cube whose remembered or detected position lies within about 40 px of the bin center, as long as some other cube of that color lies farther from the bin (a near-bin cube is picked only when it is the last cube of its color on the table). Among the cubes that remain, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color and is not set aside."
+     },
+     {
+      "modify_from": "The age order in `cubes` is the only criterion among same-colored cubes:",
+      "modify_to": "After the bin-proximity set-aside, the age order in `cubes` is the only criterion among same-colored cubes:"
+     }
+    ],
+    "refused": "The per-step replacements for the same-color selection (nearest the current gripper, farthest from the bin, smallest y, last entry of the list) stay out, as in rounds 1 to 3: the report checked each against the four blue picks of the episode and the single-color episodes and found each contradicted, while the age order fits every single-color episode. The residual order among the blue cubes that were all 58 to 61 px from the bin is not given a new criterion; age order remains the default there. The start-color change is committed only as a replacement default: round 1 established that no rule derived from the goal (larger count, smaller count, fixed color) explains which color is started, and the larger-count default has now failed in this episode, so the default is moved to the first needed entry of `cubes`, which coincides with the step #1 tie-break already committed in round 2 rather than adding a second one. The 40 px set-aside is committed as a reach rule, not as a redefinition of what counts as a cube: the 10 px bin-center exclusion and the 20 px table-cube threshold in the `cubes` field from round 3 are unchanged, so the near-bin cube is still entered and carried in memory and is picked when it is the last of its color. Neither memory document changes, since the policy's memory matched the annotation at every failing step."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 31,
+    "subgoal_wrong": 7,
+    "memory_wrong": 1,
+    "memory_only": 1,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "placed": 0,
+     "cubes": 1
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 7
+   },
+   "critique": "field cubes, ANNOTATOR PROMPT\n  Keep the field as the ordered list of goal-color cubes on the table and not yet picked, each as [color, [y, x]], but change two things. (1) The initial ordering. At step #1 the list is ordered by distance to a reference point that lies 10 px to the larger-x side of the reported bin center (the bin's visible-pixel centroid sits to the robot's right of its true center; reference = [bin_y, bin_x + 10]), nearest first, ties by smaller y. This ordering is what the recorded picks follow among cubes present from the start: a cube 30 px below-right of the bin's reported center loses to one 30 px straight below it with x beyond the bin's, and two cubes at near-equal Euclidean distance to the reported center are separated by this shifted point. Cubes that appear during execution are still appended after all initial cubes in order of first appearance, and that spawn order is never changed. (2) Matching detections to entries is one-to-one per frame: each carried entry absorbs at most one detection, the nearest one within about 10 px; a second detection in the same frame that lies within 10 px of an already-matched entry but has no unmatched entry within about 10 px is a new cube and is appended at its first appearance. A detection about 10 px or more from every entry is a different cube, not a drifted one. Example after one pick-up and one spawn: [[\"red\", [69, 179]], [\"red\", [79, 153]], [\"red\", [113, 132]], [\"red\", [58, 160]]].\n\nfield cubes, POLICY PROMPT\n  Same field, same name. When the carried-in memory is blank, list every visible cube of a goal color ordered by distance to the point 10 px to the larger-x side of the reported bin center ([bin_y, bin_x + 10]), nearest first, ties by smaller y; do not use the reported bin center itself. Otherwise copy the carried list, remove the entry the shown steps' fingers closed on (about 100% to about 46% open within about 10 px of it, then reported held), and match detections to entries ONE-TO-ONE in each frame: an entry takes the nearest detection within about 10 px and only that one; any further detection within 10 px of that entry but with no other unmatched entry within about 10 px is a new cube and is appended in order of first appearance. A detection about 10 px or more from every carried entry is a new cube. Exclusions (held cube, detections within 10 px of the held cube, detections within 10 px of the reported bin center) stay as before. Never reorder. Example: carried [[\"red\", [58, 160]]] and a frame showing red at [60, 163] and [67, 167] becomes [[\"red\", [60, 163]], [\"red\", [67, 167]]].\n\nthe policy prompt for subgoal\n  Two rules sent the policy wrong and one is missing. First, the bin-proximity set-aside (cubes within about 40 px of the bin center are skipped while a farther same-color cube exists) must be deleted entirely: at every pick step where it fired, the recorded pick was the cube 26 to 32 px from the bin's reported center, chosen purely by its position in `cubes`. In every episode, after the start color is fixed, the pick is the FIRST entry of `cubes` (as updated at this step) of the chosen color, with no distance condition of any kind; the only remaining prohibition is never pointing at a detection within about 10 px of the reported bin center. The failures where a near-bin oldest cube was skipped, and the one where the second entry was recorded instead of the first, are both resolved by the new `cubes` ordering (initial cubes ordered by distance to the point 10 px to the larger-x side of the reported bin center, then spawned cubes by age) combined with 'first entry of that color'. So the SUFFICIENCY failure at those steps becomes: point at the first entry of the needed color in `cubes`; if a detection of that color lies within about 10 px of it in the current scene, point at that detection, otherwise at the remembered position. Second, the start-color rule ('when `placed` is empty start with the color of the first entry in `cubes`') is wrong: in both multi-color episodes the recorded policy started with the color whose required count is smallest (the color needed once) even though a cube of the other color was nearer the bin, and only then moved to the other color. Replace it with: when `placed` is empty, start with the needed color that the goal asks the fewest of; if two colors tie on count, take the color of the first entry in `cubes`. The rule that a started color is finished before another is touched stays. Rules 1 (holding -> B) and 2 (all counts met -> C) stay as written. Delete the step #1 special clause about 'the needed-color cube nearest the bin's center' and the sentence listing forbidden criteria that mentions the near-bin exception; the first entry of the chosen color in `cubes` is the whole criterion.\n\nrefused\n  One step reported that the memory's age order might itself be the wrong criterion and proposed alternatives such as largest y or a different set-aside radius; this is not passed on as stated, because across the minibatch the picks of cubes that appeared during execution follow their order of appearance exactly, and the only mismatches are among cubes present from the start, which the revised initial ordering (distance to a point 10 px to the larger-x side of the reported bin center) resolves. Steps proposing a smaller set-aside radius (15 to 30 px) are answered together by removing the set-aside altogether rather than shrinking it: no recorded pick in the minibatch skipped a cube because it was near the bin, so any radius is unsupported. The suggestion that the step #1 start cube is the needed-color cube farthest from the bin is dropped; it contradicts the single-color episodes, where the start cube was among the nearest to the bin. The suggestion that the first-named color in the goal is started first is dropped; one episode started with the second-named color, and the smallest-required-count rule fits both multi-color episodes.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "cubes",
+      "edits": [
+       {
+        "modify_from": "At step #1 fill it with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y).",
+        "modify_to": "At step #1 fill it with every visible cube of a goal color, ordered by distance to the reference point that lies 10 px to the larger-x side of the reported bin center (reference = [bin_y, bin_x + 10]; the bin's visible-pixel centroid sits to the robot's right of its true center), nearest first (ties: smaller y). The reported bin center itself is not the reference."
+       },
+       {
+        "modify_from": "(any goal-color detection within about 10 px of an existing entry's position is that entry: it keeps its slot and only its position is refreshed, and an entry is never dropped and re-appended;",
+        "modify_to": "(matching is one-to-one per frame: each existing entry absorbs at most one detection, the nearest goal-color detection within about 10 px of its position, and that entry keeps its slot with only its position refreshed; a further detection in the same frame that lies within 10 px of an already-matched entry but has no unmatched entry within about 10 px is a new cube and is appended at its first appearance; a detection about 10 px or more from every entry is a different cube, not a drifted one; an entry is never dropped and re-appended;"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "cubes",
+      "edits": [
+       {
+        "modify_from": "list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y).",
+        "modify_to": "list every visible cube of a goal color ordered by distance to the point 10 px to the larger-x side of the reported bin center ([bin_y, bin_x + 10]), nearest first (ties: smaller y); do not order by the reported bin center itself."
+       },
+       {
+        "modify_from": "find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance.",
+        "modify_to": "match detections to entries ONE-TO-ONE in each frame: an entry takes the nearest detection within about 10 px and only that one, keeping its slot and taking that newest position; any further detection within 10 px of that entry but with no other unmatched entry within about 10 px is a new cube and is appended at the end, in order of first appearance; a detection about 10 px or more from every carried entry is a new cube and is appended likewise. Example: carried [[\"red\", [58, 160]]] and a frame showing red at [60, 163] and [67, 167] becomes [[\"red\", [60, 163]], [\"red\", [67, 167]]]."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "If `placed` is empty, any needed color may be started; as the fixed default, start with the color of the first entry in `cubes` (as updated at this step) whose color is still needed and which is not set aside by the bin-proximity clause below; at step #1 that is the needed-color cube nearest the bin's center, of whichever needed color it is.",
+      "modify_to": "If `placed` is empty, any needed color may be started; as the fixed default, start with the color of the first entry in `cubes` (as updated at this step) whose color is still needed."
+     },
+     {
+      "modify_from": "Among the cubes of that color, first set aside every cube whose remembered or detected position lies within about 40 px of the bin center, as long as some other cube of that color lies farther from the bin (a near-bin cube is picked only when it is the last cube of its color on the table). Among the cubes that remain, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color and is not set aside.",
+      "modify_to": "Among the cubes of that color, point at the position of the first entry in `cubes` (as updated at this step) that has that color, with no distance condition of any kind; a cube is never skipped for being near the bin."
+     },
+     {
+      "modify_from": "After the bin-proximity set-aside, the age order in `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step #1 tie-break among start cubes, below), or the one with the smallest y.",
+      "modify_to": "The order of `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest or farthest from the bin, or the one with the smallest y."
+     },
+     {
+      "modify_from": "At step #1 the first entry of `cubes` is the needed-color cube nearest the bin's center.",
+      "modify_to": "At step #1 the first entry of `cubes` is the needed-color cube nearest the point 10 px to the larger-x side of the reported bin center, as ordered when `cubes` is filled."
+     }
+    ],
+    "refused": "The start-color rule 'begin with the color the goal asks the fewest of' is not committed. Round 1 recorded three multi-color episodes of which two (two red and three green done green first; two red and one green done red first) started with the larger-count color, and the round-1 edit explicitly refused ordering by count for that reason; the round-4 and round-5 episodes started with the smaller count, so no count rule fits all six. The first-needed-entry-of-`cubes` default stays as an arbitrary stabilizer, now evaluated on the shifted initial ordering, and the step #1 start color remains unexplained rather than patched with a rule known to contradict earlier episodes. The 40 px bin-proximity set-aside from round 4 is removed as the report asks: it rested on one episode where a single blue cube went unpicked, while this round contradicts it at every step where it fired, with recorded picks 26 to 32 px from the bin center; a radius placed between 32 and 36 px would fit both only by construction, so none is kept. The 10 px bin-center exclusion, the 20 px table-cube threshold, the finish-the-started-color rule, `placed`, and Rules 1 and 2 are untouched. The proposals for largest y, farthest-from-bin start cube, first-named color, and a smaller set-aside radius stay out as the report itself refused them."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 5,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    27,
+    33,
+    55,
+    92,
+    94
+   ],
+   "verified_of_all": 0.7297297297297297,
+   "subgoal_verified": 0.7567567567567568,
+   "variables": {
+    "task": "BinFill",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     21,
+     60,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal instruction names how many cubes of which color(s) must go into the bin before the button is pressed (e.g. 'two blue cubes' or 'one red cube and three green cubes'). Apply these rules at every decision step, using the scene shown and the memory field `placed` as updated at this step. Rule 1 (holding): If the scene at this decision step shows a cube 'held in the gripper', choose B: put it into the bin. This holds whatever `placed` contains. Rule 2 (done): If no cube is held and, for every color named in the goal, the number of entries of that color in `placed` is at least the number the goal asks for, choose C: press the button. The episode ends there. Rule 3 (pick): If no cube is held and some goal color still has fewer entries in `placed` than required, choose A: pick up the cube, pointing at a cube of a color that is still needed. Where two colors are still needed, take the one with the larger remaining count (ties: either). Point at that cube's center as shown in the scene at this decision step. Prefer a cube of that color that was already visible at the same place in the earlier execution steps of this decision step (or, at step #1, simply any cube of that color), and avoid detections that flicker in and out or that lie on top of the bin's position; cubes of other colors are distractors and are never picked. Never point at the bin or the button. An episode starts in A at step #1: the gripper is raised out of the frame, `placed` is empty, so pick up a cube of a needed color. If a situation matches none of the rules (for example the fingers are closed but no cube is reported held, or no cube of a needed color is visible): if the fingers are partly closed treat it as holding and choose B; otherwise choose A pointing at the cube of a needed color nearest the gripper, and if none is visible at all, choose A pointing at any visible cube. Never choose C unless Rule 2 is satisfied.",
+    "fields": [
+     {
+      "name": "placed",
+      "description": "Ordered list of the colors of the cubes that have been put into the bin so far, oldest first. Start with an empty list when the memory is empty. Copy the carried-in list unchanged, except: if the execution steps shown at this step contain a frame with a cube 'held in the gripper' and the scene at this decision step shows the gripper open (about 100%) with no cube held, then the robot has just released a cube into the bin, so append that held cube's color once. Do not append when the step ends with a cube still held (that was a pick-up), when there are no execution steps (first step), or when the robot only pressed the button. Ignore cubes that appear or vanish on the table; only the held-then-released event counts. e.g. [\"green\", \"green\"]",
+      "annotation": "Ordered list of the colors of the cubes that have been put into the bin so far, one entry per completed 'put it into the bin' subgoal, oldest first. Empty list at step #1. At the decision step that directly follows an execution of B (the execution steps show a cube held in the gripper and then released over the bin, and the scene at the decision step shows the gripper open with nothing held), append the color of the cube that was held during that execution. Never append after a pick-up execution (one that ends with a cube held) and never after pressing the button. Count released cubes even if a cube of that color later appears somewhere on the table, since the bin is opaque and detections near it are unreliable. e.g. [\"green\", \"green\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    9,
+    38,
+    49,
+    71,
+    94
+   ],
+   "verified_of_all": 0.7575757575757576,
+   "subgoal_verified": 0.7878787878787878,
+   "variables": {
+    "task": "BinFill",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     21,
+     60,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal instruction names how many cubes of which color(s) must go into the bin before the button is pressed (e.g. 'two blue cubes' or 'one red cube and three green cubes'). Apply these rules at every decision step, using the scene shown and the memory field `placed` as updated at this step. Rule 1 (holding): If the scene at this decision step shows a cube 'held in the gripper', choose B: put it into the bin. This holds whatever `placed` contains. Rule 2 (done): If no cube is held and, for every color named in the goal, the number of entries of that color in `placed` is at least the number the goal asks for, choose C: press the button. The episode ends there. Rule 3 (pick): If no cube is held and some goal color still has fewer entries in `placed` than required, choose A: pick up the cube, pointing at a cube of a color that is still needed. Where two colors are still needed, choose the color this way: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again (a color once started is finished before any other color is touched); only when the last-placed color is complete move to another needed color. If `placed` is empty, any needed color may be started; as the fixed default, start the needed color with the larger required count, ties to the color named first in the goal instruction. Point at that cube's center as shown in the scene at this decision step. Among the cubes of that color, first discard any detection lying on top of the bin's position and prefer a detection present at the same place in every execution step of this decision step over one that appeared, vanished or moved mid-step (at step #1 all visible cubes of that color are candidates); if several candidates remain, take the one with the largest y, and on equal y the smallest x. A point offset by a pixel or two from the detection center is acceptable; cubes of other colors are distractors and are never picked. Never point at the bin or the button. An episode starts in A at step #1: the gripper is raised out of the frame, `placed` is empty, so pick up a cube of a needed color. If a situation matches none of the rules (for example the fingers are closed but no cube is reported held, or no cube of a needed color is visible): if the fingers are partly closed treat it as holding and choose B; otherwise choose A pointing at the cube of a needed color nearest the gripper, and if none is visible at all, choose A pointing at any visible cube. Never choose C unless Rule 2 is satisfied.",
+    "fields": [
+     {
+      "name": "placed",
+      "description": "Ordered list of the colors of the cubes that have been put into the bin so far, oldest first. When the carried-in memory is blank (the first decision step), write placed=[] explicitly: the field is always output as an explicit list, even when empty. Copy the carried-in list unchanged, except: if the execution steps shown at this step contain a frame with a cube 'held in the gripper' and the scene at this decision step shows the gripper open (about 100%) with no cube held, then the robot has just released a cube into the bin, so append that held cube's color once. Do not append when the step ends with a cube still held (that was a pick-up), when there are no execution steps (first step), or when the robot only pressed the button. Ignore cubes that appear or vanish on the table; only the held-then-released event counts. e.g. [\"green\", \"green\"]",
+      "annotation": "Ordered list of the colors of the cubes that have been put into the bin so far, one entry per completed 'put it into the bin' subgoal, oldest first. The literal empty list [] at step #1, written explicitly and never left blank; at every later step the field is again an explicit list. At the decision step that directly follows an execution of B (the execution steps show a cube held in the gripper and then released over the bin, and the scene at the decision step shows the gripper open with nothing held), append the color of the cube that was held during that execution. Never append after a pick-up execution (one that ends with a cube held) and never after pressing the button. Count released cubes even if a cube of that color later appears somewhere on the table, since the bin is opaque and detections near it are unreliable. e.g. [\"green\", \"green\"]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    0,
+    59,
+    62,
+    81,
+    98
+   ],
+   "verified_of_all": 0.8285714285714286,
+   "subgoal_verified": 0.8857142857142857,
+   "variables": {
+    "task": "BinFill",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     21,
+     60,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal instruction names how many cubes of which color(s) must go into the bin before the button is pressed (e.g. 'two blue cubes' or 'one red cube and three green cubes'). Apply these rules at every decision step, using the scene shown and the memory field `placed` as updated at this step. Rule 1 (holding): If the scene at this decision step shows a cube 'held in the gripper', choose B: put it into the bin. This holds whatever `placed` contains. Rule 2 (done): If no cube is held and, for every color named in the goal, the number of entries of that color in `placed` is at least the number the goal asks for, choose C: press the button. The episode ends there. Rule 3 (pick): If no cube is held and some goal color still has fewer entries in `placed` than required, choose A: pick up the cube, pointing at a cube of a color that is still needed. Where two colors are still needed, choose the color this way: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again (a color once started is finished before any other color is touched); only when the last-placed color is complete move to another needed color. If `placed` is empty, any needed color may be started; as the fixed default, start the needed color with the larger required count, ties to the color named first in the goal instruction. Among the cubes of that color, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene at this decision step shows a detection of that color within about 10 px of that entry, point at that detection's center; if not (the arm may be covering it), point at the remembered position. Do not discard a detection for drifting by a few pixels between frames, and never point at a detection lying on top of the bin's position. At step #1 the first entry of `cubes` is the needed-color cube nearest the bin's center. A point offset by a pixel or two from the detection center is acceptable; cubes of other colors are distractors and are never picked. Never point at the bin or the button. An episode starts in A at step #1: the gripper is raised out of the frame, `placed` is empty, so pick up a cube of a needed color. If a situation matches none of the rules (for example the fingers are closed but no cube is reported held, or no cube of a needed color is visible): if the fingers are partly closed treat it as holding and choose B; otherwise choose A pointing at the first entry of `cubes` whose color is still needed, and if `cubes` has no such entry, choose A pointing at any visible cube of a needed color, or failing that any visible cube. Never choose C unless Rule 2 is satisfied.",
+    "fields": [
+     {
+      "name": "placed",
+      "description": "Ordered list of the colors of the cubes that have been put into the bin so far, oldest first. When the carried-in memory is blank (the first decision step), write placed=[] explicitly: the field is always output as an explicit list, even when empty. Copy the carried-in list unchanged, except: if the execution steps shown at this step contain a frame with a cube 'held in the gripper' and the scene at this decision step shows the gripper open (about 100%) with no cube held, then the robot has just released a cube into the bin, so append that held cube's color once. Do not append when the step ends with a cube still held (that was a pick-up), when there are no execution steps (first step), or when the robot only pressed the button. Ignore cubes that appear or vanish on the table; only the held-then-released event counts. Write the list as a JSON array with double-quoted strings, never Python-style single quotes; the field is compared literally. e.g. [\"green\", \"green\"]",
+      "annotation": "Ordered list of the colors of the cubes that have been put into the bin so far, one entry per completed 'put it into the bin' subgoal, oldest first. The literal empty list [] at step #1, written explicitly and never left blank; at every later step the field is again an explicit list. At the decision step that directly follows an execution of B (the execution steps show a cube held in the gripper and then released over the bin, and the scene at the decision step shows the gripper open with nothing held), append the color of the cube that was held during that execution. Never append after a pick-up execution (one that ends with a cube held) and never after pressing the button. Count released cubes even if a cube of that color later appears somewhere on the table, since the bin is opaque and detections near it are unreliable. e.g. [\"green\", \"green\"]"
+     },
+     {
+      "name": "cubes",
+      "description": "Ordered list of the cubes of the goal colors on the table and not yet picked, oldest first, each as [color, [y, x]]. When the carried-in memory is blank (the first decision step), list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove the entry nearest (within about 10 px) the place where the execution steps show the gripper closing on and lifting a cube; append, in order of first appearance, each cube of a goal color that shows up during the execution steps at a place where no entry lies within about 10 px (ignore detections at the bin's position and the 'held in the gripper' detection; a cube that vanishes for a frame or two because the arm covers it keeps its entry, do not re-add it); refresh each entry's position to the latest place it was reported. Never reorder entries: the list order is the age order and nothing seen later changes it. Cubes of colors not named in the goal are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]]]",
+      "annotation": "Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. Age on the table is what the list preserves: a cube present at the start of the episode precedes every cube that appeared during execution, and among cubes that appeared during execution the earlier arrival precedes the later. At step #1 fill it with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step copy the carried list, then (a) remove the entry of the cube that the execution steps show being closed on and lifted in the gripper, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (two detections within about 10 px are the same cube; a cube briefly not reported because the arm covers it keeps its entry; a detection reported only while a cube is held, or at the bin's position, is not a cube), and (c) refresh each remaining entry's position to its latest reported position. Cubes of colors the goal does not name are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    62,
+    69,
+    72,
+    84,
+    86
+   ],
+   "verified_of_all": 0.8620689655172413,
+   "subgoal_verified": 0.8620689655172413,
+   "variables": {
+    "task": "BinFill",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     21,
+     60,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal instruction names how many cubes of which color(s) must go into the bin before the button is pressed (e.g. 'two blue cubes' or 'one red cube and three green cubes'). Apply these rules at every decision step, using the scene shown and the memory field `placed` as updated at this step. Rule 1 (holding): If the scene at this decision step shows a cube 'held in the gripper', choose B: put it into the bin. This holds whatever `placed` contains. Rule 2 (done): If no cube is held and, for every color named in the goal, the number of entries of that color in `placed` is at least the number the goal asks for, choose C: press the button. The episode ends there. Rule 3 (pick): If no cube is held and some goal color still has fewer entries in `placed` than required, choose A: pick up the cube, pointing at a cube of a color that is still needed. Where two colors are still needed, choose the color this way: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again (a color once started is finished before any other color is touched); only when the last-placed color is complete move to another needed color. If `placed` is empty, any needed color may be started; as the fixed default, start the needed color with the larger required count, ties to the color named first in the goal instruction. Among the cubes of that color, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color. If the scene at this decision step shows a detection of that color within about 10 px of that entry, point at that detection's center; if not (the arm may be covering it), point at the remembered position. The age order in `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step #1 tie-break among start cubes, below), or the one with the smallest y. The target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step; a detection that has drifted a few pixels is still the same cube, so do not discard it, and never point at a detection lying within about 10 px of the bin center. At step #1 the first entry of `cubes` is the needed-color cube nearest the bin's center. A point offset by a pixel or two from the detection center is acceptable; cubes of other colors are distractors and are never picked. Never point at the bin or the button. An episode starts in A at step #1: the gripper is raised out of the frame, `placed` is empty, so pick up a cube of a needed color. If a situation matches none of the rules (for example the fingers are closed but no cube is reported held, or no cube of a needed color is visible): if the fingers are partly closed treat it as holding and choose B; otherwise choose A pointing at the first entry of `cubes` whose color is still needed, and if `cubes` has no such entry, choose A pointing at any visible cube of a needed color, or failing that any visible cube. Never choose C unless Rule 2 is satisfied.",
+    "fields": [
+     {
+      "name": "placed",
+      "description": "Ordered list of the colors of the cubes that have been put into the bin so far, oldest first. When the carried-in memory is blank (the first decision step), write placed=[] explicitly: the field is always output as an explicit list, even when empty. Copy the carried-in list unchanged, except: if the execution steps shown at this step contain a frame with a cube 'held in the gripper' and the scene at this decision step shows the gripper open (about 100%) with no cube held, then the robot has just released a cube into the bin, so append that held cube's color once. Do not append when the step ends with a cube still held (that was a pick-up), when there are no execution steps (first step), or when the robot only pressed the button. Ignore cubes that appear or vanish on the table; only the held-then-released event counts. Write the list as a JSON array with double-quoted strings, never Python-style single quotes; the field is compared literally. e.g. [\"green\", \"green\"]",
+      "annotation": "Ordered list of the colors of the cubes that have been put into the bin so far, one entry per completed 'put it into the bin' subgoal, oldest first. The literal empty list [] at step #1, written explicitly and never left blank; at every later step the field is again an explicit list. At the decision step that directly follows an execution of B (the execution steps show a cube held in the gripper and then released over the bin, and the scene at the decision step shows the gripper open with nothing held), append the color of the cube that was held during that execution. Never append after a pick-up execution (one that ends with a cube held) and never after pressing the button. Count released cubes even if a cube of that color later appears somewhere on the table, since the bin is opaque and detections near it are unreliable. e.g. [\"green\", \"green\"]"
+     },
+     {
+      "name": "cubes",
+      "description": "Ordered list of the cubes of the goal colors on the table and not yet picked, oldest first, each as [color, [y, x]]. When the carried-in memory is blank (the first decision step), list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove an entry only if the execution steps shown at THIS step include the fingers closing (about 100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and is entered even if it showed up just after a release; a cube that vanishes for a frame or two because the arm covers it keeps its entry and is not re-added. Never reorder entries, never drop-and-re-append: the list order is the age order and nothing seen later changes it. Example of a refresh: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]] with a green reported at [68, 160] becomes [[\"blue\", [117, 71]], [\"green\", [68, 160]]]. Cubes of colors not named in the goal are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]]]",
+      "annotation": "Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. Age on the table is what the list preserves: a cube present at the start of the episode precedes every cube that appeared during execution, and among cubes that appeared during execution the earlier arrival precedes the later. At step #1 fill it with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step copy the carried list, then (a) remove the entry of the cube that this step's own execution steps show the fingers closing on (opening dropping from about 100% to about 46%) and then reported 'held in the gripper'; when the execution steps open with a cube already held, remove nothing for it, since that removal was made at the previous step, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (any goal-color detection within about 10 px of an existing entry's position is that entry: it keeps its slot and only its position is refreshed, and an entry is never dropped and re-appended; a cube briefly not reported because the arm covers it keeps its entry; a detection within about 10 px of the reported bin center is at the bin's position and is not a cube, whereas a detection 20 px or more from the bin center is a table cube and is appended even if it appeared right after a release; a detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one), and (c) refresh each remaining entry's position to its latest reported position. Cubes of colors the goal does not name are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    46,
+    87,
+    89,
+    99
+   ],
+   "verified_of_all": 0.7419354838709677,
+   "subgoal_verified": 0.7741935483870968,
+   "variables": {
+    "task": "BinFill",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     8,
+     21,
+     60,
+     83,
+     96
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal instruction names how many cubes of which color(s) must go into the bin before the button is pressed (e.g. 'two blue cubes' or 'one red cube and three green cubes'). Apply these rules at every decision step, using the scene shown and the memory field `placed` as updated at this step. Rule 1 (holding): If the scene at this decision step shows a cube 'held in the gripper', choose B: put it into the bin. This holds whatever `placed` contains. Rule 2 (done): If no cube is held and, for every color named in the goal, the number of entries of that color in `placed` is at least the number the goal asks for, choose C: press the button. The episode ends there. Rule 3 (pick): If no cube is held and some goal color still has fewer entries in `placed` than required, choose A: pick up the cube, pointing at a cube of a color that is still needed. Where two colors are still needed, choose the color this way: if `placed` is non-empty and its last entry is a color that still has fewer entries in `placed` than the goal requires, pick that same color again (a color once started is finished before any other color is touched); only when the last-placed color is complete move to another needed color. If `placed` is empty, any needed color may be started; as the fixed default, start with the color of the first entry in `cubes` (as updated at this step) whose color is still needed and which is not set aside by the bin-proximity clause below; at step #1 that is the needed-color cube nearest the bin's center, of whichever needed color it is. Do not choose the start color by required count or by a fixed color preference. Among the cubes of that color, first set aside every cube whose remembered or detected position lies within about 40 px of the bin center, as long as some other cube of that color lies farther from the bin (a near-bin cube is picked only when it is the last cube of its color on the table). Among the cubes that remain, pick the oldest one on the table: point at the position of the first entry in `cubes` (as updated at this step) that has that color and is not set aside. If the scene at this decision step shows a detection of that color within about 10 px of that entry, point at that detection's center; if not (the arm may be covering it), point at the remembered position. After the bin-proximity set-aside, the age order in `cubes` is the only criterion among same-colored cubes: do not choose the cube nearest the gripper, nearest the button, nearest the bin (except as the step #1 tie-break among start cubes, below), or the one with the smallest y. The target is the detection of that color within about 10 px of the chosen entry in the scene at this decision step; a detection that has drifted a few pixels is still the same cube, so do not discard it, and never point at a detection lying within about 10 px of the bin center. At step #1 the first entry of `cubes` is the needed-color cube nearest the bin's center. A point offset by a pixel or two from the detection center is acceptable; cubes of other colors are distractors and are never picked. Never point at the bin or the button. An episode starts in A at step #1: the gripper is raised out of the frame, `placed` is empty, so pick up a cube of a needed color. If a situation matches none of the rules (for example the fingers are closed but no cube is reported held, or no cube of a needed color is visible): if the fingers are partly closed treat it as holding and choose B; otherwise choose A pointing at the first entry of `cubes` whose color is still needed, and if `cubes` has no such entry, choose A pointing at any visible cube of a needed color, or failing that any visible cube. Never choose C unless Rule 2 is satisfied.",
+    "fields": [
+     {
+      "name": "placed",
+      "description": "Ordered list of the colors of the cubes that have been put into the bin so far, oldest first. When the carried-in memory is blank (the first decision step), write placed=[] explicitly: the field is always output as an explicit list, even when empty. Copy the carried-in list unchanged, except: if the execution steps shown at this step contain a frame with a cube 'held in the gripper' and the scene at this decision step shows the gripper open (about 100%) with no cube held, then the robot has just released a cube into the bin, so append that held cube's color once. Do not append when the step ends with a cube still held (that was a pick-up), when there are no execution steps (first step), or when the robot only pressed the button. Ignore cubes that appear or vanish on the table; only the held-then-released event counts. Write the list as a JSON array with double-quoted strings, never Python-style single quotes; the field is compared literally. e.g. [\"green\", \"green\"]",
+      "annotation": "Ordered list of the colors of the cubes that have been put into the bin so far, one entry per completed 'put it into the bin' subgoal, oldest first. The literal empty list [] at step #1, written explicitly and never left blank; at every later step the field is again an explicit list. At the decision step that directly follows an execution of B (the execution steps show a cube held in the gripper and then released over the bin, and the scene at the decision step shows the gripper open with nothing held), append the color of the cube that was held during that execution. Never append after a pick-up execution (one that ends with a cube held) and never after pressing the button. Count released cubes even if a cube of that color later appears somewhere on the table, since the bin is opaque and detections near it are unreliable. e.g. [\"green\", \"green\"]"
+     },
+     {
+      "name": "cubes",
+      "description": "Ordered list of the cubes of the goal colors on the table and not yet picked, oldest first, each as [color, [y, x]]. When the carried-in memory is blank (the first decision step), list every visible cube of a goal color ordered by distance to the bin's center, nearest first (ties: smaller y). Otherwise copy the carried-in list and: remove an entry only if the execution steps shown at THIS step include the fingers closing (about 100% to about 46% open) within about 10 px of that entry and the cube then reported 'held in the gripper'; if the shown steps begin with a cube already held, remove nothing for it. Then for every goal-color detection in the shown steps (excluding the one marked 'held in the gripper', any detection within about 10 px of the held cube's position while it is held, and any detection within about 10 px of the reported bin center), find the carried entry within about 10 px of it: if one exists, that entry keeps its slot and takes the newest position; if none exists, append a new entry at the end, in order of first appearance. A cube reported 20 px or more from the bin center is a real table cube and is entered even if it showed up just after a release; a cube that vanishes for a frame or two because the arm covers it keeps its entry and is not re-added. Never reorder entries, never drop-and-re-append: the list order is the age order and nothing seen later changes it. Example of a refresh: carried [[\"blue\", [117, 71]], [\"green\", [71, 154]]] with a green reported at [68, 160] becomes [[\"blue\", [117, 71]], [\"green\", [68, 160]]]. Cubes of colors not named in the goal are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]]]",
+      "annotation": "Ordered list of the cubes of the goal colors that are on the table and not yet picked, oldest first, each entry as [color, [y, x]] with the position as last seen. Age on the table is what the list preserves: a cube present at the start of the episode precedes every cube that appeared during execution, and among cubes that appeared during execution the earlier arrival precedes the later. At step #1 fill it with every visible cube of a goal color, ordered by distance to the bin's center, nearest first (ties: smaller y). At every later step copy the carried list, then (a) remove the entry of the cube that this step's own execution steps show the fingers closing on (opening dropping from about 100% to about 46%) and then reported 'held in the gripper'; when the execution steps open with a cube already held, remove nothing for it, since that removal was made at the previous step, (b) append, in order of first appearance, every cube of a goal color that first appears during the execution steps at a place where no entry already lies (any goal-color detection within about 10 px of an existing entry's position is that entry: it keeps its slot and only its position is refreshed, and an entry is never dropped and re-appended; a cube briefly not reported because the arm covers it keeps its entry; a detection within about 10 px of the reported bin center is at the bin's position and is not a cube, whereas a detection 20 px or more from the bin center is a table cube and is appended even if it appeared right after a release; a detection that appears only in frames where a cube is held and lies within about 10 px of the held cube's position is the held cube, not a new one), and (c) refresh each remaining entry's position to its latest reported position. Cubes of colors the goal does not name are never entered. Write it as a JSON array with double-quoted color strings. e.g. [[\"blue\", [54, 118]], [\"blue\", [87, 181]], [\"blue\", [53, 102]]]"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,101 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "remaining_moves"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  33,
+  41,
+  54,
+  70,
+  86
+ ],
+ "scored": 16,
+ "failed": 2,
+ "subgoal_wrong": 2,
+ "memory_wrong": 1,
+ "subgoal_verified": 0.875,
+ "memory_verified": 0.9375,
+ "reads": {
+  "remaining_moves": 11
+ },
+ "field_errors": {
+  "remaining_moves": {
+   "in": 1,
+   "sole": 1
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.125,
+ "verified_of_all": 0.875,
+ "other_problems": [],
+ "format_wrong": 1,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 16,
+ "critique": "field remaining_moves, POLICY PROMPT\n  At the first decision for retracing a demonstrated stick pattern, the first demonstrated transition moved backward within one grid column, with only a small increase in image x due to perspective. The policy encoded backward-left and wrote [\"G\",\"E\"] instead of the annotated [\"B\",\"E\"]. This is a PREDICTABILITY failure in extracting the list, and it also produces the wrong first subgoal. Strengthen the existing grid-based direction rule: identify source and destination rows and columns from the target lattice before encoding directions. A small x displacement between targets in the same perspective-slanted column is not a column change; a diagonal requires movement into an adjacent column as well as an adjacent row. For example, travel from approximately [113, 85] to [92, 89] stays in the same column and is B, not G. Use sustained wrist motion to establish travel order, not raw wrist displacement signs to classify diagonals. The field remains the ordered list of demonstrated moves not yet completed, including the current command. Initialize it from the complete demonstration when demonstration frames and empty incoming memory are present; for example, [\"B\",\"E\"]. At each later decision with carried memory, remove exactly its first entry because the preceding oracle command has completed. Do not remove the newly selected command.\n\nthe policy prompt for subgoal\n  When retracing the pattern after a completed backward-right command, the updated memory correctly contained [\"A\"], but the policy returned the action description 'move forward' rather than the executable menu label 'A'. The memory was sufficient and correctly updated; the policy prompt's description-based command wording left the output contract unclear, breaking SUFFICIENCY for selecting an executable menu option. Replace the head-to-action-description output rule with: first update remaining_moves once using the policy prompt for memory, then return its head verbatim as choice, with point=null. Valid choices are the letters A through H, not their action descriptions. Thus [\"A\"] requires choice='A', point=null. Apply this rule at initialization and after every completed command, including consecutive identical letters, without removing the head again after selection. Express the existing empty-list or invalid-head fallback as choice='A', point=null as well; it is only a deterministic fallback, not a demonstrated continuation.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "When retracing the pattern after a completed backward-right command, the updated memory correctly contained [\"A\"], but the policy returned the action description 'move forward' rather than the executable menu label 'A'. The memory was sufficient and correctly updated; the policy prompt's description-based command wording left the output contract unclear, breaking SUFFICIENCY for selecting an executable menu option. Replace the head-to-action-description output rule with: first update remaining_moves once using the policy prompt for memory, then return its head verbatim as choice, with point=null. Valid choices are the letters A through H, not their action descriptions. Thus [\"A\"] requires choice='A', point=null. Apply this rule at initialization and after every completed command, including consecutive identical letters, without removing the head again after selection. Express the existing empty-list or invalid-head fallback as choice='A', point=null as well; it is only a deterministic fallback, not a demonstrated continuation.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_moves",
+    "description": "At the first decision for retracing a demonstrated stick pattern, the first demonstrated transition moved backward within one grid column, with only a small increase in image x due to perspective. The policy encoded backward-left and wrote [\"G\",\"E\"] instead of the annotated [\"B\",\"E\"]. This is a PREDICTABILITY failure in extracting the list, and it also produces the wrong first subgoal. Strengthen the existing grid-based direction rule: identify source and destination rows and columns from the target lattice before encoding directions. A small x displacement between targets in the same perspective-slanted column is not a column change; a diagonal requires movement into an adjacent column as well as an adjacent row. For example, travel from approximately [113, 85] to [92, 89] stays in the same column and is B, not G. Use sustained wrist motion to establish travel order, not raw wrist displacement signs to classify diagonals. The field remains the ordered list of demonstrated moves not yet completed, including the current command. Initialize it from the complete demonstration when demonstration frames and empty incoming memory are present; for example, [\"B\",\"E\"]. At each later decision with carried memory, remove exactly its first entry because the preceding oracle command has completed. Do not remove the newly selected command."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    33,
+    "exec",
+    173
+   ],
+   "memory_in": "remaining_moves=['H', 'A']",
+   "answered": "NOT EXECUTABLE (not_in_menu). The choice \"move forward\" is not a label of the menu. The choice must be the label alone, copied verbatim. The answer was choice='move forward', point=None.",
+   "recorded": "A: move forward",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Make the output connection explicit: after removing the completed H, remaining_moves is ['A'], so output choice='A', not choice='move forward'. The choice must be the menu letter, not the action description; point is null.",
+   "missing": ""
+  },
+  {
+   "step": [
+    54,
+    "exec",
+    77
+   ],
+   "memory_in": "remaining_moves=",
+   "answered": "G: move backward-left",
+   "recorded": "B: move backward",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

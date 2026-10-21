@@ -1,0 +1,126 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "plan",
+  "moves_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  18,
+  41,
+  59,
+  63,
+  91
+ ],
+ "scored": 20,
+ "failed": 3,
+ "subgoal_wrong": 1,
+ "memory_wrong": 2,
+ "subgoal_verified": 0.95,
+ "memory_verified": 0.9,
+ "reads": {
+  "plan": 15,
+  "moves_done": 15
+ },
+ "field_errors": {
+  "plan": {
+   "in": 2,
+   "sole": 2
+  },
+  "moves_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.15,
+ "verified_of_all": 0.85,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 1,
+ "point_wrong": 0,
+ "decisions": 20,
+ "critique": "field plan, ANNOTATOR PROMPT\n  Same content as before: the ordered list of menu letters the demonstration traces, built once at the first decision step from the sequence of newly highlighted targets (dy/dx rule, threshold 8, letters A-H) and copied unchanged at every later step. Add one rule of form so the written value is a single fixed string: the list is always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping, e.g. [\"G\", \"B\", \"D\"]. In two first-step cases the policy derived exactly the right letters but wrote them with single quotes, so the annotated value and the policy's value were two spellings of one answer (PREDICTABILITY broken on form alone).\n\nfield plan, POLICY PROMPT\n  Same content: when the step shows DEMONSTRATION STEPS and the carried memory is empty, build the list from the newly highlighted targets in demo order (first highlighted target at the first demo frame is the start; each later target that becomes highlighted gives one letter from dy/dx, |dy|>=8 and |dx|>=8 thresholds, A-H as before); on every later step copy the carried-in plan character for character. State the form explicitly: write the list exactly as a JSON array with double-quoted letters, e.g. [\"C\", \"E\", \"C\", \"G\"]. Never use single quotes, never omit the brackets, never add spaces inside the quotes. The policy at the first decision step twice computed the correct letters but wrote ['C', 'E', 'C', 'G'] instead of [\"C\", \"E\", \"C\", \"G\"], which breaks PREDICTABILITY of the field purely by format.\n\nthe policy prompt for subgoal\n  One mid-episode step went wrong where the instruction's indexing rule invited a slip. The robot had finished its second planned move (carried moves_done was 1, the plan was six letters long) and the correct subgoal was the third letter of the plan; the policy instead chose the fourth letter. Its memory output was right (moves_done 2), so it evidently applied the formula 'plan[moves_done + 1]' to the value it had just written rather than to the carried-in value, despite the sentence warning against that. The formula is stated in terms of the carried-in value plus one while the memory the policy is simultaneously writing is that same carried-in value plus one, so two different quantities both look like 'moves_done + 1'. This is a SUFFICIENCY failure caused by an ambiguous rule rather than by missing information. Replace the indexing rule with a single statement that has no off-by-one: first write this step's memory (moves_done = 0 at the demonstration step, carried moves_done + 1 at every later step); then the subgoal is plan[moves_done] using the value JUST WRITTEN at this step, 0-based. That gives plan[0] at the first step, plan[1] at the second, plan[2] at the third, and so on, identically to before but with one quantity instead of two. Drop the sentence 'Index by the carried-in memory only, never by the memory being written at this step' and the formula 'plan[carried moves_done + 1]', since they are what collided. Keep the end-of-plan rule in the same terms: if the just-written moves_done is at or beyond the plan length, repeat the last letter. Add a cheap self-check the policy can do from what the step shows: the move the execution steps just completed is the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule), and that direction must equal plan[carried moves_done]; if it does, the letter being chosen is the one right after it in the plan, and the letter just completed is never chosen again at this step unless the plan genuinely repeats it. Keep the fallback rules unchanged (derive from two highlighted targets when the plan is empty, otherwise A).\n\nrefused\n  Nothing is withheld. The two first-step reports (plan letters correct, single-quote formatting wrong) are passed on as one format rule in both memory documents. The mid-episode step that reported nothing missing but chose the plan letter one position too far is passed on as the rewrite of the indexing rule in the subgoal instruction.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "One mid-episode step went wrong where the instruction's indexing rule invited a slip. The robot had finished its second planned move (carried moves_done was 1, the plan was six letters long) and the correct subgoal was the third letter of the plan; the policy instead chose the fourth letter. Its memory output was right (moves_done 2), so it evidently applied the formula 'plan[moves_done + 1]' to the value it had just written rather than to the carried-in value, despite the sentence warning against that. The formula is stated in terms of the carried-in value plus one while the memory the policy is simultaneously writing is that same carried-in value plus one, so two different quantities both look like 'moves_done + 1'. This is a SUFFICIENCY failure caused by an ambiguous rule rather than by missing information. Replace the indexing rule with a single statement that has no off-by-one: first write this step's memory (moves_done = 0 at the demonstration step, carried moves_done + 1 at every later step); then the subgoal is plan[moves_done] using the value JUST WRITTEN at this step, 0-based. That gives plan[0] at the first step, plan[1] at the second, plan[2] at the third, and so on, identically to before but with one quantity instead of two. Drop the sentence 'Index by the carried-in memory only, never by the memory being written at this step' and the formula 'plan[carried moves_done + 1]', since they are what collided. Keep the end-of-plan rule in the same terms: if the just-written moves_done is at or beyond the plan length, repeat the last letter. Add a cheap self-check the policy can do from what the step shows: the move the execution steps just completed is the direction the gripper travelled from the first shown execution frame to the scene at this decision step (same dy/dx rule), and that direction must equal plan[carried moves_done]; if it does, the letter being chosen is the one right after it in the plan, and the letter just completed is never chosen again at this step unless the plan genuinely repeats it. Keep the fallback rules unchanged (derive from two highlighted targets when the plan is empty, otherwise A).",
+  "policy_prompt_for_memory": [
+   {
+    "field": "plan",
+    "description": "Same content: when the step shows DEMONSTRATION STEPS and the carried memory is empty, build the list from the newly highlighted targets in demo order (first highlighted target at the first demo frame is the start; each later target that becomes highlighted gives one letter from dy/dx, |dy|>=8 and |dx|>=8 thresholds, A-H as before); on every later step copy the carried-in plan character for character. State the form explicitly: write the list exactly as a JSON array with double-quoted letters, e.g. [\"C\", \"E\", \"C\", \"G\"]. Never use single quotes, never omit the brackets, never add spaces inside the quotes. The policy at the first decision step twice computed the correct letters but wrote ['C', 'E', 'C', 'G'] instead of [\"C\", \"E\", \"C\", \"G\"], which breaks PREDICTABILITY of the field purely by format."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "plan",
+    "description": "Same content as before: the ordered list of menu letters the demonstration traces, built once at the first decision step from the sequence of newly highlighted targets (dy/dx rule, threshold 8, letters A-H) and copied unchanged at every later step. Add one rule of form so the written value is a single fixed string: the list is always written as a JSON array of double-quoted uppercase letters, square brackets, comma-space separated, no single quotes and no other wrapping, e.g. [\"G\", \"B\", \"D\"]. In two first-step cases the policy derived exactly the right letters but wrote them with single quotes, so the annotated value and the policy's value were two spellings of one answer (PREDICTABILITY broken on form alone)."
+   }
+  ],
+  "refused": "Nothing is withheld. The two first-step reports (plan letters correct, single-quote formatting wrong) are passed on as one format rule in both memory documents. The mid-episode step that reported nothing missing but chose the plan letter one position too far is passed on as the rewrite of the indexing rule in the subgoal instruction."
+ },
+ "critiques": [
+  {
+   "step": [
+    18,
+    "exec",
+    91
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "G: move backward-left",
+   "recorded": "G: move backward-left",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The plan list was correct in content (G, B, D) but was written with single quotes ['G', 'B', 'D'] instead of the JSON double-quoted form [\"G\", \"B\", \"D\"] shown in the example; the instruction should state explicitly that the plan is written as a JSON list with double-quoted letters, exactly matching the example form.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    59,
+    "exec",
+    262
+   ],
+   "memory_in": "plan=[\"F\", \"A\", \"C\", \"E\", \"D\", \"D\"]; moves_done=1",
+   "answered": "E: move forward-left",
+   "recorded": "C: move left",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    91,
+    "exec",
+    122
+   ],
+   "memory_in": "plan=; moves_done=",
+   "answered": "C: move left",
+   "recorded": "C: move left",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The plan values matched; the only difference is formatting (single quotes vs double quotes around letters). The instruction should state that the plan list must be written as JSON with double-quoted letters, e.g. [\"C\", \"E\", \"C\", \"G\"], never with single quotes.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

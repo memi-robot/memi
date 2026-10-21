@@ -1,0 +1,418 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "PatternLock",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   3,
+   10,
+   34,
+   97,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first character of the plan string just built from the demonstration (position 0). At every decision step, the subgoal is the character at position moves_done (0-based) of the plan string, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last character of the plan string. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+  "fields": [
+   {
+    "name": "plan",
+    "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; use its coordinates as the starting highlighted position for the first dy/dx computation); each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan character for character. Write the value as one plain string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. Position 0 is the first move. The value is compared character by character, so EDGH is right and [\"E\", \"D\", \"G\", \"H\"] or ['E', 'D', 'G', 'H'] are both wrong. e.g. EDGH",
+    "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; treat it as the first highlighted position all the same, and use its coordinates for the first dy/dx computation); each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. Write the value as one plain string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. Position 0 is the first move. The value is compared character by character, so EDGH is right and [\"E\", \"D\", \"G\", \"H\"] or ['E', 'D', 'G', 'H'] are both wrong. The same form is used at every step of every episode. e.g. EDGH"
+   },
+   {
+    "name": "moves_done",
+    "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+    "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+   }
+  ]
+ },
+ "initial": {
+  "task": "PatternLock",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   3,
+   10,
+   34,
+   97,
+   99
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+  "fields": [
+   {
+    "name": "plan",
+    "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+    "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+   },
+   {
+    "name": "moves_done",
+    "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+    "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 20,
+    "subgoal_wrong": 0,
+    "memory_wrong": 2,
+    "memory_only": 2,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "plan": 2,
+     "moves_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field plan, POLICY PROMPT\n  Only the serialization has to change, not the content. The failures occurred at the first decision step of two episodes: the demonstration was shown, the policy chose the correct first subgoal and derived exactly the right ordered list of plan letters from the highlighted-target transitions, but wrote the list with single-quoted letters (['G', 'B', 'D']) while the annotated memory holds a JSON array with double-quoted letters ([\"G\", \"B\", \"D\"]). That is a PREDICTABILITY break on form alone: the same fact written two ways at one step. The field keeps holding the ordered list of menu letters, built once at the first decision step from the demonstration steps and copied unchanged at every later step; add to its description that the value must be written as a JSON array with double-quoted letters and a space after each comma, exactly like the example, never single quotes and never bare letters. Example value: [\"G\", \"B\", \"D\"].",
+   "applied": {
+    "annotator_prompt": [],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+        "modify_to": "If the step shows no demonstration, copy the carried-in plan exactly. Write the value as a JSON array of double-quoted letters with a space after each comma, exactly like the example: never single quotes, never bare letters. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "Nothing refused. The report asks only for a serialization clause on the policy side of plan; the annotator prompt already yields the JSON form and the subgoal instruction was never wrong, so neither changes."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 11,
+    "subgoal_wrong": 0,
+    "memory_wrong": 3,
+    "memory_only": 3,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "plan": 3,
+     "moves_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field plan, ANNOTATOR PROMPT\n  Situation: at the first decision step of every episode, with the demonstration shown and empty memory, the policy derived exactly the same sequence of letters as the annotation (for example C, G, B, H, or a single H, or G, G), but the annotated value was written as a single-quoted Python-style list (['C', 'G', 'B', 'H']) while the rule's own example shows a double-quoted JSON list. Failure: PREDICTABILITY, because the rule and the value actually filled in disagree on the serialization of the list, so identical content is counted as two different answers to one field. Change: fix one serialization and use it everywhere. The field holds the ordered list of menu letters the demonstration traces, built once at the first decision step and copied unchanged at every later step. Write it as a list of single-quoted letters with a space after each comma, exactly like ['E', 'D', 'G', 'H']; never double quotes, never bare letters. Also state explicitly that the start marker at demo t=0 may appear under the name 'highlighted area' instead of 'highlighted target' and is treated as the first highlighted position all the same. e.g. ['E', 'D', 'G', 'H']\n\nfield plan, POLICY PROMPT\n  Situation: at the first decision step, with the demonstration shown and empty memory, the policy built the correct letters but wrote them as a double-quoted JSON array because the instruction demanded that form, while the annotated memory uses single-quoted letters. Failure: PREDICTABILITY, the instruction asks for a different serialization than the one the annotation holds, so matching content is flagged as a mismatch. Change: the field still holds the ordered list of menu letters the demonstration traces, built once when the step shows DEMONSTRATION STEPS and the carried memory is empty, then copied exactly from the carried-in memory at every later step. Write it as a list of single-quoted letters with a space after each comma, exactly like ['E', 'D', 'G', 'H']; never double quotes, never bare letters. Add that the start marker at demo t=0 may be labelled 'highlighted area' rather than 'highlighted target'; use its coordinates as the starting highlighted position for the first dy/dx computation. e.g. ['E', 'D', 'G', 'H']",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "the first highlighted target at demo t=0 is the start;",
+        "modify_to": "the first highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; treat it as the first highlighted position all the same, and use its coordinates for the first dy/dx computation);"
+       },
+       {
+        "modify_from": "One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+        "modify_to": "One letter per newly highlighted target, in demo order. Write the value as a JSON array of double-quoted letters with a space after each comma, exactly like the example: never single quotes (no Python-style ['E', 'D']), never bare letters. The same serialization is used at every step of every episode. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "the highlighted target at demo t=0 is the start;",
+        "modify_to": "the highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; use its coordinates as the starting highlighted position for the first dy/dx computation);"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [],
+    "refused": "The report asks to switch the plan serialization to single-quoted Python-style lists on both sides. That would undo the round 1 edit, which committed double-quoted JSON because in round 1 the annotator wrote double quotes and the policy wrote single quotes; this round the annotator wrote single quotes and the policy wrote double quotes. The failure in both rounds is the same: the two sides were never pinned to one form on the annotation side, so the annotator drifted. The fix is to pin one serialization explicitly in the annotator prompt, matching the one the policy prompt already demands (double-quoted JSON, as the rule's own example has shown since initialization), rather than chasing whichever form the annotator happened to use this round. The 'highlighted area' naming clarification is committed on both sides. No subgoal change is needed; the subgoal was never wrong."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 19,
+    "subgoal_wrong": 0,
+    "memory_wrong": 2,
+    "memory_only": 2,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "plan": 2,
+     "moves_done": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 0
+   },
+   "critique": "field plan, ANNOTATOR PROMPT\n  Situation: at the first decision step, after watching the demonstration, the policy derived the correct sequence of moves and the correct first subgoal, and the annotated plan held the same letters, yet the step counted as wrong because the policy emitted the list in Python single-quote form while the annotation used a JSON double-quote form. The content agreed; only the quoting differed. This breaks PREDICTABILITY: two serializations of one fact at one step are compared literally, and the quoting form is not something the demonstration can tell the policy. Change: keep the same fact (the ordered list of menu letters the demonstration traces, derived from newly highlighted targets with the same dy/dx threshold rule, including the start marker possibly labelled 'highlighted area'), written at the first decision step and copied unchanged at every later step, but serialize it as a plain string of bare capital letters with no quotes, brackets, commas or spaces. Position 0 is the first move. Example value: DFAAG\n\nfield plan, POLICY PROMPT\n  Situation: at the first decision step the policy built the right move letters from the demonstration and chose the right subgoal, but wrote the plan with single quotes around each letter instead of the double quotes the instruction asked for, so the memory counted as a mismatch even though the letters were right. The instruction already demanded double quotes and the policy still varied the quoting; a representation with no quoting at all removes the failure. Breaks PREDICTABILITY (the value asked for and the value written differ in form only). Change: when the step shows demonstration steps and the carried memory is empty, derive the letters exactly as before (start at the first highlighted target or 'highlighted area' at demo t=0; for each newly highlighted target compute dy, dx against the previously highlighted one with the 8-pixel threshold; forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). When no demonstration is shown, copy the carried-in value character for character. Write the value as one string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. The value is compared character by character, so DFAAG is right and [\"D\", \"F\", \"A\", \"A\", \"G\"] or ['D', 'F', 'A', 'A', 'G'] are both wrong. Example value: DFAAG\n\nthe policy prompt for subgoal\n  The subgoal choice itself was never wrong in these episodes; the only change follows the new plan format. Where the instruction says the subgoal is the letter of plan at index moves_done, say instead that plan is a string of bare letters and the subgoal is the character at position moves_done (0-based) of that string, where moves_done is the value written at this step (0 at the first step with the demonstration shown, carried value plus one afterwards). Keep the rules that the first step performs the first character, that every later decision step advances by exactly one character regardless of where the gripper ended, that nothing is repeated or skipped, that when moves_done is at or beyond the length of the string the last character is repeated, and the fallback of deriving the direction from two visible highlighted targets or choosing A when no plan exists. No rule is to be removed.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "Write the value as a JSON array of double-quoted letters with a space after each comma, exactly like the example: never single quotes (no Python-style ['E', 'D']), never bare letters. The same serialization is used at every step of every episode. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+        "modify_to": "Write the value as one plain string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. Position 0 is the first move. The value is compared character by character, so EDGH is right and [\"E\", \"D\", \"G\", \"H\"] or ['E', 'D', 'G', 'H'] are both wrong. The same form is used at every step of every episode. e.g. EDGH"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "plan",
+      "edits": [
+       {
+        "modify_from": "If the step shows no demonstration, copy the carried-in plan exactly. Write the value as a JSON array of double-quoted letters with a space after each comma, exactly like the example: never single quotes, never bare letters. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+        "modify_to": "If the step shows no demonstration, copy the carried-in plan character for character. Write the value as one plain string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. Position 0 is the first move. The value is compared character by character, so EDGH is right and [\"E\", \"D\", \"G\", \"H\"] or ['E', 'D', 'G', 'H'] are both wrong. e.g. EDGH"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done",
+      "modify_to": "the subgoal there is the first character of the plan string just built from the demonstration (position 0). At every decision step, the subgoal is the character at position moves_done (0-based) of the plan string, where moves_done"
+     },
+     {
+      "modify_from": "repeat the last plan letter.",
+      "modify_to": "repeat the last character of the plan string."
+     }
+    ],
+    "refused": "Nothing refused. The quoting of the plan list has failed in three consecutive rounds, once on each side and now on the policy side against an explicit double-quote demand, so pinning one quoting form has not held. Committing a bare-letter string removes the quoting dimension entirely rather than flipping to the other form; it keeps the round 1 and 2 intent (one serialization pinned on both sides, 'highlighted area' naming kept) and changes only the shape. The subgoal rules are kept in full, with only the indexing wording adjusted to the string form."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 3,
+ "quiet": 1,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    33,
+    41,
+    54,
+    70,
+    86
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    18,
+    41,
+    59,
+    63,
+    91
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    8,
+    56,
+    70,
+    72,
+    93
+   ],
+   "verified_of_all": 0.7272727272727273,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start; each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. Write the value as a JSON array of double-quoted letters with a space after each comma, exactly like the example: never single quotes, never bare letters. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start; each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    7,
+    30,
+    35,
+    59,
+    60
+   ],
+   "verified_of_all": 0.8947368421052632,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first letter of the plan just built from the demonstration (plan index 0). At every decision step, the subgoal is the letter of plan at index moves_done (0-based, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last plan letter. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; use its coordinates as the starting highlighted position for the first dy/dx computation); each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan exactly. Write the value as a JSON array of double-quoted letters with a space after each comma, exactly like the example: never single quotes, never bare letters. e.g. [\"E\", \"D\", \"G\", \"H\"]",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; treat it as the first highlighted position all the same, and use its coordinates for the first dy/dx computation); each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. Write the value as a JSON array of double-quoted letters with a space after each comma, exactly like the example: never single quotes (no Python-style ['E', 'D']), never bare letters. The same serialization is used at every step of every episode. e.g. [\"E\", \"D\", \"G\", \"H\"]"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    21,
+    24,
+    60,
+    82,
+    88
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "PatternLock",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     3,
+     10,
+     34,
+     97,
+     99
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "Every episode starts at the first decision step with empty memory and the demonstration shown; the subgoal there is the first character of the plan string just built from the demonstration (position 0). At every decision step, the subgoal is the character at position moves_done (0-based) of the plan string, where moves_done is the value written at THIS step: 0 at the first step, carried value plus one at later steps). So the first step performs plan[0], the second step plan[1], and so on. No subgoal needs a point. After a move finishes, the next decision step always advances to the next plan letter regardless of where the gripper ended; never repeat or skip. If moves_done is at or beyond the length of the plan (nothing remains), repeat the last character of the plan string. If the plan could not be built (no demonstration visible and empty plan), derive the direction from the two highlighted targets currently visible if there are two (direction from the older-looking one near the gripper to the other, same dy/dx rule), otherwise choose A: move forward. In any other unforeseen situation, pick plan[moves_done] if it exists, else A.",
+    "fields": [
+     {
+      "name": "plan",
+      "description": "The ordered list of menu letters the demonstration traces. If this step shows DEMONSTRATION STEPS (the first step, memory empty), build it now and never change it afterwards: the highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; use its coordinates as the starting highlighted position for the first dy/dx computation); each time a different target becomes highlighted in the demo frames, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (coordinates at the frame it first appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. If the step shows no demonstration, copy the carried-in plan character for character. Write the value as one plain string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. Position 0 is the first move. The value is compared character by character, so EDGH is right and [\"E\", \"D\", \"G\", \"H\"] or ['E', 'D', 'G', 'H'] are both wrong. e.g. EDGH",
+      "annotation": "The ordered list of menu letters the demonstration traces, written at the first decision step from the demonstration steps and copied unchanged at every later step. Derive it from the highlighted targets: the first highlighted target at demo t=0 is the start (this start marker may be labelled 'highlighted area' rather than 'highlighted target'; treat it as the first highlighted position all the same, and use its coordinates for the first dy/dx computation); each time a new target becomes highlighted during the demo, take dy = new y minus previous highlighted y and dx = new x minus previous highlighted x (using the coordinates at the first frame each appears). |dy| >= 8 with dy > 0 means forward, dy < 0 means backward; |dx| >= 8 with dx > 0 means left, dx < 0 means right; both over threshold means the diagonal (forward=A, backward=B, left=C, right=D, forward-left=E, forward-right=F, backward-left=G, backward-right=H). One letter per newly highlighted target, in demo order. Write the value as one plain string of bare capital letters in order, with nothing else: no quotes of any kind, no brackets, no commas, no spaces. Position 0 is the first move. The value is compared character by character, so EDGH is right and [\"E\", \"D\", \"G\", \"H\"] or ['E', 'D', 'G', 'H'] are both wrong. The same form is used at every step of every episode. e.g. EDGH"
+     },
+     {
+      "name": "moves_done",
+      "description": "How many planned moves have been finished by the scene at this step. Write 0 when the step shows demonstration steps and the carried memory is empty (first step). Otherwise the step shows execution steps of one completed move, so write the carried-in moves_done plus one. e.g. 2",
+      "annotation": "How many of the planned moves the robot has finished executing by the scene at this step. 0 at the first decision step (nothing executed yet); at every later decision step it is the previous value plus one, since each decision step follows exactly one completed move. e.g. 2"
+     }
+    ]
+   }
+  }
+ ]
+}

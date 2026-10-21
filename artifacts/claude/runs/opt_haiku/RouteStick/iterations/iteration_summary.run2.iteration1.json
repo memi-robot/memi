@@ -1,0 +1,112 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "demo_moves",
+  "legs_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  44,
+  76,
+  79,
+  85,
+  86
+ ],
+ "scored": 20,
+ "failed": 2,
+ "subgoal_wrong": 0,
+ "memory_wrong": 2,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9,
+ "reads": {
+  "demo_moves": 15,
+  "legs_done": 15
+ },
+ "field_errors": {
+  "demo_moves": {
+   "in": 2,
+   "sole": 2
+  },
+  "legs_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.1,
+ "verified_of_all": 0.9,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 20,
+ "critique": "field demo_moves, ANNOTATOR PROMPT\n  Holds the ordered list of menu letters, one per leg of the demonstration, written at the first decision step and copied unchanged afterwards; written as a Python-style list with single quotes, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']. The failure: a demonstration in which the gripper shuttles back and forth several times between the same two neighbouring targets (highlight going 108->81->108->81->108->81->108->138) was annotated with seven letters, but a policy reading the same video wrote only five, dropping the short return legs; the subgoal it chose was still right, so this breaks PREDICTABILITY of demo_moves. The rule must say explicitly: a leg is counted at EVERY change of the highlighted target, so the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited and legs of only a few frames; never merge or skip a leg because the gripper comes back to where it was. A frame that shows two targets highlighted at once is the frame at which the new target becomes highlighted: the leg ends there and the next leg starts there. The last demonstration frame may itself show the final highlight change and that change still counts as a leg. For the side letter, use the gripper frames strictly between the two highlight changes of that leg and compare their y with the y of the stick lying between the two targets. The list equals the recorded subgoal sequence of the episode, one letter per decision step.\n\nfield demo_moves, POLICY PROMPT\n  At the first decision step (empty memory carried in) build the list from the demonstration steps and write it as a single-quoted list, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A'] (single quotes, comma and space, never double quotes). First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's is the end of one leg and the start of the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly listed target is the new one. Then for each leg: new target x smaller than previous target x means RIGHT, larger means LEFT; gripper y in the frames between the two change frames smaller than the y of the stick between the two targets means BACKWARD, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the carried-in list unchanged, in the same single-quoted form. Failure that motivates this: on a video where the gripper shuttled back and forth between two adjacent targets the policy dropped the short return legs and wrote five letters instead of seven (PREDICTABILITY), and on another video it wrote the right letters but with double quotes so the value did not match (PREDICTABILITY).\n\nrefused\n  Nothing refused; both reports are passed on. The subgoal instruction stays as it is: at both failed steps the chosen subgoal (the first letter of the list) was correct, and across the minibatch demo_moves[legs_done] with legs_done incremented at every decision step after the first matches every recorded subgoal.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "demo_moves",
+    "description": "At the first decision step (empty memory carried in) build the list from the demonstration steps and write it as a single-quoted list, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A'] (single quotes, comma and space, never double quotes). First walk through the demonstration frames and list the highlighted target at every frame; every frame where the highlighted target differs from the previous frame's is the end of one leg and the start of the next, so the number of letters is exactly the number of such changes. Count a change even when the gripper returns to a target it already visited, even when the leg lasts only a few frames, and even when the change appears only in the very last demonstration frame. A frame with two targets highlighted at once is the change frame: the newly listed target is the new one. Then for each leg: new target x smaller than previous target x means RIGHT, larger means LEFT; gripper y in the frames between the two change frames smaller than the y of the stick between the two targets means BACKWARD, larger means FORWARD. LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. At every later step copy the carried-in list unchanged, in the same single-quoted form. Failure that motivates this: on a video where the gripper shuttled back and forth between two adjacent targets the policy dropped the short return legs and wrote five letters instead of seven (PREDICTABILITY), and on another video it wrote the right letters but with double quotes so the value did not match (PREDICTABILITY)."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "demo_moves",
+    "description": "Holds the ordered list of menu letters, one per leg of the demonstration, written at the first decision step and copied unchanged afterwards; written as a Python-style list with single quotes, e.g. ['D', 'A', 'D', 'C', 'D', 'A', 'A']. The failure: a demonstration in which the gripper shuttles back and forth several times between the same two neighbouring targets (highlight going 108->81->108->81->108->81->108->138) was annotated with seven letters, but a policy reading the same video wrote only five, dropping the short return legs; the subgoal it chose was still right, so this breaks PREDICTABILITY of demo_moves. The rule must say explicitly: a leg is counted at EVERY change of the highlighted target, so the number of letters equals the number of highlight changes in the demonstration, including legs that return to a target already visited and legs of only a few frames; never merge or skip a leg because the gripper comes back to where it was. A frame that shows two targets highlighted at once is the frame at which the new target becomes highlighted: the leg ends there and the next leg starts there. The last demonstration frame may itself show the final highlight change and that change still counts as a leg. For the side letter, use the gripper frames strictly between the two highlight changes of that leg and compare their y with the y of the stick lying between the two targets. The list equals the recorded subgoal sequence of the episode, one letter per decision step."
+   }
+  ],
+  "refused": "Nothing refused; both reports are passed on. The subgoal instruction stays as it is: at both failed steps the chosen subgoal (the first letter of the list) was correct, and across the minibatch demo_moves[legs_done] with legs_done incremented at every decision step after the first matches every recorded subgoal."
+ },
+ "critiques": [
+  {
+   "step": [
+    79,
+    "exec",
+    350
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "recorded": "D: move to the nearest right target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not tell me to count EVERY change of the highlighted target as a leg, including short back-and-forth legs between the same two targets (here [74,108]->[64,81] at t=256 and [64,81]->[74,108] at t=304, which I skipped, and the t=144/t=160 pair), nor how to treat a frame where two targets are highlighted at once (t=144 shows [64,81] and [74,108] both highlighted): treat it as the moment the new target became highlighted, so the leg ends there and the next leg starts from it. It should state explicitly that the list for this demonstration has seven legs (highlight sequence 108->81->108->81->108->81->108->138) and that no leg may be dropped even when the gripper returns to a target it already visited.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    86,
+    "exec",
+    250
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "A: move to the nearest left target by circling around the stick clockwise",
+   "recorded": "A: move to the nearest left target by circling around the stick clockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The list content and legs_done matched the recorded answer; the only difference is quoting style (double quotes [\"A\", ...] versus single quotes ['A', ...]). The instruction should state one exact string form for the list, e.g. write it as ['A', 'C', 'A', 'B', 'D'] with single quotes, so the written value compares identical to the recorded one.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

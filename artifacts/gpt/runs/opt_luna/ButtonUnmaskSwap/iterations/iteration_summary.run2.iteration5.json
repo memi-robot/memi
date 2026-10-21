@@ -1,0 +1,154 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "pending_target_positions",
+  "buttons_completed"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  14,
+  25,
+  38,
+  87,
+  93
+ ],
+ "scored": 19,
+ "failed": 5,
+ "subgoal_wrong": 1,
+ "memory_wrong": 5,
+ "subgoal_verified": 0.9473684210526315,
+ "memory_verified": 0.7368421052631579,
+ "reads": {
+  "pending_target_positions": 14,
+  "buttons_completed": 13
+ },
+ "field_errors": {
+  "pending_target_positions": {
+   "in": 5,
+   "sole": 5
+  },
+  "buttons_completed": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2631578947368421,
+ "verified_of_all": 0.7368421052631579,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 1,
+ "decisions": 19,
+ "critique": "field pending_target_positions, ANNOTATOR PROMPT\n  When requested cubes were covered and a pair of containers rotated during the first button press, the policy correctly selected the second button but sometimes wrote the target at its original side of the pair. The annotated memory instead placed it at the opposite side. In the two-target cases this also affected a later target even while the first target stayed stationary. These are PREDICTABILITY failures: returning to the same unordered pair of occupied locations does not mean the identities returned. Make the annotation's half-turn convention explicit: follow each covering container through the intermediate observations, exchanging identities after one observed half-turn and restoring them after a second. Do not infer a full turn from similar starting and ending layouts. The field remains an ordered list of current target centers, excluding successful pickups; update centers at every decision and remove the first entry only when its successful lift is shown. For example, after the first exchange a stationary red target followed by a moving blue target is recorded as [[92, 116], [121, 159]], and after the next exchange as [[92, 116], [95, 172]]. Preserve the existing trajectory-based annotations rather than relabeling them to match the policy's endpoint-based answers.\n\nfield pending_target_positions, POLICY PROMPT\n  During button execution, a rotating pair could finish near its original unordered positions, or already have moved before the first frame of the next observation interval. The policy selected the correct button but sometimes failed to exchange target identities; later it could retain the old location because another container occupied it. In one case this sent the final pickup to the wrong container. This breaks PREDICTABILITY for the updated positions and SUFFICIENCY for subsequent target selection. Retain the ordered list of pending target centers and the existing successful-lift removal rule, but make rotation assignment operationally explicit. At the start of an interval, treat incoming target positions as anchors from the preceding decision, not as coordinates that must appear exactly in the first new frame. Associate displaced first-frame candidates jointly with those anchors using the first-frame displacement and the subsequent observed pair motion; continue that assignment through the whole interval. For successive pair observations, compare joint assignments by signed angular advance in the established direction, allowing the smaller forward advance even when nearest-distance matching would imply a backward move. Carry identities through settling; an unordered layout recurring after a half-turn exchanges identities, not restores them. Never snap an identity back to its incoming location merely because that location becomes occupied. For example, an incoming moving target at [121, 159] can first appear at [112, 152], continue through [97, 151] and [95, 169], and settle at [95, 172]; with a stationary first target the output is [[92, 116], [95, 172]]. Update all pending targets before dispatching any command, even when their positions do not affect that command. These are temporary within-interval associations, not additional persistent fields.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "pending_target_positions",
+    "description": "During button execution, a rotating pair could finish near its original unordered positions, or already have moved before the first frame of the next observation interval. The policy selected the correct button but sometimes failed to exchange target identities; later it could retain the old location because another container occupied it. In one case this sent the final pickup to the wrong container. This breaks PREDICTABILITY for the updated positions and SUFFICIENCY for subsequent target selection. Retain the ordered list of pending target centers and the existing successful-lift removal rule, but make rotation assignment operationally explicit. At the start of an interval, treat incoming target positions as anchors from the preceding decision, not as coordinates that must appear exactly in the first new frame. Associate displaced first-frame candidates jointly with those anchors using the first-frame displacement and the subsequent observed pair motion; continue that assignment through the whole interval. For successive pair observations, compare joint assignments by signed angular advance in the established direction, allowing the smaller forward advance even when nearest-distance matching would imply a backward move. Carry identities through settling; an unordered layout recurring after a half-turn exchanges identities, not restores them. Never snap an identity back to its incoming location merely because that location becomes occupied. For example, an incoming moving target at [121, 159] can first appear at [112, 152], continue through [97, 151] and [95, 169], and settle at [95, 172]; with a stationary first target the output is [[92, 116], [95, 172]]. Update all pending targets before dispatching any command, even when their positions do not affect that command. These are temporary within-interval associations, not additional persistent fields."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "pending_target_positions",
+    "description": "When requested cubes were covered and a pair of containers rotated during the first button press, the policy correctly selected the second button but sometimes wrote the target at its original side of the pair. The annotated memory instead placed it at the opposite side. In the two-target cases this also affected a later target even while the first target stayed stationary. These are PREDICTABILITY failures: returning to the same unordered pair of occupied locations does not mean the identities returned. Make the annotation's half-turn convention explicit: follow each covering container through the intermediate observations, exchanging identities after one observed half-turn and restoring them after a second. Do not infer a full turn from similar starting and ending layouts. The field remains an ordered list of current target centers, excluding successful pickups; update centers at every decision and remove the first entry only when its successful lift is shown. For example, after the first exchange a stationary red target followed by a moving blue target is recorded as [[92, 116], [121, 159]], and after the next exchange as [[92, 116], [95, 172]]. Preserve the existing trajectory-based annotations rather than relabeling them to match the policy's endpoint-based answers."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    14,
+    "exec",
+    109
+   ],
+   "memory_in": "pending_target_positions=[[133, 158]]; buttons_completed=0",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    118
+   ],
+   "memory_in": "pending_target_positions=[[94, 116], [97, 171]]; buttons_completed=0",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    87,
+    "exec",
+    214
+   ],
+   "memory_in": "pending_target_positions=[[92, 116], [121, 159]]; buttons_completed=1",
+   "answered": "C: pick up the container at [92, 116]",
+   "recorded": "C: pick up the container at [89, 117]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make explicit how to seed a target when its incoming position is absent from the first observed frame: associate blue's incoming [121, 159] with the container at [112, 152] at t=128, then follow it through [97, 151] and [95, 169] to [95, 172]. Write pending_target_positions=[[92, 116], [95, 172]], rather than retaining [121, 159] merely because another container settles at that old position. The existing tracking rule supplies the principle but does not explicitly connect the displaced initial observation to the incoming target.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    93,
+    "exec",
+    116
+   ],
+   "memory_in": "pending_target_positions=[[134, 131], [103, 162]]; buttons_completed=0",
+   "answered": "B: press the second button",
+   "recorded": "B: press the second button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    93,
+    "exec",
+    213
+   ],
+   "memory_in": "pending_target_positions=[[92, 98], [101, 164]]; buttons_completed=1",
+   "answered": "C: pick up the container at [94, 97]",
+   "recorded": "C: pick up the container at [130, 132]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

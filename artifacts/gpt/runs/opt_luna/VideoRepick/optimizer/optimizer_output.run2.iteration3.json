@@ -1,0 +1,76 @@
+{
+ "episodes": [
+  5,
+  8,
+  16,
+  57,
+  93
+ ],
+ "user_chars": 33012,
+ "usage": {
+  "prompt_tokens": 9007,
+  "completion_tokens": 688,
+  "total_tokens": 9695,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 6712,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "For every A, point at the current visible center of the same cube identified by target_anchor, allowing small shifts after placement; use the release trajectory in the current interval to disambiguate nearby cubes. Do not point at the raised wrist or an airborne cube centroid as a table grasp location.",
+    "modify_to": "For every A, point at the current visible center of the table cube identified by target_anchor, allowing small placement and visible-center shifts. After a completed release, first select the visible table cube matching the anchor. A clear near-anchor table match takes precedence over inconsistent held-object or airborne-centroid reports during the interval. Use the actual table-height release location and coherent local motion to resolve identity only when the final table view is occluded or genuinely ambiguous. A displaced lifted-cube report alone must not transfer target identity to a different table cube. Do not point at the raised wrist or an airborne cube centroid as a table grasp location."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_anchor",
+    "edits": [
+     {
+      "modify_from": "Follow the grasped cube through release. For each subsequent exchange, track both moving cubes through the intermediate samples until they settle, matching their trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: the same set of positions can remain occupied while the cubes exchange identities. Carry the target's resulting identity and location into the next exchange. If the next exchange involves its new location and a third location, follow it onward to that third location. Two exchanges return the target only when they swap the same pair of locations; do not retain the original grasp location as the target.",
+      "modify_to": "Follow the grasped cube through release. Partition the remaining demonstration into exchanges using the moving pairs and intervening settled configurations, and process every exchange through the end of the demonstration. For each exchange, identify the two participating occupied locations and track both moving cubes jointly through the intermediate samples until they settle, matching trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: a completed exchange swaps the identities at its two locations even when the set of occupied locations looks unchanged. Apply that swap to the target's current location only if it participates; if the exchange involves two other cubes, retain the target at its stationary location. Carry the resulting target identity and location into the next exchange without restarting from the original grasp location. An exchange involving the target's new location and a third location moves it onward to that third location; two exchanges of the same pair restore the identities at those locations. Finish all exchanges before locating the target in the initial execution scene. This tracking is performed within the first decision step; do not store exchange history in persistent memory."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "The numerical trajectory examples are not committed as lookup rules; the sequential exchange procedure covers them. No annotation-rule changes or additional memory fields are needed. Existing release recognition, cycle-count updates, and A/B/C transition rules remain unchanged."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_anchor",
+    "edits": [
+     {
+      "modify_from": "Follow the grasped cube through release. For each subsequent exchange, track both moving cubes through the intermediate samples until they settle, matching their trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: the same set of positions can remain occupied while the cubes exchange identities. Carry the target's resulting identity and location into the next exchange. If the next exchange involves its new location and a third location, follow it onward to that third location. Two exchanges return the target only when they swap the same pair of locations; do not retain the original grasp location as the target.",
+      "modify_to": "Follow the grasped cube through release. Partition the remaining demonstration into exchanges using the moving pairs and intervening settled configurations, and process every exchange through the end of the demonstration. For each exchange, identify the two participating occupied locations and track both moving cubes jointly through the intermediate samples until they settle, matching trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: a completed exchange swaps the identities at its two locations even when the set of occupied locations looks unchanged. Apply that swap to the target's current location only if it participates; if the exchange involves two other cubes, retain the target at its stationary location. Carry the resulting target identity and location into the next exchange without restarting from the original grasp location. An exchange involving the target's new location and a third location moves it onward to that third location; two exchanges of the same pair restore the identities at those locations. Finish all exchanges before locating the target in the initial execution scene. This tracking is performed within the first decision step; do not store exchange history in persistent memory."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "For every A, point at the current visible center of the same cube identified by target_anchor, allowing small shifts after placement; use the release trajectory in the current interval to disambiguate nearby cubes. Do not point at the raised wrist or an airborne cube centroid as a table grasp location.",
+    "modify_to": "For every A, point at the current visible center of the table cube identified by target_anchor, allowing small placement and visible-center shifts. After a completed release, first select the visible table cube matching the anchor. A clear near-anchor table match takes precedence over inconsistent held-object or airborne-centroid reports during the interval. Use the actual table-height release location and coherent local motion to resolve identity only when the final table view is occluded or genuinely ambiguous. A displaced lifted-cube report alone must not transfer target identity to a different table cube. Do not point at the raised wrist or an airborne cube centroid as a table grasp location."
+   }
+  ],
+  "refused": "The numerical trajectory examples are not committed as lookup rules; the sequential exchange procedure covers them. No annotation-rule changes or additional memory fields are needed. Existing release recognition, cycle-count updates, and A/B/C transition rules remain unchanged."
+ },
+ "not_applied": [],
+ "refused": "The numerical trajectory examples are not committed as lookup rules; the sequential exchange procedure covers them. No annotation-rule changes or additional memory fields are needed. Existing release recognition, cycle-count updates, and A/B/C transition rules remain unchanged.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"target_anchor\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Follow the grasped cube through release. For each subsequent exchange, track both moving cubes through the intermediate samples until they settle, matching their trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: the same set of positions can remain occupied while the cubes exchange identities. Carry the target's resulting identity and location into the next exchange. If the next exchange involves its new location and a third location, follow it onward to that third location. Two exchanges return the target only when they swap the same pair of locations; do not retain the original grasp location as the target.\",\n          \"modify_to\": \"Follow the grasped cube through release. Partition the remaining demonstration into exchanges using the moving pairs and intervening settled configurations, and process every exchange through the end of the demonstration. For each exchange, identify the two participating occupied locations and track both moving cubes jointly through the intermediate samples until they settle, matching trajectories across the whole exchange using direction and motion continuity. Do not independently choose the nearest point at each sample or infer identity by matching occupied start and end locations: a completed exchange swaps the identities at its two locations even when the set of occupied locations looks unchanged. Apply that swap to the target's current location only if it participates; if the exchange involves two other cubes, retain the target at its stationary location. Carry the resulting target identity and location into the next exchange without restarting from the original grasp location. An exchange involving the target's new location and a third location moves it onward to that third location; two exchanges of the same pair restore the identities at those locations. Finish all exchanges before locating the target in the initial execution scene. This tracking is performed within the first decision step; do not store exchange history in persistent memory.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"For every A, point at the current visible center of the same cube identified by target_anchor, allowing small shifts after placement; use the release trajectory in the current interval to disambiguate nearby cubes. Do not point at the raised wrist or an airborne cube centroid as a table grasp location.\",\n      \"modify_to\": \"For every A, point at the current visible center of the table cube identified by target_anchor, allowing small placement and visible-center shifts. After a completed release, first select the visible table cube matching the anchor. A clear near-anchor table match takes precedence over inconsistent held-object or airborne-centroid reports during the interval. Use the actual table-height release location and coherent local motion to resolve identity only when the final table view is occluded or genuinely ambiguous. A displaced lifted-cube report alone must not transfer target identity to a different table cube. Do not point at the raised wrist or an airborne cube centroid as a table grasp location.\"\n    }\n  ],\n  \"refused\": \"The numerical trajectory examples are not committed as lookup rules; the sequential exchange procedure covers them. No annotation-rule changes or additional memory fields are needed. Existing release recognition, cycle-count updates, and A/B/C transition rules remain unchanged.\"\n}"
+}

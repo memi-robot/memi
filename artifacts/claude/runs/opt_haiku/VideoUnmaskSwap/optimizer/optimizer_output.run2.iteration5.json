@@ -1,0 +1,95 @@
+{
+ "episodes": [
+  0,
+  2,
+  17,
+  60,
+  75
+ ],
+ "user_chars": 45075,
+ "usage": {
+  "prompt_tokens": 17894,
+  "completion_tokens": 2385,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 17890
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 699
+  }
+ },
+ "reasoning": "I need to figure out what edits to commit based on the report's requirements: mandatory written-out intermediate steps, treating unmatched intermediate positions as empty frames with a few-pixel tolerance, a trap statement, excluding identity from listed positions, and a third worked example, plus subgoal clarifications. I'm wary of letting the instructions keep growing with each round, but the real issue is that the policy is skipping the procedure itself.\n\nThe instructions already say to label each frame before doing anything else, which the policy failed to do, so making that output mandatory makes sense. I'll fold the other requirements concisely into step three, and rather than adding a bulky fourth example, I'll swap the first simple worked example for the new one covering two cubes with different shuffle pairs, since it demonstrates both single shuffles per pair and the multi-cube case without bloating the text. For the zero-shuffle case, I'll commit to treating that as a signal of a mislabeled frame requiring a recount. I'm also adding a small clarifying clause to the subgoal rule about using the just-computed entry and tolerating a few pixels of positional drift. Now I'm preparing the JSON edit with the exact quoted passages from the policy memory to modify.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "with the point on the first entry of target_containers computed from the demonstration at that same step.",
+    "modify_to": "with the point on the first entry of target_containers computed from the demonstration at that same step: the entry just written in the memory answer for that step, so the point and the memory name the same container."
+   },
+   {
+    "modify_from": "write the point as that container's listed position.",
+    "modify_to": "write the point as that container's listed position; a point within a few pixels of that position selects the same container, so a few pixels' difference between a listed position and an entry is never a reason to doubt the container choice."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_containers",
+    "edits": [
+     {
+      "modify_from": "(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty' (a container is off its slot when it is well over 10 pixels away).",
+      "modify_to": "(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty'. A listed position within a few pixels of a slot (e.g. [98, 153] for [99, 155]) is AT that slot; a frame in which two listed positions match no slot (containers in mid-swing at intermediate positions, e.g. [73, 140] and [101, 139] where the slots are [71, 123] and [103, 159]) is an 'empty' frame for the two slots nobody occupies in it. Listed positions carry no identity: a container can only be followed through slots, never by matching positions in the last frame to positions in the first."
+     },
+     {
+      "modify_from": "if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot;",
+      "modify_to": "if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot. The entry may only be written AFTER these four things have actually been written out in the answer: the frame-by-frame labels, the numbered list of shuffles, the slot table after each swap, and the parity check; a block of one or more consecutive 'empty' frames is one shuffle even when it is the only shuffle in the video. Whenever a shuffle empties the named container's own slot, the named container ends at the OTHER slot of that pair; so if its slot was emptied an odd number of times the entry must differ from the container that first sat over the cube. Every demonstration of this task contains at least one shuffle: an answer that finds zero shuffles, or that returns every named cube to its first container, has mislabelled frames and must be recounted;"
+     },
+     {
+      "modify_from": "Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110].",
+      "modify_to": "Worked example (two cubes, two different pairs each shuffle once, so BOTH named containers move): green cube at [92, 156], blue cube at [125, 117]; first container frame lists [80, 121], [89, 157], [123, 116], [131, 154]; green's slot is [89, 157], blue's is [123, 116]; frames 80-96 list two positions matching no slot while [123, 116] and [131, 154] stay, so 'slots [80, 121] and [89, 157] empty'; frame 112 'all at slots'; frames 128-160 'slots [123, 116] and [131, 154] empty'; last frame 'all at slots'. Shuffle 1 swaps [80, 121] and [89, 157]: green now at [80, 121]. Shuffle 2 swaps [123, 116] and [131, 154]: blue now at [131, 154]. Last frame lists those slots as [82, 121] and [131, 154]; entry [[82, 121], [131, 154]]."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "The annotator prompt stays unchanged, as the report itself finds the annotated values correct. The report's third worked example is committed in place of the original single-cube, single-shuffle example rather than as a third one: it contains that case (one shuffle per pair) and adds the two-cube, two-pair situation, while the remaining second example keeps the repeated-pair and late-shuffle cases of rounds 2 and 3, so no earlier case is lost and the text does not grow by a whole example. The report's request to change the closing e.g. value to [[103, 159]] is not committed, consistent with rounds 2 and 3: the two-entry shape stays. The subgoal instruction gets only the two clarifications the report named; no transition rule changes, since every wrong subgoal came from a wrong memory entry."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "target_containers",
+    "edits": [
+     {
+      "modify_from": "(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty' (a container is off its slot when it is well over 10 pixels away).",
+      "modify_to": "(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty'. A listed position within a few pixels of a slot (e.g. [98, 153] for [99, 155]) is AT that slot; a frame in which two listed positions match no slot (containers in mid-swing at intermediate positions, e.g. [73, 140] and [101, 139] where the slots are [71, 123] and [103, 159]) is an 'empty' frame for the two slots nobody occupies in it. Listed positions carry no identity: a container can only be followed through slots, never by matching positions in the last frame to positions in the first."
+     },
+     {
+      "modify_from": "if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot;",
+      "modify_to": "if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot. The entry may only be written AFTER these four things have actually been written out in the answer: the frame-by-frame labels, the numbered list of shuffles, the slot table after each swap, and the parity check; a block of one or more consecutive 'empty' frames is one shuffle even when it is the only shuffle in the video. Whenever a shuffle empties the named container's own slot, the named container ends at the OTHER slot of that pair; so if its slot was emptied an odd number of times the entry must differ from the container that first sat over the cube. Every demonstration of this task contains at least one shuffle: an answer that finds zero shuffles, or that returns every named cube to its first container, has mislabelled frames and must be recounted;"
+     },
+     {
+      "modify_from": "Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110].",
+      "modify_to": "Worked example (two cubes, two different pairs each shuffle once, so BOTH named containers move): green cube at [92, 156], blue cube at [125, 117]; first container frame lists [80, 121], [89, 157], [123, 116], [131, 154]; green's slot is [89, 157], blue's is [123, 116]; frames 80-96 list two positions matching no slot while [123, 116] and [131, 154] stay, so 'slots [80, 121] and [89, 157] empty'; frame 112 'all at slots'; frames 128-160 'slots [123, 116] and [131, 154] empty'; last frame 'all at slots'. Shuffle 1 swaps [80, 121] and [89, 157]: green now at [80, 121]. Shuffle 2 swaps [123, 116] and [131, 154]: blue now at [131, 154]. Last frame lists those slots as [82, 121] and [131, 154]; entry [[82, 121], [131, 154]]."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "with the point on the first entry of target_containers computed from the demonstration at that same step.",
+    "modify_to": "with the point on the first entry of target_containers computed from the demonstration at that same step: the entry just written in the memory answer for that step, so the point and the memory name the same container."
+   },
+   {
+    "modify_from": "write the point as that container's listed position.",
+    "modify_to": "write the point as that container's listed position; a point within a few pixels of that position selects the same container, so a few pixels' difference between a listed position and an entry is never a reason to doubt the container choice."
+   }
+  ],
+  "refused": "The annotator prompt stays unchanged, as the report itself finds the annotated values correct. The report's third worked example is committed in place of the original single-cube, single-shuffle example rather than as a third one: it contains that case (one shuffle per pair) and adds the two-cube, two-pair situation, while the remaining second example keeps the repeated-pair and late-shuffle cases of rounds 2 and 3, so no earlier case is lost and the text does not grow by a whole example. The report's request to change the closing e.g. value to [[103, 159]] is not committed, consistent with rounds 2 and 3: the two-entry shape stays. The subgoal instruction gets only the two clarifications the report named; no transition rule changes, since every wrong subgoal came from a wrong memory entry."
+ },
+ "not_applied": [],
+ "refused": "The annotator prompt stays unchanged, as the report itself finds the annotated values correct. The report's third worked example is committed in place of the original single-cube, single-shuffle example rather than as a third one: it contains that case (one shuffle per pair) and adds the two-cube, two-pair situation, while the remaining second example keeps the repeated-pair and late-shuffle cases of rounds 2 and 3, so no earlier case is lost and the text does not grow by a whole example. The report's request to change the closing e.g. value to [[103, 159]] is not committed, consistent with rounds 2 and 3: the two-entry shape stays. The subgoal instruction gets only the two clarifications the report named; no transition rule changes, since every wrong subgoal came from a wrong memory entry.",
+ "text": "{\"annotator_prompt\": [],\n \"policy_prompt_for_memory\": [\n  {\"kind\": \"modify\", \"field\": \"target_containers\", \"edits\": [\n   {\"modify_from\": \"(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty' (a container is off its slot when it is well over 10 pixels away).\",\n    \"modify_to\": \"(3) go through EVERY container frame after the first one, in order, up to and including the last demonstration frame, and label each frame before doing anything else: either 'all at slots' or 'slots P and Q empty'. A listed position within a few pixels of a slot (e.g. [98, 153] for [99, 155]) is AT that slot; a frame in which two listed positions match no slot (containers in mid-swing at intermediate positions, e.g. [73, 140] and [101, 139] where the slots are [71, 123] and [103, 159]) is an 'empty' frame for the two slots nobody occupies in it. Listed positions carry no identity: a container can only be followed through slots, never by matching positions in the last frame to positions in the first.\"},\n   {\"modify_from\": \"if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot;\",\n    \"modify_to\": \"if the table and the parity disagree, recount the runs. Shuffles of pairs the named container is not in do not change its slot. The entry may only be written AFTER these four things have actually been written out in the answer: the frame-by-frame labels, the numbered list of shuffles, the slot table after each swap, and the parity check; a block of one or more consecutive 'empty' frames is one shuffle even when it is the only shuffle in the video. Whenever a shuffle empties the named container's own slot, the named container ends at the OTHER slot of that pair; so if its slot was emptied an odd number of times the entry must differ from the container that first sat over the cube. Every demonstration of this task contains at least one shuffle: an answer that finds zero shuffles, or that returns every named cube to its first container, has mislabelled frames and must be recounted;\"},\n   {\"modify_from\": \"Worked example: cube at [70, 119]; containers first rest at [66, 120], [84, 109], [93, 163], [119, 145]; the cube's container is [66, 120]; later frames show [66, 120] and [84, 109] both off their slots for three frames, then all back; those two swapped, so the cube's container is now the one at [84, 110] in the last frame; entry [84, 110].\",\n    \"modify_to\": \"Worked example (two cubes, two different pairs each shuffle once, so BOTH named containers move): green cube at [92, 156], blue cube at [125, 117]; first container frame lists [80, 121], [89, 157], [123, 116], [131, 154]; green's slot is [89, 157], blue's is [123, 116]; frames 80-96 list two positions matching no slot while [123, 116] and [131, 154] stay, so 'slots [80, 121] and [89, 157] empty'; frame 112 'all at slots'; frames 128-160 'slots [123, 116] and [131, 154] empty'; last frame 'all at slots'. Shuffle 1 swaps [80, 121] and [89, 157]: green now at [80, 121]. Shuffle 2 swaps [123, 116] and [131, 154]: blue now at [131, 154]. Last frame lists those slots as [82, 121] and [131, 154]; entry [[82, 121], [131, 154]].\"}\n  ]}\n ],\n \"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"with the point on the first entry of target_containers computed from the demonstration at that same step.\",\n   \"modify_to\": \"with the point on the first entry of target_containers computed from the demonstration at that same step: the entry just written in the memory answer for that step, so the point and the memory name the same container.\"},\n  {\"modify_from\": \"write the point as that container's listed position.\",\n   \"modify_to\": \"write the point as that container's listed position; a point within a few pixels of that position selects the same container, so a few pixels' difference between a listed position and an entry is never a reason to doubt the container choice.\"}\n ],\n \"refused\": \"The annotator prompt stays unchanged, as the report itself finds the annotated values correct. The report's third worked example is committed in place of the original single-cube, single-shuffle example rather than as a third one: it contains that case (one shuffle per pair) and adds the two-cube, two-pair situation, while the remaining second example keeps the repeated-pair and late-shuffle cases of rounds 2 and 3, so no earlier case is lost and the text does not grow by a whole example. The report's request to change the closing e.g. value to [[103, 159]] is not committed, consistent with rounds 2 and 3: the two-entry shape stays. The subgoal instruction gets only the two clarifications the report named; no transition rule changes, since every wrong subgoal came from a wrong memory entry.\"}"
+}

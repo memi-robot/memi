@@ -1,0 +1,101 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "selected_target"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  27,
+  63,
+  84,
+  85,
+  93
+ ],
+ "scored": 10,
+ "failed": 2,
+ "subgoal_wrong": 0,
+ "memory_wrong": 2,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.8,
+ "reads": {
+  "selected_target": 5
+ },
+ "field_errors": {
+  "selected_target": {
+   "in": 2,
+   "sole": 2
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.2,
+ "verified_of_all": 0.8,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field selected_target, POLICY PROMPT\n  The failures occurred when the goal requested the blue cube's first or second demonstrated placement target, and two targets exchanged positions after the cube had been released onto the central workspace. The final layout resembled the earlier layout. The policy correctly chose A on the execution cube, but stored the target at the original placement location rather than the selected physical target's new location. The annotated memory instead identified the exchanged target. This is a PREDICTABILITY failure: the general instruction to track identities did not sufficiently settle how to associate the intermediate observations. Make the tracking procedure explicit. At the initial decision containing the demonstration, identify the requested completed placement, then maintain temporary identities for all targets while scanning the remaining demonstration. Treat target lists as unordered detections, not persistent indices. For each interval of coordinated target movement, associate the moving targets jointly across the entire interval using their successive displacement directions and smooth paths. Do not independently choose the nearest detection to an old position at each frame, or restore identities from the final layout. When two targets pass on different sides of their shared midpoint, follow each through its own intermediate branch to the opposite endpoint; a return to the original set of positions does not imply a return of each identity. Distinguish these coordinated movements from small visible-center shifts caused by occlusion. For example, a selected target initially near [105, 164] that moves through [115, 148], [115, 111], and [97, 91] ends at [95, 89], not at the other target's endpoint near [104, 164]. Similarly, a selected target near [99, 167] moving through [104, 162], [121, 127], and [104, 95] ends at [99, 90], rather than the endpoint near its original location. These illustrate smooth branch continuation, not coordinate-specific exceptions. Keep the existing field and write timing: selected_target holds only the selected physical target's canonical center in the first execution scene, for example [95, 89]. Compute and write it at the initial decision after inspecting the complete demonstration and execution-start scene; discard the temporary tracks. Copy the incoming value unchanged at subsequent decisions. Retain the existing unknown rule for genuinely unresolved identity. No additional memory fields are needed.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "selected_target",
+    "description": "The failures occurred when the goal requested the blue cube's first or second demonstrated placement target, and two targets exchanged positions after the cube had been released onto the central workspace. The final layout resembled the earlier layout. The policy correctly chose A on the execution cube, but stored the target at the original placement location rather than the selected physical target's new location. The annotated memory instead identified the exchanged target. This is a PREDICTABILITY failure: the general instruction to track identities did not sufficiently settle how to associate the intermediate observations. Make the tracking procedure explicit. At the initial decision containing the demonstration, identify the requested completed placement, then maintain temporary identities for all targets while scanning the remaining demonstration. Treat target lists as unordered detections, not persistent indices. For each interval of coordinated target movement, associate the moving targets jointly across the entire interval using their successive displacement directions and smooth paths. Do not independently choose the nearest detection to an old position at each frame, or restore identities from the final layout. When two targets pass on different sides of their shared midpoint, follow each through its own intermediate branch to the opposite endpoint; a return to the original set of positions does not imply a return of each identity. Distinguish these coordinated movements from small visible-center shifts caused by occlusion. For example, a selected target initially near [105, 164] that moves through [115, 148], [115, 111], and [97, 91] ends at [95, 89], not at the other target's endpoint near [104, 164]. Similarly, a selected target near [99, 167] moving through [104, 162], [121, 127], and [104, 95] ends at [99, 90], rather than the endpoint near its original location. These illustrate smooth branch continuation, not coordinate-specific exceptions. Keep the existing field and write timing: selected_target holds only the selected physical target's canonical center in the first execution scene, for example [95, 89]. Compute and write it at the initial decision after inspecting the complete demonstration and execution-start scene; discard the temporary tracks. Copy the incoming value unchanged at subsequent decisions. Retain the existing unknown rule for genuinely unresolved identity. No additional memory fields are needed."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    27,
+    "exec",
+    730
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [82, 127]",
+   "recorded": "A: pick up the cube at [82, 129]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make the target-exchange association explicit: the first placement target at [107, 163] later sits at [105, 164], then follows [115, 148] at t=672, [115, 111] at t=688, [97, 91] at t=704, and [95, 89] at execution. Write selected_target=[95, 89], not [104, 164]. The general tracking instruction was present, but did not settle this association against the misleading return of the overall layout to its original positions.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    63,
+    "exec",
+    1135
+   ],
+   "memory_in": "selected_target=",
+   "answered": "A: pick up the cube at [81, 128]",
+   "recorded": "A: pick up the cube at [82, 129]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make the target correspondence explicit for the final exchange: the second-placement target near [99, 167] follows [104, 162] at t=1072, [121, 127] at t=1088, [104, 95] at t=1104, and [99, 90] at t=1120. Write selected_target=[99, 90], not [98, 166]. The general tracking instruction was present, but did not settle this correspondence in my answer.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

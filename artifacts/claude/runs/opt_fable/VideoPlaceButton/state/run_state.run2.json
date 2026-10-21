@@ -1,0 +1,429 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "variables": {
+  "task": "VideoPlaceButton",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   7,
+   31,
+   47,
+   52,
+   89
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The goal names one cube color (red, blue or green); call it the goal cube. Never choose C (press the button): the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory. Rules, applied in whatever situation you stand in: 1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says (the physical target the chosen placement landed on, followed through any movement of targets in the final demonstration frames, then mapped to the execution scene), then choose A: pick up the cube, pointing at the goal cube's current position in the execution scene. e.g. A: pick up the cube at [84, 122]. 2. Cube in hand (the scene at this decision step shows fingers about 46% open with the gripper raised, height near 0.15, after the execution steps showed it descend to the cube and close; the cube may or may not be reported as 'held in the gripper', trust the finger opening) and cube_placed is 'no': choose B: drop onto, pointing at the target entry in the current scene nearest to goal_target, which already accounts for any target movement in the demonstration, so never re-derive the drop point from where the placement visually happened (targets wobble a few pixels; use the current listed position, e.g. B: drop onto at [127, 146]). If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself. 3. Cube not in hand (fingers 100% open) and cube_placed is 'no' and goal_target is known: the pick failed or was never done; choose A: pick up the cube at the goal cube's current position. 4. cube_placed is 'yes' and the goal cube rests on goal_target: the task is complete; if a subgoal is still required, choose B: drop onto the same target again only if the cube is in hand, otherwise choose A: pick up the goal cube (keeps the loop safe). Never press the button. 5. Any situation not covered: if fingers are about 46% open and the gripper is raised, treat the cube as held and apply rule 2; otherwise apply rule 3. Never choose C.",
+  "fields": [
+   {
+    "name": "cube_placed",
+    "description": "'no' at the first step and at every step until the execution steps shown at this step contain a frame where the fingers widen from ~46% to ~100% while the gripper height is under 0.05 and the goal cube lies within about 6 pixels of goal_target; from that step on write 'yes'. e.g. no",
+    "annotation": "Whether the robot itself has already dropped the goal cube onto goal_target during execution. 'no' at every step until the decision step whose execution steps show the robot release the cube (fingers widen back to ~100% while low) with the cube lying within about 6 pixels of goal_target; 'yes' from that step on. e.g. no"
+   },
+   {
+    "name": "goal_target",
+    "description": "If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Note the listed target nearest the cube in that placement frame; that is the physical target the cube was placed on. Follow that same target forward through every remaining demonstration frame, matching entries from one frame to the next by nearest position (it may drift a few pixels, vanish while occluded, and in the final frames with the gripper parked at height 0.200 the targets may move tens of pixels per frame or swap places; keep following the one you started with, do not switch to whichever entry is nearest the original spot). Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the followed target's position in the last demonstration frame. If no target moved after the placement, this is the execution-scene target nearest the placement spot. e.g. [86, 100]",
+    "annotation": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. That placement lands on one physical target: the listed target entry nearest the cube's resting position in the placement frame. Follow that same physical target forward through every remaining demonstration frame, matching each frame's target entries to the previous frame's by nearest position (targets may drift a few pixels, may vanish while occluded and reappear, and may move tens of pixels per frame in the final frames while the gripper sits parked at height 0.200; a target that moves is followed, never replaced by whichever entry ends up nearest the old spot). The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that followed target's position in the last demonstration frame. When no target moved after the placement this is simply the execution-scene target nearest the placement spot. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+   }
+  ]
+ },
+ "initial": {
+  "task": "VideoPlaceButton",
+  "run": 1,
+  "stage": "init",
+  "initialized_on": [
+   7,
+   31,
+   47,
+   52,
+   89
+  ],
+  "seed": 7,
+  "provider": "anthropic",
+  "model": "claude-fable-5-1",
+  "reasoning_effort": "low",
+  "policy_prompt_for_subgoal": "The goal names one cube color (red or blue); call it the goal cube. Never choose C (press the button): the button press in the video is only a marker telling you which target to use. Rules, applied in whatever situation you stand in: 1. Start of episode (memory empty, target_before_button unknown, gripper raised out of frame, fingers 100% open): first compute target_before_button from the demonstration as the memory instruction says, then choose A: pick up the cube, pointing at the goal cube's current position in the execution scene. e.g. A: pick up the cube at [84, 122]. 2. Cube in hand (the scene at this decision step shows fingers about 46% open with the gripper raised, height near 0.15, after the execution steps showed it descend to the cube and close; the cube may or may not be reported as 'held in the gripper', trust the finger opening) and cube_placed is 'no': choose B: drop onto, pointing at the target entry in the current scene nearest to target_before_button (targets wobble a few pixels; use the current listed position, e.g. B: drop onto at [127, 146]). If no listed target is within 10 pixels of target_before_button (it may be hidden), point at target_before_button itself. 3. Cube not in hand (fingers 100% open) and cube_placed is 'no' and target_before_button is known: the pick failed or was never done; choose A: pick up the cube at the goal cube's current position. 4. cube_placed is 'yes' and the goal cube rests on target_before_button: the task is complete; if a subgoal is still required, choose B: drop onto the same target again only if the cube is in hand, otherwise choose A: pick up the goal cube (keeps the loop safe). Never press the button. 5. Any situation not covered: if fingers are about 46% open and the gripper is raised, treat the cube as held and apply rule 2; otherwise apply rule 3. Never choose C.",
+  "fields": [
+   {
+    "name": "target_before_button",
+    "description": "If the memory carried in holds a value, copy it unchanged. If it is unknown (first step, demonstration shown), compute it from the demonstration steps: find the first demonstration frame whose fingers read 0% open (the gripper is closing on nothing to press the button; the next frames show it low over the button); look backwards from there for the last frame where the fingers went from ~46% open to ~100% open with height under 0.05 (a release); the cube's position in that frame is the placement point; among the target entries listed in the execution scene at the bottom of this step, pick the one nearest that placement point and write its [y, x]. e.g. [126, 145]",
+    "annotation": "The [y, x] of the target that the demonstration placed the cube on immediately before the button was pressed. Found by reading the whole demonstration: locate the first demonstration frame where the fingers go to 0% open (the gripper then descends onto the button and the button's y shifts, that is the press); take the last cube release before that frame (fingers widen from ~46% to ~100% while the gripper is low, height under 0.05); the cube's position at that release is the placement point; the field holds the coordinates of the target entry nearest that placement point as listed in the scene at the start of execution. Written at the first decision step and never changed afterwards. e.g. [126, 145]"
+   },
+   {
+    "name": "cube_placed",
+    "description": "'no' at the first step and at every step until the execution steps shown at this step contain a frame where the fingers widen from ~46% to ~100% while the gripper height is under 0.05 and the goal cube lies within about 6 pixels of target_before_button; from that step on write 'yes'. e.g. no",
+    "annotation": "Whether the robot itself has already dropped the goal cube onto target_before_button during execution. 'no' at every step until the decision step whose execution steps show the robot release the cube (fingers widen back to ~100% while low) with the cube lying within about 6 pixels of target_before_button; 'yes' from that step on. e.g. no"
+   }
+  ]
+ },
+ "history": [
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 2,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "target_before_button": 0,
+     "cube_placed": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 2
+   },
+   "critique": "field goal_target, ANNOTATOR PROMPT\n  Replaces target_before_button (same role, new name, new filling). The goal instruction in this task varies in one word: it asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. The old rule always took the placement before the press, so on a goal that asked for the target after the press the memory held the wrong target and the policy dropped on it (SUFFICIENCY: the subgoal could not be chosen from a memory holding the pre-press target when the goal asked for the post-press one). Filling: read the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a decoy drop and is not a placement (the demonstration ends with such a drop onto bare table). If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step, never changed. e.g. [86, 100]\n\nfield goal_target, POLICY PROMPT\n  Replaces target_before_button. If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a decoy drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]\n\nthe policy prompt for subgoal\n  The failure: the goal asked for the target placed on right after the button press, the policy stood with the cube freshly lifted (fingers 46%, gripper raised) and memory holding the pre-press target, and rule 2 sent it to drop on that target; the recorded drop was on the other target, the one the demonstration used after the press. Rule 1 should no longer say 'compute target_before_button'; it should say: read whether the goal says 'before' or 'after', compute goal_target from the demonstration as the memory instruction says, then choose A: pick up the cube at the goal cube's current position. Every mention of target_before_button in rules 2, 3 and 4 becomes goal_target: rule 2 drops onto the current listed target nearest goal_target (within 10 pixels; else goal_target itself), rule 4 checks the goal cube resting on goal_target. Add to the preamble: the button press in the video is a time marker only; which side of it matters is set by the goal's word 'before' or 'after', and goal_target already encodes that choice, so the drop point always follows the memory. Rule 3 and 5 are unchanged in substance.\n\nrefused\n  One step on a goal that said 'right before the button was pressed' reported that the memory should have held the post-press target, because the recorded drop point was the target the demonstration used after the press. Its proposed fix, taking the last release of the goal cube immediately preceding the descent to the button, already yields exactly the target the memory carried, so the fix cannot produce the recorded answer. Two other episodes with the same 'before' wording were solved correctly by that reading, and the 'after' episode is solved by the goal-dependent rule above. That recorded label contradicts the goal wording and the other episodes, so its request is not passed on; the goal-dependent rule is kept as the consistent reading.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "delete",
+      "field": "target_before_button",
+      "edits": [],
+      "description": ""
+     },
+     {
+      "kind": "add",
+      "field": "goal_target",
+      "edits": [],
+      "description": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+     },
+     {
+      "kind": "modify",
+      "field": "cube_placed",
+      "edits": [
+       {
+        "modify_from": "already dropped the goal cube onto target_before_button during execution",
+        "modify_to": "already dropped the goal cube onto goal_target during execution"
+       },
+       {
+        "modify_from": "within about 6 pixels of target_before_button; 'yes' from that step on",
+        "modify_to": "within about 6 pixels of goal_target; 'yes' from that step on"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "add",
+      "field": "goal_target",
+      "edits": [],
+      "description": "If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]"
+     },
+     {
+      "kind": "modify",
+      "field": "cube_placed",
+      "edits": [
+       {
+        "modify_from": "within about 6 pixels of target_before_button; from that step on write 'yes'",
+        "modify_to": "within about 6 pixels of goal_target; from that step on write 'yes'"
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "the button press in the video is only a marker telling you which target to use.",
+      "modify_to": "the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory."
+     },
+     {
+      "modify_from": "1. Start of episode (memory empty, target_before_button unknown, gripper raised out of frame, fingers 100% open): first compute target_before_button from the demonstration as the memory instruction says,",
+      "modify_to": "1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says,"
+     },
+     {
+      "modify_from": "pointing at the target entry in the current scene nearest to target_before_button (targets wobble",
+      "modify_to": "pointing at the target entry in the current scene nearest to goal_target (targets wobble"
+     },
+     {
+      "modify_from": "If no listed target is within 10 pixels of target_before_button (it may be hidden), point at target_before_button itself.",
+      "modify_to": "If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself."
+     },
+     {
+      "modify_from": "and cube_placed is 'no' and target_before_button is known:",
+      "modify_to": "and cube_placed is 'no' and goal_target is known:"
+     },
+     {
+      "modify_from": "4. cube_placed is 'yes' and the goal cube rests on target_before_button:",
+      "modify_to": "4. cube_placed is 'yes' and the goal cube rests on goal_target:"
+     }
+    ],
+    "refused": "The report's own refusal is kept: the one 'right before' step whose recorded drop was the post-press target is not acted on, since its proposed reading already produces the target the memory held and contradicts both the goal wording and the two other 'before' episodes solved correctly. No clause is added for it; the goal-dependent goal_target rule covers the consistent cases."
+   },
+   "not_applied": []
+  },
+  {
+   "scored": {
+    "scored": 10,
+    "subgoal_wrong": 1,
+    "memory_wrong": 0,
+    "memory_only": 0,
+    "memory_only_unexplained": 0,
+    "fields": {
+     "cube_placed": 0,
+     "goal_target": 0
+    },
+    "format_wrong": 0,
+    "choice_wrong": 0,
+    "point_wrong": 1
+   },
+   "critique": "field goal_target, ANNOTATOR PROMPT\n  Situation: the goal asked for the target right before the button press. In the demonstration the goal cube was placed on one target, the button was pressed, the cube was moved to a second target, then dropped on bare table; after that, during the final frames while the gripper sat parked at height 0.200, two of the listed targets moved frame by frame and ended up having exchanged positions. The rule as written took the execution-scene target entry nearest the demonstration resting position, so it recorded the target now sitting where the placement happened, while the recorded drop went to the target that had physically been under the cube and had since moved elsewhere. The memory held the wrong target, so the subgoal was wrong (PREDICTABILITY of the field and, through it, SUFFICIENCY). Change: goal_target holds the [y, x] in the execution scene of the physical target the chosen placement landed on, identified by tracking that target's listed entry from the placement frame to the last demonstration frame, matching each frame's entries to the previous frame's by nearest position (targets may drift a few pixels, vanish while occluded, and may move tens of pixels per frame during the final parked frames; a target that moves must be followed, not replaced by whichever entry ends up nearest the old spot). Written at the first decision step, never changed. Also: the goal cube may be red, blue or green. e.g. [119, 145]\n\nfield goal_target, POLICY PROMPT\n  Same failure: the policy derived the target from nearest pixel position in the execution scene and got the target that had moved into the placement spot rather than the one the cube was placed on. Change the first-step derivation: after choosing the placement frame (last placement before the press for 'before', first after it for 'after'; placements are releases with the cube within about 8 pixels of a listed target, bare-table drops ignored), note the listed target nearest the cube there, then follow that same entry forward through every remaining demonstration frame by nearest-position matching from one frame to the next, including the final frames where the gripper is parked at height 0.200 and the targets may move or swap places. Write the [y, x] of the execution-scene entry nearest that entry's position in the last demonstration frame. If no target moved in the final frames this gives the same answer as before. The goal cube may be red, blue or green; the color in the goal names it. Copy the value unchanged at every later step. e.g. [119, 145]\n\nthe policy prompt for subgoal\n  Rule 1 says the goal names one cube color 'red or blue'; it must say any color the goal names (red, blue or green) is the goal cube. Rule 1 should also state that goal_target is to be derived by following the placement target through any movement of targets in the final demonstration frames, as the memory instruction describes, and that the drop point in rule 2 is the current scene's target nearest that followed position, not the target nearest where the placement visually happened. No other rule changes.\n\nrefused\n  The failed step proposed matching the demonstration placement to the execution scene 'by layout order or relative arrangement' rather than by position; that is not what the episodes show. In the other episodes targets stay put and nearest-position mapping is correct; in the failed one the targets physically moved during the final parked frames, and following the moving entry frame by frame is what recovers the recorded target. The proposal about 'several placements of other-colored cubes preceding the press' is also dropped: in every demonstration only the goal cube is ever moved, so there is no such ambiguity.",
+   "applied": {
+    "annotator_prompt": [
+     {
+      "kind": "modify",
+      "field": "goal_target",
+      "edits": [
+       {
+        "modify_from": "The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards.",
+        "modify_to": "That placement lands on one physical target: the listed target entry nearest the cube's resting position in the placement frame. Follow that same physical target forward through every remaining demonstration frame, matching each frame's target entries to the previous frame's by nearest position (targets may drift a few pixels, may vanish while occluded and reappear, and may move tens of pixels per frame in the final frames while the gripper sits parked at height 0.200; a target that moves is followed, never replaced by whichever entry ends up nearest the old spot). The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that followed target's position in the last demonstration frame. When no target moved after the placement this is simply the execution-scene target nearest the placement spot. Written at the first decision step and never changed afterwards."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_memory": [
+     {
+      "kind": "modify",
+      "field": "goal_target",
+      "edits": [
+       {
+        "modify_from": "Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement.",
+        "modify_to": "Note the listed target nearest the cube in that placement frame; that is the physical target the cube was placed on. Follow that same target forward through every remaining demonstration frame, matching entries from one frame to the next by nearest position (it may drift a few pixels, vanish while occluded, and in the final frames with the gripper parked at height 0.200 the targets may move tens of pixels per frame or swap places; keep following the one you started with, do not switch to whichever entry is nearest the original spot). Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the followed target's position in the last demonstration frame. If no target moved after the placement, this is the execution-scene target nearest the placement spot."
+       }
+      ],
+      "description": ""
+     }
+    ],
+    "policy_prompt_for_subgoal": [
+     {
+      "modify_from": "The goal names one cube color (red or blue); call it the goal cube.",
+      "modify_to": "The goal names one cube color (red, blue or green); call it the goal cube."
+     },
+     {
+      "modify_from": "compute goal_target from the demonstration as the memory instruction says, then choose A:",
+      "modify_to": "compute goal_target from the demonstration as the memory instruction says (the physical target the chosen placement landed on, followed through any movement of targets in the final demonstration frames, then mapped to the execution scene), then choose A:"
+     },
+     {
+      "modify_from": "pointing at the target entry in the current scene nearest to goal_target (targets wobble a few pixels; use the current listed position,",
+      "modify_to": "pointing at the target entry in the current scene nearest to goal_target, which already accounts for any target movement in the demonstration, so never re-derive the drop point from where the placement visually happened (targets wobble a few pixels; use the current listed position,"
+     }
+    ],
+    "refused": "The report's refused items stay out: matching demonstration targets to the execution scene by layout order or relative arrangement is not adopted, since nearest-position mapping is correct wherever targets stay put and tracking the moving target frame by frame covers the one case where they did not; and no clause is added for several placements of other-colored cubes before the press, since only the goal cube is ever moved in the demonstrations. The round-1 refusal of the contradictory 'before' label also remains. Nothing in this edit undoes the goal-dependent before/after rule from round 1; it only changes how the chosen placement is mapped to an execution-scene target."
+   },
+   "not_applied": []
+  }
+ ],
+ "revisions": 2,
+ "quiet": 0,
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    19,
+    21,
+    72,
+    79,
+    83
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.8,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal names one cube color (red or blue); call it the goal cube. Never choose C (press the button): the button press in the video is only a marker telling you which target to use. Rules, applied in whatever situation you stand in: 1. Start of episode (memory empty, target_before_button unknown, gripper raised out of frame, fingers 100% open): first compute target_before_button from the demonstration as the memory instruction says, then choose A: pick up the cube, pointing at the goal cube's current position in the execution scene. e.g. A: pick up the cube at [84, 122]. 2. Cube in hand (the scene at this decision step shows fingers about 46% open with the gripper raised, height near 0.15, after the execution steps showed it descend to the cube and close; the cube may or may not be reported as 'held in the gripper', trust the finger opening) and cube_placed is 'no': choose B: drop onto, pointing at the target entry in the current scene nearest to target_before_button (targets wobble a few pixels; use the current listed position, e.g. B: drop onto at [127, 146]). If no listed target is within 10 pixels of target_before_button (it may be hidden), point at target_before_button itself. 3. Cube not in hand (fingers 100% open) and cube_placed is 'no' and target_before_button is known: the pick failed or was never done; choose A: pick up the cube at the goal cube's current position. 4. cube_placed is 'yes' and the goal cube rests on target_before_button: the task is complete; if a subgoal is still required, choose B: drop onto the same target again only if the cube is in hand, otherwise choose A: pick up the goal cube (keeps the loop safe). Never press the button. 5. Any situation not covered: if fingers are about 46% open and the gripper is raised, treat the cube as held and apply rule 2; otherwise apply rule 3. Never choose C.",
+    "fields": [
+     {
+      "name": "target_before_button",
+      "description": "If the memory carried in holds a value, copy it unchanged. If it is unknown (first step, demonstration shown), compute it from the demonstration steps: find the first demonstration frame whose fingers read 0% open (the gripper is closing on nothing to press the button; the next frames show it low over the button); look backwards from there for the last frame where the fingers went from ~46% open to ~100% open with height under 0.05 (a release); the cube's position in that frame is the placement point; among the target entries listed in the execution scene at the bottom of this step, pick the one nearest that placement point and write its [y, x]. e.g. [126, 145]",
+      "annotation": "The [y, x] of the target that the demonstration placed the cube on immediately before the button was pressed. Found by reading the whole demonstration: locate the first demonstration frame where the fingers go to 0% open (the gripper then descends onto the button and the button's y shifts, that is the press); take the last cube release before that frame (fingers widen from ~46% to ~100% while the gripper is low, height under 0.05); the cube's position at that release is the placement point; the field holds the coordinates of the target entry nearest that placement point as listed in the scene at the start of execution. Written at the first decision step and never changed afterwards. e.g. [126, 145]"
+     },
+     {
+      "name": "cube_placed",
+      "description": "'no' at the first step and at every step until the execution steps shown at this step contain a frame where the fingers widen from ~46% to ~100% while the gripper height is under 0.05 and the goal cube lies within about 6 pixels of target_before_button; from that step on write 'yes'. e.g. no",
+      "annotation": "Whether the robot itself has already dropped the goal cube onto target_before_button during execution. 'no' at every step until the decision step whose execution steps show the robot release the cube (fingers widen back to ~100% while low) with the cube lying within about 6 pixels of target_before_button; 'yes' from that step on. e.g. no"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    7,
+    16,
+    22,
+    52,
+    97
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal names one cube color (red or blue); call it the goal cube. Never choose C (press the button): the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory. Rules, applied in whatever situation you stand in: 1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says, then choose A: pick up the cube, pointing at the goal cube's current position in the execution scene. e.g. A: pick up the cube at [84, 122]. 2. Cube in hand (the scene at this decision step shows fingers about 46% open with the gripper raised, height near 0.15, after the execution steps showed it descend to the cube and close; the cube may or may not be reported as 'held in the gripper', trust the finger opening) and cube_placed is 'no': choose B: drop onto, pointing at the target entry in the current scene nearest to goal_target (targets wobble a few pixels; use the current listed position, e.g. B: drop onto at [127, 146]). If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself. 3. Cube not in hand (fingers 100% open) and cube_placed is 'no' and goal_target is known: the pick failed or was never done; choose A: pick up the cube at the goal cube's current position. 4. cube_placed is 'yes' and the goal cube rests on goal_target: the task is complete; if a subgoal is still required, choose B: drop onto the same target again only if the cube is in hand, otherwise choose A: pick up the goal cube (keeps the loop safe). Never press the button. 5. Any situation not covered: if fingers are about 46% open and the gripper is raised, treat the cube as held and apply rule 2; otherwise apply rule 3. Never choose C.",
+    "fields": [
+     {
+      "name": "cube_placed",
+      "description": "'no' at the first step and at every step until the execution steps shown at this step contain a frame where the fingers widen from ~46% to ~100% while the gripper height is under 0.05 and the goal cube lies within about 6 pixels of goal_target; from that step on write 'yes'. e.g. no",
+      "annotation": "Whether the robot itself has already dropped the goal cube onto goal_target during execution. 'no' at every step until the decision step whose execution steps show the robot release the cube (fingers widen back to ~100% while low) with the cube lying within about 6 pixels of goal_target; 'yes' from that step on. e.g. no"
+     },
+     {
+      "name": "goal_target",
+      "description": "If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]",
+      "annotation": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    6,
+    10,
+    19,
+    22,
+    24
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal names one cube color (red or blue); call it the goal cube. Never choose C (press the button): the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory. Rules, applied in whatever situation you stand in: 1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says, then choose A: pick up the cube, pointing at the goal cube's current position in the execution scene. e.g. A: pick up the cube at [84, 122]. 2. Cube in hand (the scene at this decision step shows fingers about 46% open with the gripper raised, height near 0.15, after the execution steps showed it descend to the cube and close; the cube may or may not be reported as 'held in the gripper', trust the finger opening) and cube_placed is 'no': choose B: drop onto, pointing at the target entry in the current scene nearest to goal_target (targets wobble a few pixels; use the current listed position, e.g. B: drop onto at [127, 146]). If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself. 3. Cube not in hand (fingers 100% open) and cube_placed is 'no' and goal_target is known: the pick failed or was never done; choose A: pick up the cube at the goal cube's current position. 4. cube_placed is 'yes' and the goal cube rests on goal_target: the task is complete; if a subgoal is still required, choose B: drop onto the same target again only if the cube is in hand, otherwise choose A: pick up the goal cube (keeps the loop safe). Never press the button. 5. Any situation not covered: if fingers are about 46% open and the gripper is raised, treat the cube as held and apply rule 2; otherwise apply rule 3. Never choose C.",
+    "fields": [
+     {
+      "name": "cube_placed",
+      "description": "'no' at the first step and at every step until the execution steps shown at this step contain a frame where the fingers widen from ~46% to ~100% while the gripper height is under 0.05 and the goal cube lies within about 6 pixels of goal_target; from that step on write 'yes'. e.g. no",
+      "annotation": "Whether the robot itself has already dropped the goal cube onto goal_target during execution. 'no' at every step until the decision step whose execution steps show the robot release the cube (fingers widen back to ~100% while low) with the cube lying within about 6 pixels of goal_target; 'yes' from that step on. e.g. no"
+     },
+     {
+      "name": "goal_target",
+      "description": "If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]",
+      "annotation": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    2,
+    6,
+    20,
+    26,
+    46
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal names one cube color (red or blue); call it the goal cube. Never choose C (press the button): the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory. Rules, applied in whatever situation you stand in: 1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says, then choose A: pick up the cube, pointing at the goal cube's current position in the execution scene. e.g. A: pick up the cube at [84, 122]. 2. Cube in hand (the scene at this decision step shows fingers about 46% open with the gripper raised, height near 0.15, after the execution steps showed it descend to the cube and close; the cube may or may not be reported as 'held in the gripper', trust the finger opening) and cube_placed is 'no': choose B: drop onto, pointing at the target entry in the current scene nearest to goal_target (targets wobble a few pixels; use the current listed position, e.g. B: drop onto at [127, 146]). If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself. 3. Cube not in hand (fingers 100% open) and cube_placed is 'no' and goal_target is known: the pick failed or was never done; choose A: pick up the cube at the goal cube's current position. 4. cube_placed is 'yes' and the goal cube rests on goal_target: the task is complete; if a subgoal is still required, choose B: drop onto the same target again only if the cube is in hand, otherwise choose A: pick up the goal cube (keeps the loop safe). Never press the button. 5. Any situation not covered: if fingers are about 46% open and the gripper is raised, treat the cube as held and apply rule 2; otherwise apply rule 3. Never choose C.",
+    "fields": [
+     {
+      "name": "cube_placed",
+      "description": "'no' at the first step and at every step until the execution steps shown at this step contain a frame where the fingers widen from ~46% to ~100% while the gripper height is under 0.05 and the goal cube lies within about 6 pixels of goal_target; from that step on write 'yes'. e.g. no",
+      "annotation": "Whether the robot itself has already dropped the goal cube onto goal_target during execution. 'no' at every step until the decision step whose execution steps show the robot release the cube (fingers widen back to ~100% while low) with the cube lying within about 6 pixels of goal_target; 'yes' from that step on. e.g. no"
+     },
+     {
+      "name": "goal_target",
+      "description": "If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]",
+      "annotation": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+     }
+    ]
+   }
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    8,
+    46,
+    51,
+    72,
+    74
+   ],
+   "verified_of_all": 0.9,
+   "subgoal_verified": 0.9,
+   "variables": {
+    "task": "VideoPlaceButton",
+    "run": 1,
+    "stage": "init",
+    "initialized_on": [
+     7,
+     31,
+     47,
+     52,
+     89
+    ],
+    "seed": 7,
+    "provider": "anthropic",
+    "model": "claude-fable-5-1",
+    "reasoning_effort": "low",
+    "policy_prompt_for_subgoal": "The goal names one cube color (red or blue); call it the goal cube. Never choose C (press the button): the button press in the video is only a time marker; which side of it matters is set by the goal's word 'before' or 'after', and goal_target in memory already encodes that choice, so the drop point always follows the memory. Rules, applied in whatever situation you stand in: 1. Start of episode (memory empty, goal_target unknown, gripper raised out of frame, fingers 100% open): first read whether the goal says 'right before' or 'right after' the button was pressed, compute goal_target from the demonstration as the memory instruction says, then choose A: pick up the cube, pointing at the goal cube's current position in the execution scene. e.g. A: pick up the cube at [84, 122]. 2. Cube in hand (the scene at this decision step shows fingers about 46% open with the gripper raised, height near 0.15, after the execution steps showed it descend to the cube and close; the cube may or may not be reported as 'held in the gripper', trust the finger opening) and cube_placed is 'no': choose B: drop onto, pointing at the target entry in the current scene nearest to goal_target (targets wobble a few pixels; use the current listed position, e.g. B: drop onto at [127, 146]). If no listed target is within 10 pixels of goal_target (it may be hidden), point at goal_target itself. 3. Cube not in hand (fingers 100% open) and cube_placed is 'no' and goal_target is known: the pick failed or was never done; choose A: pick up the cube at the goal cube's current position. 4. cube_placed is 'yes' and the goal cube rests on goal_target: the task is complete; if a subgoal is still required, choose B: drop onto the same target again only if the cube is in hand, otherwise choose A: pick up the goal cube (keeps the loop safe). Never press the button. 5. Any situation not covered: if fingers are about 46% open and the gripper is raised, treat the cube as held and apply rule 2; otherwise apply rule 3. Never choose C.",
+    "fields": [
+     {
+      "name": "cube_placed",
+      "description": "'no' at the first step and at every step until the execution steps shown at this step contain a frame where the fingers widen from ~46% to ~100% while the gripper height is under 0.05 and the goal cube lies within about 6 pixels of goal_target; from that step on write 'yes'. e.g. no",
+      "annotation": "Whether the robot itself has already dropped the goal cube onto goal_target during execution. 'no' at every step until the decision step whose execution steps show the robot release the cube (fingers widen back to ~100% while low) with the cube lying within about 6 pixels of goal_target; 'yes' from that step on. e.g. no"
+     },
+     {
+      "name": "goal_target",
+      "description": "If the memory carried in holds a value, copy it unchanged. If it is empty (first step, demonstration shown): first read the goal instruction and note whether it says 'right before' or 'right after' the button was pressed. Then in the demonstration steps find the press: the first frame with fingers 0% open where the gripper is low (height under 0.08) over the button and the button's y jumps a few pixels. List the placements: frames where the fingers go from ~46% to at least ~95% open with height under 0.05 and the cube in that frame lies within about 8 pixels of a listed target (a release with no target within about 10 pixels of the cube is a drop on bare table; ignore it). For 'before', take the last placement earlier than the press; for 'after', take the first placement later than the press. Among the target entries in the execution scene at the bottom of this step, write the [y, x] of the one nearest the cube's resting position at that placement. e.g. [86, 100]",
+      "annotation": "The [y, x] of the target that the goal instruction designates: the goal asks for the target the demonstration placed the cube on either 'right before' or 'right after' the button was pressed. Found by reading the whole demonstration. The press is the first demonstration frame where the fingers read 0% open and the gripper is low (height under 0.08) over the button, with the button's listed y shifting a few pixels. A placement is a frame where the fingers widen from ~46% to at least ~95% with gripper height under 0.05 and the cube comes to rest within about 8 pixels of a listed target; a release with no listed target within about 10 pixels of the cube's resting position is a drop on bare table and is not a placement. If the goal says 'before', take the last placement preceding the press frame; if it says 'after', take the first placement following the press frame. The field holds the [y, x] of the target entry in the scene at the start of execution nearest to that placement's cube resting position. Written at the first decision step and never changed afterwards. e.g. [86, 100]"
+     }
+    ]
+   }
+  }
+ ]
+}

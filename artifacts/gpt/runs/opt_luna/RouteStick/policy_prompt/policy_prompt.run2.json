@@ -1,0 +1,77 @@
+{
+ "task": "RouteStick",
+ "run": 2,
+ "iterations": 5,
+ "revisions": 4,
+ "stopped_because": "ran the 5 iterations it was given",
+ "measured": [
+  {
+   "iteration": 1,
+   "episodes": [
+    44,
+    76,
+    79,
+    85,
+    86
+   ],
+   "verified_of_all": 0.8,
+   "subgoal_verified": 0.9
+  },
+  {
+   "iteration": 2,
+   "episodes": [
+    2,
+    32,
+    40,
+    65,
+    85
+   ],
+   "verified_of_all": 0.6875,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 3,
+   "episodes": [
+    2,
+    48,
+    75,
+    79,
+    80
+   ],
+   "verified_of_all": 0.7619047619047619,
+   "subgoal_verified": 1.0
+  },
+  {
+   "iteration": 4,
+   "episodes": [
+    8,
+    17,
+    18,
+    40,
+    70
+   ],
+   "verified_of_all": 0.8125,
+   "subgoal_verified": 0.9375
+  },
+  {
+   "iteration": 5,
+   "episodes": [
+    5,
+    10,
+    22,
+    38,
+    73
+   ],
+   "verified_of_all": 1.0,
+   "subgoal_verified": 1.0
+  }
+ ],
+ "policy_prompt_for_subgoal": "First update remaining_path according to the policy prompt for memory. If its first letter is A, select A: move to the nearest robot-left target clockwise. If B, select B: move to the nearest robot-right target clockwise. If C, select C: move to the nearest robot-left target counterclockwise. If D, select D: move to the nearest robot-right target counterclockwise. These conditions apply regardless of the preceding subgoal: after any completed A, B, C, or D, transition to whichever letter now leads remaining_path. The current highlighted target is the departure site, not the destination. Robot-left selects the adjacent target with larger x and robot-right the adjacent target with smaller x; the menu handles these targets internally and requires no point. Initial subgoals decoded from the demonstrations are B for episode 0, A for episode 19, D for episode 58, A for episode 86, and A for episode 99. Never infer the next direction solely from the current location: identical locations can require different moves on repeated visits. If the list is empty, the demonstrated route is complete and no further traversal is intended. If an unexpected situation nevertheless requires a menu answer, or the demonstration cannot be decoded, choose A if a larger-x adjacent target exists, otherwise B if a smaller-x adjacent target exists, otherwise A; this is only a deterministic fallback, not an additional demonstrated move.",
+ "fields": [
+  {
+   "name": "remaining_path",
+   "description": "When memory is empty and demonstration frames are present, decode the entire demonstration in two stages. First construct a temporary traversal ledger from the demonstration alone, excluding the reset to the execution starting scene. Anchor the ledger at the initial demonstrated highlighted target and initial wrist position, before any arrival change. Identify that starting target and every chronological arrival through the final demonstration arrival, identifying sites by stable horizontal order rather than exact fluctuating coordinates. The first distinct arrival closes the first traversal from this initial scene; it does not begin the route. Each consecutive pair of distinct adjacent sites creates one ledger row, even if that pair or destination has appeared before. Complete this arrival ledger before classifying any traversal; never compress its repeated rows. The ledger is temporary reasoning at this decision, not an additional memory field. Use highlight changes together with wrist arrival and subsequent motion to resolve each reached site. Temporary double highlights must not erase an arrival boundary. Suppress only coordinate jitter and duplicate indications of the same arrival; preserve every return to a previously visited site, immediate reversal, and repeated crossing as a separate traversal. Do not combine traversals into a net excursion. Second classify each ledger row independently. For that crossing, identify its departure and destination target sites, representative resting wrist positions at those endpoints, and intermediate wrist samples belonging to that crossing. Write any positions as [y, x]. Compute destination target x minus departure target x to determine horizontal direction; do not use a local reversal in wrist x. Judge the arc using the substantial interior wrist excursion relative to the line joining that row's endpoint wrist positions, not a near-arrival sample that may belong to the next crossing. For endpoint wrist positions [y0, x0] and [y1, x1] and an interior wrist sample [ys, xs], when x1 differs from x0, baseline_y = y0 + (y1 - y0) * (xs - x0) / (x1 - x0). Negative ys minus baseline_y indicates upper; positive indicates lower. Use wrist coordinates throughout this baseline calculation. Reversing horizontal direction does not by itself change the side of the baseline occupied by the arc. Use this table: larger x plus upper arc = A; larger x plus lower arc = C; smaller x plus upper arc = D; smaller x plus lower arc = B. Larger x is robot-left and smaller x is robot-right. Do not infer an arc from the preceding traversal, the net excursion, or a waypoint. Do not confuse the wrist with the attached stick endpoint or compare wrist height directly with target coordinates to classify the arc. Write exactly one letter per ledger row in chronological order. Verify a one-to-one correspondence between rows and letters, retaining every repeated crossing and the row ending at the final demonstration arrival. Explicitly check that the first row covers the motion from the demonstration's initial scene to its first distinct arrival, and that its independently classified letter is the first entry of the list. Keep this entry even though it is also the command being selected now. Before committing the list, verify every letter against its own demonstration segment, not just the first letter. First check the departure and destination target x values: smaller destination x permits only B or D; larger destination x permits only A or C. Independently check the intermediate wrist trajectory against the baseline joining that segment's endpoint wrist resting positions: upper selects D for smaller x or A for larger x; lower selects B for smaller x or C for larger x. Correct any letter that fails either check. Recheck both properties for every segment, including successive moves in the same horizontal direction and moves immediately after reversals; neither direction nor arc may be copied from a neighboring traversal. Write the full list at this first decision, without deleting the move selected now. On a later decision with carried memory, the intervening execution shows the preceding oracle command completed at its adjacent target; remove exactly one leading letter from the carried list before selecting the next command. The decision-step protocol guarantees that each such return follows one completed command, so do not count individual frames or repeated highlights as additional completions. If there is no intervening completed execution, retain the carried list. Once exhausted, write []. Use a canonical textual format for the list: square brackets, single-quoted uppercase letters, and a comma followed by one space between entries. This formatting does not change which traversals the list contains or when entries are removed. e.g. ['A', 'B', 'A', 'D']"
+  }
+ ],
+ "stage": "optimized"
+}

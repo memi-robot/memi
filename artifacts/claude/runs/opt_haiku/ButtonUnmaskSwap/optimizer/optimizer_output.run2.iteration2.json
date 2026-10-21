@@ -1,0 +1,215 @@
+{
+ "episodes": [
+  10,
+  15,
+  36,
+  39,
+  47
+ ],
+ "user_chars": 38838,
+ "usage": {
+  "prompt_tokens": 15360,
+  "completion_tokens": 2799,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 15356
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 994
+  }
+ },
+ "reasoning": "I need to plan the JSON edits now: updating the annotator prompts so each container field (red, green, blue) explicitly states that when a tracked container doesn't move in a step, its field retains the last-frame position, with identity changing only through chain links. I also want to add a policy prompt to the green_container memory requiring all three fields to be rewritten at every step, including a worked example, then apply similar brief guidance to red and blue.\n\nI apply the same wording to blue_container, then update the policy memory for green to specify matching the carried-in position to the nearest container in the first frame and tracking it forward by smallest displacement each step, never jumping straight to the last frame. I also insert a reminder at the start of each field's description that it must be rewritten every step showing containers, regardless of whether that color is named in the goal or whether it moved.\n\nThen I tighten the pointing rules so the policy always points at the value written at the current step after the full chain update, never at the carried-in or just-placed value, making sure the memory update finishes first if the carried-in value still looks stale.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Use the remembered container position, not the cube's original spot.",
+    "modify_to": "Use the remembered container position, not the cube's original spot: the point is the <color>_container value written AT THIS STEP after the full chain, not the carried-in value; if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point."
+   },
+   {
+    "modify_from": "do not point at the one just put down.",
+    "modify_to": "do not point at the one just put down. The point is that color's value written at this step after the full chain, not the carried-in value."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "green_container",
+    "edits": [
+     {
+      "modify_from": "[y, x] of the container hiding the green cube.",
+      "modify_to": "[y, x] of the container hiding the green cube. At every step whose frames show containers, rewrite this field, and likewise red_container and blue_container, whether or not the color is named in the goal and whether or not its container moved."
+     },
+     {
+      "modify_from": "At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame.",
+      "modify_to": "At every later step: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame shown nearest the carried value, even if it is 10-15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write that container's last-frame position. Never match the carried value straight to the last frame. Worked example of the swap trap: carried [131, 115]; first frame has containers at [118, 118] and [113, 162], pick [118, 118]; next frame it is at [99, 134], next at [101, 161]; write [101, 161], although the OTHER container, which came from [113, 162], now stands at [131, 116], almost exactly the carried value. A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside)."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_container",
+    "edits": [
+     {
+      "modify_from": "kept exactly as green_container:",
+      "modify_to": "kept exactly as green_container, rewritten at every step that shows containers even when red is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it):"
+     },
+     {
+      "modify_from": "(trust the chain, not an assumed swap);",
+      "modify_to": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match);"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "blue_container",
+    "edits": [
+     {
+      "modify_from": "kept exactly as green_container:",
+      "modify_to": "kept exactly as green_container, rewritten at every step that shows containers even when blue is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it):"
+     },
+     {
+      "modify_from": "(trust the chain, not an assumed swap);",
+      "modify_to": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it);"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "green_container",
+    "edits": [
+     {
+      "modify_from": "Value is the tracked container's position in the last frame shown.",
+      "modify_to": "Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_container",
+    "edits": [
+     {
+      "modify_from": "written at the last frame shown;",
+      "modify_to": "written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal;"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "blue_container",
+    "edits": [
+     {
+      "modify_from": "written at the last frame shown;",
+      "modify_to": "written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal;"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "refused": "The suggestion that a last-frame container coinciding with the carried-in position is itself evidence of a completed swap stays out, as the report itself advised: when nothing moved the coinciding container is the same one, so the instruction says the coincidence is neither for nor against and only the chain decides. The report's request to treat the carried-in red_container as wrong at the press step is not acted on as a memory change; it was an annotation inconsistency, settled by the rule-side clause that a tracked container keeps its identity across a step in which it does not move. No field is added or removed; the chained-match rule committed in round 1 stands and is only made stricter about identity and about rewriting all three fields."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "modify",
+    "field": "green_container",
+    "edits": [
+     {
+      "modify_from": "Value is the tracked container's position in the last frame shown.",
+      "modify_to": "Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_container",
+    "edits": [
+     {
+      "modify_from": "written at the last frame shown;",
+      "modify_to": "written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal;"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "blue_container",
+    "edits": [
+     {
+      "modify_from": "written at the last frame shown;",
+      "modify_to": "written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal;"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "green_container",
+    "edits": [
+     {
+      "modify_from": "[y, x] of the container hiding the green cube.",
+      "modify_to": "[y, x] of the container hiding the green cube. At every step whose frames show containers, rewrite this field, and likewise red_container and blue_container, whether or not the color is named in the goal and whether or not its container moved."
+     },
+     {
+      "modify_from": "At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame.",
+      "modify_to": "At every later step: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame shown nearest the carried value, even if it is 10-15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write that container's last-frame position. Never match the carried value straight to the last frame. Worked example of the swap trap: carried [131, 115]; first frame has containers at [118, 118] and [113, 162], pick [118, 118]; next frame it is at [99, 134], next at [101, 161]; write [101, 161], although the OTHER container, which came from [113, 162], now stands at [131, 116], almost exactly the carried value. A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside)."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_container",
+    "edits": [
+     {
+      "modify_from": "kept exactly as green_container:",
+      "modify_to": "kept exactly as green_container, rewritten at every step that shows containers even when red is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it):"
+     },
+     {
+      "modify_from": "(trust the chain, not an assumed swap);",
+      "modify_to": "(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match);"
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "blue_container",
+    "edits": [
+     {
+      "modify_from": "kept exactly as green_container:",
+      "modify_to": "kept exactly as green_container, rewritten at every step that shows containers even when blue is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it):"
+     },
+     {
+      "modify_from": "(trust the chain, not an assumed swap);",
+      "modify_to": "(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it);"
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "Use the remembered container position, not the cube's original spot.",
+    "modify_to": "Use the remembered container position, not the cube's original spot: the point is the <color>_container value written AT THIS STEP after the full chain, not the carried-in value; if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point."
+   },
+   {
+    "modify_from": "do not point at the one just put down.",
+    "modify_to": "do not point at the one just put down. The point is that color's value written at this step after the full chain, not the carried-in value."
+   }
+  ],
+  "refused": "The suggestion that a last-frame container coinciding with the carried-in position is itself evidence of a completed swap stays out, as the report itself advised: when nothing moved the coinciding container is the same one, so the instruction says the coincidence is neither for nor against and only the chain decides. The report's request to treat the carried-in red_container as wrong at the press step is not acted on as a memory change; it was an annotation inconsistency, settled by the rule-side clause that a tracked container keeps its identity across a step in which it does not move. No field is added or removed; the chained-match rule committed in round 1 stands and is only made stricter about identity and about rewriting all three fields."
+ },
+ "not_applied": [],
+ "refused": "The suggestion that a last-frame container coinciding with the carried-in position is itself evidence of a completed swap stays out, as the report itself advised: when nothing moved the coinciding container is the same one, so the instruction says the coincidence is neither for nor against and only the chain decides. The report's request to treat the carried-in red_container as wrong at the press step is not acted on as a memory change; it was an annotation inconsistency, settled by the rule-side clause that a tracked container keeps its identity across a step in which it does not move. No field is added or removed; the chained-match rule committed in round 1 stands and is only made stricter about identity and about rewriting all three fields.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"modify\", \"field\": \"green_container\", \"edits\": [{\"modify_from\": \"Value is the tracked container's position in the last frame shown.\", \"modify_to\": \"Value is the tracked container's position in the last frame shown. The tracked container changes identity only where a frame-to-frame link in the chain says so: when the tracked container does not move across a step (jitter of a few pixels aside), the field keeps that same container's last-frame position and never switches to another stationary container, even one standing near an earlier value. The field is filled at every step that shows containers, whether or not green is named in the goal.\"}]}, {\"kind\": \"modify\", \"field\": \"red_container\", \"edits\": [{\"modify_from\": \"written at the last frame shown;\", \"modify_to\": \"written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not red is named in the goal;\"}]}, {\"kind\": \"modify\", \"field\": \"blue_container\", \"edits\": [{\"modify_from\": \"written at the last frame shown;\", \"modify_to\": \"written at the last frame shown, the same container kept whenever it does not move across a step and its identity changing only through a chain link, filled at every step that shows containers whether or not blue is named in the goal;\"}]}], \"policy_prompt_for_memory\": [{\"kind\": \"modify\", \"field\": \"green_container\", \"edits\": [{\"modify_from\": \"[y, x] of the container hiding the green cube.\", \"modify_to\": \"[y, x] of the container hiding the green cube. At every step whose frames show containers, rewrite this field, and likewise red_container and blue_container, whether or not the color is named in the goal and whether or not its container moved.\"}, {\"modify_from\": \"At every later step, match the carried-in position to the nearest container in the FIRST frame shown, then follow it frame to frame, each time choosing the container with the smallest displacement from the previous frame; never match the carried-in position straight to the last frame.\", \"modify_to\": \"At every later step: (1) if the carried value is a cube position (first step with containers), take the container standing on it in the first frame shown; (2) otherwise take the container in the FIRST frame shown nearest the carried value, even if it is 10-15 px away because the glide was already under way; (3) step frame to frame, each time picking the container with the smallest displacement from the one just chosen; (4) write that container's last-frame position. Never match the carried value straight to the last frame. Worked example of the swap trap: carried [131, 115]; first frame has containers at [118, 118] and [113, 162], pick [118, 118]; next frame it is at [99, 134], next at [101, 161]; write [101, 161], although the OTHER container, which came from [113, 162], now stands at [131, 116], almost exactly the carried value. A container standing in the last frame at the carried position is neither for nor against; only the chain decides. Conversely, when no container moves during a step, the chain returns the same container and the value stays (jitter of a few pixels aside).\"}]}, {\"kind\": \"modify\", \"field\": \"red_container\", \"edits\": [{\"modify_from\": \"kept exactly as green_container:\", \"modify_to\": \"kept exactly as green_container, rewritten at every step that shows containers even when red is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it):\"}, {\"modify_from\": \"(trust the chain, not an assumed swap);\", \"modify_to\": \"(trust the chain, not an assumed swap; a last-frame container coinciding with the carried position is the swap trap, not a match);\"}]}, {\"kind\": \"modify\", \"field\": \"blue_container\", \"edits\": [{\"modify_from\": \"kept exactly as green_container:\", \"modify_to\": \"kept exactly as green_container, rewritten at every step that shows containers even when blue is not named in the goal and even when its container stood still (snapping from the cube's original position to the container on it):\"}, {\"modify_from\": \"(trust the chain, not an assumed swap);\", \"modify_to\": \"(trust the chain, not an assumed swap; never match the carried value straight to a last-frame container, even one standing within a pixel or two of it);\"}]}], \"policy_prompt_for_subgoal\": [{\"modify_from\": \"Use the remembered container position, not the cube's original spot.\", \"modify_to\": \"Use the remembered container position, not the cube's original spot: the point is the <color>_container value written AT THIS STEP after the full chain, not the carried-in value; if the carried-in value still looks like a first-step cube position or has not been rewritten at a step showing containers, finish the memory update first and then point.\"}, {\"modify_from\": \"do not point at the one just put down.\", \"modify_to\": \"do not point at the one just put down. The point is that color's value written at this step after the full chain, not the carried-in value.\"}], \"refused\": \"The suggestion that a last-frame container coinciding with the carried-in position is itself evidence of a completed swap stays out, as the report itself advised: when nothing moved the coinciding container is the same one, so the instruction says the coincidence is neither for nor against and only the chain decides. The report's request to treat the carried-in red_container as wrong at the press step is not acted on as a memory change; it was an annotation inconsistency, settled by the rule-side clause that a tracked container keeps its identity across a step in which it does not move. No field is added or removed; the chained-match rule committed in round 1 stands and is only made stricter about identity and about rewriting all three fields.\"}"
+}

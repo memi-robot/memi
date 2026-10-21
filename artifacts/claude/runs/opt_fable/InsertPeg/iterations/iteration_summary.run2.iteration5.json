@@ -1,0 +1,85 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "grasp_point",
+  "insert_side"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  12,
+  36,
+  43,
+  45
+ ],
+ "scored": 10,
+ "failed": 0,
+ "subgoal_wrong": 0,
+ "memory_wrong": 0,
+ "subgoal_verified": 1.0,
+ "memory_verified": 1.0,
+ "reads": {
+  "grasp_point": 0,
+  "insert_side": 5
+ },
+ "field_errors": {
+  "grasp_point": {
+   "in": 0,
+   "sole": 0
+  },
+  "insert_side": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {
+  "grasp_point": "read at no step of 10"
+ },
+ "loss": 0.0,
+ "verified_of_all": 1.0,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 10,
+ "critique": "field grasp_point, ANNOTATOR PROMPT\n  DELETE this field. It was written at the first decision step and never read at any later step. The pick point is needed only at the first decision step, where the demonstration is in view and the policy computes it directly from the demonstration frame in which the gripper is lowest and the fingers first close; the memory written at that step is first read at the next step, and at the next step a peg end is always already held, so the point is never needed again. The field fails NECESSITY: it holds a fact that no later step reads. The only situation it existed for, a failed pick that has to be retried after the demonstration is gone, does not occur in any episode. Keep only insert_side.\n\nfield grasp_point, POLICY PROMPT\n  DELETE this field. Do not write a pick point into memory. At the first decision step compute the pick point directly from the demonstration frames shown (lowest gripper height, fingers just closed from 100% to about 22-25% open, nearest peg head or peg tail entry, taken at its start-of-execution coordinates) and use it for the point of subgoal A at that same step; nothing about it is carried forward. The memory consists of insert_side alone, written at the first decision step from the final demonstration frames (gripper low near the aperture box; gripper x smaller than box x means right, larger means left) and copied unchanged at every later step.\n\nthe policy prompt for subgoal\n  Remove every reference to a grasp_point memory field. Rule 1 stays as the opening rule but its point is computed on the spot: when the demonstration is shown, memory is empty and nothing is held, choose A and point at the peg end the demonstration gripper closed on, found from the demonstration frame where the gripper is lowest and the fingers have just narrowed to about 22-25% open, taking the nearest peg head or peg tail entry of that frame at the coordinates that entry has in the start-of-execution scene; write insert_side at this step. Rule 2 stays: when a peg end is listed as held in the gripper with fingers about 22-25% open, the pick is done; choose B when insert_side is right and C when insert_side is left. Rule 3, the retry rule that pointed at a stored grasp_point, is dropped, since no stored point exists and no episode shows a pick that has to be retried. Rule 4 becomes: if nothing is held and the demonstration is no longer shown, choose A and point at the peg end nearest the aperture box on the side named by insert_side; if something is held, choose B when insert_side is right or unknown and C when insert_side is left. Carry insert_side forward unchanged.\n\nrefused\n  No step was reported as failed, so no policy report is being passed on or held back. The one thing acted on is the field block: grasp_point was carried at every step and read at none. It is not kept for the retry-after-failed-pick case, because that case appears in no episode of the minibatch; every second decision step shows a peg end already held, and the first decision step has the demonstration in view and needs no memory to find the pick point.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "Remove every reference to a grasp_point memory field. Rule 1 stays as the opening rule but its point is computed on the spot: when the demonstration is shown, memory is empty and nothing is held, choose A and point at the peg end the demonstration gripper closed on, found from the demonstration frame where the gripper is lowest and the fingers have just narrowed to about 22-25% open, taking the nearest peg head or peg tail entry of that frame at the coordinates that entry has in the start-of-execution scene; write insert_side at this step. Rule 2 stays: when a peg end is listed as held in the gripper with fingers about 22-25% open, the pick is done; choose B when insert_side is right and C when insert_side is left. Rule 3, the retry rule that pointed at a stored grasp_point, is dropped, since no stored point exists and no episode shows a pick that has to be retried. Rule 4 becomes: if nothing is held and the demonstration is no longer shown, choose A and point at the peg end nearest the aperture box on the side named by insert_side; if something is held, choose B when insert_side is right or unknown and C when insert_side is left. Carry insert_side forward unchanged.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "grasp_point",
+    "description": "DELETE this field. Do not write a pick point into memory. At the first decision step compute the pick point directly from the demonstration frames shown (lowest gripper height, fingers just closed from 100% to about 22-25% open, nearest peg head or peg tail entry, taken at its start-of-execution coordinates) and use it for the point of subgoal A at that same step; nothing about it is carried forward. The memory consists of insert_side alone, written at the first decision step from the final demonstration frames (gripper low near the aperture box; gripper x smaller than box x means right, larger means left) and copied unchanged at every later step."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "grasp_point",
+    "description": "DELETE this field. It was written at the first decision step and never read at any later step. The pick point is needed only at the first decision step, where the demonstration is in view and the policy computes it directly from the demonstration frame in which the gripper is lowest and the fingers first close; the memory written at that step is first read at the next step, and at the next step a peg end is always already held, so the point is never needed again. The field fails NECESSITY: it holds a fact that no later step reads. The only situation it existed for, a failed pick that has to be retried after the demonstration is gone, does not occur in any episode. Keep only insert_side."
+   }
+  ],
+  "refused": "No step was reported as failed, so no policy report is being passed on or held back. The one thing acted on is the field block: grasp_point was carried at every step and read at none. It is not kept for the retry-after-failed-pick case, because that case appears in no episode of the minibatch; every second decision step shows a peg end already held, and the first decision step has the demonstration in view and needs no memory to find the pick point."
+ },
+ "critiques": []
+}

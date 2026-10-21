@@ -1,0 +1,261 @@
+{
+ "run": 2,
+ "iteration": 2,
+ "fields": [
+  "blue_deposited",
+  "red_deposited",
+  "green_deposited"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  9,
+  38,
+  49,
+  71,
+  94
+ ],
+ "scored": 33,
+ "failed": 12,
+ "subgoal_wrong": 10,
+ "memory_wrong": 5,
+ "subgoal_verified": 0.696969696969697,
+ "memory_verified": 0.8484848484848485,
+ "reads": {
+  "blue_deposited": 13,
+  "red_deposited": 11,
+  "green_deposited": 13
+ },
+ "field_errors": {
+  "blue_deposited": {
+   "in": 1,
+   "sole": 1
+  },
+  "red_deposited": {
+   "in": 2,
+   "sole": 2
+  },
+  "green_deposited": {
+   "in": 2,
+   "sole": 2
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.36363636363636365,
+ "verified_of_all": 0.6363636363636364,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 2,
+ "point_wrong": 8,
+ "decisions": 33,
+ "critique": "field blue_deposited, POLICY PROMPT\n  During the three-blue task, a held blue cube ceased to be held as the fingers opened at the bin-release pose, and the empty gripper withdrew while other free blue cubes remained visible. The policy preserved 1 rather than writing the annotated count 2 and then selected the wrong next cube. Requiring visible disappearance inside the opaque bin made the update ambiguous, breaking PREDICTABILITY. Keep this field as the cumulative integer number of completed blue deposits, initialized to 0. Increment once when the supplied interval shows a blue cube held before release, opening fingers at the bin-release pose, and subsequent empty-gripper withdrawal. Direct visibility of entry into the opaque bin, a reduction in the total number of visible cubes, and equality between elevated wrist coordinates and the bin's image center are not required. The interval may begin at the release pose; an approach need not be visible. Distinguish the carried cube from other free cubes using the supplied interval rather than treating newly appearing or persistent cubes as evidence that release failed. Preserve otherwise; do not count pickups, issuing B, or repeated frames of one release. Example value after two completed blue deposits: 2.\n\nfield red_deposited, POLICY PROMPT\n  During one-red and mixed red-and-green tasks, a held red cube disappeared from the gripper as the fingers opened at an elevated bin-release pose, followed by empty-gripper withdrawal. Other red cubes remained visible, including a separate cube already present before release. The policy preserved 0 instead of the annotated 1, sometimes continuing with A instead of stopping with C. This breaks PREDICTABILITY because the wording suggested that direct entry into the bin had to be seen. Keep this field as the cumulative integer number of completed red deposits, initialized to 0. Increment once when the current interval shows a red cube held before release, opening fingers at the bin-release pose, and subsequent empty-gripper withdrawal. Direct visibility of entry into the opaque bin, a decrease in visible cube count, and equality between elevated wrist coordinates and the bin's image center are not required. An interval beginning at the release pose is sufficient without a visible approach. Use within-interval continuity to distinguish other free cubes from the carried cube; their persistence or reappearance does not undo the deposit. Preserve otherwise, without counting pickups, issuing B, or repeated release frames. Example value after one completed red deposit: 1.\n\nfield green_deposited, POLICY PROMPT\n  During mixed-color tasks, the green cube held at the beginning of a release interval ceased to be held when the fingers opened, followed by empty-gripper withdrawal. In one case the approach was absent from the interval. The policy preserved 0 instead of the annotated 1 and, when that deposit completed the goal, selected another A rather than C. This breaks PREDICTABILITY: the execution description imposed stronger visual requirements than the completed-deposit annotation. Keep this field as the cumulative integer number of completed green deposits, initialized to 0. Increment once when the current interval shows a green cube held before release, opening fingers at the bin-release pose, and subsequent empty-gripper withdrawal. An interval starting at that pose suffices; neither a visible approach nor a frame showing entry into the opaque bin is necessary. Elevated wrist coordinates may differ from the bin's image center. Other free cubes remaining visible or appearing do not invalidate the release, and total visible cube count need not decrease. Preserve otherwise; do not count pickups, issuing B, or repeated frames of the same release. Example value after one completed green deposit: 1.\n\nthe policy prompt for subgoal\n  In single-color and mixed-color tasks with multiple eligible cubes, the smallest-y fallback selected a different object from the recorded target despite sufficient deposit counters. For the three-blue-and-two-green goal, the blanket green-before-blue priority also selected the wrong color in a layout whose recorded execution completes blue first. These are SUFFICIENCY failures in target selection, not missing historical facts; no new memory fields are needed. Retain the rules that first update counters, choose C when every quota is met, choose B for a requested cube currently held, and otherwise choose A for a still-needed color. Remove the unconditional green-before-blue rule for the three-blue-and-two-green goal. Scope green-first to the existing layout with the bin near [90, 148], retaining its existing target preferences. For that same goal with the bin near [101, 141], complete blue before green: at blue_deposited values 0, 1, and 2 prefer the currently visible blue cubes near [54, 104], [71, 130], and [64, 80], respectively; once blue_deposited is 3, at green_deposited values 0 and 1 prefer green near [101, 176] and [52, 122], respectively. Add the following goal-and-layout-conditioned preferences ahead of the fallback: for three blue with the bin near [105, 100], prefer blue near [64, 75], [94, 138], and [54, 118] at blue_deposited values 0, 1, and 2; for one red and one green with the bin near [101, 173], complete red before green, preferring red near [86, 69] while red_deposited is 0 and then green near [96, 104] while green_deposited is 0; for one red with the bin near [117, 169], prefer red near [98, 84]. Apply these as situation rules using updated counters, not as a stored sequence. Match the goal and current layout together, and match approximate preferred locations to current visible free cubes of the specified color; output a point inside the selected cube at its current position in [y, x] order. Preserve all other supported layout-specific preferences, including the two-red-and-one-green layout with the bin near [107, 86]. Use the existing fallback only when no applicable preference selects an available candidate. Neither newly appearing cubes nor remaining visible distractors override quota completion.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "In single-color and mixed-color tasks with multiple eligible cubes, the smallest-y fallback selected a different object from the recorded target despite sufficient deposit counters. For the three-blue-and-two-green goal, the blanket green-before-blue priority also selected the wrong color in a layout whose recorded execution completes blue first. These are SUFFICIENCY failures in target selection, not missing historical facts; no new memory fields are needed. Retain the rules that first update counters, choose C when every quota is met, choose B for a requested cube currently held, and otherwise choose A for a still-needed color. Remove the unconditional green-before-blue rule for the three-blue-and-two-green goal. Scope green-first to the existing layout with the bin near [90, 148], retaining its existing target preferences. For that same goal with the bin near [101, 141], complete blue before green: at blue_deposited values 0, 1, and 2 prefer the currently visible blue cubes near [54, 104], [71, 130], and [64, 80], respectively; once blue_deposited is 3, at green_deposited values 0 and 1 prefer green near [101, 176] and [52, 122], respectively. Add the following goal-and-layout-conditioned preferences ahead of the fallback: for three blue with the bin near [105, 100], prefer blue near [64, 75], [94, 138], and [54, 118] at blue_deposited values 0, 1, and 2; for one red and one green with the bin near [101, 173], complete red before green, preferring red near [86, 69] while red_deposited is 0 and then green near [96, 104] while green_deposited is 0; for one red with the bin near [117, 169], prefer red near [98, 84]. Apply these as situation rules using updated counters, not as a stored sequence. Match the goal and current layout together, and match approximate preferred locations to current visible free cubes of the specified color; output a point inside the selected cube at its current position in [y, x] order. Preserve all other supported layout-specific preferences, including the two-red-and-one-green layout with the bin near [107, 86]. Use the existing fallback only when no applicable preference selects an available candidate. Neither newly appearing cubes nor remaining visible distractors override quota completion.",
+  "policy_prompt_for_memory": [
+   {
+    "field": "blue_deposited",
+    "description": "During the three-blue task, a held blue cube ceased to be held as the fingers opened at the bin-release pose, and the empty gripper withdrew while other free blue cubes remained visible. The policy preserved 1 rather than writing the annotated count 2 and then selected the wrong next cube. Requiring visible disappearance inside the opaque bin made the update ambiguous, breaking PREDICTABILITY. Keep this field as the cumulative integer number of completed blue deposits, initialized to 0. Increment once when the supplied interval shows a blue cube held before release, opening fingers at the bin-release pose, and subsequent empty-gripper withdrawal. Direct visibility of entry into the opaque bin, a reduction in the total number of visible cubes, and equality between elevated wrist coordinates and the bin's image center are not required. The interval may begin at the release pose; an approach need not be visible. Distinguish the carried cube from other free cubes using the supplied interval rather than treating newly appearing or persistent cubes as evidence that release failed. Preserve otherwise; do not count pickups, issuing B, or repeated frames of one release. Example value after two completed blue deposits: 2."
+   },
+   {
+    "field": "red_deposited",
+    "description": "During one-red and mixed red-and-green tasks, a held red cube disappeared from the gripper as the fingers opened at an elevated bin-release pose, followed by empty-gripper withdrawal. Other red cubes remained visible, including a separate cube already present before release. The policy preserved 0 instead of the annotated 1, sometimes continuing with A instead of stopping with C. This breaks PREDICTABILITY because the wording suggested that direct entry into the bin had to be seen. Keep this field as the cumulative integer number of completed red deposits, initialized to 0. Increment once when the current interval shows a red cube held before release, opening fingers at the bin-release pose, and subsequent empty-gripper withdrawal. Direct visibility of entry into the opaque bin, a decrease in visible cube count, and equality between elevated wrist coordinates and the bin's image center are not required. An interval beginning at the release pose is sufficient without a visible approach. Use within-interval continuity to distinguish other free cubes from the carried cube; their persistence or reappearance does not undo the deposit. Preserve otherwise, without counting pickups, issuing B, or repeated release frames. Example value after one completed red deposit: 1."
+   },
+   {
+    "field": "green_deposited",
+    "description": "During mixed-color tasks, the green cube held at the beginning of a release interval ceased to be held when the fingers opened, followed by empty-gripper withdrawal. In one case the approach was absent from the interval. The policy preserved 0 instead of the annotated 1 and, when that deposit completed the goal, selected another A rather than C. This breaks PREDICTABILITY: the execution description imposed stronger visual requirements than the completed-deposit annotation. Keep this field as the cumulative integer number of completed green deposits, initialized to 0. Increment once when the current interval shows a green cube held before release, opening fingers at the bin-release pose, and subsequent empty-gripper withdrawal. An interval starting at that pose suffices; neither a visible approach nor a frame showing entry into the opaque bin is necessary. Elevated wrist coordinates may differ from the bin's image center. Other free cubes remaining visible or appearing do not invalidate the release, and total visible cube count need not decrease. Preserve otherwise; do not count pickups, issuing B, or repeated frames of the same release. Example value after one completed green deposit: 1."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    9,
+    "exec",
+    190
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [55, 119]",
+   "recorded": "A: pick up the cube at [95, 139]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "Missing a same-color target preference for the three-blue goal with the bin near [105, 100]: after blue_deposited becomes 1, choose A targeting the visible blue cube near [94, 138] (recorded point [95, 139]), rather than the smallest-y fallback cube at [55, 119].",
+   "missing": ""
+  },
+  {
+   "step": [
+    9,
+    "exec",
+    331
+   ],
+   "memory_in": "blue_deposited=1; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [53, 101]",
+   "recorded": "A: pick up the cube at [55, 119]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Clarify whether this interval counts as a successful blue deposit: the blue cube held at t=288 is no longer held at t=304 and the open gripper withdraws, but four free blue cubes remain visible, so disappearance into the bin is not established. To produce the recorded count of 2, the policy prompt must identify this observable transition as a completed deposit despite that ambiguity; otherwise the recorded increment needs review.",
+   "missing_from_policy_prompt_for_subgoal": "For the three-blue goal with the bin near [105, 100], after the second deposit select the blue cube currently near [54, 118] (recorded point [55, 119]). No existing layout preference specifies this choice, and the stated smallest-y fallback instead selects [53, 101].",
+   "missing": ""
+  },
+  {
+   "step": [
+    38,
+    "exec",
+    190
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [82, 99]",
+   "recorded": "A: pick up the cube at [97, 105]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "For the one-red-and-one-green goal with the bin near [101, 173], after the red deposit and with green_deposited=0, select the green cube near [96, 104], targeting [97, 105], rather than applying the smallest-y fallback that selects [82, 99]. The policy prompt lacked this same-color target preference.",
+   "missing": ""
+  },
+  {
+   "step": [
+    49,
+    "exec",
+    0
+   ],
+   "memory_in": "blue_deposited=; red_deposited=; green_deposited=",
+   "answered": "A: pick up the cube at [56, 177]",
+   "recorded": "A: pick up the cube at [99, 85]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "A target preference for this one-red goal with the bin near [117, 169]: select the visible red cube at [98, 84], corresponding to the recorded point [99, 85]. The existing smallest-y fallback instead selects [56, 177]; no applicable rule specifies the recorded cube.",
+   "missing": ""
+  },
+  {
+   "step": [
+    49,
+    "exec",
+    182
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [56, 177]",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The policy prompt did not make clear that this interval counts as a completed red deposit: the red cube held through t=144 disappears after release, and the fully open, empty gripper withdraws at t=160–182. The red cube at [56, 177] was already a separate free cube at t=112, not the released cube. This should increment red_deposited from 0 to 1 despite the elevated release position differing from the bin's visible center.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    0
+   ],
+   "memory_in": "blue_deposited=; red_deposited=; green_deposited=",
+   "answered": "A: pick up the cube at [101, 176]",
+   "recorded": "A: pick up the cube at [55, 105]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "The green-before-blue priority for three blue and two green was applied too broadly. At this initial layout, with the bin near [101, 141], blue near [54, 104], and green near [101, 176], the policy prompt should specify picking the visible blue cube first, targeting near [55, 105], rather than the green cube. Scope the existing green-first rule to the layouts where it is supported.",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    209
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [53, 123]",
+   "recorded": "A: pick up the cube at [72, 131]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "For the three-blue, two-green goal with the bin near [101, 141], the policy prompt needed a layout-specific exception to green-first ordering: after the first blue deposit, with blue_deposited=1 and green_deposited=0, choose A on the blue cube currently at [71, 130], matching the recorded target [72, 131]. It also needed this same-color target preference rather than the smallest-y fallback, which would select blue at [53, 84].",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    375
+   ],
+   "memory_in": "blue_deposited=1; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [53, 123]",
+   "recorded": "A: pick up the cube at [65, 81]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "For this three-blue-and-two-green layout with the bin near [101, 141], after blue_deposited reaches 2 and green_deposited remains 0, choose another blue cube rather than applying the blanket green-before-blue priority. Specify the blue cube currently near [64, 80] (recorded target [65, 81]), rather than the other blue cube at [53, 84] that the smallest-y fallback would select.",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    565
+   ],
+   "memory_in": "blue_deposited=2; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [52, 121]",
+   "recorded": "A: pick up the cube at [102, 177]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "",
+   "missing_from_policy_prompt_for_subgoal": "A target preference for this layout was missing: with the goal of three blue and two green cubes, bin near [101, 141], blue_deposited=3 and green_deposited=0, select the green cube currently near [101, 176] (recorded target [102, 177]). The existing smallest-y fallback instead selects the green cube near [52, 122].",
+   "missing": ""
+  },
+  {
+   "step": [
+    71,
+    "exec",
+    715
+   ],
+   "memory_in": "blue_deposited=3; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [52, 122]",
+   "recorded": "A: pick up the cube at [54, 124]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Clarify that the green cube held at t=672, absent when the fingers open to 96% at t=688, followed by open-gripper withdrawal through t=715, constitutes one completed green deposit despite the elevated gripper appearing above the bin in image coordinates and no frame showing the cube entering it. Increment green_deposited from 0 to 1.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    186
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=0; green_deposited=0",
+   "answered": "A: pick up the cube at [64, 83]",
+   "recorded": "A: pick up the cube at [66, 84]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make explicit that this interval is a completed red deposit: the red cube held at t=128–144 disappears when the fingers open at t=160, and the empty gripper withdraws through t=186. Increment red_deposited from 0 to 1 even though the elevated release position [63, 68] is offset from the bin's visible center [107, 86]; direct visibility of the cube entering the opaque bin is not required.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    94,
+    "exec",
+    526
+   ],
+   "memory_in": "blue_deposited=0; red_deposited=2; green_deposited=0",
+   "answered": "A: pick up the cube at [58, 99]",
+   "recorded": "C: press the button",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Clarify that this interval already shows a completed green deposit: the green cube held at t=480 disappears as the fingers open to 99% at t=496, followed by empty-gripper withdrawal. Count this release even though the interval begins at the release pose and shows neither the approach toward the bin nor a cube position matching its visible center. Increment green_deposited from 0 to 1.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

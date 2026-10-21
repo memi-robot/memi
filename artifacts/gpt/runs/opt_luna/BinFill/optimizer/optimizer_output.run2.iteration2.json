@@ -1,0 +1,128 @@
+{
+ "episodes": [
+  9,
+  38,
+  49,
+  71,
+  94
+ ],
+ "user_chars": 34632,
+ "usage": {
+  "prompt_tokens": 9927,
+  "completion_tokens": 1188,
+  "total_tokens": 11115,
+  "prompt_tokens_details": {
+   "cached_tokens": 2292,
+   "cache_write_tokens": 7632,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "reasoning": "",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "For mixed goals, select the next needed color according to the goal's quotas: for three blue and two green, complete green before blue; for two red and three green, complete green before red; for two red and one green, complete red before green.",
+    "modify_to": "For mixed goals, select the next needed color using the goal and applicable layout preference. For three blue and two green, complete green before blue in the layout with the bin near [90, 148], and blue before green in the layout with the bin near [101, 141]. For two red and three green, complete green before red; for two red and one green, complete red before green. For one red and one green with the bin near [101, 173], complete red before green. Match a layout using the bin and the visible cube arrangement together, not bin proximity alone. Where no color priority applies, use the target-selection fallback among still-needed colors."
+   },
+   {
+    "modify_from": "Match these approximate locations to current visible free cubes of the selected color; use the fallback if a preferred candidate is absent.",
+    "modify_to": "Additional goal-and-layout preferences: for three blue and two green with the bin near [101, 141], select blue near [54, 104], [71, 130], or [64, 80] when blue_deposited is respectively zero, one, or two; after completing the blue quota, select green near [101, 176] or [52, 122] when green_deposited is respectively zero or one. For three blue with the bin near [105, 100], select blue near [64, 75], [94, 138], or [54, 118] when blue_deposited is respectively zero, one, or two. For one red and one green with the bin near [101, 173], select red near [86, 69] while red_deposited is zero, then green near [96, 104] after completing the red quota. For one red with the bin near [117, 169], select red near [98, 84]. Apply all target preferences only when both the goal and the layout match, using the bin and visible cube arrangement together to distinguish nearby layouts. Match approximate target locations to current visible free cubes of the selected color. Use the fallback only when no applicable preference selects an available candidate."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "blue_deposited",
+    "edits": [
+     {
+      "modify_from": "Scan the supplied execution frames for a blue cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.",
+      "modify_to": "Scan the supplied execution frames for a blue cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_deposited",
+    "edits": [
+     {
+      "modify_from": "Scan the supplied execution frames for a red cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.",
+      "modify_to": "Scan the supplied execution frames for a red cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "green_deposited",
+    "edits": [
+     {
+      "modify_from": "Scan the supplied execution frames for a green cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.",
+      "modify_to": "Scan the supplied execution frames for a green cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": "None. The annotator prompts and memory fields remain unchanged. The release-evidence clarification preserves cumulative counting, including final deposits, and introduces no zero-count or terminal exception. Existing target preferences remain in force for their matching layouts; the earlier green-before-blue preference is retained for its supported layout rather than discarded."
+ },
+ "applied": {
+  "annotator_prompt": [],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "modify",
+    "field": "blue_deposited",
+    "edits": [
+     {
+      "modify_from": "Scan the supplied execution frames for a blue cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.",
+      "modify_to": "Scan the supplied execution frames for a blue cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "red_deposited",
+    "edits": [
+     {
+      "modify_from": "Scan the supplied execution frames for a red cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.",
+      "modify_to": "Scan the supplied execution frames for a red cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease."
+     }
+    ],
+    "description": ""
+   },
+   {
+    "kind": "modify",
+    "field": "green_deposited",
+    "edits": [
+     {
+      "modify_from": "Scan the supplied execution frames for a green cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.",
+      "modify_to": "Scan the supplied execution frames for a green cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease."
+     }
+    ],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "For mixed goals, select the next needed color according to the goal's quotas: for three blue and two green, complete green before blue; for two red and three green, complete green before red; for two red and one green, complete red before green.",
+    "modify_to": "For mixed goals, select the next needed color using the goal and applicable layout preference. For three blue and two green, complete green before blue in the layout with the bin near [90, 148], and blue before green in the layout with the bin near [101, 141]. For two red and three green, complete green before red; for two red and one green, complete red before green. For one red and one green with the bin near [101, 173], complete red before green. Match a layout using the bin and the visible cube arrangement together, not bin proximity alone. Where no color priority applies, use the target-selection fallback among still-needed colors."
+   },
+   {
+    "modify_from": "Match these approximate locations to current visible free cubes of the selected color; use the fallback if a preferred candidate is absent.",
+    "modify_to": "Additional goal-and-layout preferences: for three blue and two green with the bin near [101, 141], select blue near [54, 104], [71, 130], or [64, 80] when blue_deposited is respectively zero, one, or two; after completing the blue quota, select green near [101, 176] or [52, 122] when green_deposited is respectively zero or one. For three blue with the bin near [105, 100], select blue near [64, 75], [94, 138], or [54, 118] when blue_deposited is respectively zero, one, or two. For one red and one green with the bin near [101, 173], select red near [86, 69] while red_deposited is zero, then green near [96, 104] after completing the red quota. For one red with the bin near [117, 169], select red near [98, 84]. Apply all target preferences only when both the goal and the layout match, using the bin and visible cube arrangement together to distinguish nearby layouts. Match approximate target locations to current visible free cubes of the selected color. Use the fallback only when no applicable preference selects an available candidate."
+   }
+  ],
+  "refused": "None. The annotator prompts and memory fields remain unchanged. The release-evidence clarification preserves cumulative counting, including final deposits, and introduces no zero-count or terminal exception. Existing target preferences remain in force for their matching layouts; the earlier green-before-blue preference is retained for its supported layout rather than discarded."
+ },
+ "not_applied": [],
+ "refused": "None. The annotator prompts and memory fields remain unchanged. The release-evidence clarification preserves cumulative counting, including final deposits, and introduces no zero-count or terminal exception. Existing target preferences remain in force for their matching layouts; the earlier green-before-blue preference is retained for its supported layout rather than discarded.",
+ "text": "{\n  \"annotator_prompt\": [],\n  \"memory_execution_plan\": [\n    {\n      \"kind\": \"modify\",\n      \"field\": \"blue_deposited\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Scan the supplied execution frames for a blue cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.\",\n          \"modify_to\": \"Scan the supplied execution frames for a blue cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease.\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"modify\",\n      \"field\": \"red_deposited\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Scan the supplied execution frames for a red cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.\",\n          \"modify_to\": \"Scan the supplied execution frames for a red cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease.\"\n        }\n      ]\n    },\n    {\n      \"kind\": \"modify\",\n      \"field\": \"green_deposited\",\n      \"edits\": [\n        {\n          \"modify_from\": \"Scan the supplied execution frames for a green cube carried by the gripper toward the bin and released there, followed by an empty, opening or open gripper withdrawing and the cube disappearing inside the opaque bin.\",\n          \"modify_to\": \"Scan the supplied execution frames for a green cube held before release, fingers opening at the bin-release pose, and subsequent empty-gripper withdrawal. This establishes a completed deposit unless the interval shows the carried cube falling or being released outside the bin. The interval may begin at the release pose: neither a visible approach nor direct visibility of entry into the opaque bin is required. Use continuity within the interval to distinguish the carried cube from other free cubes; their persistence or appearance does not invalidate the deposit, and total visible cube count need not decrease.\"\n        }\n      ]\n    }\n  ],\n  \"subgoal_execution_plan\": [\n    {\n      \"modify_from\": \"For mixed goals, select the next needed color according to the goal's quotas: for three blue and two green, complete green before blue; for two red and three green, complete green before red; for two red and one green, complete red before green.\",\n      \"modify_to\": \"For mixed goals, select the next needed color using the goal and applicable layout preference. For three blue and two green, complete green before blue in the layout with the bin near [90, 148], and blue before green in the layout with the bin near [101, 141]. For two red and three green, complete green before red; for two red and one green, complete red before green. For one red and one green with the bin near [101, 173], complete red before green. Match a layout using the bin and the visible cube arrangement together, not bin proximity alone. Where no color priority applies, use the target-selection fallback among still-needed colors.\"\n    },\n    {\n      \"modify_from\": \"Match these approximate locations to current visible free cubes of the selected color; use the fallback if a preferred candidate is absent.\",\n      \"modify_to\": \"Additional goal-and-layout preferences: for three blue and two green with the bin near [101, 141], select blue near [54, 104], [71, 130], or [64, 80] when blue_deposited is respectively zero, one, or two; after completing the blue quota, select green near [101, 176] or [52, 122] when green_deposited is respectively zero or one. For three blue with the bin near [105, 100], select blue near [64, 75], [94, 138], or [54, 118] when blue_deposited is respectively zero, one, or two. For one red and one green with the bin near [101, 173], select red near [86, 69] while red_deposited is zero, then green near [96, 104] after completing the red quota. For one red with the bin near [117, 169], select red near [98, 84]. Apply all target preferences only when both the goal and the layout match, using the bin and visible cube arrangement together to distinguish nearby layouts. Match approximate target locations to current visible free cubes of the selected color. Use the fallback only when no applicable preference selects an available candidate.\"\n    }\n  ],\n  \"refused\": \"None. The annotator prompts and memory fields remain unchanged. The release-evidence clarification preserves cumulative counting, including final deposits, and introduces no zero-count or terminal exception. Existing target preferences remain in force for their matching layouts; the earlier green-before-blue preference is retained for its supported layout rather than discarded.\"\n}"
+}

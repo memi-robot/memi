@@ -1,0 +1,116 @@
+{
+ "run": 2,
+ "iteration": 5,
+ "fields": [
+  "crossings",
+  "cube_side",
+  "peak_speed",
+  "last_cube_x",
+  "last_t"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  34,
+  36,
+  41,
+  60,
+  88
+ ],
+ "scored": 26,
+ "failed": 1,
+ "subgoal_wrong": 0,
+ "memory_wrong": 1,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9615384615384616,
+ "reads": {
+  "crossings": 21,
+  "cube_side": 18,
+  "peak_speed": 19,
+  "last_cube_x": 15,
+  "last_t": 15
+ },
+ "field_errors": {
+  "crossings": {
+   "in": 0,
+   "sole": 0
+  },
+  "cube_side": {
+   "in": 1,
+   "sole": 1
+  },
+  "peak_speed": {
+   "in": 0,
+   "sole": 0
+  },
+  "last_cube_x": {
+   "in": 0,
+   "sole": 0
+  },
+  "last_t": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.038461538461538464,
+ "verified_of_all": 0.9615384615384616,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 26,
+ "critique": "field cube_side, ANNOTATOR PROMPT\n  At the first step of an episode, with empty memory, the annotated value was read correctly as 'smaller_x' (cube x 61 against target x 145), but the policy wrote 'larger_x' because it compared the first numbers of the [y, x] positions. The field still holds which side of the target line the cube is on in the scene at this decision step; it is overwritten at every step and at the first step is read from the single frame shown. To keep the two documents written the same way, the rule should state in this field's own entry that cube_x and target_x are the SECOND numbers of the cube's and target's [y, x] positions (never the first), with a worked comparison: cube at [131, 61] and target at [107, 145] give 61 and 145, and 61 < 145 -> 'smaller_x'. e.g. smaller_x\n\nfield cube_side, POLICY PROMPT\n  At the first step of an episode (empty memory, one frame shown, gripper raised out of the frame), the policy chose the right subgoal but wrote cube_side as 'larger_x' where the annotation said 'smaller_x', because it compared the y numbers (131 > 107) instead of the x numbers. This breaks PREDICTABILITY: the entry for this field never said which number of the [y, x] position to use, only 'cube_x', so the same frame yielded two answers. The field holds which side of the target line the cube is on in the last frame shown at this step, overwritten every step. The entry must say in its own words: take the SECOND number of the cube's [y, x] position and the SECOND number of the target's [y, x] position (the first numbers are y and are never used here); write 'smaller_x' if the cube's second number is smaller than the target's, 'larger_x' if it is larger. Worked example: cube at [131, 61] and target at [107, 145] -> compare 61 with 145 -> 61 < 145 -> smaller_x. e.g. smaller_x",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "cube_side",
+    "description": "At the first step of an episode (empty memory, one frame shown, gripper raised out of the frame), the policy chose the right subgoal but wrote cube_side as 'larger_x' where the annotation said 'smaller_x', because it compared the y numbers (131 > 107) instead of the x numbers. This breaks PREDICTABILITY: the entry for this field never said which number of the [y, x] position to use, only 'cube_x', so the same frame yielded two answers. The field holds which side of the target line the cube is on in the last frame shown at this step, overwritten every step. The entry must say in its own words: take the SECOND number of the cube's [y, x] position and the SECOND number of the target's [y, x] position (the first numbers are y and are never used here); write 'smaller_x' if the cube's second number is smaller than the target's, 'larger_x' if it is larger. Worked example: cube at [131, 61] and target at [107, 145] -> compare 61 with 145 -> 61 < 145 -> smaller_x. e.g. smaller_x"
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "cube_side",
+    "description": "At the first step of an episode, with empty memory, the annotated value was read correctly as 'smaller_x' (cube x 61 against target x 145), but the policy wrote 'larger_x' because it compared the first numbers of the [y, x] positions. The field still holds which side of the target line the cube is on in the scene at this decision step; it is overwritten at every step and at the first step is read from the single frame shown. To keep the two documents written the same way, the rule should state in this field's own entry that cube_x and target_x are the SECOND numbers of the cube's and target's [y, x] positions (never the first), with a worked comparison: cube at [131, 61] and target at [107, 145] give 61 and 145, and 61 < 145 -> 'smaller_x'. e.g. smaller_x"
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    36,
+    "exec",
+    0
+   ],
+   "memory_in": "crossings=; cube_side=; peak_speed=; last_cube_x=; last_t=",
+   "answered": "A: move to the top of the button to prepare",
+   "recorded": "A: move to the top of the button to prepare",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The cube_side field should restate, in its own entry, that cube_x and target_x are the SECOND numbers of the [y, x] positions (cube [131, 61] -> 61, target [107, 145] -> 145), and give a worked comparison: 61 < 145 -> smaller_x. I compared using the first (y) numbers, 131 > 107, and wrote larger_x.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

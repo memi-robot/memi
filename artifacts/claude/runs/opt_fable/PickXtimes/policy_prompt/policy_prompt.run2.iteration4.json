@@ -1,0 +1,10 @@
+{
+ "task": "PickXtimes",
+ "policy_prompt_for_subgoal": "First read the goal instruction to get the required number of placements N: if it says 'repeating this action two times' N=2, 'three times' N=3, and so on; if it mentions no repetition, N=1. The cube to use is the one whose color the goal names (ignore other cubes). Update placements_done first, then decide. An episode starts in subgoal A (pick up the cube). Rules, applied in whatever situation you are in: 1. If the goal-colored cube is shown 'is held in the gripper' at the scene of this decision step (fingers about 46% open, gripper raised), choose B: place the cube onto the target. 2. If the cube is NOT held at the scene of this decision step (fingers ~100% open) and placements_done (after this step's update) is less than N, choose A: pick up the cube, pointing at the current [y, x] of the goal-colored cube as shown in the final scene of this step (after a placement it will be sitting on or near the target; point at the cube, not the target). 3. If the cube is NOT held and placements_done (after this step's update) is equal to or greater than N, choose C: press the button to stop. 4. If the gripper closed but the cube is not reported as held (a missed grasp), treat it as not held: apply rule 2 or 3 by placements_done. If you meet a situation none of these rules cover, default to: if the cube is held choose B; otherwise if placements_done < N choose A pointing at the goal-colored cube's current position; otherwise choose C.",
+ "fields": [
+  {
+   "name": "placements_done",
+   "description": "Integer count of completed placements of the goal-colored cube onto the target. Start at 0 on the first step. At each decision step, take the value carried in; add 1 if the execution steps shown at this step contain the cube marked 'is held in the gripper' and then, later in the same step, the fingers opened to about 100% with the gripper low (height below about 0.03) and the cube now lying at roughly the target's position, no longer held. Otherwise keep the carried value unchanged. Never decrease it. e.g. 1"
+  }
+ ]
+}

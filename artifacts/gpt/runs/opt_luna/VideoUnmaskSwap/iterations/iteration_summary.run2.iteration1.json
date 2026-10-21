@@ -1,0 +1,129 @@
+{
+ "run": 2,
+ "iteration": 1,
+ "fields": [
+  "remaining_targets"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "openai",
+   "model": "gpt-6-astra",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  2,
+  28,
+  31,
+  67,
+  79
+ ],
+ "scored": 13,
+ "failed": 4,
+ "subgoal_wrong": 3,
+ "memory_wrong": 4,
+ "subgoal_verified": 0.7692307692307693,
+ "memory_verified": 0.6923076923076923,
+ "reads": {
+  "remaining_targets": 9
+ },
+ "field_errors": {
+  "remaining_targets": {
+   "in": 4,
+   "sole": 4
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.3076923076923077,
+ "verified_of_all": 0.6923076923076923,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 3,
+ "decisions": 13,
+ "critique": "field remaining_targets, POLICY PROMPT\n  At initialization, the goals requested one hidden cube's container or two containers in color order. The moving containers finished near the same unordered set of positions they had occupied before moving. The policy treated some of these motions as identity restoration: it selected an original covering position instead of the exchanged destination, or selected the first target correctly but retained the wrong second destination. The intended memory instead listed the final positions of the tracked covering containers in goal order. This is a PREDICTABILITY failure in demonstration-based initialization, also causing incorrect immediate or later target selection; it does not require another memory field or a change in subgoal rules. Strengthen the tracking instructions as follows: associate identities with containers when they cover the cubes, then follow each identity along its entire moving arc. A moving pair departing two resting positions and settling into those same two positions can constitute ONE exchange: the identities end at opposite endpoints. Do not count the intermediate crossing or the return of the unordered position set as an additional exchange. Use the direction of travel through the intermediate frames to assign endpoints, rather than resetting identities at each resting layout or matching only nearest positions. Only a second complete exchange of that same pair restores their original assignment; exchanges involving a different pair do not cancel the first. For example, a green-covering container moving [71, 123] → [73, 140] → [86, 158] → [103, 159] ends at [103, 159], even though another container ends near green's original position. The initialized value is therefore [[103, 159]]. In a two-target goal, independently follow both requested identities through all exchanges, including exchanges with unrequested or extra containers, and retain both final destinations in goal order. Replace the episode-specific initialization lookup with these observation-based instructions. Keep the field's meaning and subsequent updates unchanged: remaining_targets is the ordered list of final container locations for requested pickups not yet completed; initialize when the demonstration is shown with absent incoming memory, remove its first entry only when the currently shown execution contains the successful grasp and lift of that target, and preserve it during release. Selecting a pickup does not itself remove an entry, and an existing empty list is not a request to initialize again.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "remaining_targets",
+    "description": "At initialization, the goals requested one hidden cube's container or two containers in color order. The moving containers finished near the same unordered set of positions they had occupied before moving. The policy treated some of these motions as identity restoration: it selected an original covering position instead of the exchanged destination, or selected the first target correctly but retained the wrong second destination. The intended memory instead listed the final positions of the tracked covering containers in goal order. This is a PREDICTABILITY failure in demonstration-based initialization, also causing incorrect immediate or later target selection; it does not require another memory field or a change in subgoal rules. Strengthen the tracking instructions as follows: associate identities with containers when they cover the cubes, then follow each identity along its entire moving arc. A moving pair departing two resting positions and settling into those same two positions can constitute ONE exchange: the identities end at opposite endpoints. Do not count the intermediate crossing or the return of the unordered position set as an additional exchange. Use the direction of travel through the intermediate frames to assign endpoints, rather than resetting identities at each resting layout or matching only nearest positions. Only a second complete exchange of that same pair restores their original assignment; exchanges involving a different pair do not cancel the first. For example, a green-covering container moving [71, 123] → [73, 140] → [86, 158] → [103, 159] ends at [103, 159], even though another container ends near green's original position. The initialized value is therefore [[103, 159]]. In a two-target goal, independently follow both requested identities through all exchanges, including exchanges with unrequested or extra containers, and retain both final destinations in goal order. Replace the episode-specific initialization lookup with these observation-based instructions. Keep the field's meaning and subsequent updates unchanged: remaining_targets is the ordered list of final container locations for requested pickups not yet completed; initialize when the demonstration is shown with absent incoming memory, remove its first entry only when the currently shown execution contains the successful grasp and lift of that target, and preserve it during release. Selecting a pickup does not itself remove an entry, and an existing empty list is not a request to initialize again."
+   }
+  ],
+  "annotator_prompt": [],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    2,
+    "exec",
+    114
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [73, 123]",
+   "recorded": "A: pick up the container at [101, 161]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make explicit that this demonstration contains one exchange, not a return of each container to its original position: the green-covering container follows [71, 123] → [73, 140] → [86, 158] → [103, 159], while the other moving container ends at [73, 123]. Thus initialize remaining_targets=[[103, 159]], despite the final set of occupied positions resembling the initial set.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    31,
+    "exec",
+    168
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [97, 91]",
+   "recorded": "A: pick up the container at [65, 105]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Clarify that each displayed rotation is one exchange, not two: the red-covering container follows [127,154] → [116,140] → [95,138] → [86,151], ending at [85,153]; the blue-covering container follows [97,89] → [90,83] → [75,85] → [69,103]. Returning to the same set of occupied positions does not restore identities. Initialize remaining_targets=[[69,103],[85,153]].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    67,
+    "exec",
+    168
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [66, 118]",
+   "recorded": "A: pick up the container at [81, 109]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "The tracking rule needed to clarify that each moving pair in this demonstration completes one identity exchange, not two: blue moves from [119, 145] through [106, 137] and [94, 143] to [93, 163]; red moves from [66, 120] through [71, 125] and [82, 129] to [84, 110]. The return of the unordered pair of positions near its original layout does not restore identities. Write remaining_targets=[[84, 110], [93, 163]].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  },
+  {
+   "step": [
+    79,
+    "exec",
+    216
+   ],
+   "memory_in": "remaining_targets=",
+   "answered": "A: pick up the container at [90, 96]",
+   "recorded": "A: pick up the container at [87, 96]",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "Make the red-container trajectory explicit: it moves from [122, 163] through [111, 147] at t=80 and [93, 142] at t=96 to [81, 155] at t=112, ending at [80, 157]. This is one exchange with the green container, not a return to its original position. The blue container undergoes two exchanges and ends at [90, 96]. Thus initialize remaining_targets to [[90, 96], [80, 157]].",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

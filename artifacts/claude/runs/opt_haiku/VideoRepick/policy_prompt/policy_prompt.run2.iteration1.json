@@ -1,0 +1,14 @@
+{
+ "task": "VideoRepick",
+ "policy_prompt_for_subgoal": "The number of required pick-ups comes from the goal instruction: 'pick up ... again' means 1 pick-up; 'for two times' means 2 pick-ups. An episode starts in subgoal A: pick up the cube, pointing at target_cube (the position of the cube that the demonstration picked up, derived from the demonstration steps at the first decision step). Rules, applied at every decision step after updating memory: - If the scene at this decision step shows the gripper raised with fingers partly closed (about 46% open, not 100%) and the cube held in the gripper or missing from the table list, the robot is holding the cube: choose B: put it down. - Otherwise (fingers 100% open, all cubes on the table): if picks_done is less than the required number of pick-ups, choose A: pick up the cube, pointing at target_cube (the current table position of that cube); if picks_done equals or exceeds the required number, choose C: press the button to finish. If a situation matches no rule (for example the gripper state is ambiguous or target_cube cannot be matched to any listed cube), prefer: holding something -> B; not holding and picks_done below the requirement -> A at the cube nearest target_cube; else -> C. Never point at any cube other than the one nearest target_cube.",
+ "fields": [
+  {
+   "name": "target_cube",
+   "description": "Position [y, x] of the cube to pick. At the first decision step (memory empty), read the DEMONSTRATION STEPS: find the cube that appears as 'held in the gripper' (or disappears from the table list while the gripper fingers are about 46% open), note where it was on the table just before the gripper came down on it, and write the position of the cube that sits closest to that spot in the scene at the start of execution (the cube is set down and the shuffle returns it to nearly the same place). At every later step, if the scene at this decision step lists a cube on the table within about 10 px of the carried value, write that cube's current position; if the cube is currently held in the gripper, copy the carried value unchanged. e.g. [93, 140]"
+  },
+  {
+   "name": "picks_done",
+   "description": "Count of completed pick-ups. Write 0 at the first decision step (memory empty). At any later step, look at the last frame shown (the scene at this decision step): if the gripper is raised (height about 0.14 or more) with fingers partly closed (about 46% open, not 100%) and a cube is held in the gripper or missing from the table list, write the carried value plus one; otherwise write the carried value unchanged. e.g. 1"
+  }
+ ]
+}

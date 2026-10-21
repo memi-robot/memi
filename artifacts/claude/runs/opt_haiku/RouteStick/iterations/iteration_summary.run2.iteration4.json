@@ -1,0 +1,98 @@
+{
+ "run": 2,
+ "iteration": 4,
+ "fields": [
+  "demo_moves",
+  "legs_done"
+ ],
+ "models": {
+  "annotator": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "policy_forward": {
+   "provider": "anthropic",
+   "model": "claude-haiku-5-5",
+   "reasoning_effort": "low"
+  },
+  "policy_backward": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  },
+  "optimizer": {
+   "provider": "anthropic",
+   "model": "claude-fable-5-1",
+   "reasoning_effort": "low"
+  }
+ },
+ "episodes": [
+  8,
+  17,
+  18,
+  40,
+  70
+ ],
+ "scored": 16,
+ "failed": 1,
+ "subgoal_wrong": 0,
+ "memory_wrong": 1,
+ "subgoal_verified": 1.0,
+ "memory_verified": 0.9375,
+ "reads": {
+  "demo_moves": 11,
+  "legs_done": 11
+ },
+ "field_errors": {
+  "demo_moves": {
+   "in": 1,
+   "sole": 1
+  },
+  "legs_done": {
+   "in": 0,
+   "sole": 0
+  }
+ },
+ "unused_fields": {},
+ "loss": 0.0625,
+ "verified_of_all": 0.9375,
+ "other_problems": [],
+ "format_wrong": 0,
+ "choice_wrong": 0,
+ "point_wrong": 0,
+ "decisions": 16,
+ "critique": "field demo_moves, ANNOTATOR PROMPT\n  The failure occurred at the first decision step, where the policy builds the whole list from the demonstration. Across the demonstration frames the highlighted target's coordinates drift by one to three pixels while it is still the same target (the target slots themselves jitter: a slot listed at one position in one frame appears a pixel or two away in the next). The policy treated such a drift as the highlighted target moving to a new target and inserted an extra leg, producing a five-letter list where the recorded subgoals had four. This breaks PREDICTABILITY: the rule defines a leg boundary as 'a different target becomes highlighted' without saying how a different target is told from the same target whose coordinates wobbled. The field keeps holding the ordered list of menu letters, one per leg, written at the first decision step and copied unchanged afterwards, e.g. ['C', 'B', 'B', 'B']. Change the definition of a leg boundary: the highlighted target has changed only when its position jumps to the slot of a target that was listed as a non-highlighted target in the previous frame, i.e. to a position tens of pixels away in x (the target slots are spaced roughly 30 px or more apart). A highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg. Identify targets by slot, not by exact coordinates: the set of target slots is fixed for the episode, and each frame's highlighted target is whichever slot it is nearest to. Everything else about the rule (two-target change frame, counting returns to a visited slot, the leg's frames, the reference cube, the side test, the letter table) stays as it is, stated in terms of slots.\n\nfield demo_moves, POLICY PROMPT\n  Same situation: at the first decision step the policy listed the highlighted target at every demonstration frame and counted every coordinate difference as a change, so a one-to-three-pixel wobble of the same highlighted target became an extra leg and an extra letter. The instruction says 'every frame where the highlighted target differs from the previous frame's ends one leg' without saying that targets jitter by a few pixels from frame to frame. Add, in terms the policy can check from the frames: first fix the target slots from the first demonstration frame (the highlighted target plus every listed target; the slots are spaced roughly 30 px or more apart in x). Then at each frame assign the highlighted target to the nearest slot. A leg ends only when the highlighted target is assigned to a different slot than in the previous frame, which always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target and nothing has changed; do not count it. Then proceed exactly as before: two-target frames are change frames, returns to an already-visited slot count, the leg's frames are those strictly after the opening frame and strictly before the closing change frame, the reference cube is the one whose x lies between the two slots, the side is read from gripper y versus that cube's y, LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. Example value: ['C', 'B', 'B', 'B']. Copy the list unchanged at every later step.",
+ "proposal": {
+  "policy_prompt_for_subgoal": "",
+  "policy_prompt_for_memory": [
+   {
+    "field": "demo_moves",
+    "description": "Same situation: at the first decision step the policy listed the highlighted target at every demonstration frame and counted every coordinate difference as a change, so a one-to-three-pixel wobble of the same highlighted target became an extra leg and an extra letter. The instruction says 'every frame where the highlighted target differs from the previous frame's ends one leg' without saying that targets jitter by a few pixels from frame to frame. Add, in terms the policy can check from the frames: first fix the target slots from the first demonstration frame (the highlighted target plus every listed target; the slots are spaced roughly 30 px or more apart in x). Then at each frame assign the highlighted target to the nearest slot. A leg ends only when the highlighted target is assigned to a different slot than in the previous frame, which always shows as a jump of tens of pixels to where a previously non-highlighted target sat. If the highlighted position is within a few pixels (under about 10 px) of the previous frame's highlighted position, it is the same target and nothing has changed; do not count it. Then proceed exactly as before: two-target frames are change frames, returns to an already-visited slot count, the leg's frames are those strictly after the opening frame and strictly before the closing change frame, the reference cube is the one whose x lies between the two slots, the side is read from gripper y versus that cube's y, LEFT+backward=A, RIGHT+forward=B, LEFT+forward=C, RIGHT+backward=D. Example value: ['C', 'B', 'B', 'B']. Copy the list unchanged at every later step."
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "field": "demo_moves",
+    "description": "The failure occurred at the first decision step, where the policy builds the whole list from the demonstration. Across the demonstration frames the highlighted target's coordinates drift by one to three pixels while it is still the same target (the target slots themselves jitter: a slot listed at one position in one frame appears a pixel or two away in the next). The policy treated such a drift as the highlighted target moving to a new target and inserted an extra leg, producing a five-letter list where the recorded subgoals had four. This breaks PREDICTABILITY: the rule defines a leg boundary as 'a different target becomes highlighted' without saying how a different target is told from the same target whose coordinates wobbled. The field keeps holding the ordered list of menu letters, one per leg, written at the first decision step and copied unchanged afterwards, e.g. ['C', 'B', 'B', 'B']. Change the definition of a leg boundary: the highlighted target has changed only when its position jumps to the slot of a target that was listed as a non-highlighted target in the previous frame, i.e. to a position tens of pixels away in x (the target slots are spaced roughly 30 px or more apart). A highlighted position within a few pixels (under about 10 px) of the previous frame's highlighted position is the same target with coordinate jitter and does not end a leg. Identify targets by slot, not by exact coordinates: the set of target slots is fixed for the episode, and each frame's highlighted target is whichever slot it is nearest to. Everything else about the rule (two-target change frame, counting returns to a visited slot, the leg's frames, the reference cube, the side test, the letter table) stays as it is, stated in terms of slots."
+   }
+  ],
+  "refused": ""
+ },
+ "critiques": [
+  {
+   "step": [
+    18,
+    "exec",
+    200
+   ],
+   "memory_in": "demo_moves=; legs_done=",
+   "answered": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "recorded": "C: move to the nearest left target by circling around the stick counterclockwise",
+   "missing_from_memory": "",
+   "missing_from_policy_prompt_for_memory": "It did not say that a highlighted target that shifts by only a pixel or two between frames (here [83, 161] at t=96 becoming [82, 163] at t=112 and t=128) is the same target with coordinate jitter and does not end a leg. I counted that 161->163 shift as a LEFT change and inserted an extra 'A' leg. The instruction should say a leg ends only when the highlighted target jumps to a different target slot, i.e. to the position of one of the other listed targets (roughly 30+ px away in x), and that small drifts of a few px are the same target. With that, the changes are 161->195 (C), 195->161 (B), 163->127 (B), 127->93 (B), giving four letters.",
+   "missing_from_policy_prompt_for_subgoal": "",
+   "missing": ""
+  }
+ ]
+}

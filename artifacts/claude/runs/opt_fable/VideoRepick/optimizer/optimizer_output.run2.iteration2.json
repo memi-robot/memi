@@ -1,0 +1,84 @@
+{
+ "episodes": [
+  43,
+  50,
+  53,
+  73,
+  74
+ ],
+ "user_chars": 36381,
+ "usage": {
+  "prompt_tokens": 14963,
+  "completion_tokens": 1832,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "cache_write_tokens": 14959
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 633
+  }
+ },
+ "reasoning": "I'm checking whether deleting target_cube is actually safe by verifying that every pick-up decision step, including the first one, has an associated descent in its execution steps that lets the target cube be recovered—since trajectories are correct and picks don't fail, this seems to hold.\n\nSo I'll commit to removing that field and transferring its derivation logic into the subgoal instruction itself: the instruction for subgoal A now needs to say to point at whichever cube is nearest a descent position found in the shown execution steps (or, if no descent is shown yet, the one from the demonstration), rather than referencing a separate target_cube variable.\n\n",
+ "revision": {
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "An episode starts in subgoal A: pick up the cube, pointing at target_cube (the position of the cube that the demonstration picked up, derived from the demonstration steps at the first decision step).",
+    "modify_to": "An episode starts in subgoal A: pick up the cube, pointing at the cube the demonstration grasped. The point for A is never taken from memory; it is found from what the step shows, by the point rule at the end of this instruction. The memory holds only picks_done."
+   },
+   {
+    "modify_from": "choose A: pick up the cube, pointing at target_cube (the current table position of that cube);",
+    "modify_to": "choose A: pick up the cube, pointing at the cube given by the point rule below;"
+   },
+   {
+    "modify_from": "If the execution steps shown include a descent to table height (gripper below about 0.04), point at the listed cube nearest that descent position; it is the same cube as target_cube. Pointing at the listed cube position, or within a few px of it (such as the demonstration's grasp position), is acceptable. Never point at any cube other than the one nearest target_cube.",
+    "modify_to": "Point rule for A. At the first decision step (memory empty), use the demonstration steps shown at that step: find the demonstration frame where the gripper is lowest (height about 0.02) with fingers about 46-51% open; the grasped cube is the listed cube (from a demonstration frame before the gripper descended) nearest that gripper position, and it is the cube reported 'held in the gripper' in the following frames. Ignore cubes that vanish from the list earlier while the gripper is high and 100% open; they are only hidden by the arm. After the demonstration's put-down, follow that cube through every remaining demonstration frame: in each frame it is the listed cube nearest its position in the previous frame (cubes swap places during the shuffle and move tens of pixels per frame, and lists are sorted by y, not identity; do not assume it returns to its old spot). Point at the cube in the scene at the start of execution nearest its last demonstration position. At every later decision step where A is chosen, the execution steps shown contain the put-down descent: the frame where the gripper is at table height (below about 0.04) with the fingers opening; point at the listed cube in the scene at this decision step (the last frame shown) nearest that descent position, since that is the cube just set down and the cube to pick again. Pointing at the listed cube position, or within a few px of it (such as the demonstration's grasp position), is acceptable. Never point at any other cube."
+   }
+  ],
+  "policy_prompt_for_memory": [
+   {
+    "kind": "delete",
+    "field": "target_cube",
+    "edits": [],
+    "description": ""
+   }
+  ],
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "target_cube",
+    "edits": [],
+    "description": ""
+   }
+  ],
+  "refused": "The request from the failed step to repair target_cube by naming which frame's list to read, and to record the 'lifted off the table' drawn position when the gripper is raised, is not committed: the field is deleted on both sides because every step that needs the pick point recovers it from what that step shows (the demonstration at the first decision step, the put-down descent at every later pick step), so the field failed NECESSITY and the proposed value would not have been a usable pick point anyway. The round-1 derivation of the grasped cube (lowest-gripper frame, occlusion caveat, nearest-neighbour tracking through the shuffle) is kept in full; it moves from the memory instruction into the subgoal instruction's point rule, so this edit does not undo round 1. picks_done, the holding test, and the required-count rule are left unchanged, as the report found them correct at every step."
+ },
+ "applied": {
+  "annotator_prompt": [
+   {
+    "kind": "delete",
+    "field": "target_cube",
+    "edits": [],
+    "description": ""
+   }
+  ],
+  "policy_prompt_for_memory": [],
+  "policy_prompt_for_subgoal": [
+   {
+    "modify_from": "An episode starts in subgoal A: pick up the cube, pointing at target_cube (the position of the cube that the demonstration picked up, derived from the demonstration steps at the first decision step).",
+    "modify_to": "An episode starts in subgoal A: pick up the cube, pointing at the cube the demonstration grasped. The point for A is never taken from memory; it is found from what the step shows, by the point rule at the end of this instruction. The memory holds only picks_done."
+   },
+   {
+    "modify_from": "choose A: pick up the cube, pointing at target_cube (the current table position of that cube);",
+    "modify_to": "choose A: pick up the cube, pointing at the cube given by the point rule below;"
+   },
+   {
+    "modify_from": "If the execution steps shown include a descent to table height (gripper below about 0.04), point at the listed cube nearest that descent position; it is the same cube as target_cube. Pointing at the listed cube position, or within a few px of it (such as the demonstration's grasp position), is acceptable. Never point at any cube other than the one nearest target_cube.",
+    "modify_to": "Point rule for A. At the first decision step (memory empty), use the demonstration steps shown at that step: find the demonstration frame where the gripper is lowest (height about 0.02) with fingers about 46-51% open; the grasped cube is the listed cube (from a demonstration frame before the gripper descended) nearest that gripper position, and it is the cube reported 'held in the gripper' in the following frames. Ignore cubes that vanish from the list earlier while the gripper is high and 100% open; they are only hidden by the arm. After the demonstration's put-down, follow that cube through every remaining demonstration frame: in each frame it is the listed cube nearest its position in the previous frame (cubes swap places during the shuffle and move tens of pixels per frame, and lists are sorted by y, not identity; do not assume it returns to its old spot). Point at the cube in the scene at the start of execution nearest its last demonstration position. At every later decision step where A is chosen, the execution steps shown contain the put-down descent: the frame where the gripper is at table height (below about 0.04) with the fingers opening; point at the listed cube in the scene at this decision step (the last frame shown) nearest that descent position, since that is the cube just set down and the cube to pick again. Pointing at the listed cube position, or within a few px of it (such as the demonstration's grasp position), is acceptable. Never point at any other cube."
+   }
+  ],
+  "refused": "The request from the failed step to repair target_cube by naming which frame's list to read, and to record the 'lifted off the table' drawn position when the gripper is raised, is not committed: the field is deleted on both sides because every step that needs the pick point recovers it from what that step shows (the demonstration at the first decision step, the put-down descent at every later pick step), so the field failed NECESSITY and the proposed value would not have been a usable pick point anyway. The round-1 derivation of the grasped cube (lowest-gripper frame, occlusion caveat, nearest-neighbour tracking through the shuffle) is kept in full; it moves from the memory instruction into the subgoal instruction's point rule, so this edit does not undo round 1. picks_done, the holding test, and the required-count rule are left unchanged, as the report found them correct at every step."
+ },
+ "not_applied": [],
+ "refused": "The request from the failed step to repair target_cube by naming which frame's list to read, and to record the 'lifted off the table' drawn position when the gripper is raised, is not committed: the field is deleted on both sides because every step that needs the pick point recovers it from what that step shows (the demonstration at the first decision step, the put-down descent at every later pick step), so the field failed NECESSITY and the proposed value would not have been a usable pick point anyway. The round-1 derivation of the grasped cube (lowest-gripper frame, occlusion caveat, nearest-neighbour tracking through the shuffle) is kept in full; it moves from the memory instruction into the subgoal instruction's point rule, so this edit does not undo round 1. picks_done, the holding test, and the required-count rule are left unchanged, as the report found them correct at every step.",
+ "text": "{\"annotator_prompt\": [{\"kind\": \"delete\", \"field\": \"target_cube\"}],\n \"policy_prompt_for_memory\": [{\"kind\": \"delete\", \"field\": \"target_cube\"}],\n \"policy_prompt_for_subgoal\": [\n  {\"modify_from\": \"An episode starts in subgoal A: pick up the cube, pointing at target_cube (the position of the cube that the demonstration picked up, derived from the demonstration steps at the first decision step).\",\n   \"modify_to\": \"An episode starts in subgoal A: pick up the cube, pointing at the cube the demonstration grasped. The point for A is never taken from memory; it is found from what the step shows, by the point rule at the end of this instruction. The memory holds only picks_done.\"},\n  {\"modify_from\": \"choose A: pick up the cube, pointing at target_cube (the current table position of that cube);\",\n   \"modify_to\": \"choose A: pick up the cube, pointing at the cube given by the point rule below;\"},\n  {\"modify_from\": \"If the execution steps shown include a descent to table height (gripper below about 0.04), point at the listed cube nearest that descent position; it is the same cube as target_cube. Pointing at the listed cube position, or within a few px of it (such as the demonstration's grasp position), is acceptable. Never point at any cube other than the one nearest target_cube.\",\n   \"modify_to\": \"Point rule for A. At the first decision step (memory empty), use the demonstration steps shown at that step: find the demonstration frame where the gripper is lowest (height about 0.02) with fingers about 46-51% open; the grasped cube is the listed cube (from a demonstration frame before the gripper descended) nearest that gripper position, and it is the cube reported 'held in the gripper' in the following frames. Ignore cubes that vanish from the list earlier while the gripper is high and 100% open; they are only hidden by the arm. After the demonstration's put-down, follow that cube through every remaining demonstration frame: in each frame it is the listed cube nearest its position in the previous frame (cubes swap places during the shuffle and move tens of pixels per frame, and lists are sorted by y, not identity; do not assume it returns to its old spot). Point at the cube in the scene at the start of execution nearest its last demonstration position. At every later decision step where A is chosen, the execution steps shown contain the put-down descent: the frame where the gripper is at table height (below about 0.04) with the fingers opening; point at the listed cube in the scene at this decision step (the last frame shown) nearest that descent position, since that is the cube just set down and the cube to pick again. Pointing at the listed cube position, or within a few px of it (such as the demonstration's grasp position), is acceptable. Never point at any other cube.\"}],\n \"refused\": \"The request from the failed step to repair target_cube by naming which frame's list to read, and to record the 'lifted off the table' drawn position when the gripper is raised, is not committed: the field is deleted on both sides because every step that needs the pick point recovers it from what that step shows (the demonstration at the first decision step, the put-down descent at every later pick step), so the field failed NECESSITY and the proposed value would not have been a usable pick point anyway. The round-1 derivation of the grasped cube (lowest-gripper frame, occlusion caveat, nearest-neighbour tracking through the shuffle) is kept in full; it moves from the memory instruction into the subgoal instruction's point rule, so this edit does not undo round 1. picks_done, the holding test, and the required-count rule are left unchanged, as the report found them correct at every step.\"}"
+}
