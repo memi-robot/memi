@@ -23,8 +23,8 @@ change.
 Each iteration annotates a fresh minibatch with φ (`annotator.forward`), evaluates the policy under θ
 (`policy.forward` and `loss`), and revises both prompts from the failures
 (`policy.backward`, `annotator.backward`, `optimizer.step`). MEMI runs as a
-high-level planner whose subgoals RoboMME's low-level planner executes
-(**Plan**, `memi/plan`), and as an end-to-end policy that outputs every
+high-level planner whose subgoals RoboMME's ground-truth low-level controller
+executes (**Plan**, `memi/plan`), and as an end-to-end policy that outputs every
 waypoint (**Act**, `memi/act`).
 
 This repository holds the code, the training data, every optimization run
@@ -149,7 +149,7 @@ third_party/     RoboMME and the Embodied-Astra harness, as git submodules
 
 ## Acknowledgments
 
-The tasks, the low-level planner and the simulator come from
+The tasks, the low-level controller and the simulator come from
 [RoboMME](https://github.com/RoboMME/robomme_benchmark), built on
 [ManiSkill](https://github.com/haosulab/ManiSkill). Act adapts the harness of
 [Embodied-Astra](https://github.com/jackbjed/embodied-astra-robomme). The
