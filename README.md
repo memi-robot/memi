@@ -1,6 +1,6 @@
 <div align="center">
 
-# MEMI: Self-Improving Robot Memory as an Inverse Problem
+# MEMI: Reverse-Engineering What Robots Should Remember
 
 [![Project page](https://img.shields.io/badge/Project-page-0f0f70)](https://memi-robot.github.io/)
 [![Benchmark](https://img.shields.io/badge/Benchmark-RoboMME-405c78)](https://robomme.github.io/)
@@ -140,7 +140,7 @@ third_party/     RoboMME and the Embodied-Astra harness, as git submodules
 
 ```bibtex
 @misc{ryu2026memi,
-  title        = {MEMI: Self-Improving Robot Memory as an Inverse Problem},
+  title        = {MEMI: Reverse-Engineering What Robots Should Remember},
   author       = {Ryu, Sooyoung and Dai, Yinpei and Du, Yilun and Finn, Chelsea and Liu, Yuejiang},
   year         = {2026},
   url          = {https://memi-robot.github.io/}
