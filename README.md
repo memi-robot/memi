@@ -143,7 +143,7 @@ third_party/     RoboMME and the Embodied-Astra harness, as git submodules
   title        = {MEMI: Reverse-Engineering What Robots Should Remember},
   author       = {Ryu, Sooyoung and Dai, Yinpei and Du, Yilun and Finn, Chelsea and Liu, Yuejiang},
   year         = {2026},
-  url          = {https://memi-robot.github.io/}
+  url          = {https://memi-robot.github.io}
 }
 ```
 
