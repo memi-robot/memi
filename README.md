@@ -2,6 +2,7 @@
 
 # MEMI: Reverse-Engineering What Robots Should Remember
 
+[![CoRL 2026 LBR](https://img.shields.io/badge/CoRL_2026-Late_Breaking_Results-c25c43)](https://openreview.net/forum?id=tpnXdtxVMS)
 [![Project page](https://img.shields.io/badge/Project-page-0f0f70)](https://memi-robot.github.io/)
 [![Benchmark](https://img.shields.io/badge/Benchmark-RoboMME-405c78)](https://robomme.github.io/)
 [![Leaderboard](https://img.shields.io/badge/RoboMME-Leaderboard-a8853f)](https://robomme.github.io/leaderboard.html)
@@ -139,11 +140,12 @@ third_party/     RoboMME and the Embodied-Astra harness, as git submodules
 ## Citation
 
 ```bibtex
-@misc{ryu2026memi,
-  title        = {MEMI: Reverse-Engineering What Robots Should Remember},
-  author       = {Ryu, Sooyoung and Dai, Yinpei and Du, Yilun and Finn, Chelsea and Liu, Yuejiang},
+@inproceedings{ryu2026memi,
+  title        = {{MEMI}: Reverse-Engineering What Robots Should Remember},
+  author       = {Sooyoung Ryu and Yinpei Dai and Yilun Du and Chelsea Finn and Yuejiang Liu},
+  booktitle    = {CoRL 2026 Late Breaking Results},
   year         = {2026},
-  url          = {https://memi-robot.github.io}
+  url          = {https://openreview.net/forum?id=tpnXdtxVMS}
 }
 ```
 
